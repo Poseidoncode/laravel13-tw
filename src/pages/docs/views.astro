@@ -7,9 +7,9 @@ const content = `<h1>視圖</h1>
 <li><a href="#writing-views-in-react-svelte-or-vue">使用 React / Svelte / Vue 編寫視圖</a></li>
 </ul>
 </li>
-<li><a href="#creating-and-rendering-views">創建和渲染視圖</a><ul>
+<li><a href="#creating-and-rendering-views">建立和渲染視圖</a><ul>
 <li><a href="#nested-view-directories">嵌套視圖目錄</a></li>
-<li><a href="#creating-the-first-available-view">創建第一個可用視圖</a></li>
+<li><a href="#creating-the-first-available-view">建立第一個可用視圖</a></li>
 <li><a href="#determining-if-a-view-exists">判斷視圖是否存在</a></li>
 </ul>
 </li>
@@ -18,7 +18,7 @@ const content = `<h1>視圖</h1>
 </ul>
 </li>
 <li><a href="#view-composers">視圖合成器</a><ul>
-<li><a href="#view-creators">視圖創建器</a></li>
+<li><a href="#view-creators">視圖建立器</a></li>
 </ul>
 </li>
 <li><a href="#optimizing-views">優化視圖</a></li>
@@ -46,15 +46,15 @@ const content = `<h1>視圖</h1>
 </blockquote>
 <p><a name="writing-views-in-react-svelte-or-vue"></a></p>
 <h3>使用 React / Svelte / Vue 編寫視圖</h3>
-<p>許多開發者開始不再透過 Blade 使用 PHP 編寫前端模板，而是更喜歡使用 React、Svelte 或 Vue 來編寫模板。Laravel 透過 <a href="https://inertiajs.com/">Inertia</a> 讓這變得非常簡單，Inertia 是一個庫，讓您可以輕鬆地將 React / Svelte / Vue 前端與 Laravel 後端連接，而無需構建 SPA 的典型複雜性。</p>
+<p>許多開發者開始不再透過 Blade 使用 PHP 編寫前端模板，而是更喜歡使用 React、Svelte 或 Vue 來編寫模板。Laravel 透過 <a href="https://inertiajs.com/">Inertia</a> 讓這變得非常簡單，Inertia 是一個庫，讓您可以輕鬆地將 React / Svelte / Vue 前端與 Laravel 後端連接，而無需建立 SPA 的典型複雜性。</p>
 <p>我們的 <a href="/docs/starter-kits">React、Svelte 和 Vue 應用程式入門套件</a>為您的下一個由 Inertia 驅動的 Laravel 應用程式提供了絕佳的起點。</p>
 <p><a name="creating-and-rendering-views"></a></p>
-<h2>創建和渲染視圖</h2>
-<p>您可以透過在應用程式的 <code>resources/views</code> 目錄中放置帶有 <code>.blade.php</code> 擴展名的文件或使用 <code>make:view</code> Artisan 命令來創建視圖：</p>
+<h2>建立和渲染視圖</h2>
+<p>您可以透過在應用程式的 <code>resources/views</code> 目錄中放置帶有 <code>.blade.php</code> 擴展名的文件或使用 <code>make:view</code> Artisan 命令來建立視圖：</p>
 <pre><code class="language-shell">php artisan make:view greeting
 </code></pre>
-<p><code>.blade.php</code> 擴展名通知框架該文件包含 <a href="/docs/blade">Blade 模板</a>。Blade 模板包含 HTML 以及 Blade 指令，允許您輕鬆地顯示值、創建「if」語句、迭代資料等。</p>
-<p>創建視圖後，您可以使用全域 <code>view</code> 輔助函數從應用程式的路由或控制器中傳回它：</p>
+<p><code>.blade.php</code> 擴展名通知框架該文件包含 <a href="/docs/blade">Blade 模板</a>。Blade 模板包含 HTML 以及 Blade 指令，允許您輕鬆地顯示值、建立「if」語句、迭代資料等。</p>
+<p>建立視圖後，您可以使用全域 <code>view</code> 輔助函數從應用程式的路由或控制器中傳回它：</p>
 <pre><code class="language-php">Route::get('/', function () {
     return view('greeting', ['name' => 'James']);
 });
@@ -75,8 +75,8 @@ return View::make('greeting', ['name' => 'James']);
 視圖目錄名稱不應包含 <code>.</code> 字元。</p>
 </blockquote>
 <p><a name="creating-the-first-available-view"></a></p>
-<h3>創建第一個可用視圖</h3>
-<p>使用 <code>View</code> 外觀的 <code>first</code> 方法，您可以創建給定視圖陣列中存在的第一個視圖。如果您的應用程式或套件允許視圖被自訂或覆蓋，這可能會很有用：</p>
+<h3>建立第一個可用視圖</h3>
+<p>使用 <code>View</code> 外觀的 <code>first</code> 方法，您可以建立給定視圖陣列中存在的第一個視圖。如果您的應用程式或套件允許視圖被自訂或覆蓋，這可能會很有用：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\View;
 
 return View::first(['custom.admin', 'admin'], $data);
@@ -133,7 +133,7 @@ class AppServiceProvider extends ServiceProvider
 <h2>視圖合成器</h2>
 <p>視圖合成器是在渲染視圖時被呼叫的回呼或類別方法。如果您有想要在每次渲染視圖時綁定到視圖的資料，視圖合成器可以幫助您將該邏輯組織到一個位置。如果同一視圖被應用程式中的多個路由或控制器傳回，並且總是需要特定的資料，視圖合成器可能特別有用。</p>
 <p>通常，視圖合成器將在您應用程式的<a href="/docs/providers">服務提供者</a>之一中註冊。在此範例中，我們將假設 <code>App\\Providers\\AppServiceProvider</code> 將容納此邏輯。</p>
-<p>我們將使用 <code>View</code> 外觀的 <code>composer</code> 方法來註冊視圖合成器。Laravel 不包含用於基於類別的視圖合成器的預設目錄，因此您可以自由地按照您希望的方式組織它們。例如，您可以創建一個 <code>app/View/Composers</code> 目錄來容納所有應用程式的視圖合成器：</p>
+<p>我們將使用 <code>View</code> 外觀的 <code>composer</code> 方法來註冊視圖合成器。Laravel 不包含用於基於類別的視圖合成器的預設目錄，因此您可以自由地按照您希望的方式組織它們。例如，您可以建立一個 <code>app/View/Composers</code> 目錄來容納所有應用程式的視圖合成器：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Providers;
@@ -183,7 +183,7 @@ use Illuminate\\View\\View;
 class ProfileComposer
 {
     /**
-     * 創建一個新的 Profile 合成器。
+     * 建立一個新的 Profile 合成器。
      */
     public function __construct(
         protected UserRepository $users,
@@ -219,8 +219,8 @@ Facades\\View::composer('*', function (View $view) {
 });
 </code></pre>
 <p><a name="view-creators"></a></p>
-<h3>視圖創建器</h3>
-<p>視圖「創建器」與視圖合成器非常相似；但是，它們在視圖實例化後立即執行，而不是等到視圖即將渲染時。要註冊視圖創建器，請使用 <code>creator</code> 方法：</p>
+<h3>視圖建立器</h3>
+<p>視圖「建立器」與視圖合成器非常相似；但是，它們在視圖實例化後立即執行，而不是等到視圖即將渲染時。要註冊視圖建立器，請使用 <code>creator</code> 方法：</p>
 <pre><code class="language-php">use App\\View\\Creators\\ProfileCreator;
 use Illuminate\\Support\\Facades\\View;
 

@@ -90,7 +90,7 @@ npm run preview
 
 ### 使用方式
 
-1. 點擊頁面頂部的搜尋框
+1. 點選頁面頂部的搜尋框
 2. 或使用快捷鍵 `⌘K` (Mac) / `Ctrl+K` (Windows/Linux)
 3. 輸入關鍵字搜尋
 4. 使用方向鍵導航結果
@@ -279,7 +279,7 @@ npm run build:search
 - [ ] 事件 (events)
 - [ ] 檔案系統 (filesystem)
 - [ ] 輔助函式 (helpers)
-- [ ] HTTP 用戶端 (http-client)
+- [ ] HTTP 客戶端 (http-client)
 - [ ] 本地化 (localization)
 - [ ] 郵件 (mail)
 - [ ] 通知 (notifications)

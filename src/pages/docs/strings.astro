@@ -1858,7 +1858,7 @@ $padded = str(&#39;Taylor&#39;)-&gt;padRight(10, &#39;_&#39;);
 </code></pre>
 <p><a name="method-fluent-str-pipe"></a></p>
 <h4><code>pipe()</code> {.collection-method}</h4>
-<p><code>pipe</code> 方法將字串傳遞給給定的回調並返回結果：</p>
+<p><code>pipe</code> 方法將字串傳遞給給定的回呼並返回結果：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $result = str(&#39;hello&#39;)-&gt;pipe(function ($string) {
@@ -2111,7 +2111,7 @@ $string = str(&#39;The quick brown fox jumps over the lazy dog.&#39;)-&gt;take(5
 </code></pre>
 <p><a name="method-fluent-str-tap"></a></p>
 <h4><code>tap()</code> {.collection-method}</h4>
-<p><code>tap</code> 方法將字串傳遞給給定的回調並返回字串實例：</p>
+<p><code>tap</code> 方法將字串傳遞給給定的回呼並返回字串實例：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Hello&#39;)-&gt;tap(function ($string) {
@@ -2242,7 +2242,7 @@ $string = str(&#39;laravel&#39;)-&gt;upper();
 </code></pre>
 <p><a name="method-fluent-str-when"></a></p>
 <h4><code>when()</code> {.collection-method}</h4>
-<p><code>when</code> 方法在給定的布林條件為 true 時對字串實例執行給定的回調：</p>
+<p><code>when</code> 方法在給定的布林條件為 true 時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;when(true, function ($string) {
@@ -2253,7 +2253,7 @@ $string = str(&#39;Laravel&#39;)-&gt;when(true, function ($string) {
 </code></pre>
 <p><a name="method-fluent-str-when-contains"></a></p>
 <h4><code>whenContains()</code> {.collection-method}</h4>
-<p><code>whenContains</code> 方法在字串包含給定值時對字串實例執行給定的回調：</p>
+<p><code>whenContains</code> 方法在字串包含給定值時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel Framework&#39;)-&gt;whenContains(&#39;Framework&#39;, function ($string) {
@@ -2264,7 +2264,7 @@ $string = str(&#39;Laravel Framework&#39;)-&gt;whenContains(&#39;Framework&#39;,
 </code></pre>
 <p><a name="method-fluent-str-when-contains-all"></a></p>
 <h4><code>whenContainsAll()</code> {.collection-method}</h4>
-<p><code>whenContainsAll</code> 方法在字串包含所有給定值時對字串實例執行給定的回調：</p>
+<p><code>whenContainsAll</code> 方法在字串包含所有給定值時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel Framework&#39;)-&gt;whenContainsAll([&#39;Laravel&#39;, &#39;Framework&#39;], function ($string) {
@@ -2275,7 +2275,7 @@ $string = str(&#39;Laravel Framework&#39;)-&gt;whenContainsAll([&#39;Laravel&#39
 </code></pre>
 <p><a name="method-fluent-str-when-doesnt-end-with"></a></p>
 <h4><code>whenDoesntEndWith()</code> {.collection-method}</h4>
-<p><code>whenDoesntEndWith</code> 方法在字串不以給定值結尾時對字串實例執行給定的回調：</p>
+<p><code>whenDoesntEndWith</code> 方法在字串不以給定值結尾時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;whenDoesntEndWith(&#39;foo&#39;, function ($string) {
@@ -2286,7 +2286,7 @@ $string = str(&#39;Laravel&#39;)-&gt;whenDoesntEndWith(&#39;foo&#39;, function (
 </code></pre>
 <p><a name="method-fluent-str-when-doesnt-start-with"></a></p>
 <h4><code>whenDoesntStartWith()</code> {.collection-method}</h4>
-<p><code>whenDoesntStartWith</code> 方法在字串不以給定值開頭時對字串實例執行給定的回調：</p>
+<p><code>whenDoesntStartWith</code> 方法在字串不以給定值開頭時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;whenDoesntStartWith(&#39;foo&#39;, function ($string) {
@@ -2297,7 +2297,7 @@ $string = str(&#39;Laravel&#39;)-&gt;whenDoesntStartWith(&#39;foo&#39;, function
 </code></pre>
 <p><a name="method-fluent-str-when-empty"></a></p>
 <h4><code>whenEmpty()</code> {.collection-method}</h4>
-<p><code>whenEmpty</code> 方法在字串為空時對字串實例執行給定的回調：</p>
+<p><code>whenEmpty</code> 方法在字串為空時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;&#39;)-&gt;whenEmpty(function ($string) {
@@ -2308,7 +2308,7 @@ $string = str(&#39;&#39;)-&gt;whenEmpty(function ($string) {
 </code></pre>
 <p><a name="method-fluent-str-when-not-empty"></a></p>
 <h4><code>whenNotEmpty()</code> {.collection-method}</h4>
-<p><code>whenNotEmpty</code> 方法在字串不為空時對字串實例執行給定的回調：</p>
+<p><code>whenNotEmpty</code> 方法在字串不為空時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;whenNotEmpty(function ($string) {
@@ -2319,7 +2319,7 @@ $string = str(&#39;Laravel&#39;)-&gt;whenNotEmpty(function ($string) {
 </code></pre>
 <p><a name="method-fluent-str-when-starts-with"></a></p>
 <h4><code>whenStartsWith()</code> {.collection-method}</h4>
-<p><code>whenStartsWith</code> 方法在字串以給定值開頭時對字串實例執行給定的回調：</p>
+<p><code>whenStartsWith</code> 方法在字串以給定值開頭時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel Framework&#39;)-&gt;whenStartsWith(&#39;Laravel&#39;, function ($string) {
@@ -2330,7 +2330,7 @@ $string = str(&#39;Laravel Framework&#39;)-&gt;whenStartsWith(&#39;Laravel&#39;,
 </code></pre>
 <p><a name="method-fluent-str-when-ends-with"></a></p>
 <h4><code>whenEndsWith()</code> {.collection-method}</h4>
-<p><code>whenEndsWith</code> 方法在字串以給定值結尾時對字串實例執行給定的回調：</p>
+<p><code>whenEndsWith</code> 方法在字串以給定值結尾時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;whenEndsWith(&#39;el&#39;, function ($string) {
@@ -2341,7 +2341,7 @@ $string = str(&#39;Laravel&#39;)-&gt;whenEndsWith(&#39;el&#39;, function ($strin
 </code></pre>
 <p><a name="method-fluent-str-when-exactly"></a></p>
 <h4><code>whenExactly()</code> {.collection-method}</h4>
-<p><code>whenExactly</code> 方法在字串與給定值完全匹配時對字串實例執行給定的回調：</p>
+<p><code>whenExactly</code> 方法在字串與給定值完全匹配時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;whenExactly(&#39;Laravel&#39;, function ($string) {
@@ -2352,7 +2352,7 @@ $string = str(&#39;Laravel&#39;)-&gt;whenExactly(&#39;Laravel&#39;, function ($s
 </code></pre>
 <p><a name="method-fluent-str-when-not-exactly"></a></p>
 <h4><code>whenNotExactly()</code> {.collection-method}</h4>
-<p><code>whenNotExactly</code> 方法在字串與給定值不完全匹配時對字串實例執行給定的回調：</p>
+<p><code>whenNotExactly</code> 方法在字串與給定值不完全匹配時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel&#39;)-&gt;whenNotExactly(&#39;Taylor&#39;, function ($string) {
@@ -2363,7 +2363,7 @@ $string = str(&#39;Laravel&#39;)-&gt;whenNotExactly(&#39;Taylor&#39;, function (
 </code></pre>
 <p><a name="method-fluent-str-when-is"></a></p>
 <h4><code>whenIs()</code> {.collection-method}</h4>
-<p><code>whenIs</code> 方法在字串匹配給定模式時對字串實例執行給定的回調：</p>
+<p><code>whenIs</code> 方法在字串匹配給定模式時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Laravel Framework&#39;)-&gt;whenIs(&#39;Laravel *&#39;, function ($string) {
@@ -2374,7 +2374,7 @@ $string = str(&#39;Laravel Framework&#39;)-&gt;whenIs(&#39;Laravel *&#39;, funct
 </code></pre>
 <p><a name="method-fluent-str-when-is-ascii"></a></p>
 <h4><code>whenIsAscii()</code> {.collection-method}</h4>
-<p><code>whenIsAscii</code> 方法在字串僅包含 ASCII 字元時對字串實例執行給定的回調：</p>
+<p><code>whenIsAscii</code> 方法在字串僅包含 ASCII 字元時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;Taylor&#39;)-&gt;whenIsAscii(function ($string) {
@@ -2385,7 +2385,7 @@ $string = str(&#39;Taylor&#39;)-&gt;whenIsAscii(function ($string) {
 </code></pre>
 <p><a name="method-fluent-str-when-is-ulid"></a></p>
 <h4><code>whenIsUlid()</code> {.collection-method}</h4>
-<p><code>whenIsUlid</code> 方法在字串是有效 ULID 時對字串實例執行給定的回調：</p>
+<p><code>whenIsUlid</code> 方法在字串是有效 ULID 時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;01gd4d3tgrrfqeda94gdbtdk5c&#39;)-&gt;whenIsUlid(function ($string) {
@@ -2396,7 +2396,7 @@ $string = str(&#39;01gd4d3tgrrfqeda94gdbtdk5c&#39;)-&gt;whenIsUlid(function ($st
 </code></pre>
 <p><a name="method-fluent-str-when-is-uuid"></a></p>
 <h4><code>whenIsUuid()</code> {.collection-method}</h4>
-<p><code>whenIsUuid</code> 方法在字串是有效 UUID 時對字串實例執行給定的回調：</p>
+<p><code>whenIsUuid</code> 方法在字串是有效 UUID 時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;5b9e3467-2c4f-4d5a-b9b5-4f6f7f8f9d0a&#39;)-&gt;whenIsUuid(function ($string) {
@@ -2407,7 +2407,7 @@ $string = str(&#39;5b9e3467-2c4f-4d5a-b9b5-4f6f7f8f9d0a&#39;)-&gt;whenIsUuid(fun
 </code></pre>
 <p><a name="method-fluent-str-when-test"></a></p>
 <h4><code>whenTest()</code> {.collection-method}</h4>
-<p><code>whenTest</code> 方法在字串匹配給定正規表達式時對字串實例執行給定的回調：</p>
+<p><code>whenTest</code> 方法在字串匹配給定正規表達式時對字串實例執行給定的回呼：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\str;
 
 $string = str(&#39;laravel&#39;)-&gt;whenTest(&#39;/^lar/&#39;, function ($string) {

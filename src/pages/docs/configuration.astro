@@ -51,7 +51,7 @@ const content = `<h1>配置</h1>
 <p>在載入應用程式的環境變數之前，Laravel 會判斷是否已外部提供 <code>APP_ENV</code> 環境變數或是否已指定 <code>--env</code> CLI 參數。如果是，Laravel 將嘗試載入 <code>.env.[APP_ENV]</code> 檔案（如果存在）。如果不存在，將載入預設的 <code>.env</code> 檔案。</p>
 <p><a name="environment-variable-types"></a></p>
 <h3>環境變數類型</h3>
-<p><code>.env</code> 檔案中的所有變數通常都被解析為字串，因此已創建一些保留值以允許您從 <code>env()</code> 函數返回更廣泛的類型：</p>
+<p><code>.env</code> 檔案中的所有變數通常都被解析為字串，因此已建立一些保留值以允許您從 <code>env()</code> 函數返回更廣泛的類型：</p>
 <div class="overflow-auto"><table>
 <thead>
 <tr>
@@ -187,7 +187,7 @@ $value = config(&#39;app.timezone&#39;);
 // 如果配置值不存在，則檢索預設值...
 $value = config(&#39;app.timezone&#39;, &#39;Asia/Seoul&#39;);
 </code></pre>
-<p>要在運行時設定配置值，您可以調用 <code>Config</code> Facade 的 <code>set</code> 方法或向 <code>config</code> 函數傳遞一個數組：</p>
+<p>要在運行時設定配置值，您可以調用 <code>Config</code> Facade 的 <code>set</code> 方法或向 <code>config</code> 函數傳遞一個陣列：</p>
 <pre><code class="language-php">Config::set(&#39;app.timezone&#39;, &#39;America/Chicago&#39;);
 
 config([&#39;app.timezone&#39; =&gt; &#39;America/Chicago&#39;]);
@@ -223,10 +223,10 @@ php artisan config:publish --all
 </code></pre>
 <p><a name="debug-mode"></a></p>
 <h2>除錯模式</h2>
-<p><code>config/app.php</code> 配置檔案中的 <code>debug</code> 選項決定實際向用戶顯示多少錯誤資訊。預設情況下，此選項設定為尊重 <code>.env</code> 檔案中儲存的 <code>APP_DEBUG</code> 環境變數的值。</p>
+<p><code>config/app.php</code> 配置檔案中的 <code>debug</code> 選項決定實際向使用者顯示多少錯誤資訊。預設情況下，此選項設定為尊重 <code>.env</code> 檔案中儲存的 <code>APP_DEBUG</code> 環境變數的值。</p>
 <blockquote>
 <p>[!WARNING]
-對於本機開發，您應該將 <code>APP_DEBUG</code> 環境變數設定為 <code>true</code>。<strong>在生產環境中，此值應始終為 <code>false</code>。如果在生產中將變數設定為 <code>true</code>，您將面臨向應用程式的最終用戶暴露敏感配置值的風險。</strong></p>
+對於本機開發，您應該將 <code>APP_DEBUG</code> 環境變數設定為 <code>true</code>。<strong>在生產環境中，此值應始終為 <code>false</code>。如果在生產中將變數設定為 <code>true</code>，您將面臨向應用程式的最終使用者暴露敏感配置值的風險。</strong></p>
 </blockquote>
 <p><a name="maintenance-mode"></a></p>
 <h2>維護模式</h2>
@@ -265,13 +265,13 @@ APP_MAINTENANCE_STORE=database
 </code></pre>
 <p><a name="pre-rendering-the-maintenance-mode-view"></a></p>
 <h4>預渲染維護模式視圖</h4>
-<p>如果您在部署期間使用 <code>php artisan down</code> 命令，如果用戶在您的 Composer 依賴項或其他基礎架構組件更新時存取應用程式，他們仍可能偶爾遇到錯誤。這是因為 Laravel 框架的很大一部分必須引導以判斷您的應用程式是否處於維護模式，並使用模板引擎渲染維護模式視圖。</p>
+<p>如果您在部署期間使用 <code>php artisan down</code> 命令，如果使用者在您的 Composer 依賴項或其他基礎架構元件更新時存取應用程式，他們仍可能偶爾遇到錯誤。這是因為 Laravel 框架的很大一部分必須引導以判斷您的應用程式是否處於維護模式，並使用模板引擎渲染維護模式視圖。</p>
 <p>出於這個原因，Laravel 允許您預渲染一個維護模式視圖，該視圖將在請求週期的最開始返回。此視圖在您的應用程式的任何依賴項載入之前渲染。您可以使用 <code>down</code> 命令的 <code>render</code> 選項預渲染您選擇的模板：</p>
 <pre><code class="language-shell">php artisan down --render=&quot;errors::503&quot;
 </code></pre>
 <p><a name="redirecting-maintenance-mode-requests"></a></p>
 <h4>重定向維護模式請求</h4>
-<p>處於維護模式時，Laravel 將為用戶嘗試存取的所有應用程式 URL 顯示維護模式視圖。如果您願意，可以指示 Laravel 將所有請求重定向到特定 URL。這可以使用 <code>redirect</code> 選項來實現。例如，您可能希望將所有請求重定向到 <code>/</code> URI：</p>
+<p>處於維護模式時，Laravel 將為使用者嘗試存取的所有應用程式 URL 顯示維護模式視圖。如果您願意，可以指示 Laravel 將所有請求重定向到特定 URL。這可以使用 <code>redirect</code> 選項來實現。例如，您可能希望將所有請求重定向到 <code>/</code> URI：</p>
 <pre><code class="language-shell">php artisan down --redirect=/
 </code></pre>
 <p><a name="disabling-maintenance-mode"></a></p>

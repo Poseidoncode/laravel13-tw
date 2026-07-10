@@ -118,7 +118,7 @@ public function test_basic_example(): void
 </code></pre>
 <p><a name="how-facades-work"></a></p>
 <h2>外觀如何運作</h2>
-<p>在 Laravel 應用程式中，外觀是一個提供從容器存取物件的類別。實現此功能的機制在 <code>Facade</code> 類別中。Laravel 的外觀以及您創建的任何自訂外觀都將擴展底層 <code>Illuminate\\Support\\Facades\\Facade</code> 類別。</p>
+<p>在 Laravel 應用程式中，外觀是一個提供從容器存取物件的類別。實現此功能的機制在 <code>Facade</code> 類別中。Laravel 的外觀以及您建立的任何自訂外觀都將擴展底層 <code>Illuminate\\Support\\Facades\\Facade</code> 類別。</p>
 <p><code>Facade</code> 基類利用 <code>__callStatic()</code> 魔術方法將外觀的呼叫延遲到從容器解析的物件。在下面的範例中，對 Laravel 快取系統進行了呼叫。瞥一眼這段代碼，可能會假設正在 <code>Cache</code> 類別上呼叫靜態 <code>get</code> 方法：</p>
 <pre><code class="language-php">&lt;?php
 
@@ -145,7 +145,7 @@ class UserController extends Controller
 <pre><code class="language-php">class Cache extends Facade
 {
     /**
-     * 獲取已註冊的組件名稱。
+     * 獲取已註冊的元件名稱。
      */
     protected static function getFacadeAccessor(): string
     {

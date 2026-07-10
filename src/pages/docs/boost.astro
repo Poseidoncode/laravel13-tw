@@ -79,7 +79,7 @@ gemini mcp add -s project -t stdio laravel-boost php artisan boost:mcp
 <pre><code class="language-text">1. 按兩次 \`shift\` 打開命令面板
 2. 搜尋「MCP Settings」並按 \`enter\`
 3. 勾選 \`laravel-boost\` 旁邊的方框
-4. 點擊右下角的「Apply」
+4. 點選右下角的「Apply」
 </code></pre>
 <p><a name="keeping-boost-resources-updated"></a></p>
 <h3>保持 Boost 資源更新</h3>
@@ -265,8 +265,8 @@ gemini mcp add -s project -t stdio laravel-boost php artisan boost:mcp
 <p>要使用您自己的自訂 AI 指南來增強 Laravel Boost，請將 <code>.blade.php</code> 或 <code>.md</code> 檔案添加到應用程式的 <code>.ai/guidelines/*</code> 目錄中。當您在應用程式中運行 <code>boost:install</code> 時，這些檔案將自動包含在 Laravel Boost 的指南中。</p>
 <p><a name="overriding-boost-ai-guidelines"></a></p>
 <h3>覆蓋 Boost AI 指南</h3>
-<p>您可以透過創建具有匹配檔案路徑的自訂指南來覆蓋 Boost 的內建 AI 指南。當您創建與現有 Boost 指南路徑匹配的自訂指南時，Boost 將使用您的自訂版本而不是內建版本。</p>
-<p>例如，要覆蓋 Boost 的「Inertia React v2 Form Guidance」指南，請在 <code>.ai/guidelines/inertia-react/2/forms.blade.php</code> 創建一個檔案。當您在應用程式中運行 <code>boost:install</code> 時，Boost 將包含您的自訂指南而不是預設指南。</p>
+<p>您可以透過建立具有匹配檔案路徑的自訂指南來覆蓋 Boost 的內建 AI 指南。當您建立與現有 Boost 指南路徑匹配的自訂指南時，Boost 將使用您的自訂版本而不是內建版本。</p>
+<p>例如，要覆蓋 Boost 的「Inertia React v2 Form Guidance」指南，請在 <code>.ai/guidelines/inertia-react/2/forms.blade.php</code> 建立一個檔案。當您在應用程式中運行 <code>boost:install</code> 時，Boost 將包含您的自訂指南而不是預設指南。</p>
 <p><a name="third-party-package-ai-guidelines"></a></p>
 <h3>第三方套件 AI 指南</h3>
 <p>如果您維護一個第三方套件並希望 Boost 包含其 AI 指南，您可以透過在套件中添加 <code>resources/boost/guidelines/core.blade.php</code> 檔案來實現。當使用者運行 <code>php artisan boost:install</code> 時，Boost 將自動載入您的指南。</p>
@@ -354,13 +354,13 @@ $result = PackageName::featureTwo($param1, $param2);
 <p><a name="custom-skills"></a></p>
 <h3>自訂技能</h3>
 <p>要建立您自己的自訂技能，請將 <code>SKILL.md</code> 檔案添加到應用程式的 <code>.ai/skills/{skill-name}/</code> 目錄中。當您在應用程式中運行 <code>boost:update</code> 時，您的自訂技能將與 Boost 的內建技能一起安裝。</p>
-<p>例如，要為應用程式的領域邏輯創建一個自訂技能：</p>
+<p>例如，要為應用程式的領域邏輯建立一個自訂技能：</p>
 <pre><code>.ai/skills/creating-invoices/SKILL.md
 </code></pre>
 <p><a name="overriding-skills"></a></p>
 <h3>覆蓋技能</h3>
-<p>您可以透過創建具有匹配名稱的自訂技能來覆蓋 Boost 的內建技能。當您創建與現有 Boost 技能名稱匹配的自訂技能時，Boost 將使用您的自訂版本而不是內建版本。</p>
-<p>例如，要覆蓋 Boost 的 <code>livewire-development</code> 技能，請在 <code>.ai/skills/livewire-development/SKILL.md</code> 創建一個檔案。當您在應用程式中運行 <code>boost:update</code> 時，Boost 將包含您的自訂技能而不是預設技能。</p>
+<p>您可以透過建立具有匹配名稱的自訂技能來覆蓋 Boost 的內建技能。當您建立與現有 Boost 技能名稱匹配的自訂技能時，Boost 將使用您的自訂版本而不是內建版本。</p>
+<p>例如，要覆蓋 Boost 的 <code>livewire-development</code> 技能，請在 <code>.ai/skills/livewire-development/SKILL.md</code> 建立一個檔案。當您在應用程式中運行 <code>boost:update</code> 時，Boost 將包含您的自訂技能而不是預設技能。</p>
 <p><a name="third-party-package-skills"></a></p>
 <h3>第三方套件技能</h3>
 <p>如果您維護一個第三方套件並希望 Boost 包含其技能，您可以透過在套件中添加 <code>resources/boost/skills/{skill-name}/SKILL.md</code> 檔案來實現。當使用者運行 <code>php artisan boost:install</code> 時，Boost 將根據使用者的偏好自動安裝您的技能。</p>
@@ -458,10 +458,10 @@ $result = PackageName::featureTwo($param1, $param2);
 </tbody></table>
 </div><p><a name="extending-boost"></a></p>
 <h2>擴展 Boost</h2>
-<p>Boost 開箱即支援許多流行的 IDE 和 AI 代理。如果您的編碼工具尚未被支援，您可以創建自己的代理並將其與 Boost 整合。</p>
+<p>Boost 開箱即支援許多流行的 IDE 和 AI 代理。如果您的編碼工具尚未被支援，您可以建立自己的代理並將其與 Boost 整合。</p>
 <p><a name="adding-support-for-other-ides-ai-agents"></a></p>
 <h3>添加對其他 IDE / AI 代理的支援</h3>
-<p>要添加對新 IDE 或 AI 代理的支援，請創建一個擴展 <code>Laravel\\Boost\\Install\\Agents\\Agent</code> 的類別，並根據您的需求實現以下一個或多個合約：</p>
+<p>要添加對新 IDE 或 AI 代理的支援，請建立一個擴展 <code>Laravel\\Boost\\Install\\Agents\\Agent</code> 的類別，並根據您的需求實現以下一個或多個合約：</p>
 <ul>
 <li><code>Laravel\\Boost\\Contracts\\SupportsGuidelines</code> - 添加對 AI 指南的支援。</li>
 <li><code>Laravel\\Boost\\Contracts\\SupportsMcp</code> - 添加對 MCP 的支援。</li>

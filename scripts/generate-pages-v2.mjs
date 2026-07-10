@@ -84,7 +84,7 @@ const documentationStructure = [
   { title: '事件', slug: 'events', category: '進階功能', originalSlug: 'events' },
   { title: '檔案系統', slug: 'filesystem', category: '進階功能', originalSlug: 'filesystem' },
   { title: '輔助函式', slug: 'helpers', category: '進階功能', originalSlug: 'helpers' },
-  { title: 'HTTP 用戶端', slug: 'http-client', category: '進階功能', originalSlug: 'http-client' },
+  { title: 'HTTP 客戶端', slug: 'http-client', category: '進階功能', originalSlug: 'http-client' },
   { title: '本地化', slug: 'localization', category: '進階功能', originalSlug: 'localization' },
   { title: '郵件', slug: 'mail', category: '進階功能', originalSlug: 'mail' },
   { title: '通知', slug: 'notifications', category: '進階功能', originalSlug: 'notifications' },

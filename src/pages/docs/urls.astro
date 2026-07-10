@@ -19,7 +19,7 @@ const content = `<h1>URL 生成</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>Laravel 提供了多種輔助函數來協助您為應用程式生成 URL。這些輔助函數主要在範本和 API 回應中構建連結時，或在生成到應用程式另一部分的重定向上時很有用。</p>
+<p>Laravel 提供了多種輔助函數來協助您為應用程式生成 URL。這些輔助函數主要在範本和 API 回應中建立連結時，或在生成到應用程式另一部分的重定向上時很有用。</p>
 <p><a name="the-basics"></a></p>
 <h2>基礎知識</h2>
 <p><a name="generating-urls"></a></p>
@@ -122,8 +122,8 @@ echo route('comment.show', ['post' => 1, 'comment' => 3]);
 </code></pre>
 <p><a name="signed-urls"></a></p>
 <h3>簽名 URL</h3>
-<p>Laravel 允許您輕鬆地為命名路由創建「簽名」URL。這些 URL 在查詢字串中附加了一個「簽名」雜湊，允許 Laravel 驗證該 URL 自創建以來未被修改。簽名 URL 對於公開可存取但需要一層防護以防止 URL 操作的路由特別有用。</p>
-<p>例如，您可以使用簽名 URL 來實現一個公開的「取消訂閱」連結，該連結將透過電子郵件發送給您的客戶。要為命名路由創建簽名 URL，請使用 <code>URL</code> 外觀的 <code>signedRoute</code> 方法：</p>
+<p>Laravel 允許您輕鬆地為命名路由建立「簽名」URL。這些 URL 在查詢字串中附加了一個「簽名」雜湊，允許 Laravel 驗證該 URL 自建立以來未被修改。簽名 URL 對於公開可存取但需要一層防護以防止 URL 操作的路由特別有用。</p>
+<p>例如，您可以使用簽名 URL 來實現一個公開的「取消訂閱」連結，該連結將透過電子郵件發送給您的客戶。要為命名路由建立簽名 URL，請使用 <code>URL</code> 外觀的 <code>signedRoute</code> 方法：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\URL;
 
 return URL::signedRoute('unsubscribe', ['user' => 1]);
@@ -189,8 +189,8 @@ $url = action([HomeController::class, 'index']);
 </code></pre>
 <p><a name="fluent-uri-objects"></a></p>
 <h2>流暢 URI 物件</h2>
-<p>Laravel 的 <code>Uri</code> 類別提供了一個便利且流暢的介面，用於透過物件創建和操作 URI。此類別封裝了底層 League URI 套件提供的功能，並與 Laravel 的路由系統無縫整合。</p>
-<p>您可以使用靜態方法輕鬆地創建 <code>Uri</code> 實例：</p>
+<p>Laravel 的 <code>Uri</code> 類別提供了一個便利且流暢的介面，用於透過物件建立和操作 URI。此類別封裝了底層 League URI 套件提供的功能，並與 Laravel 的路由系統無縫整合。</p>
+<p>您可以使用靜態方法輕鬆地建立 <code>Uri</code> 實例：</p>
 <pre><code class="language-php">use App\\Http\\Controllers\\UserController;
 use App\\Http\\Controllers\\InvokableController;
 use Illuminate\\Support\\Uri;

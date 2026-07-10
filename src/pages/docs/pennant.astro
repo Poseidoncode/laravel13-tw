@@ -55,7 +55,7 @@ const content = `<h1>Laravel Pennant</h1>
 <p>接下來，您應該使用 <code>vendor:publish</code> Artisan 命令來發佈 Pennant 的配置和遷移檔案：</p>
 <pre><code class="language-shell">php artisan vendor:publish --provider="Laravel\\Pennant\\PennantServiceProvider"
 </code></pre>
-<p>最後，您應該運行應用程式的資料庫遷移。這將創建一個 <code>features</code> 表，Pennant 使用它來驅動其 <code>database</code> 驅動程式：</p>
+<p>最後，您應該運行應用程式的資料庫遷移。這將建立一個 <code>features</code> 表，Pennant 使用它來驅動其 <code>database</code> 驅動程式：</p>
 <pre><code class="language-shell">php artisan migrate
 </code></pre>
 <p><a name="configuration"></a></p>
@@ -102,7 +102,7 @@ class AppServiceProvider extends ServiceProvider
 </code></pre>
 <p><a name="class-based-features"></a></p>
 <h3>基於類別的功能</h3>
-<p>Pennant 還允許您定義基於類別的功能。與基於閉包的功能定義不同，無需在服務提供者中註冊基於類別的功能。要創建基於類別的功能，您可以呼叫 <code>pennant:feature</code> Artisan 命令。預設情況下，功能類別將放置在應用程式的 <code>app/Features</code> 目錄中：</p>
+<p>Pennant 還允許您定義基於類別的功能。與基於閉包的功能定義不同，無需在服務提供者中註冊基於類別的功能。要建立基於類別的功能，您可以呼叫 <code>pennant:feature</code> Artisan 命令。預設情況下，功能類別將放置在應用程式的 <code>app/Features</code> 目錄中：</p>
 <pre><code class="language-shell">php artisan pennant:feature NewApi
 </code></pre>
 <p>編寫功能類別時，您只需要定義一個 <code>resolve</code> 方法，該方法將被呼叫以解析給定作用域的功能初始值。同樣，作用域通常是當前已認證的使用者：</p>
@@ -420,7 +420,7 @@ class NewApi
 </code></pre>
 <p><a name="in-memory-cache"></a></p>
 <h3>記憶體快取</h3>
-<p>檢查功能時，Pennant 將創建一個結果的記憶體快取。如果您正在使用 <code>database</code> 驅動程式，這意味著在單個請求內重新檢查同一功能將不會觸發額外的資料庫查詢。這還確保了功能在請求持續時間內具有一致的結果。</p>
+<p>檢查功能時，Pennant 將建立一個結果的記憶體快取。如果您正在使用 <code>database</code> 驅動程式，這意味著在單個請求內重新檢查同一功能將不會觸發額外的資料庫查詢。這還確保了功能在請求持續時間內具有一致的結果。</p>
 <p>如果您需要手動刷新記憶體快取，可以使用 <code>Feature</code> 外觀提供的 <code>flushCache</code> 方法：</p>
 <pre><code class="language-php">Feature::flushCache();
 </code></pre>
@@ -433,7 +433,7 @@ class NewApi
     ? $this->resolveNewApiResponse($request)
     : $this->resolveLegacyApiResponse($request);
 </code></pre>
-<p>當然，功能作用域不限於「使用者」。想像您已經構建了一個新的計費體驗，您正在向整個團隊而不是單個使用者推出。也許您希望較老的團隊比新團隊有較慢的推出。您的功能解析閉包可能看起來像這樣：</p>
+<p>當然，功能作用域不限於「使用者」。想像您已經建立了一個新的計費體驗，您正在向整個團隊而不是單個使用者推出。也許您希望較老的團隊比新團隊有較慢的推出。您的功能解析閉包可能看起來像這樣：</p>
 <pre><code class="language-php">use App\\Models\\Team;
 use Illuminate\\Support\\Carbon;
 use Illuminate\\Support\\Lottery;
@@ -817,7 +817,7 @@ class RedisFeatureDriver implements Driver
 <p>現在，我們只需要使用 Redis 連接來實現這些方法。有關如何實現這些方法的範例，請查看 <a href="https://github.com/laravel/pennant/blob/1.x/src/Drivers/DatabaseDriver.php">Pennant 原始碼</a>中的 <code>Laravel\\Pennant\\Drivers\\DatabaseDriver</code></p>
 <blockquote>
 <p>[!NOTE]
-Laravel 不附帶用於存放擴展的目錄。您可以自由地將它們放在任何您喜歡的地方。在此範例中，我們創建了一個 <code>Extensions</code> 目錄來存放 <code>RedisFeatureDriver</code>。</p>
+Laravel 不附帶用於存放擴展的目錄。您可以自由地將它們放在任何您喜歡的地方。在此範例中，我們建立了一個 <code>Extensions</code> 目錄來存放 <code>RedisFeatureDriver</code>。</p>
 </blockquote>
 <p><a name="registering-the-driver"></a></p>
 <h4>註冊驅動程式</h4>
@@ -889,7 +889,7 @@ class FeatureFlagServiceDriver implements Driver, DefinesFeaturesExternally
 <h2>事件</h2>
 <p>Pennant 派發各種事件，在整個應用程式中追蹤功能開關時可能很有用。</p>
 <h3><code>Laravel\\Pennant\\Events\\FeatureRetrieved</code></h3>
-<p>每次<a href="#checking-features">檢查功能</a>時都會派發此事件。此事件對於在整個應用程式中創建和追蹤功能開關使用情況的指標可能很有用。</p>
+<p>每次<a href="#checking-features">檢查功能</a>時都會派發此事件。此事件對於在整個應用程式中建立和追蹤功能開關使用情況的指標可能很有用。</p>
 <h3><code>Laravel\\Pennant\\Events\\FeatureResolved</code></h3>
 <p>當功能的值首次為特定作用域解析時，會派發此事件。</p>
 <h3><code>Laravel\\Pennant\\Events\\UnknownFeatureResolved</code></h3>

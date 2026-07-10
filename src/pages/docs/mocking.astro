@@ -17,7 +17,7 @@ const content = `<h1>模擬</h1>
 <p>Laravel 開箱即用提供了用於模擬事件、作業和其他外觀的有用方法。這些輔助函數主要在 Mockery 之上提供了一個便利層，因此您不必手動進行複雜的 Mockery 方法呼叫。</p>
 <p><a name="mocking-objects"></a></p>
 <h2>模擬物件</h2>
-<p>當模擬將透過 Laravel 的<a href="/docs/container">服務容器</a>注入到應用程式中的物件時，您需要將模擬的實例作為 <code>instance</code> 綁定綁定到容器中。這將指示容器使用您的模擬物件實例而不是構建物件本身：</p>
+<p>當模擬將透過 Laravel 的<a href="/docs/container">服務容器</a>注入到應用程式中的物件時，您需要將模擬的實例作為 <code>instance</code> 綁定綁定到容器中。這將指示容器使用您的模擬物件實例而不是建立物件本身：</p>
 <pre><code class="language-php">use App\\Service;
 use Mockery;
 use Mockery\\MockInterface;

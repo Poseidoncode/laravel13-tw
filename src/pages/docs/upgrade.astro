@@ -29,7 +29,7 @@ const content = `<h1>升級指南</h1>
 <li><a href="#containercall-and-nullable-class-defaults"><code>Container::call</code> 和可空類別預設值</a></li>
 <li><a href="#domain-route-registration-precedence">網域路由註冊優先順序</a></li>
 <li><a href="#jobattempted-event-exception-payload"><code>JobAttempted</code> 事件異常負載</a></li>
-<li><a href="#manager-extend-callback-binding">Manager <code>extend</code> 回調綁定</a></li>
+<li><a href="#manager-extend-callback-binding">Manager <code>extend</code> 回呼綁定</a></li>
 <li><a href="#mysql-delete-queries-with-join-order-by-and-limit">MySQL <code>DELETE</code> 查詢與 <code>JOIN</code>、<code>ORDER BY</code> 和 <code>LIMIT</code></a></li>
 <li><a href="#pagination-bootstrap-view-names">分頁 Bootstrap 視圖名稱</a></li>
 <li><a href="#polymorphic-pivot-table-name-generation">多型樞紐表名稱生成</a></li>
@@ -99,7 +99,7 @@ public function touch($key, $seconds);
     App\\Support\\CachedPricingSnapshot::class,
 ],
 </code></pre>
-<p>如果您的應用程式先前依賴反序列化任意快取物件，您需要將該用法遷移到明確的類別允許清單或非物件快取負載（例如數組）。</p>
+<p>如果您的應用程式先前依賴反序列化任意快取物件，您需要將該用法遷移到明確的類別允許清單或非物件快取負載（例如陣列）。</p>
 <p><a name="container"></a></p>
 <h3>容器</h3>
 <p><a name="containercall-and-nullable-class-defaults"></a></p>
@@ -148,7 +148,7 @@ public function touch($key, $seconds);
 <p><a name="model-booting-and-nested-instantiation"></a></p>
 <h4>模型啟動和巢狀實例化</h4>
 <p><strong>影響可能性：極低</strong></p>
-<p>在模型仍在啟動時創建新的模型實例現在被禁止，並會拋出 <code>LogicException</code>。</p>
+<p>在模型仍在啟動時建立新的模型實例現在被禁止，並會拋出 <code>LogicException</code>。</p>
 <p>這影響從模型 <code>boot</code> 方法或 trait <code>boot*</code> 方法內部實例化模型的程式碼：</p>
 <pre><code class="language-php">protected static function boot()
 {
@@ -174,7 +174,7 @@ public function touch($key, $seconds);
 <p><a name="http-client-response-throw-and-throwif-signatures"></a></p>
 <h4>HTTP 客戶端 <code>Response::throw</code> 和 <code>throwIf</code> 簽名</h4>
 <p><strong>影響可能性：極低</strong></p>
-<p>HTTP 客戶端回應方法現在在方法簽名中聲明其回調參數：</p>
+<p>HTTP 客戶端回應方法現在在方法簽名中聲明其回呼參數：</p>
 <pre><code class="language-php">public function throw($callback = null);
 public function throwIf($condition, $callback = null);
 </code></pre>
@@ -260,10 +260,10 @@ use Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken;
 <p><a name="support"></a></p>
 <h3>支援</h3>
 <p><a name="manager-extend-callback-binding"></a></p>
-<h4>Manager <code>extend</code> 回調綁定</h4>
+<h4>Manager <code>extend</code> 回呼綁定</h4>
 <p><strong>影響可能性：低</strong></p>
 <p>透過 manager <code>extend</code> 方法註冊的自訂驅動程式閉包現在綁定到 manager 實例。</p>
-<p>如果您先前依賴其他綁定物件（例如服務提供者實例）作為這些回調中的 <code>$this</code>，您應該使用 <code>use (...)</code> 將這些值移入閉包捕獲中。</p>
+<p>如果您先前依賴其他綁定物件（例如服務提供者實例）作為這些回呼中的 <code>$this</code>，您應該使用 <code>use (...)</code> 將這些值移入閉包捕獲中。</p>
 <p><a name="str-factories-reset-between-tests"></a></p>
 <h4><code>Str</code> 工廠在測試之間重置</h4>
 <p><strong>影響可能性：低</strong></p>
@@ -280,7 +280,7 @@ use Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken;
 <h4>Symfony PHP 8.5 Polyfill 和全域函數衝突</h4>
 <p><strong>影響可能性：低</strong></p>
 <p>Laravel 13 引入了對 <code>symfony/polyfill-php85</code> 的依賴。在低於 8.5 的 PHP 版本上，除非在引導期間已定義，否則此 polyfill 會定義全域函數，如 <code>array_first()</code> 和 <code>array_last()</code>。</p>
-<p>這些函數可能與使用相同名稱的舊版輔助函式套件（如 <code>laravel/helpers</code>）或自訂全域輔助函數衝突。例如，歷史上的 <code>array_first()</code> 輔助函數接受一個回調來返回第一個匹配的元素，而 polyfill 版本只返回數組的第一個元素。</p>
+<p>這些函數可能與使用相同名稱的舊版輔助函式套件（如 <code>laravel/helpers</code>）或自訂全域輔助函數衝突。例如，歷史上的 <code>array_first()</code> 輔助函數接受一個回呼來返回第一個匹配的元素，而 polyfill 版本只返回陣列的第一個元素。</p>
 <p>為了避免衝突並確保跨 PHP 版本的一致行為，您應該優先使用 <code>Illuminate\\Support\\Arr</code> 方法：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 

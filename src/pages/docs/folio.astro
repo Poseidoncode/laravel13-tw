@@ -9,7 +9,7 @@ const content = `<h1>Laravel Folio</h1>
 <li><a href="#subdomain-routing">子網域路由</a></li>
 </ul>
 </li>
-<li><a href="#creating-routes">創建路由</a><ul>
+<li><a href="#creating-routes">建立路由</a><ul>
 <li><a href="#nested-routes">嵌套路由</a></li>
 <li><a href="#index-routes">索引路由</a></li>
 </ul>
@@ -26,8 +26,8 @@ const content = `<h1>Laravel Folio</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p><a href="https://github.com/laravel/folio">Laravel Folio</a> 是一個強大的基於頁面的路由器，旨在簡化 Laravel 應用程式中的路由。使用 Laravel Folio，生成路由變得像在應用程式的 <code>resources/views/pages</code> 目錄中創建 Blade 範本一樣簡單。</p>
-<p>例如，要創建一個可透過 <code>/greeting</code> URL 存取的頁面，只需在應用程式的 <code>resources/views/pages</code> 目錄中創建一個 <code>greeting.blade.php</code> 檔案：</p>
+<p><a href="https://github.com/laravel/folio">Laravel Folio</a> 是一個強大的基於頁面的路由器，旨在簡化 Laravel 應用程式中的路由。使用 Laravel Folio，生成路由變得像在應用程式的 <code>resources/views/pages</code> 目錄中建立 Blade 範本一樣簡單。</p>
+<p>例如，要建立一個可透過 <code>/greeting</code> URL 存取的頁面，只需在應用程式的 <code>resources/views/pages</code> 目錄中建立一個 <code>greeting.blade.php</code> 檔案：</p>
 <pre><code class="language-php">&lt;div&gt;
     Hello World
 &lt;/div&gt;
@@ -75,15 +75,15 @@ Folio::domain('{account}.example.com')
     ->path(resource_path('views/pages/admin'));
 </code></pre>
 <p><a name="creating-routes"></a></p>
-<h2>創建路由</h2>
-<p>您可以透過在任何 Folio 掛載目錄中放置 Blade 範本來創建 Folio 路由。預設情況下，Folio 掛載 <code>resources/views/pages</code> 目錄，但您可以在 Folio 服務提供者的 <code>boot</code> 方法中自訂這些目錄。</p>
+<h2>建立路由</h2>
+<p>您可以透過在任何 Folio 掛載目錄中放置 Blade 範本來建立 Folio 路由。預設情況下，Folio 掛載 <code>resources/views/pages</code> 目錄，但您可以在 Folio 服務提供者的 <code>boot</code> 方法中自訂這些目錄。</p>
 <p>將 Blade 範本放在 Folio 掛載目錄中後，您可以立即透過瀏覽器存取它。例如，放在 <code>pages/schedule.blade.php</code> 中的頁面可以透過 <code>http://example.com/schedule</code> 在瀏覽器中存取。</p>
 <p>要快速查看所有 Folio 頁面/路由的列表，您可以呼叫 <code>folio:list</code> Artisan 命令：</p>
 <pre><code class="language-shell">php artisan folio:list
 </code></pre>
 <p><a name="nested-routes"></a></p>
 <h3>嵌套路由</h3>
-<p>您可以透過在 Folio 的其中一個目錄中創建一個或多個目錄來創建嵌套路由。例如，要創建一個可透過 <code>/user/profile</code> 存取的頁面，請在 <code>pages/user</code> 目錄中創建一個 <code>profile.blade.php</code> 範本：</p>
+<p>您可以透過在 Folio 的其中一個目錄中建立一個或多個目錄來建立嵌套路由。例如，要建立一個可透過 <code>/user/profile</code> 存取的頁面，請在 <code>pages/user</code> 目錄中建立一個 <code>profile.blade.php</code> 範本：</p>
 <pre><code class="language-shell">php artisan folio:page user/profile
 
 # pages/user/profile.blade.php → /user/profile

@@ -74,7 +74,7 @@ Storage::disk('local')->put('example.txt', 'Contents');
 <h3>驅動程式先決條件</h3>
 <p><a name="s3-driver-configuration"></a></p>
 <h4>S3 驅動程式配置</h4>
-<p>在使用 S3 驅動程式之前，您需要通過 Composer 套件管理器安裝 Flysystem S3 套件：</p>
+<p>在使用 S3 驅動程式之前，您需要透過 Composer 套件管理器安裝 Flysystem S3 套件：</p>
 <pre><code class="language-shell">composer require league/flysystem-aws-s3-v3 "^3.0" --with-all-dependencies</code></pre>
 <p>S3 磁碟配置陣列位於您的 <code>config/filesystems.php</code> 配置檔中。通常，您應使用以下環境變數來配置 S3 資訊和憑證，這些環境變數由 <code>config/filesystems.php</code> 配置檔引用：</p>
 <pre><code class="language-ini">AWS_ACCESS_KEY_ID=&lt;your-key-id&gt;
@@ -85,7 +85,7 @@ AWS_USE_PATH_STYLE_ENDPOINT=false</code></pre>
 <p>為方便起見，這些環境變數與 AWS CLI 使用的命名慣例匹配。</p>
 <p><a name="ftp-driver-configuration"></a></p>
 <h4>FTP 驅動程式配置</h4>
-<p>在使用 FTP 驅動程式之前，您需要通過 Composer 套件管理器安裝 Flysystem FTP 套件：</p>
+<p>在使用 FTP 驅動程式之前，您需要透過 Composer 套件管理器安裝 Flysystem FTP 套件：</p>
 <pre><code class="language-shell">composer require league/flysystem-ftp "^3.0"</code></pre>
 <p>Laravel 的 Flysystem 整合與 FTP 配合良好；但是，框架的預設 <code>config/filesystems.php</code> 配置檔中不包含範例配置。如果您需要配置 FTP 檔案系統，可以使用以下配置範例：</p>
 <pre><code class="language-php">'ftp' => [
@@ -103,7 +103,7 @@ AWS_USE_PATH_STYLE_ENDPOINT=false</code></pre>
 ],</code></pre>
 <p><a name="sftp-driver-configuration"></a></p>
 <h4>SFTP 驅動程式配置</h4>
-<p>在使用 SFTP 驅動程式之前，您需要通過 Composer 套件管理器安裝 Flysystem SFTP 套件：</p>
+<p>在使用 SFTP 驅動程式之前，您需要透過 Composer 套件管理器安裝 Flysystem SFTP 套件：</p>
 <pre><code class="language-shell">composer require league/flysystem-sftp-v3 "^3.0"</code></pre>
 <p>Laravel 的 Flysystem 整合與 SFTP 配合良好；但是，框架的預設 <code>config/filesystems.php</code> 配置檔中不包含範例配置。如果您需要配置 SFTP 檔案系統，可以使用以下配置範例：</p>
 <pre><code class="language-php">'sftp' => [
@@ -118,15 +118,15 @@ AWS_USE_PATH_STYLE_ENDPOINT=false</code></pre>
 ],</code></pre>
 <p><a name="scoped-and-read-only-filesystems"></a></p>
 <h3>範圍限定與唯讀檔案系統</h3>
-<p>範圍限定磁碟允許您定義一個所有路徑都自動添加給定路徑前綴的檔案系統。在建立範圍限定的檔案系統磁碟之前，您需要通過 Composer 套件管理器安裝一個額外的 Flysystem 套件：</p>
+<p>範圍限定磁碟允許您定義一個所有路徑都自動添加給定路徑前綴的檔案系統。在建立範圍限定的檔案系統磁碟之前，您需要透過 Composer 套件管理器安裝一個額外的 Flysystem 套件：</p>
 <pre><code class="language-shell">composer require league/flysystem-path-prefixing "^3.0"</code></pre>
-<p>您可以通過定義一個使用 <code>scoped</code> 驅動程式的磁碟來建立任何現有檔案系統磁碟的路徑範圍限定實例。例如，您可以建立一個將現有 <code>s3</code> 磁碟範圍限定到特定路徑前綴的磁碟，然後使用範圍限定磁碟的每個檔案操作都將使用指定的前綴：</p>
+<p>您可以透過定義一個使用 <code>scoped</code> 驅動程式的磁碟來建立任何現有檔案系統磁碟的路徑範圍限定實例。例如，您可以建立一個將現有 <code>s3</code> 磁碟範圍限定到特定路徑前綴的磁碟，然後使用範圍限定磁碟的每個檔案操作都將使用指定的前綴：</p>
 <pre><code class="language-php">'s3-videos' => [
     'driver' => 'scoped',
     'disk' => 's3',
     'prefix' => 'path/to/videos',
 ],</code></pre>
-<p>「唯讀」磁碟允許您建立不允許寫入操作的檔案系統磁碟。在使用 <code>read-only</code> 配置選項之前，您需要通過 Composer 套件管理器安裝一個額外的 Flysystem 套件：</p>
+<p>「唯讀」磁碟允許您建立不允許寫入操作的檔案系統磁碟。在使用 <code>read-only</code> 配置選項之前，您需要透過 Composer 套件管理器安裝一個額外的 Flysystem 套件：</p>
 <pre><code class="language-shell">composer require league/flysystem-read-only "^3.0"</code></pre>
 <p>接下來，您可以在一個或多個磁碟的配置陣列中包含 <code>read-only</code> 配置選項：</p>
 <pre><code class="language-php">'s3-videos' => [
@@ -137,7 +137,7 @@ AWS_USE_PATH_STYLE_ENDPOINT=false</code></pre>
 <p><a name="amazon-s3-compatible-filesystems"></a></p>
 <h3>Amazon S3 相容檔案系統</h3>
 <p>預設情況下，應用程式的 <code>filesystems</code> 配置檔包含一個 <code>s3</code> 磁碟的配置。除了使用此磁碟與 <a href="https://aws.amazon.com/s3/">Amazon S3</a> 互動之外，您還可以使用它與任何 S3 相容的檔案儲存服務互動，例如 <a href="https://github.com/rustfs/rustfs">RustFS</a>、<a href="https://www.digitalocean.com/products/spaces/">DigitalOcean Spaces</a>、<a href="https://www.vultr.com/products/object-storage/">Vultr Object Storage</a>、<a href="https://www.cloudflare.com/developer-platform/products/r2/">Cloudflare R2</a> 或 <a href="https://www.hetzner.com/storage/object-storage/">Hetzner Cloud Storage</a>。</p>
-<p>通常，在更新磁碟的憑證以匹配您計劃使用的服務的憑證後，您只需更新 <code>endpoint</code> 配置選項的值。此選項的值通常通過 <code>AWS_ENDPOINT</code> 環境變數定義：</p>
+<p>通常，在更新磁碟的憑證以匹配您計劃使用的服務的憑證後，您只需更新 <code>endpoint</code> 配置選項的值。此選項的值通常透過 <code>AWS_ENDPOINT</code> 環境變數定義：</p>
 <pre><code class="language-php">'endpoint' => env('AWS_ENDPOINT', 'https://rustfs:9000'),</code></pre>
 <p><a name="obtaining-disk-instances"></a></p>
 <h2>取得磁碟實例</h2>
@@ -290,7 +290,7 @@ $size = Storage::size('file.jpg');
 <p><code>lastModified</code> 方法返回檔案最後一次修改的 UNIX 時間戳：</p>
 <pre><code class="language-php">$time = Storage::lastModified('file.jpg');
 </code></pre>
-<p>給定檔案的 MIME 類型可以通過 <code>mimeType</code> 方法獲取：</p>
+<p>給定檔案的 MIME 類型可以透過 <code>mimeType</code> 方法獲取：</p>
 <pre><code class="language-php">$mime = Storage::mimeType('file.jpg');
 </code></pre>
 <p><a name="file-paths"></a></p>
@@ -349,7 +349,7 @@ $path = Storage::putFile('photos', new File('/path/to/photo'));
 $path = Storage::putFileAs('photos', new File('/path/to/photo'), 'photo.jpg');
 </code></pre>
 <p>關於 <code>putFile</code> 方法有幾點需要注意。請注意，我們只指定了目錄名稱，而不是檔案名。預設情況下，<code>putFile</code> 方法將產生一個唯一 ID 作為檔案名。檔案的副檔名將通過檢查檔案的 MIME 類型來確定。<code>putFile</code> 方法將返回檔案的路徑，因此您可以將包含產生的檔案名的路徑儲存在資料庫中。</p>
-<p><code>putFile</code> 和 <code>putFileAs</code> 方法還接受一個參數來指定儲存檔案的「可見性」。如果您將檔案儲存在 Amazon S3 等雲端磁碟上，並且希望檔案通過產生的 URL 可公開存取，這特別有用：</p>
+<p><code>putFile</code> 和 <code>putFileAs</code> 方法還接受一個參數來指定儲存檔案的「可見性」。如果您將檔案儲存在 Amazon S3 等雲端磁碟上，並且希望檔案透過產生的 URL 可公開存取，這特別有用：</p>
 <pre><code class="language-php">Storage::putFile('photos', new File('/path/to/photo'), 'public');
 </code></pre>
 <p><a name="file-uploads"></a></p>
@@ -422,12 +422,12 @@ $extension = $file->extension();
 <p><a name="file-visibility"></a></p>
 <h3>檔案可見性</h3>
 <p>在 Laravel 的 Flysystem 整合中，「可見性」是跨多個平台的檔案權限抽象。檔案可以宣告為 <code>public</code> 或 <code>private</code>。當檔案被宣告為 <code>public</code> 時，表示該檔案通常應可被其他人存取。例如，使用 S3 驅動程式時，您可以檢索 <code>public</code> 檔案的 URL。</p>
-<p>您可以通過 <code>put</code> 方法在寫入檔案時設定可見性：</p>
+<p>您可以透過 <code>put</code> 方法在寫入檔案時設定可見性：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
 
 Storage::put('file.jpg', $contents, 'public');
 </code></pre>
-<p>如果檔案已儲存，可以通過 <code>getVisibility</code> 和 <code>setVisibility</code> 方法檢索和設定其可見性：</p>
+<p>如果檔案已儲存，可以透過 <code>getVisibility</code> 和 <code>setVisibility</code> 方法檢索和設定其可見性：</p>
 <pre><code class="language-php">$visibility = Storage::getVisibility('file.jpg');
 
 Storage::setVisibility('file.jpg', 'public');

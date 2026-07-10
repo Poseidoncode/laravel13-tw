@@ -35,7 +35,7 @@ const content = `<h1>Eloquent：修改器和轉換</h1>
 <h2>存取器和修改器</h2>
 <p><a name="defining-an-accessor"></a></p>
 <h3>定義存取器</h3>
-<p>存取器在存取時轉換 Eloquent 屬性值。要定義存取器，請在模型上創建一個受保護的方法來表示可存取的屬性。此方法名稱應與底層模型屬性/資料庫欄位的「駝峰命名法」表示相對應。</p>
+<p>存取器在存取時轉換 Eloquent 屬性值。要定義存取器，請在模型上建立一個受保護的方法來表示可存取的屬性。此方法名稱應與底層模型屬性/資料庫欄位的「駝峰命名法」表示相對應。</p>
 <p>在此範例中，我們將為 <code>first_name</code> 屬性定義一個存取器。當嘗試存取 <code>first_name</code> 屬性的值時，Eloquent 將自動呼叫存取器。所有屬性存取器/修改器方法必須聲明 <code>Illuminate\\Database\\Eloquent\\Casts\\Attribute</code> 的返回類型提示：</p>
 <pre><code class="language-php">&lt;?php
 
@@ -47,7 +47,7 @@ use Illuminate\\Database\\Eloquent\\Model;
 class User extends Model
 {
     /**
-     * 獲取用戶的名字。
+     * 獲取使用者的名字。
      */
     protected function firstName(): Attribute
     {
@@ -70,13 +70,13 @@ $firstName = $user-&gt;first_name;
 如果您希望將這些計算值添加到模型的陣列/JSON 表示中，<a href="/docs/eloquent-serialization#appending-values-to-json">您將需要追加它們</a>。</p>
 </blockquote>
 <p><a name="building-value-objects-from-multiple-attributes"></a></p>
-<h4>從多個屬性構建值物件</h4>
-<p>有時您的存取器可能需要將多個模型屬性轉換為單個「值物件」。為此，您的 <code>get</code> 閉包可以接受第二個參數 <code>$attributes</code>，它將自動供應給閉包並包含所有模型當前屬性的數組：</p>
+<h4>從多個屬性建立值物件</h4>
+<p>有時您的存取器可能需要將多個模型屬性轉換為單個「值物件」。為此，您的 <code>get</code> 閉包可以接受第二個參數 <code>$attributes</code>，它將自動供應給閉包並包含所有模型當前屬性的陣列：</p>
 <pre><code class="language-php">use App\\Support\\Address;
 use Illuminate\\Database\\Eloquent\\Casts\\Attribute;
 
 /**
- * 與用戶的地址互動。
+ * 與使用者的地址互動。
  */
 protected function address(): Attribute
 {
@@ -110,7 +110,7 @@ $user-&gt;save();
 </code></pre>
 <p>如果您想禁用屬性的物件快取行為，您可以在定義屬性時調用 <code>withoutObjectCaching</code> 方法：</p>
 <pre><code class="language-php">/**
- * 與用戶的地址互動。
+ * 與使用者的地址互動。
  */
 protected function address(): Attribute
 {
@@ -135,7 +135,7 @@ use Illuminate\\Database\\Eloquent\\Model;
 class User extends Model
 {
     /**
-     * 與用戶的名字互動。
+     * 與使用者的名字互動。
      */
     protected function firstName(): Attribute
     {
@@ -153,7 +153,7 @@ $user = User::find(1);
 
 $user-&gt;first_name = &#39;Sally&#39;;
 </code></pre>
-<p>在此範例中，<code>set</code> 回調將使用值 <code>Sally</code> 被呼叫。然後，修改器將對名稱應用 <code>strtolower</code> 函數並將其結果值設定在模型的內部 <code>$attributes</code> 陣列中。</p>
+<p>在此範例中，<code>set</code> 回呼將使用值 <code>Sally</code> 被呼叫。然後，修改器將對名稱應用 <code>strtolower</code> 函數並將其結果值設定在模型的內部 <code>$attributes</code> 陣列中。</p>
 <p><a name="mutating-multiple-attributes"></a></p>
 <h4>修改多個屬性</h4>
 <p>有時您的修改器可能需要在底層模型上設定多個屬性。為此，您可以從 <code>set</code> 閉包返回一個陣列。陣列中的每個鍵應對應於與模型關聯的底層屬性/資料庫欄位：</p>
@@ -161,7 +161,7 @@ $user-&gt;first_name = &#39;Sally&#39;;
 use Illuminate\\Database\\Eloquent\\Casts\\Attribute;
 
 /**
- * 與用戶的地址互動。
+ * 與使用者的地址互動。
  */
 protected function address(): Attribute
 {
@@ -180,7 +180,7 @@ protected function address(): Attribute
 <p><a name="attribute-casting"></a></p>
 <h2>屬性轉換</h2>
 <p>屬性轉換提供了與存取器和修改器類似的功能，而無需您在模型上定義任何額外方法。相反，模型的 <code>casts</code> 方法提供了一種將屬性轉換為常用資料類型的便利方式。</p>
-<p><code>casts</code> 方法應返回一個數組，其中鍵是要轉換的屬性名稱，值是您希望將欄位轉換為的類型。支援的轉換類型有：</p>
+<p><code>casts</code> 方法應返回一個陣列，其中鍵是要轉換的屬性名稱，值是您希望將欄位轉換為的類型。支援的轉換類型有：</p>
 <div class="content-list" markdown="1"><ul>
 <li><code>array</code></li>
 <li><code>AsFluent::class</code></li>
@@ -411,7 +411,7 @@ class Option implements Arrayable, JsonSerializable
     public bool $isLocked;
 
     /**
-     * 創建一個新的 Option 實例。
+     * 建立一個新的 Option 實例。
      */
     public function __construct(array $data)
     {
@@ -583,7 +583,7 @@ $users = User::select([
 </code></pre>
 <p><a name="custom-casts"></a></p>
 <h2>自訂轉換</h2>
-<p>Laravel 有各種內建的、有用的轉換類型；但是，您可能偶爾需要定義自己的轉換類型。要創建一個轉換，請執行 <code>make:cast</code> Artisan 命令。新的轉換類別將放置在您的 <code>app/Casts</code> 目錄中：</p>
+<p>Laravel 有各種內建的、有用的轉換類型；但是，您可能偶爾需要定義自己的轉換類型。要建立一個轉換，請執行 <code>make:cast</code> Artisan 命令。新的轉換類別將放置在您的 <code>app/Casts</code> 目錄中：</p>
 <pre><code class="language-shell">php artisan make:cast AsJson
 </code></pre>
 <p>所有自訂轉換類別都實現了 <code>CastsAttributes</code> 介面。實現此介面的類別必須定義一個 <code>get</code> 和 <code>set</code> 方法。<code>get</code> 方法負責將底層資料庫中的原始值轉換為轉換值，而 <code>set</code> 方法應將轉換值轉換為可儲存在資料庫中的原始值。作為範例，我們將重新實現內建的 <code>json</code> 轉換類型作為自訂轉換類型：</p>
@@ -651,7 +651,7 @@ class User extends Model
 </code></pre>
 <p><a name="value-object-casting"></a></p>
 <h3>值物件轉換</h3>
-<p>您不限於將值轉換為原始類型。您還可以將值轉換為物件。定義將值轉換為物件的自訂轉換與轉換為原始類型非常相似；但是，如果您的值物件包含多個資料庫欄位，<code>set</code> 方法必須返回一個金鑰/值對的數組，這些金鑰/值對將用於在模型上設定原始的、可儲存的值。如果您的值物件只影響單個欄位，您應該直接返回可儲存的值。</p>
+<p>您不限於將值轉換為原始類型。您還可以將值轉換為物件。定義將值轉換為物件的自訂轉換與轉換為原始類型非常相似；但是，如果您的值物件包含多個資料庫欄位，<code>set</code> 方法必須返回一個金鑰/值對的陣列，這些金鑰/值對將用於在模型上設定原始的、可儲存的值。如果您的值物件只影響單個欄位，您應該直接返回可儲存的值。</p>
 <p>作為範例，我們將定義一個自訂轉換類別，將多個模型值轉換為單個 <code>Address</code> 值物件。我們將假設 <code>Address</code> 值物件有兩個公共屬性：<code>lineOne</code> 和 <code>lineTwo</code>：</p>
 <pre><code class="language-php">&lt;?php
 
@@ -763,7 +763,7 @@ use Illuminate\\Database\\Eloquent\\Model;
 class AsHash implements CastsInboundAttributes
 {
     /**
-     * 創建一個新的轉換類別實例。
+     * 建立一個新的轉換類別實例。
      */
     public function __construct(
         protected string|null $algorithm = null,

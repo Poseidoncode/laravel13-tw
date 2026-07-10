@@ -15,8 +15,8 @@ const content = `<h1>雜湊</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>Laravel 的 <code>Hash</code> <a href="/docs/facades">facade</a> 提供了安全的 Bcrypt 和 Argon2 雜湊功能，用於儲存用戶密碼。如果您使用 Laravel <a href="/docs/starter-kits">應用程式入門套件</a>之一，預設將使用 Bcrypt 進行註冊和認證。</p>
-<p>Bcrypt 是雜湊密碼的絕佳選擇，因為其「工作因子」是可調整的，這意味著隨著硬體效能的提升，生成雜湊所需的時間可以增加。雜湊密碼時，慢是好的。演算法雜湊密碼所需的時間越長，惡意用戶生成用於暴力攻擊的「彩虹表」所需的時間就越長。</p>
+<p>Laravel 的 <code>Hash</code> <a href="/docs/facades">facade</a> 提供了安全的 Bcrypt 和 Argon2 雜湊功能，用於儲存使用者密碼。如果您使用 Laravel <a href="/docs/starter-kits">應用程式入門套件</a>之一，預設將使用 Bcrypt 進行註冊和認證。</p>
+<p>Bcrypt 是雜湊密碼的絕佳選擇，因為其「工作因子」是可調整的，這意味著隨著硬體效能的提升，生成雜湊所需的時間可以增加。雜湊密碼時，慢是好的。演算法雜湊密碼所需的時間越長，惡意使用者生成用於暴力攻擊的「彩虹表」所需的時間就越長。</p>
 <p><a name="configuration"></a></p>
 <h2>設定</h2>
 <p>預設情況下，Laravel 在雜湊資料時使用 <code>bcrypt</code> 雜湊驅動程式。但是，還支援其他幾種雜湊驅動程式，包括 <a href="https://en.wikipedia.org/wiki/Argon2">argon</a> 和 <a href="https://en.wikipedia.org/wiki/Argon2">argon2id</a>。</p>

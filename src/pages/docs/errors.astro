@@ -25,11 +25,11 @@ const content = `<h1>錯誤處理</h1>
 <p>傳遞給 <code>withExceptions</code> 閉包的 <code>$exceptions</code> 物件是 <code>Illuminate\\Foundation\\Configuration\\Exceptions</code> 的實例，負責管理應用程式中的異常處理。我們將在整個文件中深入探討此物件。</p>
 <p><a name="configuration"></a></p>
 <h2>設定</h2>
-<p><code>config/app.php</code> 設定檔中的 <code>debug</code> 選項決定了實際向用戶顯示多少錯誤資訊。預設情況下，此選項設定為遵循 <code>APP_DEBUG</code> 環境變數的值，該值儲存在 <code>.env</code> 檔案中。</p>
+<p><code>config/app.php</code> 設定檔中的 <code>debug</code> 選項決定了實際向使用者顯示多少錯誤資訊。預設情況下，此選項設定為遵循 <code>APP_DEBUG</code> 環境變數的值，該值儲存在 <code>.env</code> 檔案中。</p>
 <p>在本機開發期間，您應將 <code>APP_DEBUG</code> 環境變數設為 <code>true</code>。</p>
 <blockquote>
 <p>[!WARNING]
-在生產環境中，<code>APP_DEBUG</code> 的值應始終為 <code>false</code>。如果在生產環境中將值設為 <code>true</code>，您可能會將敏感的設定值暴露給應用程式的最終用戶。</p>
+在生產環境中，<code>APP_DEBUG</code> 的值應始終為 <code>false</code>。如果在生產環境中將值設為 <code>true</code>，您可能會將敏感的設定值暴露給應用程式的最終使用者。</p>
 </blockquote>
 <p><a name="handling-exceptions"></a></p>
 <h2>處理異常</h2>
@@ -64,7 +64,7 @@ const content = `<h1>錯誤處理</h1>
 </blockquote>
 <p><a name="global-log-context"></a></p>
 <h4>全域日誌上下文</h4>
-<p>如果可用，Laravel 會自動將當前用戶的 ID 作為上下文資料新增到每個異常的日誌訊息中。您可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>context</code> 異常方法來定義自己的全域上下文資料。此資訊將包含在應用程式寫入的每個異常日誌訊息中：</p>
+<p>如果可用，Laravel 會自動將當前使用者的 ID 作為上下文資料新增到每個異常的日誌訊息中。您可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>context</code> 異常方法來定義自己的全域上下文資料。此資訊將包含在應用程式寫入的每個異常日誌訊息中：</p>
 <pre><code class="language-php">->withExceptions(function (Exceptions $exceptions): void {
     $exceptions->context(fn () => [
         'foo' => 'bar',
@@ -97,7 +97,7 @@ class InvalidOrderException extends Exception
 </code></pre>
 <p><a name="the-report-helper"></a></p>
 <h4><code>report</code> 輔助函數</h4>
-<p>有時您可能需要報告異常但繼續處理當前請求。<code>report</code> 輔助函數允許您快速報告異常，而無需向用戶渲染錯誤頁面：</p>
+<p>有時您可能需要報告異常但繼續處理當前請求。<code>report</code> 輔助函數允許您快速報告異常，而無需向使用者渲染錯誤頁面：</p>
 <pre><code class="language-php">public function isValid(string $value): bool
 {
     try {

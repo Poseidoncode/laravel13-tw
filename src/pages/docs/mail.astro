@@ -230,7 +230,7 @@ public function headers(): Headers
 <p>循環傳輸從配置的郵件程式清單中隨機選擇一個郵件程式，然後在每個後續電子郵件中切換到下一個可用的郵件程式。與 <code>failover</code> 傳輸相比，<code>roundrobin</code> 傳輸提供<a href="https://en.wikipedia.org/wiki/Load_balancing_(computing)">負載平衡</a>，而 <code>failover</code> 傳輸有助於實現<a href="https://en.wikipedia.org/wiki/High_availability">高可用性</a>。</p>
 <p><a name="generating-mailables"></a></p>
 <h2>生成可郵寄物件</h2>
-<p>構建 Laravel 應用程式時，應用程式發送的每種類型的電子郵件都表示為一個「可郵寄」類別。這些類別存儲在 <code>app/Mail</code> 目錄中。如果您在應用程式中沒有看到此目錄，請不要擔心，因為當您使用 <code>make:mail</code> Artisan 命令創建第一個可郵寄類別時，它會為您生成：</p>
+<p>建立 Laravel 應用程式時，應用程式發送的每種類型的電子郵件都表示為一個「可郵寄」類別。這些類別存儲在 <code>app/Mail</code> 目錄中。如果您在應用程式中沒有看到此目錄，請不要擔心，因為當您使用 <code>make:mail</code> Artisan 命令建立第一個可郵寄類別時，它會為您生成：</p>
 <pre><code class="language-shell">php artisan make:mail OrderShipped
 </code></pre>
 <p><a name="writing-mailables"></a></p>
@@ -281,7 +281,7 @@ public function envelope(): Envelope
 </code></pre>
 <p><a name="configuring-the-view"></a></p>
 <h3>配置視圖</h3>
-<p>在可郵寄類別的 <code>content</code> 方法中，您可以定義 <code>view</code>，或者在渲染電子郵件內容時應使用哪個範本。由於每個電子郵件通常使用 <a href="/docs/blade">Blade 範本</a>來渲染其內容，因此在構建電子郵件 HTML 時，您可以充分利用 Blade 範本引擎的功能和便利性：</p>
+<p>在可郵寄類別的 <code>content</code> 方法中，您可以定義 <code>view</code>，或者在渲染電子郵件內容時應使用哪個範本。由於每個電子郵件通常使用 <a href="/docs/blade">Blade 範本</a>來渲染其內容，因此在建立電子郵件 HTML 時，您可以充分利用 Blade 範本引擎的功能和便利性：</p>
 <pre><code class="language-php">/**
  * 獲取訊息內容定義。
  */
@@ -294,11 +294,11 @@ public function content(): Content
 </code></pre>
 <blockquote>
 <p>[!NOTE]
-您可能希望創建一個 <code>resources/views/mail</code> 目錄來容納所有電子郵件範本；但是，您可以自由地將它們放在 <code>resources/views</code> 目錄中的任何位置。</p>
+您可能希望建立一個 <code>resources/views/mail</code> 目錄來容納所有電子郵件範本；但是，您可以自由地將它們放在 <code>resources/views</code> 目錄中的任何位置。</p>
 </blockquote>
 <p><a name="plain-text-emails"></a></p>
 <h4>純文字電子郵件</h4>
-<p>如果您希望定義電子郵件的純文字版本，可以在創建訊息的 <code>Content</code> 定義時指定純文字範本。像 <code>view</code> 參數一樣，<code>text</code> 參數應該是一個範本名稱，將用於渲染電子郵件的內容。您可以自由定義訊息的 HTML 和純文字版本：</p>
+<p>如果您希望定義電子郵件的純文字版本，可以在建立訊息的 <code>Content</code> 定義時指定純文字範本。像 <code>view</code> 參數一樣，<code>text</code> 參數應該是一個範本名稱，將用於渲染電子郵件的內容。您可以自由定義訊息的 HTML 和純文字版本：</p>
 <pre><code class="language-php">/**
  * 獲取訊息內容定義。
  */
@@ -336,7 +336,7 @@ class OrderShipped extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * 創建一個新的訊息實例。
+     * 建立一個新的訊息實例。
      */
     public function __construct(
         public Order $order,
@@ -376,7 +376,7 @@ class OrderShipped extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * 創建一個新的訊息實例。
+     * 建立一個新的訊息實例。
      */
     public function __construct(
         protected Order $order,
@@ -540,7 +540,7 @@ class Photo extends Model implements Attachable
     }
 }
 </code></pre>
-<p>定義可附加物件後，您可以在構建電子郵件訊息時從 <code>attachments</code> 方法返回該物件的實例：</p>
+<p>定義可附加物件後，您可以在建立電子郵件訊息時從 <code>attachments</code> 方法返回該物件的實例：</p>
 <pre><code class="language-php">/**
  * 獲取訊息的附件。
  *
@@ -552,13 +552,13 @@ public function attachments(): array
 }
 </code></pre>
 <p>當然，附件資料可以儲存在遠端檔案儲存服務（如 Amazon S3）上。因此，Laravel 還允許您從儲存在應用程式其中一個<a href="/docs/filesystem">文件系統磁碟</a>上的資料生成附件實例：</p>
-<pre><code class="language-php">// 從預設磁碟上的檔案創建附件...
+<pre><code class="language-php">// 從預設磁碟上的檔案建立附件...
 return Attachment::fromStorage($this->path);
 
-// 從特定磁碟上的檔案創建附件...
+// 從特定磁碟上的檔案建立附件...
 return Attachment::fromStorageDisk('backblaze', $this->path);
 </code></pre>
-<p>此外，您可以透過記憶體中的資料創建附件實例。為此，向 <code>fromData</code> 方法提供一個閉包。該閉包應返回代表附件的原始資料：</p>
+<p>此外，您可以透過記憶體中的資料建立附件實例。為此，向 <code>fromData</code> 方法提供一個閉包。該閉包應返回代表附件的原始資料：</p>
 <pre><code class="language-php">return Attachment::fromData(fn () => $this->content, 'Photo Name');
 </code></pre>
 <p>Laravel 還提供了其他可用於自訂附件的方法。例如，您可以使用 <code>as</code> 和 <code>withMime</code> 方法來自訂檔案的名稱和 MIME 類型：</p>
@@ -656,7 +656,7 @@ public function content(): Content
 </code></pre>
 <p><a name="writing-markdown-messages"></a></p>
 <h3>編寫 Markdown 訊息</h3>
-<p>Markdown 可郵寄物件使用 Blade 元件和 Markdown 語法的組合，允許您輕鬆構建郵件訊息，同時利用 Laravel 的預建電子郵件 UI 元件：</p>
+<p>Markdown 可郵寄物件使用 Blade 元件和 Markdown 語法的組合，允許您輕鬆建立郵件訊息，同時利用 Laravel 的預建電子郵件 UI 元件：</p>
 <pre><code class="language-blade"><x-mail::message>
 # Order Shipped
 
@@ -707,7 +707,7 @@ This is the panel content.
 <p><a name="customizing-the-css"></a></p>
 <h4>自訂 CSS</h4>
 <p>匯出元件後，<code>resources/views/vendor/mail/html/themes</code> 目錄將包含一個 <code>default.css</code> 檔案。您可以自訂此檔案中的 CSS，您的樣式將自動轉換為 Markdown 郵件訊息的 HTML 表示中的內聯 CSS 樣式。</p>
-<p>如果您希望為 Laravel 的 Markdown 元件構建一個全新的主題，可以將 CSS 檔案放在 <code>html/themes</code> 目錄中。命名並儲存 CSS 檔案後，更新應用程式 <code>config/mail.php</code> 配置檔案的 <code>theme</code> 選項以匹配您新主題的名稱。</p>
+<p>如果您希望為 Laravel 的 Markdown 元件建立一個全新的主題，可以將 CSS 檔案放在 <code>html/themes</code> 目錄中。命名並儲存 CSS 檔案後，更新應用程式 <code>config/mail.php</code> 配置檔案的 <code>theme</code> 選項以匹配您新主題的名稱。</p>
 <p>要自訂個別可郵寄物件的主題，可以將可郵寄物件類別的 <code>$theme</code> 屬性設定為發送該可郵寄物件時應使用的主題名稱。</p>
 <p><a name="sending-mail"></a></p>
 <h2>發送郵件</h2>
@@ -747,7 +747,7 @@ class OrderShipmentController extends Controller
 </code></pre>
 <p><a name="looping-over-recipients"></a></p>
 <h4>迭代收件者</h4>
-<p>偶爾，您可能需要透過迭代收件者/電子郵件地址陣列來向收件者列表發送可郵寄物件。但是，由於 <code>to</code> 方法會將電子郵件地址附加到可郵寄物件的收件者列表中，因此每次循環迭代都會向每個先前的收件者發送另一封電子郵件。因此，您應該始終為每個收件者重新創建可郵寄物件實例：</p>
+<p>偶爾，您可能需要透過迭代收件者/電子郵件地址陣列來向收件者列表發送可郵寄物件。但是，由於 <code>to</code> 方法會將電子郵件地址附加到可郵寄物件的收件者列表中，因此每次循環迭代都會向每個先前的收件者發送另一封電子郵件。因此，您應該始終為每個收件者重新建立可郵寄物件實例：</p>
 <pre><code class="language-php">foreach (['taylor@example.com', 'dries@example.com'] as $recipient) {
     Mail::to($recipient)->send(new OrderShipped($order));
 }
@@ -813,7 +813,7 @@ class OrderShipped extends Mailable implements ShouldQueue
 </code></pre>
 <p><a name="queued-mailables-and-database-transactions"></a></p>
 <h4>佇列可郵寄物件和資料庫交易</h4>
-<p>當佇列可郵寄物件在資料庫交易內被派發時，它們可能會在資料庫交易提交之前被佇列處理。當這種情況發生時，在資料庫交易期間對模型或資料庫記錄進行的任何更新可能尚未反映在資料庫中。此外，在交易內創建的任何模型或資料庫記錄可能不存在於資料庫中。如果您的可郵寄物件依賴這些模型，則在處理發送佇列可郵寄物件的作業時可能會發生意外錯誤。</p>
+<p>當佇列可郵寄物件在資料庫交易內被派發時，它們可能會在資料庫交易提交之前被佇列處理。當這種情況發生時，在資料庫交易期間對模型或資料庫記錄進行的任何更新可能尚未反映在資料庫中。此外，在交易內建立的任何模型或資料庫記錄可能不存在於資料庫中。如果您的可郵寄物件依賴這些模型，則在處理發送佇列可郵寄物件的作業時可能會發生意外錯誤。</p>
 <p>如果您的佇列連接的 <code>after_commit</code> 配置選項設定為 <code>false</code>，您仍然可以透過在發送郵件訊息時呼叫 <code>afterCommit</code> 方法來指示特定的佇列可郵寄物件應在所有打開的資料庫交易提交後被派發：</p>
 <pre><code class="language-php">Mail::to($request->user())->send(
     (new OrderShipped($order))->afterCommit()
@@ -834,7 +834,7 @@ class OrderShipped extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     /**
-     * 創建一個新的訊息實例。
+     * 建立一個新的訊息實例。
      */
     public function __construct()
     {
@@ -1153,7 +1153,7 @@ public function boot(): void
 <p>使用 <code>alwaysTo</code> 方法時，郵件訊息上的任何額外「cc」或「bcc」地址將被移除。</p>
 <p><a name="events"></a></p>
 <h2>事件</h2>
-<p>Laravel 在發送郵件訊息時會派發兩個事件。<code>MessageSending</code> 事件在訊息被發送之前派發，而 <code>MessageSent</code> 事件在訊息被發送後派發。請記住，這些事件是在郵件被<em>發送</em>時派發的，而不是在放入佇列時。您可以在應用程式中為這些事件<a href="/docs/events">創建事件監聽器</a>：</p>
+<p>Laravel 在發送郵件訊息時會派發兩個事件。<code>MessageSending</code> 事件在訊息被發送之前派發，而 <code>MessageSent</code> 事件在訊息被發送後派發。請記住，這些事件是在郵件被<em>發送</em>時派發的，而不是在放入佇列時。您可以在應用程式中為這些事件<a href="/docs/events">建立事件監聽器</a>：</p>
 <pre><code class="language-php">use Illuminate\\Mail\\Events\\MessageSending;
 // use Illuminate\\Mail\\Events\\MessageSent;
 
@@ -1184,7 +1184,7 @@ use Symfony\\Component\\Mime\\MessageConverter;
 class MailchimpTransport extends AbstractTransport
 {
     /**
-     * 創建一個新的 Mailchimp 傳輸實例。
+     * 建立一個新的 Mailchimp 傳輸實例。
      */
     public function __construct(
         protected ApiClient $client,
@@ -1237,7 +1237,7 @@ public function boot(): void
     });
 }
 </code></pre>
-<p>定義並註冊好自訂傳輸後，您可以在應用程式的 <code>config/mail.php</code> 配置檔案中創建一個使用新傳輸的郵件程式定義：</p>
+<p>定義並註冊好自訂傳輸後，您可以在應用程式的 <code>config/mail.php</code> 配置檔案中建立一個使用新傳輸的郵件程式定義：</p>
 <pre><code class="language-php">'mailchimp' => [
     'transport' => 'mailchimp',
     'key' => env('MAILCHIMP_API_KEY'),
@@ -1275,7 +1275,7 @@ public function boot(): void
     });
 }
 </code></pre>
-<p>註冊好傳輸後，您可以在應用程式的 <code>config/mail.php</code> 配置檔案中創建一個使用新傳輸的郵件程式定義：</p>
+<p>註冊好傳輸後，您可以在應用程式的 <code>config/mail.php</code> 配置檔案中建立一個使用新傳輸的郵件程式定義：</p>
 <pre><code class="language-php">'brevo' => [
     'transport' => 'brevo',
     // ...

@@ -3,7 +3,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
 const content = `<h1>HTTP 回應</h1>
 <ul>
-<li><a href="#creating-responses">創建回應</a><ul>
+<li><a href="#creating-responses">建立回應</a><ul>
 <li><a href="#attaching-headers-to-responses">向回應附加標頭</a></li>
 <li><a href="#attaching-cookies-to-responses">向回應附加 Cookie</a></li>
 <li><a href="#cookies-and-encryption">Cookie 與加密</a></li>
@@ -33,7 +33,7 @@ const content = `<h1>HTTP 回應</h1>
 <li><a href="#response-macros">回應巨集</a></li>
 </ul>
 <p><a name="creating-responses"></a></p>
-<h2>創建回應</h2>
+<h2>建立回應</h2>
 <p><a name="strings-arrays"></a></p>
 <h4>字串與陣列</h4>
 <p>所有路由和控制器都應返回一個回應，該回應將被傳回使用者的瀏覽器。Laravel 提供了幾種不同的方式來返回回應。最基本的回應是從路由或控制器返回一個字串。框架將自動將字串轉換為完整的 HTTP 回應：</p>
@@ -53,7 +53,7 @@ const content = `<h1>HTTP 回應</h1>
 <p><a name="response-objects"></a></p>
 <h4>回應物件</h4>
 <p>通常，您不會只從路由動作返回簡單的字串或陣列。相反，您將返回完整的 <code>Illuminate\\Http\\Response</code> 實例或<a href="/docs/views">視圖</a>。</p>
-<p>返回完整的 <code>Response</code> 實例允許您自訂回應的 HTTP 狀態碼和標頭。<code>Response</code> 實例繼承自 <code>Symfony\\Component\\HttpFoundation\\Response</code> 類別，該類別提供了多種用於構建 HTTP 回應的方法：</p>
+<p>返回完整的 <code>Response</code> 實例允許您自訂回應的 HTTP 狀態碼和標頭。<code>Response</code> 實例繼承自 <code>Symfony\\Component\\HttpFoundation\\Response</code> 類別，該類別提供了多種用於建立 HTTP 回應的方法：</p>
 <pre><code class="language-php">Route::get('/home', function () {
     return response('Hello World', 200)
         ->header('Content-Type', 'text/plain');
@@ -70,7 +70,7 @@ Route::get('/user/{user}', function (User $user) {
 </code></pre>
 <p><a name="attaching-headers-to-responses"></a></p>
 <h3>向回應附加標頭</h3>
-<p>請記住，大多數回應方法都是可鏈式呼叫的，允許以流暢的方式構建回應實例。例如，您可以使用 <code>header</code> 方法在將回應傳回使用者之前向其添加一系列標頭：</p>
+<p>請記住，大多數回應方法都是可鏈式呼叫的，允許以流暢的方式建立回應實例。例如，您可以使用 <code>header</code> 方法在將回應傳回使用者之前向其添加一系列標頭：</p>
 <pre><code class="language-php">return response($content)
     ->header('Content-Type', $type)
     ->header('X-Header-One', 'Header Value')
@@ -114,7 +114,7 @@ return response($content)->withoutHeader(['X-Debug', 'X-Powered-By']);
     'name', 'value', $minutes, $path, $domain, $secure, $httpOnly
 );
 </code></pre>
-<p>如果您希望確保某個 Cookie 隨傳出回應一起發送，但您還沒有該回應的實例，可以使用 <code>Cookie</code> 外觀來「佇列化」Cookie，以便在發送回應時將其附加到回應。<code>queue</code> 方法接受創建 Cookie 實例所需的參數。這些 Cookie 將在發送給瀏覽器之前附加到傳出回應：</p>
+<p>如果您希望確保某個 Cookie 隨傳出回應一起發送，但您還沒有該回應的實例，可以使用 <code>Cookie</code> 外觀來「佇列化」Cookie，以便在發送回應時將其附加到回應。<code>queue</code> 方法接受建立 Cookie 實例所需的參數。這些 Cookie 將在發送給瀏覽器之前附加到傳出回應：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Cookie;
 
 Cookie::queue('name', 'value', $minutes);
@@ -201,12 +201,12 @@ return redirect()->action([UserController::class, 'index']);
 </code></pre>
 <p><a name="redirecting-external-domains"></a></p>
 <h3>重定向到外部網域</h3>
-<p>有時您可能需要重定向到應用程式外部的網域。您可以透過呼叫 <code>away</code> 方法來實現，該方法創建一個 <code>RedirectResponse</code>，而不進行任何額外的 URL 編碼、驗證或驗證：</p>
+<p>有時您可能需要重定向到應用程式外部的網域。您可以透過呼叫 <code>away</code> 方法來實現，該方法建立一個 <code>RedirectResponse</code>，而不進行任何額外的 URL 編碼、驗證或驗證：</p>
 <pre><code class="language-php">return redirect()->away('https://www.google.com');
 </code></pre>
 <p><a name="redirecting-with-flashed-session-data"></a></p>
 <h3>帶有閃存 Session 資料的重定向</h3>
-<p>重定向到新 URL 和<a href="/docs/session#flash-data">將資料閃存到 Session</a>通常是同時完成的。通常，這是在成功執行動作後將成功訊息閃存到 Session 時完成的。為了方便，您可以使用單個流暢的方法鏈創建一個 <code>RedirectResponse</code> 實例並將資料閃存到 Session：</p>
+<p>重定向到新 URL 和<a href="/docs/session#flash-data">將資料閃存到 Session</a>通常是同時完成的。通常，這是在成功執行動作後將成功訊息閃存到 Session 時完成的。為了方便，您可以使用單個流暢的方法鏈建立一個 <code>RedirectResponse</code> 實例並將資料閃存到 Session：</p>
 <pre><code class="language-php">Route::post('/user/profile', function () {
     // ...
 
@@ -244,7 +244,7 @@ return redirect()->action([UserController::class, 'index']);
     'state' => 'CA',
 ]);
 </code></pre>
-<p>如果您希望創建 JSONP 回應，可以將 <code>json</code> 方法與 <code>withCallback</code> 方法結合使用：</p>
+<p>如果您希望建立 JSONP 回應，可以將 <code>json</code> 方法與 <code>withCallback</code> 方法結合使用：</p>
 <pre><code class="language-php">return response()
     ->json(['name' => 'Abigail', 'state' => 'CA'])
     ->withCallback($request->input('callback'));

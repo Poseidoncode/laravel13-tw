@@ -428,7 +428,7 @@ class ExampleTest extends TestCase
 </code></pre>
 <blockquote>
 <p>[!NOTE]
-<code>assertJson</code> 方法將回應轉換為陣列以驗證給定的陣列是否存在於應用程式返回的 JSON 回應中。因此，如果 JSON 回應中還有其他屬性，只要給定的片段存在，此測試仍將通過。</p>
+<code>assertJson</code> 方法將回應轉換為陣列以驗證給定的陣列是否存在於應用程式返回的 JSON 回應中。因此，如果 JSON 回應中還有其他屬性，只要給定的片段存在，此測試仍將透過。</p>
 </blockquote>
 <p><a name="verifying-exact-match"></a></p>
 <h4>斷言精確 JSON 匹配</h4>
@@ -502,7 +502,7 @@ class ExampleTest extends TestCase
     }
 }
 </code></pre>
-<p><code>assertJsonPath</code> 方法還接受一個閉包，可用於動態判斷斷言是否應通過：</p>
+<p><code>assertJsonPath</code> 方法還接受一個閉包，可用於動態判斷斷言是否應透過：</p>
 <pre><code class="language-php">$response->assertJsonPath('team.owner.name', fn (string $name) => strlen($name) >= 3);
 </code></pre>
 <p>如果您需要一次斷言多個 JSON 路徑，可以使用 <code>assertJsonPaths</code> 方法。每個路徑的預期值也可以是一個閉包：</p>
@@ -722,10 +722,10 @@ Storage::disk('avatars')->assertMissing('missing.jpg');
 </code></pre>
 <p><a name="fake-file-customization"></a></p>
 <h4>虛擬檔案自訂</h4>
-<p>使用 <code>UploadedFile</code> 類別提供的 <code>fake</code> 方法創建檔案時，您可以指定圖像的寬度、高度和大小（以千位元組為單位），以更好地測試應用程式的驗證規則：</p>
+<p>使用 <code>UploadedFile</code> 類別提供的 <code>fake</code> 方法建立檔案時，您可以指定圖像的寬度、高度和大小（以千位元組為單位），以更好地測試應用程式的驗證規則：</p>
 <pre><code class="language-php">UploadedFile::fake()->image('avatar.jpg', $width, $height)->size(100);
 </code></pre>
-<p>除了創建圖像外，您還可以使用 <code>create</code> 方法創建任何其他類型的檔案：</p>
+<p>除了建立圖像外，您還可以使用 <code>create</code> 方法建立任何其他類型的檔案：</p>
 <pre><code class="language-php">UploadedFile::fake()->create('document.pdf', $sizeInKilobytes);
 </code></pre>
 <p>如果需要，您可以向該方法傳遞一個 <code>$mimeType</code> 參數來明確定義檔案應返回的 MIME 類型：</p>
@@ -790,7 +790,7 @@ $view->assertSee('Taylor');
 </code></pre>
 <p><a name="caching-routes"></a></p>
 <h2>快取路由</h2>
-<p>在測試運行之前，Laravel 會啟動一個應用程式的新實例，包括收集所有已定義的路由。如果您的應用程式有很多路由檔案，您可能希望將 <code>Illuminate\\Foundation\\Testing\\WithCachedRoutes</code> trait 添加到您的測試案例中。在使用此 trait 的測試中，路由只會被構建一次並存儲在記憶體中，這意味著路由收集過程只會在您的測試套件中的所有測試中運行一次：</p>
+<p>在測試運行之前，Laravel 會啟動一個應用程式的新實例，包括收集所有已定義的路由。如果您的應用程式有很多路由檔案，您可能希望將 <code>Illuminate\\Foundation\\Testing\\WithCachedRoutes</code> trait 添加到您的測試案例中。在使用此 trait 的測試中，路由只會被建立一次並存儲在記憶體中，這意味著路由收集過程只會在您的測試套件中的所有測試中運行一次：</p>
 <pre><code class="language-php">&lt;?php
 
 use App\\Http\\Controllers\\UserController;
@@ -1045,7 +1045,7 @@ class BasicTest extends TestCase
 <p>斷言回應包含給定的 JSON 資料：</p>
 <pre><code class="language-php">$response->assertJson(array $data, $strict = false);
 </code></pre>
-<p><code>assertJson</code> 方法將回應轉換為陣列以驗證給定的陣列是否存在於應用程式返回的 JSON 回應中。因此，如果 JSON 回應中還有其他屬性，只要給定的片段存在，此測試仍將通過。</p>
+<p><code>assertJson</code> 方法將回應轉換為陣列以驗證給定的陣列是否存在於應用程式返回的 JSON 回應中。因此，如果 JSON 回應中還有其他屬性，只要給定的片段存在，此測試仍將透過。</p>
 <p><a name="assert-json-count"></a></p>
 <h4>assertJsonCount</h4>
 <p>斷言回應 JSON 在給定鍵處有一個具有預期項目數的陣列：</p>
@@ -1340,7 +1340,7 @@ $response->assertJsonFragment(['name' => 'Taylor Otwell']);
 <p>斷言會話包含給定的資料：</p>
 <pre><code class="language-php">$response->assertSessionHas($key, $value = null);
 </code></pre>
-<p>如果需要，可以將一個閉包作為第二個參數傳遞給 <code>assertSessionHas</code> 方法。如果閉包返回 <code>true</code>，則斷言將通過：</p>
+<p>如果需要，可以將一個閉包作為第二個參數傳遞給 <code>assertSessionHas</code> 方法。如果閉包返回 <code>true</code>，則斷言將透過：</p>
 <pre><code class="language-php">$response->assertSessionHas($key, function (User $value) {
     return $value->name === 'Taylor Otwell';
 });
@@ -1350,7 +1350,7 @@ $response->assertJsonFragment(['name' => 'Taylor Otwell']);
 <p>斷言會話在<a href="/docs/responses#redirecting-with-flashed-session-data">閃現輸入陣列</a>中具有給定值：</p>
 <pre><code class="language-php">$response->assertSessionHasInput($key, $value = null);
 </code></pre>
-<p>如果需要，可以將一個閉包作為第二個參數傳遞給 <code>assertSessionHasInput</code> 方法。如果閉包返回 <code>true</code>，則斷言將通過：</p>
+<p>如果需要，可以將一個閉包作為第二個參數傳遞給 <code>assertSessionHasInput</code> 方法。如果閉包返回 <code>true</code>，則斷言將透過：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Crypt;
 
 $response->assertSessionHasInput($key, function (string $value) {

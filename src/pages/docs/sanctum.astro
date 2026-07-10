@@ -44,11 +44,11 @@ const content = `<h1>Laravel Sanctum</h1>
 <p><a name="how-it-works-api-tokens"></a></p>
 <h4>API 令牌</h4>
 <p>首先，Sanctum 是一個簡單的套件，您可以用來向使用者頒發 API 令牌，而無需 OAuth 的複雜性。此功能的靈感來自 GitHub 和其他頒發「個人存取令牌」的應用程式。例如，假設應用程式的「帳號設定」中有一個畫面，使用者可以在其中為其帳戶產生 API 令牌。您可以使用 Sanctum 來產生和管理這些令牌。這些令牌通常具有很長的過期時間（數年），但使用者可以隨時手動撤銷它們。</p>
-<p>Laravel Sanctum 通過將使用者 API 令牌儲存在單個資料庫表中，並通過應包含有效 API 令牌的 <code>Authorization</code> 標頭來認證傳入的 HTTP 請求，從而提供此功能。</p>
+<p>Laravel Sanctum 透過將使用者 API 令牌儲存在單個資料庫表中，並透過應包含有效 API 令牌的 <code>Authorization</code> 標頭來認證傳入的 HTTP 請求，從而提供此功能。</p>
 <p><a name="how-it-works-spa-authentication"></a></p>
 <h4>SPA 認證</h4>
 <p>其次，Sanctum 的存在是為了提供一種簡單的方法來認證需要與 Laravel 驅動的 API 通訊的單頁應用程式（SPA）。這些 SPA 可能與您的 Laravel 應用程式存在於同一個儲存庫中，也可能是一個完全獨立的儲存庫，例如使用 Next.js 或 Nuxt 建立的 SPA。</p>
-<p>對於此功能，Sanctum 不使用任何類型的令牌。相反，Sanctum 使用 Laravel 內建的基於 cookie 的工作階段認證服務。這提供了 CSRF 保護、工作階段認證的優勢，並防止通過 XSS 洩漏認證憑證。</p>
+<p>對於此功能，Sanctum 不使用任何類型的令牌。相反，Sanctum 使用 Laravel 內建的基於 cookie 的工作階段認證服務。這提供了 CSRF 保護、工作階段認證的優勢，並防止透過 XSS 洩漏認證憑證。</p>
 <p>Sanctum 僅在傳入請求來自您自己的 SPA 前端時才會嘗試使用 cookie 進行認證。當 Sanctum 檢查傳入的 HTTP 請求時，它會首先檢查認證 cookie，如果不存在，則 Sanctum 會檢查 <code>Authorization</code> 標頭中是否有有效的 API 令牌。</p>
 <blockquote>
 <p>[!NOTE]
@@ -56,7 +56,7 @@ const content = `<h1>Laravel Sanctum</h1>
 </blockquote>
 <p><a name="installation"></a></p>
 <h2>安裝</h2>
-<p>您可以通過 <code>install:api</code> Artisan 命令安裝 Laravel Sanctum：</p>
+<p>您可以透過 <code>install:api</code> Artisan 命令安裝 Laravel Sanctum：</p>
 <pre><code class="language-shell">php artisan install:api</code></pre>
 <p>接下來，如果您打算使用 Sanctum 來認證 SPA，請參閱本文檔的 <a href="#spa-authentication">SPA 認證</a>部分。</p>
 <p><a name="configuration"></a></p>
@@ -71,7 +71,7 @@ class PersonalAccessToken extends SanctumPersonalAccessToken
     // ...
 }
 </code></pre>
-<p>然後，您可以通過 Sanctum 提供的 <code>usePersonalAccessTokenModel</code> 方法指示 Sanctum 使用您的自訂模型。通常，您應該在應用程式 <code>AppServiceProvider</code> 檔案的 <code>boot</code> 方法中呼叫此方法：</p>
+<p>然後，您可以透過 Sanctum 提供的 <code>usePersonalAccessTokenModel</code> 方法指示 Sanctum 使用您的自訂模型。通常，您應該在應用程式 <code>AppServiceProvider</code> 檔案的 <code>boot</code> 方法中呼叫此方法：</p>
 <pre><code class="language-php">use App\\Models\\Sanctum\\PersonalAccessToken;
 use Laravel\\Sanctum\\Sanctum;
 
@@ -100,7 +100,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 }
 </code></pre>
-<p>要頒發令牌，您可以使用 <code>createToken</code> 方法。<code>createToken</code> 方法返回一個 <code>Laravel\\Sanctum\\NewAccessToken</code> 實例。API 令牌在儲存到資料庫之前會使用 SHA-256 哈希進行哈希處理，但您可以通過 <code>NewAccessToken</code> 實例的 <code>plainTextToken</code> 屬性存取令牌的明文值。您應在令牌建立後立即將此值顯示給使用者：</p>
+<p>要頒發令牌，您可以使用 <code>createToken</code> 方法。<code>createToken</code> 方法返回一個 <code>Laravel\\Sanctum\\NewAccessToken</code> 實例。API 令牌在儲存到資料庫之前會使用 SHA-256 哈希進行哈希處理，但您可以透過 <code>NewAccessToken</code> 實例的 <code>plainTextToken</code> 屬性存取令牌的明文值。您應在令牌建立後立即將此值顯示給使用者：</p>
 <pre><code class="language-php">use Illuminate\\Http\\Request;
 
 Route::post('/tokens/create', function (Request $request) {
@@ -155,7 +155,7 @@ use Laravel\\Sanctum\\Http\\Middleware\\CheckForAnyAbility;
 <p>例如，如果我們想像一個管理伺服器的應用程式，這可能意味著檢查令牌是否被授權更新伺服器<strong>並且</strong>該伺服器屬於該使用者：</p>
 <pre><code class="language-php">return $request->user()->id === $server->user_id &&
        $request->user()->tokenCan('server:update')</code></pre>
-<p>起初，允許呼叫 <code>tokenCan</code> 方法並對第一方 UI 發起的請求始終返回 <code>true</code> 可能看起來很奇怪；但是，能夠始終假設 API 令牌可用並可以通過 <code>tokenCan</code> 方法檢查是很方便的。通過採用這種方法，您可以在應用程式的授權政策中始終呼叫 <code>tokenCan</code> 方法，而無需擔心請求是來自應用程式的 UI 還是由 API 的第三方消費者發起的。</p>
+<p>起初，允許呼叫 <code>tokenCan</code> 方法並對第一方 UI 發起的請求始終返回 <code>true</code> 可能看起來很奇怪；但是，能夠始終假設 API 令牌可用並可以透過 <code>tokenCan</code> 方法檢查是很方便的。透過採用這種方法，您可以在應用程式的授權政策中始終呼叫 <code>tokenCan</code> 方法，而無需擔心請求是來自應用程式的 UI 還是由 API 的第三方消費者發起的。</p>
 <p><a name="protecting-routes"></a></p>
 <h3>保護路由</h3>
 <p>要保護路由以使所有傳入請求都必須經過認證，您應將 <code>sanctum</code> 認證守衛附加到 <code>routes/web.php</code> 和 <code>routes/api.php</code> 路由檔案中的受保護路由。此守衛將確保傳入請求被認證為有狀態的、基於 cookie 的認證請求，或者如果請求來自第三方，則包含有效的 API 令牌標頭。</p>
@@ -167,7 +167,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');</code></pre>
 <p><a name="revoking-tokens"></a></p>
 <h3>撤銷令牌</h3>
-<p>您可以通過使用 <code>Laravel\\Sanctum\\HasApiTokens</code> trait 提供的 <code>tokens</code> 關聯從資料庫中刪除令牌來「撤銷」它們：</p>
+<p>您可以透過使用 <code>Laravel\\Sanctum\\HasApiTokens</code> trait 提供的 <code>tokens</code> 關聯從資料庫中刪除令牌來「撤銷」它們：</p>
 <pre><code class="language-php">// Revoke all tokens...
 $user->tokens()->delete();
 
@@ -179,9 +179,9 @@ $user->tokens()->where('id', $tokenId)->delete();
 </code></pre>
 <p><a name="token-expiration"></a></p>
 <h3>令牌過期</h3>
-<p>預設情況下，Sanctum 令牌永遠不會過期，只能通過<a href="#revoking-tokens">撤銷令牌</a>來使其失效。但是，如果您想為應用程式的 API 令牌配置過期時間，可以通過應用程式的 <code>sanctum</code> 配置檔案中的 <code>expiration</code> 配置選項來實現。此配置選項定義了頒發的令牌在被視為過期之前的分鐘數：</p>
+<p>預設情況下，Sanctum 令牌永遠不會過期，只能透過<a href="#revoking-tokens">撤銷令牌</a>來使其失效。但是，如果您想為應用程式的 API 令牌配置過期時間，可以透過應用程式的 <code>sanctum</code> 配置檔案中的 <code>expiration</code> 配置選項來實現。此配置選項定義了頒發的令牌在被視為過期之前的分鐘數：</p>
 <pre><code class="language-php">'expiration' => 525600,</code></pre>
-<p>如果您想獨立指定每個令牌的過期時間，可以通過將過期時間作為第三個參數提供給 <code>createToken</code> 方法來實現：</p>
+<p>如果您想獨立指定每個令牌的過期時間，可以透過將過期時間作為第三個參數提供給 <code>createToken</code> 方法來實現：</p>
 <pre><code class="language-php">return $user->createToken(
     'token-name', ['*'], now()->plus(weeks: 1)
 )->plainTextToken;</code></pre>
@@ -193,7 +193,7 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 <p><a name="spa-authentication"></a></p>
 <h2>SPA 認證</h2>
 <p>Sanctum 還提供了一種簡單的方法來認證需要與 Laravel 驅動的 API 通訊的單頁應用程式（SPA）。這些 SPA 可能與您的 Laravel 應用程式存在於同一個儲存庫中，也可能是一個完全獨立的儲存庫。</p>
-<p>對於此功能，Sanctum 不使用任何類型的令牌。相反，Sanctum 使用 Laravel 內建的基於 cookie 的工作階段認證服務。這種認證方法提供了 CSRF 保護、工作階段認證的優勢，並防止通過 XSS 洩漏認證憑證。</p>
+<p>對於此功能，Sanctum 不使用任何類型的令牌。相反，Sanctum 使用 Laravel 內建的基於 cookie 的工作階段認證服務。這種認證方法提供了 CSRF 保護、工作階段認證的優勢，並防止透過 XSS 洩漏認證憑證。</p>
 <blockquote>
 <p>[!WARNING]
 為了進行認證，您的 SPA 和 API 必須共享相同的頂級域。但是，它們可以放置在不同的子域上。此外，您應確保在請求中發送 <code>Accept: application/json</code> 標頭以及 <code>Referer</code> 或 <code>Origin</code> 標頭。</p>
@@ -206,11 +206,11 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 <p>為了幫助您設定第一方有狀態域，Sanctum 提供了兩個可以在配置中包含的輔助函數。首先，<code>Sanctum::currentApplicationUrlWithPort()</code> 將從 <code>APP_URL</code> 環境變數返回目前的應用程式 URL，而 <code>Sanctum::currentRequestHost()</code> 將向有狀態域列表注入一個佔位符，在運行時，該佔位符將被目前請求的主機替換，以便所有具有相同域的請求都被視為有狀態。</p>
 <blockquote>
 <p>[!WARNING]
-如果您通過包含連接埠的 URL 存取應用程式（<code>127.0.0.1:8000</code>），您應確保在域中包含連接埠號碼。</p>
+如果您透過包含連接埠的 URL 存取應用程式（<code>127.0.0.1:8000</code>），您應確保在域中包含連接埠號碼。</p>
 </blockquote>
 <p><a name="sanctum-middleware"></a></p>
 <h4>Sanctum 中介層</h4>
-<p>接下來，您應指示 Laravel，來自 SPA 的傳入請求可以使用 Laravel 的工作階段 cookie 進行認證，同時仍允許來自第三方或行動應用程式的請求使用 API 令牌進行認證。這可以通過在應用程式的 <code>bootstrap/app.php</code> 檔案中呼叫 <code>statefulApi</code> 中介層方法來輕鬆實現：</p>
+<p>接下來，您應指示 Laravel，來自 SPA 的傳入請求可以使用 Laravel 的工作階段 cookie 進行認證，同時仍允許來自第三方或行動應用程式的請求使用 API 令牌進行認證。這可以透過在應用程式的 <code>bootstrap/app.php</code> 檔案中呼叫 <code>statefulApi</code> 中介層方法來輕鬆實現：</p>
 <pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
     $middleware->statefulApi();
 })</code></pre>
@@ -219,11 +219,11 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 <p>如果您在從執行在單獨子域上的 SPA 進行認證時遇到問題，則很可能配置了錯誤的 CORS（跨源資源共享）或工作階段 cookie 設定。</p>
 <p><code>config/cors.php</code> 配置檔案預設情況下不會發佈。如果您需要自訂 Laravel 的 CORS 選項，應使用 <code>config:publish</code> Artisan 命令發佈完整的 <code>cors</code> 配置檔案：</p>
 <pre><code class="language-shell">php artisan config:publish cors</code></pre>
-<p>接下來，您應確保應用程式的 CORS 配置返回值為 <code>True</code> 的 <code>Access-Control-Allow-Credentials</code> 標頭。這可以通過將應用程式 <code>config/cors.php</code> 配置檔案中的 <code>supports_credentials</code> 選項設定為 <code>true</code> 來實現。</p>
-<p>此外，您應在應用程式的全域 <code>axios</code> 實例上啟用 <code>withCredentials</code> 和 <code>withXSRFToken</code> 選項。這可以在您的 <code>resources/js/app.js</code> 檔案中執行。如果您不使用 Axios 從前端發送 HTTP 請求，則應在自己的 HTTP 用戶端上執行等效的配置：</p>
+<p>接下來，您應確保應用程式的 CORS 配置返回值為 <code>True</code> 的 <code>Access-Control-Allow-Credentials</code> 標頭。這可以透過將應用程式 <code>config/cors.php</code> 配置檔案中的 <code>supports_credentials</code> 選項設定為 <code>true</code> 來實現。</p>
+<p>此外，您應在應用程式的全域 <code>axios</code> 實例上啟用 <code>withCredentials</code> 和 <code>withXSRFToken</code> 選項。這可以在您的 <code>resources/js/app.js</code> 檔案中執行。如果您不使用 Axios 從前端發送 HTTP 請求，則應在自己的 HTTP 客戶端上執行等效的配置：</p>
 <pre><code class="language-js">axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;</code></pre>
-<p>最後，您應確保應用程式的工作階段 cookie 域配置支援根域的任何子域。您可以通過在應用程式的 <code>config/session.php</code> 配置檔案中為域添加前導 <code>.</code> 來實現：</p>
+<p>最後，您應確保應用程式的工作階段 cookie 域配置支援根域的任何子域。您可以透過在應用程式的 <code>config/session.php</code> 配置檔案中為域添加前導 <code>.</code> 來實現：</p>
 <pre><code class="language-php">'domain' => '.domain.com',</code></pre>
 <p><a name="spa-authenticating"></a></p>
 <h3>認證</h3>
@@ -233,11 +233,11 @@ axios.defaults.withXSRFToken = true;</code></pre>
 <pre><code class="language-js">axios.get('/sanctum/csrf-cookie').then(response => {
     // Login...
 });</code></pre>
-<p>在此請求期間，Laravel 將設定一個包含當前 CSRF 令牌的 <code>XSRF-TOKEN</code> cookie。然後，此令牌應進行 URL 解碼，並在後續請求的 <code>X-XSRF-TOKEN</code> 標頭中傳遞，像 Axios 和 Angular HttpClient 這樣的 HTTP 用戶端函式庫會自動為您執行此操作。如果您的 JavaScript HTTP 函式庫沒有為您設定該值，您將需要手動將 <code>X-XSRF-TOKEN</code> 標頭設定為與此路由設定的 <code>XSRF-TOKEN</code> cookie 的 URL 解碼值匹配。</p>
+<p>在此請求期間，Laravel 將設定一個包含當前 CSRF 令牌的 <code>XSRF-TOKEN</code> cookie。然後，此令牌應進行 URL 解碼，並在後續請求的 <code>X-XSRF-TOKEN</code> 標頭中傳遞，像 Axios 和 Angular HttpClient 這樣的 HTTP 客戶端函式庫會自動為您執行此操作。如果您的 JavaScript HTTP 函式庫沒有為您設定該值，您將需要手動將 <code>X-XSRF-TOKEN</code> 標頭設定為與此路由設定的 <code>XSRF-TOKEN</code> cookie 的 URL 解碼值匹配。</p>
 <p><a name="logging-in"></a></p>
 <h4>登入</h4>
 <p>一旦 CSRF 保護初始化完畢，您應向 Laravel 應用程式的 <code>/login</code> 路由發出 <code>POST</code> 請求。此 <code>/login</code> 路由可以<a href="/docs/authentication#authenticating-users">手動實作</a>，或使用像 <a href="/docs/fortify">Laravel Fortify</a> 這樣的無頭認證套件。</p>
-<p>如果登入請求成功，您將被認證，並且對應用程式路由的後續請求將通過 Laravel 應用程式發送給用戶端的會話 cookie 自動進行認證。此外，由於您的應用程式已經向 <code>/sanctum/csrf-cookie</code> 路由發出請求，只要您的 JavaScript HTTP 用戶端在 <code>X-XSRF-TOKEN</code> 標頭中發送 <code>XSRF-TOKEN</code> cookie 的值，後續請求應自動獲得 CSRF 保護。</p>
+<p>如果登入請求成功，您將被認證，並且對應用程式路由的後續請求將透過 Laravel 應用程式發送給客戶端的會話 cookie 自動進行認證。此外，由於您的應用程式已經向 <code>/sanctum/csrf-cookie</code> 路由發出請求，只要您的 JavaScript HTTP 客戶端在 <code>X-XSRF-TOKEN</code> 標頭中發送 <code>XSRF-TOKEN</code> cookie 的值，後續請求應自動獲得 CSRF 保護。</p>
 <p>當然，如果使用者的工作階段因缺乏活動而過期，則對 Laravel 應用程式的後續請求可能會收到 401 或 419 HTTP 錯誤回應。在這種情況下，您應將使用者重新導向到 SPA 的登入頁面。</p>
 <p>由於這種 SPA 認證方法是基於工作階段的，您可以使用 Laravel 的標準認證服務，包括<a href="/docs/authentication#remembering-users">「記住我」</a>功能。</p>
 <blockquote>
@@ -324,13 +324,13 @@ Route::post('/sanctum/token', function (Request $request) {
 </blockquote>
 <p><a name="protecting-mobile-api-routes"></a></p>
 <h3>保護路由</h3>
-<p>如前所述，您可以通過將 <code>sanctum</code> 認證守衛附加到路由來保護路由，以使所有傳入請求都必須經過認證：</p>
+<p>如前所述，您可以透過將 <code>sanctum</code> 認證守衛附加到路由來保護路由，以使所有傳入請求都必須經過認證：</p>
 <pre><code class="language-php">Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');</code></pre>
 <p><a name="revoking-mobile-api-tokens"></a></p>
 <h3>撤銷令牌</h3>
-<p>要允許使用者撤銷頒發給行動裝置的 API 令牌，您可以在 Web 應用程式 UI 的「帳號設定」部分中按名稱列出它們，並附帶一個「撤銷」按鈕。當使用者按一下「撤銷」按鈕時，您可以從資料庫中刪除該令牌。請記住，您可以通過 <code>Laravel\\Sanctum\\HasApiTokens</code> trait 提供的 <code>tokens</code> 關聯存取使用者的 API 令牌：</p>
+<p>要允許使用者撤銷頒發給行動裝置的 API 令牌，您可以在 Web 應用程式 UI 的「帳號設定」部分中按名稱列出它們，並附帶一個「撤銷」按鈕。當使用者按一下「撤銷」按鈕時，您可以從資料庫中刪除該令牌。請記住，您可以透過 <code>Laravel\\Sanctum\\HasApiTokens</code> trait 提供的 <code>tokens</code> 關聯存取使用者的 API 令牌：</p>
 <pre><code class="language-php">// Revoke all tokens...
 $user->tokens()->delete();
 

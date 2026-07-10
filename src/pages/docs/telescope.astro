@@ -39,7 +39,7 @@ const content = `<h1>Laravel Telescope</h1>
 <li><a href="#view-watcher">視圖觀察者</a></li>
 </ul>
 </li>
-<li><a href="#displaying-user-avatars">顯示用戶頭像</a></li>
+<li><a href="#displaying-user-avatars">顯示使用者頭像</a></li>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
@@ -200,7 +200,7 @@ public function register(): void
 </code></pre>
 <p><a name="tagging"></a></p>
 <h2>標籤</h2>
-<p>Telescope 允許您透過「標籤」搜尋條目。通常，標籤是 Eloquent 模型類別名稱或已認證的用戶 ID，Telescope 會自動將它們新增到條目中。有時，您可能想將自己的自訂標籤附加到條目。要實現此目的，可以使用 <code>Telescope::tag</code> 方法。<code>tag</code> 方法接受一個應返回標籤陣列的閉包。閉包返回的標籤將與 Telescope 自動附加到條目的任何標籤合併。通常，您應該在 <code>App\\Providers\\TelescopeServiceProvider</code> 類別的 <code>register</code> 方法中呼叫 <code>tag</code> 方法：</p>
+<p>Telescope 允許您透過「標籤」搜尋條目。通常，標籤是 Eloquent 模型類別名稱或已認證的使用者 ID，Telescope 會自動將它們新增到條目中。有時，您可能想將自己的自訂標籤附加到條目。要實現此目的，可以使用 <code>Telescope::tag</code> 方法。<code>tag</code> 方法接受一個應返回標籤陣列的閉包。閉包返回的標籤將與 Telescope 自動附加到條目的任何標籤合併。通常，您應該在 <code>App\\Providers\\TelescopeServiceProvider</code> 類別的 <code>register</code> 方法中呼叫 <code>tag</code> 方法：</p>
 <pre><code class="language-php">use Laravel\\Telescope\\EntryType;
 use Laravel\\Telescope\\IncomingEntry;
 use Laravel\\Telescope\\Telescope;
@@ -352,8 +352,8 @@ public function register(): void
 <h3>視圖觀察者</h3>
 <p>視圖觀察者記錄渲染視圖時使用的<a href="/docs/views">視圖</a>名稱、路徑、資料和「合成器」。</p>
 <p><a name="displaying-user-avatars"></a></p>
-<h2>顯示用戶頭像</h2>
-<p>Telescope 儀表板顯示儲存給定條目時已認證的用戶的頭像。預設情況下，Telescope 將使用 Gravatar 網路服務來檢索頭像。但是，您可以透過在 <code>App\\Providers\\TelescopeServiceProvider</code> 類別中註冊回呼來自訂頭像 URL。回呼將接收用戶的 ID 和電子郵件地址，並應返回用戶的頭像圖片 URL：</p>
+<h2>顯示使用者頭像</h2>
+<p>Telescope 儀表板顯示儲存給定條目時已認證的使用者的頭像。預設情況下，Telescope 將使用 Gravatar 網路服務來檢索頭像。但是，您可以透過在 <code>App\\Providers\\TelescopeServiceProvider</code> 類別中註冊回呼來自訂頭像 URL。回呼將接收使用者的 ID 和電子郵件地址，並應返回使用者的頭像圖片 URL：</p>
 <pre><code class="language-php">use App\\Models\\User;
 use Laravel\\Telescope\\Telescope;
 

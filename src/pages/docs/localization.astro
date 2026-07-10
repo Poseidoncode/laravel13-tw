@@ -43,7 +43,7 @@ const content = `<h1>本地化</h1>
 <p>我們將在本文檔中討論管理翻譯字串的每種方法。</p>
 <p><a name="publishing-the-language-files"></a></p>
 <h3>發佈語言檔案</h3>
-<p>預設情況下，Laravel 應用程式骨架不包含 <code>lang</code> 目錄。如果您希望自訂 Laravel 的語言檔案或創建自己的語言檔案，應該透過 <code>lang:publish</code> Artisan 命令來搭建 <code>lang</code> 目錄。<code>lang:publish</code> 命令將在您的應用程式中創建 <code>lang</code> 目錄，並發佈 Laravel 使用的預設語言檔案集：</p>
+<p>預設情況下，Laravel 應用程式骨架不包含 <code>lang</code> 目錄。如果您希望自訂 Laravel 的語言檔案或建立自己的語言檔案，應該透過 <code>lang:publish</code> Artisan 命令來搭建 <code>lang</code> 目錄。<code>lang:publish</code> 命令將在您的應用程式中建立 <code>lang</code> 目錄，並發佈 Laravel 使用的預設語言檔案集：</p>
 <pre><code class="language-shell">php artisan lang:publish
 </code></pre>
 <p><a name="configuring-the-locale"></a></p>
@@ -124,7 +124,7 @@ return [
 <p><a name="using-translation-strings-as-keys"></a></p>
 <h3>使用翻譯字串作為鍵</h3>
 <p>對於具有大量可翻譯字串的應用程式，使用「短鍵」定義每個字串在視圖中引用鍵時可能會變得令人困惑，並且為應用程式支援的每個翻譯字串不斷發明鍵也很繁瑣。</p>
-<p>為此，Laravel 還支援使用字串的「預設」翻譯作為鍵來定義翻譯字串。使用翻譯字串作為鍵的語言檔案以 JSON 檔案的形式存儲在 <code>lang</code> 目錄中。例如，如果您的應用程式有西班牙語翻譯，您應該創建一個 <code>lang/es.json</code> 檔案：</p>
+<p>為此，Laravel 還支援使用字串的「預設」翻譯作為鍵來定義翻譯字串。使用翻譯字串作為鍵的語言檔案以 JSON 檔案的形式存儲在 <code>lang</code> 目錄中。例如，如果您的應用程式有西班牙語翻譯，您應該建立一個 <code>lang/es.json</code> 檔案：</p>
 <pre><code class="language-json">{
     "I love programming.": "Me encanta programar."
 }
@@ -183,7 +183,7 @@ public function boot(): void
     "There is one apple|There are many apples": "Hay una manzana|Hay muchas manzanas"
 }
 </code></pre>
-<p>您甚至可以創建更複雜的複數化規則，為多個值範圍指定翻譯字串：</p>
+<p>您甚至可以建立更複雜的複數化規則，為多個值範圍指定翻譯字串：</p>
 <pre><code class="language-php">'apples' => '{0} There are none|[1,19] There are some|[20,*] There are many',
 </code></pre>
 <p>定義具有複數化選項的翻譯字串後，您可以使用 <code>trans_choice</code> 函數來檢索給定「數量」的行。在此範例中，由於數量大於一，因此返回翻譯字串的複數形式：</p>

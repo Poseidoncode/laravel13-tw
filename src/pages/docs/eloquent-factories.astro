@@ -10,7 +10,7 @@ const content = `<h1>Eloquent：工廠</h1>
 <li><a href="#factory-callbacks">工廠回呼</a></li>
 </ul>
 </li>
-<li><a href="#creating-models-using-factories">使用工廠創建模型</a><ul>
+<li><a href="#creating-models-using-factories">使用工廠建立模型</a><ul>
 <li><a href="#instantiating-models">實例化模型</a></li>
 <li><a href="#persisting-models">持久化模型</a></li>
 <li><a href="#sequences">序列</a></li>
@@ -73,7 +73,7 @@ class UserFactory extends Factory
     }
 }
 </code></pre>
-<p>如您所見，在最基本的形式中，工廠是擴展 Laravel 基礎工廠類別並定義 <code>definition</code> 方法的類別。<code>definition</code> 方法返回使用工廠創建模型時應應用的預設屬性值集。</p>
+<p>如您所見，在最基本的形式中，工廠是擴展 Laravel 基礎工廠類別並定義 <code>definition</code> 方法的類別。<code>definition</code> 方法返回使用工廠建立模型時應應用的預設屬性值集。</p>
 <p>透過 <code>fake</code> 輔助函數，工廠可以存取 <a href="https://github.com/FakerPHP/Faker">Faker</a> PHP 函式庫，該函式庫允許您方便地生成各種類型的隨機資料用於測試和填充。</p>
 <blockquote>
 <p>[!NOTE]
@@ -83,7 +83,7 @@ class UserFactory extends Factory
 <h2>定義模型工廠</h2>
 <p><a name="generating-factories"></a></p>
 <h3>生成工廠</h3>
-<p>要創建一個工廠，請執行 <code>make:factory</code> <a href="/docs/artisan">Artisan 命令</a>：</p>
+<p>要建立一個工廠，請執行 <code>make:factory</code> <a href="/docs/artisan">Artisan 命令</a>：</p>
 <pre><code class="language-shell">php artisan make:factory PostFactory
 </code></pre>
 <p>新的工廠類別將放置在您的 <code>database/factories</code> 目錄中。</p>
@@ -104,7 +104,7 @@ class Flight extends Model
 <pre><code class="language-php">use Database\\Factories\\Administration\\FlightFactory;
 
 /**
- * 為模型創建一個新的工廠實例。
+ * 為模型建立一個新的工廠實例。
  */
 protected static function newFactory()
 {
@@ -142,14 +142,14 @@ public function suspended(): Factory
 </code></pre>
 <p><a name="trashed-state"></a></p>
 <h4>「已刪除」狀態</h4>
-<p>如果您的 Eloquent 模型可以<a href="/docs/eloquent#soft-deleting">被軟刪除</a>，您可以呼叫內建的 <code>trashed</code> 狀態方法來指示創建的模型應該已經「被軟刪除」。您不需要手動定義 <code>trashed</code> 狀態，因為它對所有工廠都自動可用：</p>
+<p>如果您的 Eloquent 模型可以<a href="/docs/eloquent#soft-deleting">被軟刪除</a>，您可以呼叫內建的 <code>trashed</code> 狀態方法來指示建立的模型應該已經「被軟刪除」。您不需要手動定義 <code>trashed</code> 狀態，因為它對所有工廠都自動可用：</p>
 <pre><code class="language-php">use App\\Models\\User;
 
 $user = User::factory()->trashed()->create();
 </code></pre>
 <p><a name="factory-callbacks"></a></p>
 <h3>工廠回呼</h3>
-<p>工廠回呼使用 <code>afterMaking</code> 和 <code>afterCreating</code> 方法註冊，允許您在創建或創建模型後執行額外的任務。您應該透過在工廠類別上定義 <code>configure</code> 方法來註冊這些回呼。當工廠被實例化時，Laravel 將自動呼叫此方法：</p>
+<p>工廠回呼使用 <code>afterMaking</code> 和 <code>afterCreating</code> 方法註冊，允許您在建立或建立模型後執行額外的任務。您應該透過在工廠類別上定義 <code>configure</code> 方法來註冊這些回呼。當工廠被實例化時，Laravel 將自動呼叫此方法：</p>
 <pre><code class="language-php">namespace Database\\Factories;
 
 use App\\Models\\User;
@@ -193,15 +193,15 @@ public function suspended(): Factory
 }
 </code></pre>
 <p><a name="creating-models-using-factories"></a></p>
-<h2>使用工廠創建模型</h2>
+<h2>使用工廠建立模型</h2>
 <p><a name="instantiating-models"></a></p>
 <h3>實例化模型</h3>
-<p>定義好工廠後，您可以使用 <code>Illuminate\\Database\\Eloquent\\Factories\\HasFactory</code> trait 提供給模型的靜態 <code>factory</code> 方法來為該模型實例化工廠。讓我們看幾個創建模型的範例。首先，我們將使用 <code>make</code> 方法來創建不持久化到資料庫的模型：</p>
+<p>定義好工廠後，您可以使用 <code>Illuminate\\Database\\Eloquent\\Factories\\HasFactory</code> trait 提供給模型的靜態 <code>factory</code> 方法來為該模型實例化工廠。讓我們看幾個建立模型的範例。首先，我們將使用 <code>make</code> 方法來建立不持久化到資料庫的模型：</p>
 <pre><code class="language-php">use App\\Models\\User;
 
 $user = User::factory()->make();
 </code></pre>
-<p>您可以使用 <code>count</code> 方法來創建多個模型的集合：</p>
+<p>您可以使用 <code>count</code> 方法來建立多個模型的集合：</p>
 <pre><code class="language-php">$users = User::factory()->count(3)->make();
 </code></pre>
 <p><a name="applying-states"></a></p>
@@ -223,17 +223,17 @@ $user = User::factory()->make();
 </code></pre>
 <blockquote>
 <p>[!NOTE]
-使用工廠創建模型時，<a href="/docs/eloquent#mass-assignment">批量賦值保護</a>會自動禁用。</p>
+使用工廠建立模型時，<a href="/docs/eloquent#mass-assignment">批量賦值保護</a>會自動禁用。</p>
 </blockquote>
 <p><a name="persisting-models"></a></p>
 <h3>持久化模型</h3>
 <p><code>create</code> 方法實例化模型實例並使用 Eloquent 的 <code>save</code> 方法將它們持久化到資料庫中：</p>
 <pre><code class="language-php">use App\\Models\\User;
 
-// 創建一個 App\\Models\\User 實例...
+// 建立一個 App\\Models\\User 實例...
 $user = User::factory()->create();
 
-// 創建三個 App\\Models\\User 實例...
+// 建立三個 App\\Models\\User 實例...
 $users = User::factory()->count(3)->create();
 </code></pre>
 <p>您可以向 <code>create</code> 方法傳遞一個屬性陣列來覆蓋工廠的預設模型屬性：</p>
@@ -243,7 +243,7 @@ $users = User::factory()->count(3)->create();
 </code></pre>
 <p><a name="sequences"></a></p>
 <h3>序列</h3>
-<p>有時您可能希望為每個創建的模型修改給定模型屬性的值。您可以透過將狀態轉換定義為序列來實現這一點。例如，您可能希望為每個創建的使用者在 <code>Y</code> 和 <code>N</code> 之間交替修改 <code>admin</code> 欄位的值：</p>
+<p>有時您可能希望為每個建立的模型修改給定模型屬性的值。您可以透過將狀態轉換定義為序列來實現這一點。例如，您可能希望為每個建立的使用者在 <code>Y</code> 和 <code>N</code> 之間交替修改 <code>admin</code> 欄位的值：</p>
 <pre><code class="language-php">use App\\Models\\User;
 use Illuminate\\Database\\Eloquent\\Factories\\Sequence;
 
@@ -255,7 +255,7 @@ $users = User::factory()
     ))
     ->create();
 </code></pre>
-<p>在此範例中，五個使用者將以 <code>admin</code> 值 <code>Y</code> 創建，五個使用者將以 <code>admin</code> 值 <code>N</code> 創建。</p>
+<p>在此範例中，五個使用者將以 <code>admin</code> 值 <code>Y</code> 建立，五個使用者將以 <code>admin</code> 值 <code>N</code> 建立。</p>
 <p>如果需要，您可以包含一個閉包作為序列值。每次序列需要一個新值時都會呼叫該閉包：</p>
 <pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Factories\\Sequence;
 
@@ -287,7 +287,7 @@ $users = User::factory()
 <h2>工廠關聯</h2>
 <p><a name="has-many-relationships"></a></p>
 <h3>一對多關聯</h3>
-<p>接下來，讓我們探討如何使用 Laravel 的流式工廠方法來構建 Eloquent 模型關聯。首先，讓我們假設我們的應用程式有一個 <code>App\\Models\\User</code> 模型和一個 <code>App\\Models\\Post</code> 模型。此外，讓我們假設 <code>User</code> 模型定義了一個與 <code>Post</code> 的 <code>hasMany</code> 關聯。我們可以使用 Laravel 工廠提供的 <code>has</code> 方法來創建一個擁有三篇文章的使用者。<code>has</code> 方法接受一個工廠實例：</p>
+<p>接下來，讓我們探討如何使用 Laravel 的流式工廠方法來建立 Eloquent 模型關聯。首先，讓我們假設我們的應用程式有一個 <code>App\\Models\\User</code> 模型和一個 <code>App\\Models\\Post</code> 模型。此外，讓我們假設 <code>User</code> 模型定義了一個與 <code>Post</code> 的 <code>hasMany</code> 關聯。我們可以使用 Laravel 工廠提供的 <code>has</code> 方法來建立一個擁有三篇文章的使用者。<code>has</code> 方法接受一個工廠實例：</p>
 <pre><code class="language-php">use App\\Models\\Post;
 use App\\Models\\User;
 
@@ -313,19 +313,19 @@ $user = User::factory()
 </code></pre>
 <p><a name="has-many-relationships-using-magic-methods"></a></p>
 <h4>使用魔法方法</h4>
-<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來構建關聯。例如，以下範例將使用慣例來確定相關模型應透過 <code>User</code> 模型上的 <code>posts</code> 關聯方法來創建：</p>
+<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來建立關聯。例如，以下範例將使用慣例來確定相關模型應透過 <code>User</code> 模型上的 <code>posts</code> 關聯方法來建立：</p>
 <pre><code class="language-php">$user = User::factory()
     ->hasPosts(3)
     ->create();
 </code></pre>
-<p>使用魔法方法創建工廠關聯時，您可以傳遞一個屬性陣列來覆蓋相關模型：</p>
+<p>使用魔法方法建立工廠關聯時，您可以傳遞一個屬性陣列來覆蓋相關模型：</p>
 <pre><code class="language-php">$user = User::factory()
     ->hasPosts(3, [
         'published' => false,
     ])
     ->create();
 </code></pre>
-<p>您還可以傳遞多個屬性陣列來創建具有逐模型狀態的相關模型。Laravel 將按順序應用每個陣列：</p>
+<p>您還可以傳遞多個屬性陣列來建立具有逐模型狀態的相關模型。Laravel 將按順序應用每個陣列：</p>
 <pre><code class="language-php">$user = User::factory()
     ->hasPosts(
         ['title' => 'First Post'],
@@ -343,7 +343,7 @@ $user = User::factory()
 </code></pre>
 <p><a name="belongs-to-relationships"></a></p>
 <h3>多對一關聯</h3>
-<p>現在我們已經探討了如何使用工廠構建「一對多」關聯，讓我們探索關聯的反面。<code>for</code> 方法可用於定義工廠創建的模型所屬的父模型。例如，我們可以創建三個屬於單個使用者的 <code>App\\Models\\Post</code> 模型實例：</p>
+<p>現在我們已經探討了如何使用工廠建立「一對多」關聯，讓我們探索關聯的反面。<code>for</code> 方法可用於定義工廠建立的模型所屬的父模型。例如，我們可以建立三個屬於單個使用者的 <code>App\\Models\\Post</code> 模型實例：</p>
 <pre><code class="language-php">use App\\Models\\Post;
 use App\\Models\\User;
 
@@ -354,7 +354,7 @@ $posts = Post::factory()
     ]))
     ->create();
 </code></pre>
-<p>如果您已經有一個應該與您正在創建的模型關聯的父模型實例，您可以將模型實例傳遞給 <code>for</code> 方法：</p>
+<p>如果您已經有一個應該與您正在建立的模型關聯的父模型實例，您可以將模型實例傳遞給 <code>for</code> 方法：</p>
 <pre><code class="language-php">$user = User::factory()->create();
 
 $posts = Post::factory()
@@ -374,7 +374,7 @@ $posts = Post::factory()
 </code></pre>
 <p><a name="many-to-many-relationships"></a></p>
 <h3>多對多關聯</h3>
-<p>像<a href="#has-many-relationships">一對多關聯</a>一樣，「多對多」關聯可以使用 <code>has</code> 方法來創建：</p>
+<p>像<a href="#has-many-relationships">一對多關聯</a>一樣，「多對多」關聯可以使用 <code>has</code> 方法來建立：</p>
 <pre><code class="language-php">use App\\Models\\Role;
 use App\\Models\\User;
 
@@ -418,7 +418,7 @@ $user = User::factory()
     )
     ->create();
 </code></pre>
-<p>如果您已經有您希望附加到您正在創建的模型的模型實例，您可以將模型實例傳遞給 <code>hasAttached</code> 方法。在此範例中，相同的三個角色將附加到所有三個使用者：</p>
+<p>如果您已經有您希望附加到您正在建立的模型的模型實例，您可以將模型實例傳遞給 <code>hasAttached</code> 方法。在此範例中，相同的三個角色將附加到所有三個使用者：</p>
 <pre><code class="language-php">$roles = Role::factory()->count(3)->create();
 
 $users = User::factory()
@@ -428,7 +428,7 @@ $users = User::factory()
 </code></pre>
 <p><a name="many-to-many-relationships-using-magic-methods"></a></p>
 <h4>使用魔法方法</h4>
-<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來定義多對多關聯。例如，以下範例將使用慣例來確定相關模型應透過 <code>User</code> 模型上的 <code>roles</code> 關聯方法來創建：</p>
+<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來定義多對多關聯。例如，以下範例將使用慣例來確定相關模型應透過 <code>User</code> 模型上的 <code>roles</code> 關聯方法來建立：</p>
 <pre><code class="language-php">$user = User::factory()
     ->hasRoles(1, [
         'name' => 'Editor'
@@ -437,21 +437,21 @@ $users = User::factory()
 </code></pre>
 <p><a name="polymorphic-relationships"></a></p>
 <h3>多態關聯</h3>
-<p><a href="/docs/eloquent-relationships#polymorphic-relationships">多態關聯</a>也可以使用工廠來創建。多態「多態多」關聯的創建方式與典型的「一對多」關聯相同。例如，如果 <code>App\\Models\\Post</code> 模型與 <code>App\\Models\\Comment</code> 模型有一個 <code>morphMany</code> 關聯：</p>
+<p><a href="/docs/eloquent-relationships#polymorphic-relationships">多態關聯</a>也可以使用工廠來建立。多態「多態多」關聯的建立方式與典型的「一對多」關聯相同。例如，如果 <code>App\\Models\\Post</code> 模型與 <code>App\\Models\\Comment</code> 模型有一個 <code>morphMany</code> 關聯：</p>
 <pre><code class="language-php">use App\\Models\\Post;
 
 $post = Post::factory()->hasComments(3)->create();
 </code></pre>
 <p><a name="morph-to-relationships"></a></p>
 <h4>多態多對一關聯</h4>
-<p>不能使用魔法方法來創建 <code>morphTo</code> 關聯。相反，必須直接使用 <code>for</code> 方法，並且必須明確提供關聯的名稱。例如，想像 <code>Comment</code> 模型有一個定義 <code>morphTo</code> 關聯的 <code>commentable</code> 方法。在這種情況下，我們可以直接使用 <code>for</code> 方法來創建屬於單個帖子的三個評論：</p>
+<p>不能使用魔法方法來建立 <code>morphTo</code> 關聯。相反，必須直接使用 <code>for</code> 方法，並且必須明確提供關聯的名稱。例如，想像 <code>Comment</code> 模型有一個定義 <code>morphTo</code> 關聯的 <code>commentable</code> 方法。在這種情況下，我們可以直接使用 <code>for</code> 方法來建立屬於單個帖子的三個評論：</p>
 <pre><code class="language-php">$comments = Comment::factory()->count(3)->for(
     Post::factory(), 'commentable'
 )->create();
 </code></pre>
 <p><a name="polymorphic-many-to-many-relationships"></a></p>
 <h4>多態多對多關聯</h4>
-<p>多態「多對多」（<code>morphToMany</code> / <code>morphedByMany</code>）關聯的創建方式與非多態「多對多」關聯相同：</p>
+<p>多態「多對多」（<code>morphToMany</code> / <code>morphedByMany</code>）關聯的建立方式與非多態「多對多」關聯相同：</p>
 <pre><code class="language-php">use App\\Models\\Tag;
 use App\\Models\\Video;
 
@@ -462,14 +462,14 @@ $video = Video::factory()
     )
     ->create();
 </code></pre>
-<p>當然，魔法 <code>has</code> 方法也可以用於創建多態「多對多」關聯：</p>
+<p>當然，魔法 <code>has</code> 方法也可以用於建立多態「多對多」關聯：</p>
 <pre><code class="language-php">$video = Video::factory()
     ->hasTags(3, ['public' => true])
     ->create();
 </code></pre>
 <p><a name="defining-relationships-within-factories"></a></p>
 <h3>在工廠中定義關聯</h3>
-<p>要在模型工廠中定義關聯，通常會將一個新的工廠實例分配給關聯的外鍵。這通常用於「反向」關聯（如 <code>belongsTo</code> 和 <code>morphTo</code> 關聯）。例如，如果您希望在創建帖子時創建一個新的使用者，您可以執行以下操作：</p>
+<p>要在模型工廠中定義關聯，通常會將一個新的工廠實例分配給關聯的外鍵。這通常用於「反向」關聯（如 <code>belongsTo</code> 和 <code>morphTo</code> 關聯）。例如，如果您希望在建立帖子時建立一個新的使用者，您可以執行以下操作：</p>
 <pre><code class="language-php">use App\\Models\\User;
 
 /**
@@ -506,8 +506,8 @@ public function definition(): array
 </code></pre>
 <p><a name="recycling-an-existing-model-for-relationships"></a></p>
 <h3>回收現有模型用於關聯</h3>
-<p>如果您有與另一個模型共享共同關聯的模型，可以使用 <code>recycle</code> 方法來確保為工廠創建的所有關聯回收單個相關模型實例。</p>
-<p>例如，想像您有 <code>Airline</code>、<code>Flight</code> 和 <code>Ticket</code> 模型，其中票屬於航空公司和航班，航班也屬於航空公司。創建票時，您可能希望票和航班使用相同的航空公司，因此您可以將航空公司實例傳遞給 <code>recycle</code> 方法：</p>
+<p>如果您有與另一個模型共享共同關聯的模型，可以使用 <code>recycle</code> 方法來確保為工廠建立的所有關聯回收單個相關模型實例。</p>
+<p>例如，想像您有 <code>Airline</code>、<code>Flight</code> 和 <code>Ticket</code> 模型，其中票屬於航空公司和航班，航班也屬於航空公司。建立票時，您可能希望票和航班使用相同的航空公司，因此您可以將航空公司實例傳遞給 <code>recycle</code> 方法：</p>
 <pre><code class="language-php">Ticket::factory()
     ->recycle(Airline::factory()->create())
     ->create();

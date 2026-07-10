@@ -54,12 +54,12 @@ event(new Registered($user));
 <p>接下來，您的 <code>users</code> 資料表必須包含 <code>email_verified_at</code> 欄位，以儲存使用者電子郵件地址被驗證的日期和時間。通常，這已包含在 Laravel 預設的 <code>0001_01_01_000000_create_users_table.php</code> 資料庫遷移中。</p>
 <p><a name="verification-routing"></a></p>
 <h2>路由</h2>
-<p>為了正確實作電子郵件驗證，需要定義三個路由。首先，需要一個路由來向使用者顯示通知，告知他們應點擊 Laravel 在註冊後傳送的驗證電子郵件中的驗證連結。</p>
-<p>其次，需要一個路由來處理使用者點擊電子郵件中的驗證連結時產生的請求。</p>
+<p>為了正確實作電子郵件驗證，需要定義三個路由。首先，需要一個路由來向使用者顯示通知，告知他們應點選 Laravel 在註冊後傳送的驗證電子郵件中的驗證連結。</p>
+<p>其次，需要一個路由來處理使用者點選電子郵件中的驗證連結時產生的請求。</p>
 <p>第三，需要一個路由，以便在使用者意外遺失第一個驗證連結時重新傳送驗證連結。</p>
 <p><a name="the-email-verification-notice"></a></p>
 <h3>電子郵件驗證通知</h3>
-<p>如前所述，應定義一個路由，該路由將返回一個視圖，指示使用者點擊 Laravel 在註冊後透過電子郵件傳送給他們的驗證連結。當使用者嘗試在未先驗證電子郵件地址的情況下存取應用程式的其他部分時，將向他們顯示此視圖。請記住，只要您的 <code>App\\Models\\User</code> 模型實作了 <code>MustVerifyEmail</code> 介面，該連結就會自動透過電子郵件傳送給使用者：</p>
+<p>如前所述，應定義一個路由，該路由將返回一個視圖，指示使用者點選 Laravel 在註冊後透過電子郵件傳送給他們的驗證連結。當使用者嘗試在未先驗證電子郵件地址的情況下存取應用程式的其他部分時，將向他們顯示此視圖。請記住，只要您的 <code>App\\Models\\User</code> 模型實作了 <code>MustVerifyEmail</code> 介面，該連結就會自動透過電子郵件傳送給使用者：</p>
 <pre><code class="language-php">Route::get(&#39;/email/verify&#39;, function () {
     return view(&#39;auth.verify-email&#39;);
 })-&gt;middleware(&#39;auth&#39;)-&gt;name(&#39;verification.notice&#39;);
@@ -71,7 +71,7 @@ event(new Registered($user));
 </blockquote>
 <p><a name="the-email-verification-handler"></a></p>
 <h3>電子郵件驗證處理器</h3>
-<p>接下來，我們需要定義一個路由來處理使用者點擊透過電子郵件傳送給他們的驗證連結時產生的請求。此路由應命名為 <code>verification.verify</code>，並分配 <code>auth</code> 和 <code>signed</code> 中介層：</p>
+<p>接下來，我們需要定義一個路由來處理使用者點選透過電子郵件傳送給他們的驗證連結時產生的請求。此路由應命名為 <code>verification.verify</code>，並分配 <code>auth</code> 和 <code>signed</code> 中介層：</p>
 <pre><code class="language-php">use Illuminate\\Foundation\\Auth\\EmailVerificationRequest;
 
 Route::get(&#39;/email/verify/{id}/{hash}&#39;, function (EmailVerificationRequest $request) {

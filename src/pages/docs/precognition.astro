@@ -29,8 +29,8 @@ const content = `<h1>Precognition</h1>
 <h2>即時驗證</h2>
 <p><a name="using-vue"></a></p>
 <h3>使用 Vue</h3>
-<p>使用 Laravel Precognition，您可以為使用者提供即時驗證體驗，而無需在前端 Vue 應用程式中複製驗證規則。為了說明其工作原理，讓我們在應用程式中構建一個用於創建新使用者的表單。</p>
-<p>首先，要為路由啟用 Precognition，應將 <code>HandlePrecognitiveRequests</code> 中介層添加到路由定義中。您還應該創建一個<a href="/docs/validation#form-request-validation">表單請求</a>來存放路由的驗證規則：</p>
+<p>使用 Laravel Precognition，您可以為使用者提供即時驗證體驗，而無需在前端 Vue 應用程式中複製驗證規則。為了說明其工作原理，讓我們在應用程式中建立一個用於建立新使用者的表單。</p>
+<p>首先，要為路由啟用 Precognition，應將 <code>HandlePrecognitiveRequests</code> 中介層添加到路由定義中。您還應該建立一個<a href="/docs/validation#form-request-validation">表單請求</a>來存放路由的驗證規則：</p>
 <pre><code class="language-php">use App\\Http\\Requests\\StoreUserRequest;
 use Illuminate\\Foundation\\Http\\Middleware\\HandlePrecognitiveRequests;
 
@@ -41,7 +41,7 @@ Route::post('/users', function (StoreUserRequest $request) {
 <p>接下來，您應該透過 NPM 安裝 Laravel Precognition 的 Vue 前端輔助工具：</p>
 <pre><code class="language-shell">npm install laravel-precognition-vue
 </code></pre>
-<p>安裝 Laravel Precognition 套件後，您現在可以使用 Precognition 的 <code>useForm</code> 函數創建一個表單物件，提供 HTTP 方法（<code>post</code>）、目標 URL（<code>/users</code>）和初始表單資料。</p>
+<p>安裝 Laravel Precognition 套件後，您現在可以使用 Precognition 的 <code>useForm</code> 函數建立一個表單物件，提供 HTTP 方法（<code>post</code>）、目標 URL（<code>/users</code>）和初始表單資料。</p>
 <p>然後，要啟用即時驗證，請在每個輸入的 <code>change</code> 事件上呼叫表單的 <code>validate</code> 方法，並提供輸入的名稱：</p>
 <pre><code class="language-vue">&lt;script setup&gt;
 import { useForm } from 'laravel-precognition-vue';
@@ -125,7 +125,7 @@ const submit = () =&gt; form.submit();
     }"
 &gt;
 </code></pre>
-<p>如我們所見，您可以掛鉤到輸入的 <code>change</code> 事件，並在使用者與它們互動時驗證個別輸入；但是，您可能需要驗證使用者尚未互動的輸入。這在構建「向導」時很常見，您希望在進入下一步之前驗證所有可見的輸入，無論使用者是否與它們互動過。</p>
+<p>如我們所見，您可以掛鉤到輸入的 <code>change</code> 事件，並在使用者與它們互動時驗證個別輸入；但是，您可能需要驗證使用者尚未互動的輸入。這在建立「向導」時很常見，您希望在進入下一步之前驗證所有可見的輸入，無論使用者是否與它們互動過。</p>
 <p>要使用 Precognition 實現這一點，您應該呼叫 <code>validate</code> 方法，將您希望驗證的欄位名稱傳遞給 <code>only</code> 配置鍵。您可以使用 <code>onSuccess</code> 或 <code>onValidationError</code> 回呼來處理驗證結果：</p>
 <pre><code class="language-html">&lt;button
     type="button"
@@ -154,8 +154,8 @@ const submit = () =&gt; form.submit();
 </code></pre>
 <p><a name="using-react"></a></p>
 <h3>使用 React</h3>
-<p>使用 Laravel Precognition，您可以為使用者提供即時驗證體驗，而無需在前端 React 應用程式中複製驗證規則。為了說明其工作原理，讓我們在應用程式中構建一個用於創建新使用者的表單。</p>
-<p>首先，要為路由啟用 Precognition，應將 <code>HandlePrecognitiveRequests</code> 中介層添加到路由定義中。您還應該創建一個<a href="/docs/validation#form-request-validation">表單請求</a>來存放路由的驗證規則：</p>
+<p>使用 Laravel Precognition，您可以為使用者提供即時驗證體驗，而無需在前端 React 應用程式中複製驗證規則。為了說明其工作原理，讓我們在應用程式中建立一個用於建立新使用者的表單。</p>
+<p>首先，要為路由啟用 Precognition，應將 <code>HandlePrecognitiveRequests</code> 中介層添加到路由定義中。您還應該建立一個<a href="/docs/validation#form-request-validation">表單請求</a>來存放路由的驗證規則：</p>
 <pre><code class="language-php">use App\\Http\\Requests\\StoreUserRequest;
 use Illuminate\\Foundation\\Http\\Middleware\\HandlePrecognitiveRequests;
 
@@ -166,7 +166,7 @@ Route::post('/users', function (StoreUserRequest $request) {
 <p>接下來，您應該透過 NPM 安裝 Laravel Precognition 的 React 前端輔助工具：</p>
 <pre><code class="language-shell">npm install laravel-precognition-react
 </code></pre>
-<p>安裝 Laravel Precognition 套件後，您現在可以使用 Precognition 的 <code>useForm</code> 函數創建一個表單物件，提供 HTTP 方法（<code>post</code>）、目標 URL（<code>/users</code>）和初始表單資料。</p>
+<p>安裝 Laravel Precognition 套件後，您現在可以使用 Precognition 的 <code>useForm</code> 函數建立一個表單物件，提供 HTTP 方法（<code>post</code>）、目標 URL（<code>/users</code>）和初始表單資料。</p>
 <p>要啟用即時驗證，您應該監聽每個輸入的 <code>change</code> 和 <code>blur</code> 事件。在 <code>change</code> 事件處理器中，您應該使用 <code>setData</code> 函數設定表單的資料，並傳遞輸入的名稱和新值。然後，在 <code>blur</code> 事件處理器中呼叫表單的 <code>validate</code> 方法，並提供輸入的名稱：</p>
 <pre><code class="language-jsx">import { useForm } from 'laravel-precognition-react';
 
@@ -241,7 +241,7 @@ export default function Form() {
     }}
 &gt;
 </code></pre>
-<p>如我們所見，您可以掛鉤到輸入的 <code>blur</code> 事件，並在使用者與它們互動時驗證個別輸入；但是，您可能需要驗證使用者尚未互動的輸入。這在構建「向導」時很常見，您希望在進入下一步之前驗證所有可見的輸入，無論使用者是否與它們互動過。</p>
+<p>如我們所見，您可以掛鉤到輸入的 <code>blur</code> 事件，並在使用者與它們互動時驗證個別輸入；但是，您可能需要驗證使用者尚未互動的輸入。這在建立「向導」時很常見，您希望在進入下一步之前驗證所有可見的輸入，無論使用者是否與它們互動過。</p>
 <p>要使用 Precognition 實現這一點，您應該呼叫 <code>validate</code> 方法，將您希望驗證的欄位名稱傳遞給 <code>only</code> 配置鍵。您可以使用 <code>onSuccess</code> 或 <code>onValidationError</code> 回呼來處理驗證結果：</p>
 <pre><code class="language-jsx">&lt;button
     type="button"
@@ -274,8 +274,8 @@ export default function Form() {
 </code></pre>
 <p><a name="using-alpine"></a></p>
 <h3>使用 Alpine 和 Blade</h3>
-<p>使用 Laravel Precognition，您可以為使用者提供即時驗證體驗，而無需在前端 Alpine 應用程式中複製驗證規則。為了說明其工作原理，讓我們在應用程式中構建一個用於創建新使用者的表單。</p>
-<p>首先，要為路由啟用 Precognition，應將 <code>HandlePrecognitiveRequests</code> 中介層添加到路由定義中。您還應該創建一個<a href="/docs/validation#form-request-validation">表單請求</a>來存放路由的驗證規則：</p>
+<p>使用 Laravel Precognition，您可以為使用者提供即時驗證體驗，而無需在前端 Alpine 應用程式中複製驗證規則。為了說明其工作原理，讓我們在應用程式中建立一個用於建立新使用者的表單。</p>
+<p>首先，要為路由啟用 Precognition，應將 <code>HandlePrecognitiveRequests</code> 中介層添加到路由定義中。您還應該建立一個<a href="/docs/validation#form-request-validation">表單請求</a>來存放路由的驗證規則：</p>
 <pre><code class="language-php">use App\\Http\\Requests\\CreateUserRequest;
 use Illuminate\\Foundation\\Http\\Middleware\\HandlePrecognitiveRequests;
 
@@ -295,7 +295,7 @@ window.Alpine = Alpine;
 Alpine.plugin(Precognition);
 Alpine.start();
 </code></pre>
-<p>安裝並註冊 Laravel Precognition 套件後，您現在可以使用 Precognition 的 <code>$form</code>「魔法」創建一個表單物件，提供 HTTP 方法（<code>post</code>）、目標 URL（<code>/users</code>）和初始表單資料。</p>
+<p>安裝並註冊 Laravel Precognition 套件後，您現在可以使用 Precognition 的 <code>$form</code>「魔法」建立一個表單物件，提供 HTTP 方法（<code>post</code>）、目標 URL（<code>/users</code>）和初始表單資料。</p>
 <p>要啟用即時驗證，您應該將表單的資料綁定到其相關輸入，然後監聽每個輸入的 <code>change</code> 事件。在 <code>change</code> 事件處理器中，您應該呼叫表單的 <code>validate</code> 方法，並提供輸入的名稱：</p>
 <pre><code class="language-html">&lt;form x-data="{
     form: $form('post', '/register', {
@@ -362,7 +362,7 @@ Alpine.start();
 <p>[!WARNING]
 表單輸入只有在發生變更並收到驗證回應後才會顯示為有效或無效。</p>
 </blockquote>
-<p>如我們所見，您可以掛鉤到輸入的 <code>change</code> 事件，並在使用者與它們互動時驗證個別輸入；但是，您可能需要驗證使用者尚未互動的輸入。這在構建「向導」時很常見，您希望在進入下一步之前驗證所有可見的輸入，無論使用者是否與它們互動過。</p>
+<p>如我們所見，您可以掛鉤到輸入的 <code>change</code> 事件，並在使用者與它們互動時驗證個別輸入；但是，您可能需要驗證使用者尚未互動的輸入。這在建立「向導」時很常見，您希望在進入下一步之前驗證所有可見的輸入，無論使用者是否與它們互動過。</p>
 <p>要使用 Precognition 實現這一點，您應該呼叫 <code>validate</code> 方法，將您希望驗證的欄位名稱傳遞給 <code>only</code> 配置鍵。您可以使用 <code>onSuccess</code> 或 <code>onValidationError</code> 回呼來處理驗證結果：</p>
 <pre><code class="language-html">&lt;button
     type="button"
@@ -380,7 +380,7 @@ Alpine.start();
 </code></pre>
 <p><a name="repopulating-old-form-data"></a></p>
 <h4>重新填充舊表單資料</h4>
-<p>在上面討論的使用者創建範例中，我們使用 Precognition 進行即時驗證；但是，我們正在執行傳統的伺服器端表單提交來提交表單。因此，表單應填充伺服器端表單提交返回的任何「舊」輸入和驗證錯誤：</p>
+<p>在上面討論的使用者建立範例中，我們使用 Precognition 進行即時驗證；但是，我們正在執行傳統的伺服器端表單提交來提交表單。因此，表單應填充伺服器端表單提交返回的任何「舊」輸入和驗證錯誤：</p>
 <pre><code class="language-html">&lt;form x-data="{
     form: $form('post', '/register', {
         name: '{{ old('name') }}',
@@ -412,7 +412,7 @@ Alpine.start();
 </code></pre>
 <p><a name="configuring-axios"></a></p>
 <h3>配置 Axios</h3>
-<p>Precognition 驗證函式庫使用 <a href="https://github.com/axios/axios">Axios</a> HTTP 用戶端向應用程式的後端發送請求。為了方便，Axios 實例可以根據應用程式的需求進行自訂。例如，使用 <code>laravel-precognition-vue</code> 函式庫時，您可以在應用程式的 <code>resources/js/app.js</code> 檔案中向每個外發請求添加額外的請求標頭：</p>
+<p>Precognition 驗證函式庫使用 <a href="https://github.com/axios/axios">Axios</a> HTTP 客戶端向應用程式的後端發送請求。為了方便，Axios 實例可以根據應用程式的需求進行自訂。例如，使用 <code>laravel-precognition-vue</code> 函式庫時，您可以在應用程式的 <code>resources/js/app.js</code> 檔案中向每個外發請求添加額外的請求標頭：</p>
 <pre><code class="language-js">import { client } from 'laravel-precognition-vue';
 
 client.axios().defaults.headers.common['Authorization'] = authToken;
@@ -441,7 +441,7 @@ form.validate('users.*.*');
 <p><a name="customizing-validation-rules"></a></p>
 <h2>自訂驗證規則</h2>
 <p>可以使用請求的 <code>isPrecognitive</code> 方法來自訂在預知請求期間執行的驗證規則。</p>
-<p>例如，在使用者創建表單上，我們可能希望僅在最終表單提交時驗證密碼是否「未洩露」。對於預知驗證請求，我們將簡單地驗證密碼是必需的且最少 8 個字元。使用 <code>isPrecognitive</code> 方法，我們可以自訂表單請求定義的規則：</p>
+<p>例如，在使用者建立表單上，我們可能希望僅在最終表單提交時驗證密碼是否「未洩露」。對於預知驗證請求，我們將簡單地驗證密碼是必需的且最少 8 個字元。使用 <code>isPrecognitive</code> 方法，我們可以自訂表單請求定義的規則：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Http\\Requests;

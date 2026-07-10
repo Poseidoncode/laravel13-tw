@@ -54,11 +54,11 @@ const content = `<h1>資料庫：查詢建構器</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>Laravel 的資料庫查詢建構器提供了一個方便、流暢的介面來創建和運行資料庫查詢。它可用於執行應用程式中的大多數資料庫操作，並且與 Laravel 支援的所有資料庫系統完美配合。</p>
+<p>Laravel 的資料庫查詢建構器提供了一個方便、流暢的介面來建立和運行資料庫查詢。它可用於執行應用程式中的大多數資料庫操作，並且與 Laravel 支援的所有資料庫系統完美配合。</p>
 <p>Laravel 查詢建構器使用 PDO 參數綁定來保護您的應用程式免受 SQL 注入攻擊。無需清理或清理作為查詢綁定傳遞給查詢建構器的字串。</p>
 <blockquote>
 <p>[!WARNING]
-PDO 不支援綁定欄位名稱。因此，您不應允許用戶輸入來決定查詢引用的欄位名稱，包括「order by」欄位。</p>
+PDO 不支援綁定欄位名稱。因此，您不應允許使用者輸入來決定查詢引用的欄位名稱，包括「order by」欄位。</p>
 </blockquote>
 <p><a name="running-database-queries"></a></p>
 <h2>執行資料庫查詢</h2>
@@ -75,7 +75,7 @@ use Illuminate\\View\\View;
 class UserController extends Controller
 {
     /**
-     * 顯示應用程式所有用戶的列表。
+     * 顯示應用程式所有使用者的列表。
      */
     public function index(): View
     {
@@ -116,7 +116,7 @@ return $user-&gt;email;
 </code></pre>
 <p><a name="retrieving-a-list-of-column-values"></a></p>
 <h4>檢索欄位值列表</h4>
-<p>如果您想檢索一個包含單個欄位值的 <code>Illuminate\\Support\\Collection</code> 實例，您可以使用 <code>pluck</code> 方法。在此範例中，我們將檢索用戶頭銜的集合：</p>
+<p>如果您想檢索一個包含單個欄位值的 <code>Illuminate\\Support\\Collection</code> 實例，您可以使用 <code>pluck</code> 方法。在此範例中，我們將檢索使用者頭銜的集合：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\DB;
 
 $titles = DB::table(&#39;users&#39;)-&gt;pluck(&#39;title&#39;);
@@ -174,11 +174,11 @@ DB::table(&#39;users&#39;)-&gt;orderBy(&#39;id&#39;)-&gt;chunk(100, function (Co
 </code></pre>
 <blockquote>
 <p>[!WARNING]
-在區塊回調中更新或刪除記錄時，對主鍵或外鍵的任何更改都可能影響區塊查詢。這可能導致記錄未被包含在分塊結果中。</p>
+在區塊回呼中更新或刪除記錄時，對主鍵或外鍵的任何更改都可能影響區塊查詢。這可能導致記錄未被包含在分塊結果中。</p>
 </blockquote>
 <p><a name="streaming-results-lazily"></a></p>
 <h3>延遲串流結果</h3>
-<p><code>lazy</code> 方法與<a href="#chunking-results">分塊方法</a>的工作方式類似，因為它以區塊形式執行查詢。但是，它不是將每個區塊傳遞給回調，而是返回一個 <a href="/docs/collections#lazy-collections">LazyCollection</a>，讓您可以將結果作為單個流進行互動：</p>
+<p><code>lazy</code> 方法與<a href="#chunking-results">分塊方法</a>的工作方式類似，因為它以區塊形式執行查詢。但是，它不是將每個區塊傳遞給回呼，而是返回一個 <a href="/docs/collections#lazy-collections">LazyCollection</a>，讓您可以將結果作為單個流進行互動：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\DB;
 
 DB::table(&#39;users&#39;)-&gt;orderBy(&#39;id&#39;)-&gt;lazy()-&gt;each(function (object $user) {
@@ -199,7 +199,7 @@ DB::table(&#39;users&#39;)-&gt;orderBy(&#39;id&#39;)-&gt;lazy()-&gt;each(functio
 </blockquote>
 <p><a name="aggregates"></a></p>
 <h3>聚合</h3>
-<p>查詢建構器還提供了多種用於檢索聚合值的方法，如 <code>count</code>、<code>max</code>、<code>min</code>、<code>avg</code> 和 <code>sum</code>。您可以在構建查詢後調用這些方法中的任何一個：</p>
+<p>查詢建構器還提供了多種用於檢索聚合值的方法，如 <code>count</code>、<code>max</code>、<code>min</code>、<code>avg</code> 和 <code>sum</code>。您可以在建立查詢後調用這些方法中的任何一個：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\DB;
 
 $users = DB::table(&#39;users&#39;)-&gt;count();
@@ -243,7 +243,7 @@ $users = $query-&gt;addSelect(&#39;age&#39;)-&gt;get();
 </code></pre>
 <p><a name="raw-expressions"></a></p>
 <h2>原始表達式</h2>
-<p>有時您可能需要向查詢中插入一個任意字串。要創建一個原始字串表達式，您可以使用 <code>DB</code> Facade 提供的 <code>raw</code> 方法：</p>
+<p>有時您可能需要向查詢中插入一個任意字串。要建立一個原始字串表達式，您可以使用 <code>DB</code> Facade 提供的 <code>raw</code> 方法：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)
     -&gt;select(DB::raw(&#39;count(*) as user_count, status&#39;))
     -&gt;where(&#39;status&#39;, &#39;&lt;&gt;&#39;, 1)
@@ -252,28 +252,28 @@ $users = $query-&gt;addSelect(&#39;age&#39;)-&gt;get();
 </code></pre>
 <blockquote>
 <p>[!WARNING]
-原始語句將作為字串注入查詢中，因此您應極度小心以避免創建 SQL 注入漏洞。</p>
+原始語句將作為字串注入查詢中，因此您應極度小心以避免建立 SQL 注入漏洞。</p>
 </blockquote>
 <p><a name="raw-methods"></a></p>
 <h3>原始方法</h3>
 <p>不是使用 <code>DB::raw</code> 方法，您還可以使用以下方法向查詢的各個部分插入原始表達式。<strong>請記住，Laravel 無法保證任何使用原始表達式的查詢都受到 SQL 注入漏洞的保護。</strong></p>
 <p><a name="selectraw"></a></p>
 <h4><code>selectRaw</code></h4>
-<p><code>selectRaw</code> 方法可用於替代 <code>addSelect(DB::raw(/* ... */))</code>。此方法接受一個可選的綁定數組作為其第二個參數：</p>
+<p><code>selectRaw</code> 方法可用於替代 <code>addSelect(DB::raw(/* ... */))</code>。此方法接受一個可選的綁定陣列作為其第二個參數：</p>
 <pre><code class="language-php">$orders = DB::table(&#39;orders&#39;)
     -&gt;selectRaw(&#39;price * ? as price_with_tax&#39;, [1.0825])
     -&gt;get();
 </code></pre>
 <p><a name="whereraw-orwhereraw"></a></p>
 <h4><code>whereRaw / orWhereRaw</code></h4>
-<p><code>whereRaw</code> 和 <code>orWhereRaw</code> 方法可用於向查詢中注入原始「where」子句。這些方法接受一個可選的綁定數組作為其第二個參數：</p>
+<p><code>whereRaw</code> 和 <code>orWhereRaw</code> 方法可用於向查詢中注入原始「where」子句。這些方法接受一個可選的綁定陣列作為其第二個參數：</p>
 <pre><code class="language-php">$orders = DB::table(&#39;orders&#39;)
     -&gt;whereRaw(&#39;price &gt; IF(state = &quot;TX&quot;, ?, 100)&#39;, [200])
     -&gt;get();
 </code></pre>
 <p><a name="havingraw-orhavingraw"></a></p>
 <h4><code>havingRaw / orHavingRaw</code></h4>
-<p><code>havingRaw</code> 和 <code>orHavingRaw</code> 方法可用於提供一個原始字串作為「having」子句的值。這些方法接受一個可選的綁定數組作為其第二個參數：</p>
+<p><code>havingRaw</code> 和 <code>orHavingRaw</code> 方法可用於提供一個原始字串作為「having」子句的值。這些方法接受一個可選的綁定陣列作為其第二個參數：</p>
 <pre><code class="language-php">$orders = DB::table(&#39;orders&#39;)
     -&gt;select(&#39;department&#39;, DB::raw(&#39;SUM(price) as total_sales&#39;))
     -&gt;groupBy(&#39;department&#39;)
@@ -345,7 +345,7 @@ $users = DB::table(&#39;users&#39;)
 </code></pre>
 <p><a name="subquery-joins"></a></p>
 <h4>子查詢連接</h4>
-<p>您可以使用 <code>joinSub</code>、<code>leftJoinSub</code> 和 <code>rightJoinSub</code> 方法將查詢連接到子查詢。這些方法中的每一個都接收三個參數：子查詢、其表別名和一個定義相關欄位的閉包。在此範例中，我們將檢索用戶集合，其中每個用戶記錄還包含用戶最近發布的部落格文章的 <code>created_at</code> 時間戳：</p>
+<p>您可以使用 <code>joinSub</code>、<code>leftJoinSub</code> 和 <code>rightJoinSub</code> 方法將查詢連接到子查詢。這些方法中的每一個都接收三個參數：子查詢、其表別名和一個定義相關欄位的閉包。在此範例中，我們將檢索使用者集合，其中每個使用者記錄還包含使用者最近發布的部落格文章的 <code>created_at</code> 時間戳：</p>
 <pre><code class="language-php">$latestPosts = DB::table(&#39;posts&#39;)
     -&gt;select(&#39;user_id&#39;, DB::raw(&#39;MAX(created_at) as last_post_created_at&#39;))
     -&gt;where(&#39;is_published&#39;, true)
@@ -363,7 +363,7 @@ $users = DB::table(&#39;users&#39;)
 側向連接目前僅由 PostgreSQL、MySQL &gt;= 8.0.14 和 SQL Server 支援。</p>
 </blockquote>
 <p>您可以使用 <code>joinLateral</code> 和 <code>leftJoinLateral</code> 方法與子查詢執行「側向連接」。這些方法中的每一個都接收兩個參數：子查詢和其表別名。連接條件應在給定子查詢的 <code>where</code> 子句中指定。側向連接針對每一行進行評估，並且可以引用子查詢外部的欄位。</p>
-<p>在此範例中，我們將檢索用戶集合以及用戶最近的三篇部落格文章。每個用戶最多可以在結果集中產生三行：每個最近的部落格文章一行。連接條件在子查詢中使用 <code>whereColumn</code> 子句指定，引用當前用戶行：</p>
+<p>在此範例中，我們將檢索使用者集合以及使用者最近的三篇部落格文章。每個使用者最多可以在結果集中產生三行：每個最近的部落格文章一行。連接條件在子查詢中使用 <code>whereColumn</code> 子句指定，引用當前使用者行：</p>
 <pre><code class="language-php">$latestPosts = DB::table(&#39;posts&#39;)
     -&gt;select(&#39;id as post_id&#39;, &#39;title as post_title&#39;, &#39;created_at as post_created_at&#39;)
     -&gt;whereColumn(&#39;user_id&#39;, &#39;users.id&#39;)
@@ -376,7 +376,7 @@ $users = DB::table(&#39;users&#39;)
 </code></pre>
 <p><a name="unions"></a></p>
 <h2>聯合</h2>
-<p>查詢建構器還提供了一個方便的方法來將兩個或多個查詢「聯合」在一起。例如，您可以創建一個初始查詢並使用 <code>union</code> 方法將其與更多查詢聯合：</p>
+<p>查詢建構器還提供了一個方便的方法來將兩個或多個查詢「聯合」在一起。例如，您可以建立一個初始查詢並使用 <code>union</code> 方法將其與更多查詢聯合：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\DB;
 
 $usersWithoutFirstName = DB::table(&#39;users&#39;)
@@ -393,7 +393,7 @@ $users = DB::table(&#39;users&#39;)
 <p><a name="where-clauses"></a></p>
 <h3>WHERE 子句</h3>
 <p>您可以使用查詢建構器的 <code>where</code> 方法向查詢添加「where」子句。對 <code>where</code> 方法最基本的呼叫需要三個參數。第一個參數是欄位的名稱。第二個參數是一個運算符，可以是資料庫支援的任何運算符。第三個參數是要與欄位值進行比較的值。</p>
-<p>例如，以下查詢檢索 <code>votes</code> 欄位值等於 <code>100</code> 且 <code>age</code> 欄位值大於 <code>35</code> 的用戶：</p>
+<p>例如，以下查詢檢索 <code>votes</code> 欄位值等於 <code>100</code> 且 <code>age</code> 欄位值大於 <code>35</code> 的使用者：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)
     -&gt;where(&#39;votes&#39;, &#39;=&#39;, 100)
     -&gt;where(&#39;age&#39;, &#39;&gt;&#39;, 35)
@@ -402,7 +402,7 @@ $users = DB::table(&#39;users&#39;)
 <p>為了方便，如果您想驗證一個欄位是否 <code>=</code> 給定的值，您可以將該值作為第二個參數傳遞給 <code>where</code> 方法。Laravel 將假設您想使用 <code>=</code> 運算符：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)-&gt;where(&#39;votes&#39;, 100)-&gt;get();
 </code></pre>
-<p>您還可以向 <code>where</code> 方法傳遞一個關聯式數組來快速查詢多個欄位：</p>
+<p>您還可以向 <code>where</code> 方法傳遞一個關聯式陣列來快速查詢多個欄位：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)-&gt;where([
     &#39;first_name&#39; =&gt; &#39;Jane&#39;,
     &#39;last_name&#39; =&gt; &#39;Doe&#39;,
@@ -421,7 +421,7 @@ $users = DB::table(&#39;users&#39;)
     -&gt;where(&#39;name&#39;, &#39;like&#39;, &#39;T%&#39;)
     -&gt;get();
 </code></pre>
-<p>您還可以向 <code>where</code> 函數傳遞一個條件數組。數組的每個元素都應該是一個包含通常傳遞給 <code>where</code> 方法的三個參數的數組：</p>
+<p>您還可以向 <code>where</code> 函數傳遞一個條件陣列。陣列的每個元素都應該是一個包含通常傳遞給 <code>where</code> 方法的三個參數的陣列：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)-&gt;where([
     [&#39;status&#39;, &#39;=&#39;, &#39;1&#39;],
     [&#39;subscribed&#39;, &#39;&lt;&gt;&#39;, &#39;1&#39;],
@@ -429,7 +429,7 @@ $users = DB::table(&#39;users&#39;)
 </code></pre>
 <blockquote>
 <p>[!WARNING]
-PDO 不支援綁定欄位名稱。因此，您不應允許用戶輸入來決定查詢引用的欄位名稱，包括「order by」欄位。</p>
+PDO 不支援綁定欄位名稱。因此，您不應允許使用者輸入來決定查詢引用的欄位名稱，包括「order by」欄位。</p>
 </blockquote>
 <blockquote>
 <p>[!WARNING]
@@ -548,7 +548,7 @@ $users = DB::table(&#39;users&#39;)
     -&gt;whereJsonDoesntContain(&#39;options-&gt;languages&#39;, &#39;en&#39;)
     -&gt;get();
 </code></pre>
-<p>如果您的應用程式使用 MariaDB、MySQL 或 PostgreSQL 資料庫，您可以向 <code>whereJsonContains</code> 和 <code>whereJsonDoesntContain</code> 方法傳遞一個值的數組：</p>
+<p>如果您的應用程式使用 MariaDB、MySQL 或 PostgreSQL 資料庫，您可以向 <code>whereJsonContains</code> 和 <code>whereJsonDoesntContain</code> 方法傳遞一個值的陣列：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)
     -&gt;whereJsonContains(&#39;options-&gt;languages&#39;, [&#39;en&#39;, &#39;de&#39;])
     -&gt;get();
@@ -769,7 +769,7 @@ $invoices = DB::table(&#39;invoices&#39;)
     -&gt;whereColumn(&#39;updated_at&#39;, &#39;&gt;&#39;, &#39;created_at&#39;)
     -&gt;get();
 </code></pre>
-<p>您還可以向 <code>whereColumn</code> 方法傳遞一個欄位比較的數組。這些條件將使用 <code>and</code> 運算符連接：</p>
+<p>您還可以向 <code>whereColumn</code> 方法傳遞一個欄位比較的陣列。這些條件將使用 <code>and</code> 運算符連接：</p>
 <pre><code class="language-php">$users = DB::table(&#39;users&#39;)
     -&gt;whereColumn([
         [&#39;first_name&#39;, &#39;=&#39;, &#39;last_name&#39;],
@@ -826,7 +826,7 @@ where exists (
 </code></pre>
 <p><a name="subquery-where-clauses"></a></p>
 <h3>子查詢 WHERE 子句</h3>
-<p>有時您可能需要構建一個將子查詢的結果與給定值進行比較的「where」子句。您可以透過向 <code>where</code> 方法傳遞一個閉包和一個值來完成此操作。例如，以下查詢將檢索具有給定類型的近期「會員資格」的所有用戶：</p>
+<p>有時您可能需要建立一個將子查詢的結果與給定值進行比較的「where」子句。您可以透過向 <code>where</code> 方法傳遞一個閉包和一個值來完成此操作。例如，以下查詢將檢索具有給定類型的近期「會員資格」的所有使用者：</p>
 <pre><code class="language-php">use App\\Models\\User;
 use Illuminate\\Database\\Query\\Builder;
 
@@ -838,7 +838,7 @@ $users = User::where(function (Builder $query) {
         -&gt;limit(1);
 }, &#39;Pro&#39;)-&gt;get();
 </code></pre>
-<p>或者，您可能需要構建一個將欄位與子查詢的結果進行比較的「where」子句。您可以透過向 <code>where</code> 方法傳遞一個欄位、運算符和閉包來完成此操作。例如，以下查詢將檢索金額低於平均值的所有收入記錄：</p>
+<p>或者，您可能需要建立一個將欄位與子查詢的結果進行比較的「where」子句。您可以透過向 <code>where</code> 方法傳遞一個欄位、運算符和閉包來完成此操作。例如，以下查詢將檢索金額低於平均值的所有收入記錄：</p>
 <pre><code class="language-php">use App\\Models\\Income;
 use Illuminate\\Database\\Query\\Builder;
 
@@ -891,7 +891,7 @@ $incomes = Income::where(&#39;amount&#39;, &#39;&lt;&#39;, function (Builder $qu
     -&gt;limit(10)
     -&gt;get();
 </code></pre>
-<p>使用 PostgreSQL 時，必須在創建 <code>vector</code> 欄位之前載入 <code>pgvector</code> 擴充套件：</p>
+<p>使用 PostgreSQL 時，必須在建立 <code>vector</code> 欄位之前載入 <code>pgvector</code> 擴充套件：</p>
 <pre><code class="language-php">Schema::ensureVectorExtensionExists();
 </code></pre>
 <p><a name="ordering-grouping-limit-and-offset"></a></p>
@@ -931,7 +931,7 @@ $incomes = Income::where(&#39;amount&#39;, &#39;&lt;&#39;, function (Builder $qu
 </code></pre>
 <p><a name="random-ordering"></a></p>
 <h4>隨機排序</h4>
-<p><code>inRandomOrder</code> 方法可用於隨機對查詢結果進行排序。例如，您可以使用此方法獲取隨機用戶：</p>
+<p><code>inRandomOrder</code> 方法可用於隨機對查詢結果進行排序。例如，您可以使用此方法獲取隨機使用者：</p>
 <pre><code class="language-php">$randomUser = DB::table(&#39;users&#39;)
     -&gt;inRandomOrder()
     -&gt;first();
@@ -976,7 +976,7 @@ $usersOrderedByEmail = $query-&gt;reorderDesc(&#39;email&#39;)-&gt;get();
     -&gt;having(&#39;account_id&#39;, &#39;&gt;&#39;, 100)
     -&gt;get();
 </code></pre>
-<p>要構建更進階的 <code>having</code> 語句，請參閱 <a href="#raw-methods">havingRaw</a> 方法。</p>
+<p>要建立更進階的 <code>having</code> 語句，請參閱 <a href="#raw-methods">havingRaw</a> 方法。</p>
 <p><a name="limit-and-offset"></a></p>
 <h3>限制和偏移</h3>
 <p>您可以使用 <code>limit</code> 和 <code>offset</code> 方法來限制從查詢返回的結果數量，或跳過查詢中的給定數量的結果：</p>
@@ -1010,13 +1010,13 @@ $users = DB::table(&#39;users&#39;)
 </code></pre>
 <p><a name="insert-statements"></a></p>
 <h2>INSERT 語句</h2>
-<p>查詢建構器還提供了一個 <code>insert</code> 方法，可用於向資料庫表中插入記錄。<code>insert</code> 方法接受一個欄位名稱和值的數組：</p>
+<p>查詢建構器還提供了一個 <code>insert</code> 方法，可用於向資料庫表中插入記錄。<code>insert</code> 方法接受一個欄位名稱和值的陣列：</p>
 <pre><code class="language-php">DB::table(&#39;users&#39;)-&gt;insert([
     &#39;email&#39; =&gt; &#39;kayla@example.com&#39;,
     &#39;votes&#39; =&gt; 0
 ]);
 </code></pre>
-<p>您可以透過傳遞一個數組的數組來一次插入多條記錄。每個數組代表應插入表中的一條記錄：</p>
+<p>您可以透過傳遞一個陣列的陣列來一次插入多條記錄。每個陣列代表應插入表中的一條記錄：</p>
 <pre><code class="language-php">DB::table(&#39;users&#39;)-&gt;insert([
     [&#39;email&#39; =&gt; &#39;picard@example.com&#39;, &#39;votes&#39; =&gt; 0],
     [&#39;email&#39; =&gt; &#39;janeway@example.com&#39;, &#39;votes&#39; =&gt; 0],
@@ -1048,7 +1048,7 @@ $users = DB::table(&#39;users&#39;)
 </blockquote>
 <p><a name="upserts"></a></p>
 <h3>Upserts</h3>
-<p><code>upsert</code> 方法將插入不存在的記錄，並使用您可以指定的新值更新已存在的記錄。該方法的第一個參數由要插入或更新的值組成，而第二個參數列出在關聯表中唯一識別記錄的列。該方法的第三個也是最後一個參數是一個列的數組，如果資料庫中已存在匹配的記錄，則應更新這些列：</p>
+<p><code>upsert</code> 方法將插入不存在的記錄，並使用您可以指定的新值更新已存在的記錄。該方法的第一個參數由要插入或更新的值組成，而第二個參數列出在關聯表中唯一識別記錄的列。該方法的第三個也是最後一個參數是一個列的陣列，如果資料庫中已存在匹配的記錄，則應更新這些列：</p>
 <pre><code class="language-php">DB::table(&#39;flights&#39;)-&gt;upsert(
     [
         [&#39;departure&#39; =&gt; &#39;Oakland&#39;, &#39;destination&#39; =&gt; &#39;San Diego&#39;, &#39;price&#39; =&gt; 99],
@@ -1065,14 +1065,14 @@ $users = DB::table(&#39;users&#39;)
 </blockquote>
 <p><a name="update-statements"></a></p>
 <h2>UPDATE 語句</h2>
-<p>除了向資料庫插入記錄外，查詢建構器還可以使用 <code>update</code> 方法更新現有記錄。<code>update</code> 方法與 <code>insert</code> 方法一樣，接受一個表示要更新的列的列和值對的數組。<code>update</code> 方法返回受影響的行數。您可以使用 <code>where</code> 子句約束 <code>update</code> 查詢：</p>
+<p>除了向資料庫插入記錄外，查詢建構器還可以使用 <code>update</code> 方法更新現有記錄。<code>update</code> 方法與 <code>insert</code> 方法一樣，接受一個表示要更新的列的列和值對的陣列。<code>update</code> 方法返回受影響的行數。您可以使用 <code>where</code> 子句約束 <code>update</code> 查詢：</p>
 <pre><code class="language-php">$affected = DB::table(&#39;users&#39;)
     -&gt;where(&#39;id&#39;, 1)
     -&gt;update([&#39;votes&#39; =&gt; 1]);
 </code></pre>
 <p><a name="update-or-insert"></a></p>
 <h4>更新或插入</h4>
-<p>有時您可能想要更新資料庫中的現有記錄，或者在不存在匹配記錄時創建它。在這種情況下，可以使用 <code>updateOrInsert</code> 方法。<code>updateOrInsert</code> 方法接受兩個參數：一個用於查找記錄的條件數組，以及一個表示要更新的列的列和值對的數組。</p>
+<p>有時您可能想要更新資料庫中的現有記錄，或者在不存在匹配記錄時建立它。在這種情況下，可以使用 <code>updateOrInsert</code> 方法。<code>updateOrInsert</code> 方法接受兩個參數：一個用於查找記錄的條件陣列，以及一個表示要更新的列的列和值對的陣列。</p>
 <p><code>updateOrInsert</code> 方法將嘗試使用第一個參數的列和值對來定位匹配的資料庫記錄。如果記錄存在，它將使用第二個參數中的值進行更新。如果找不到記錄，將使用兩個參數的合併屬性插入一條新記錄：</p>
 <pre><code class="language-php">DB::table(&#39;users&#39;)
     -&gt;updateOrInsert(
@@ -1277,7 +1277,7 @@ class Paginate
 </code></pre>
 <p><a name="debugging"></a></p>
 <h2>除錯</h2>
-<p>您可以在構建查詢時使用 <code>dd</code> 和 <code>dump</code> 方法來轉儲當前的查詢綁定和 SQL。<code>dd</code> 方法將顯示除錯資訊然後停止執行請求。<code>dump</code> 方法將顯示除錯資訊但允許請求繼續執行：</p>
+<p>您可以在建立查詢時使用 <code>dd</code> 和 <code>dump</code> 方法來轉儲當前的查詢綁定和 SQL。<code>dd</code> 方法將顯示除錯資訊然後停止執行請求。<code>dump</code> 方法將顯示除錯資訊但允許請求繼續執行：</p>
 <pre><code class="language-php">DB::table(&#39;users&#39;)-&gt;where(&#39;votes&#39;, &#39;&gt;&#39;, 100)-&gt;dd();
 
 DB::table(&#39;users&#39;)-&gt;where(&#39;votes&#39;, &#39;&gt;&#39;, 100)-&gt;dump();

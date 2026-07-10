@@ -19,8 +19,8 @@ const content = `<h1>前端</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>Laravel 是一個後端框架，提供構建現代 Web 應用程式所需的所有功能，如<a href="/docs/routing">路由</a>、<a href="/docs/validation">驗證</a>、<a href="/docs/cache">快取</a>、<a href="/docs/queues">佇列</a>、<a href="/docs/filesystem">檔案儲存</a>等。然而，我們認為為開發者提供一個美麗的全端體驗非常重要，包括構建應用程式前端的強大方法。</p>
-<p>在使用 Laravel 構建應用程式時，有兩種主要方法來處理前端開發，您選擇哪種方法取決於您是想透過利用 PHP 還是使用 React、Svelte 和 Vue 等 JavaScript 框架來構建前端。我們將在下面討論這兩種選項，以便您可以就應用程式前端開發的最佳方法做出明智的決定。</p>
+<p>Laravel 是一個後端框架，提供建立現代 Web 應用程式所需的所有功能，如<a href="/docs/routing">路由</a>、<a href="/docs/validation">驗證</a>、<a href="/docs/cache">快取</a>、<a href="/docs/queues">佇列</a>、<a href="/docs/filesystem">檔案儲存</a>等。然而，我們認為為開發者提供一個美麗的全端體驗非常重要，包括建立應用程式前端的強大方法。</p>
+<p>在使用 Laravel 建立應用程式時，有兩種主要方法來處理前端開發，您選擇哪種方法取決於您是想透過利用 PHP 還是使用 React、Svelte 和 Vue 等 JavaScript 框架來建立前端。我們將在下面討論這兩種選項，以便您可以就應用程式前端開發的最佳方法做出明智的決定。</p>
 <p><a name="using-php"></a></p>
 <h2>使用 PHP</h2>
 <p><a name="php-and-blade"></a></p>
@@ -39,16 +39,16 @@ const content = `<h1>前端</h1>
     @endforeach
 &lt;/div&gt;
 </code></pre>
-<p>以這種方式構建應用程式時，表單提交和其他頁面互動通常會從伺服器接收全新的 HTML 文檔，並且瀏覽器會重新渲染整個頁面。即使在今天，許多應用程式可能仍然非常適合使用簡單的 Blade 模板以這種方式構建其前端。</p>
+<p>以這種方式建立應用程式時，表單提交和其他頁面互動通常會從伺服器接收全新的 HTML 文檔，並且瀏覽器會重新渲染整個頁面。即使在今天，許多應用程式可能仍然非常適合使用簡單的 Blade 模板以這種方式建立其前端。</p>
 <p><a name="growing-expectations"></a></p>
 <h4>不斷增長的期望</h4>
-<p>然而，隨著用戶對 Web 應用程式的期望不斷提高，許多開發者發現需要構建更具動態性的前端，使互動感覺更加精緻。鑑於此，一些開發者選擇開始使用 React、Svelte 和 Vue 等 JavaScript 框架構建應用程式的前端。</p>
-<p>其他開發者則偏好堅持使用他們熟悉的後端語言，開發了允許構建現代 Web 應用程式 UI 的解決方案，同時仍主要使用其選擇的後端語言。例如，在 <a href="https://rubyonrails.org/">Rails</a> 生態系統中，這促使了 <a href="https://turbo.hotwired.dev/">Turbo</a>、<a href="https://hotwired.dev/">Hotwire</a> 和 <a href="https://stimulus.hotwired.dev/">Stimulus</a> 等函式庫的創建。</p>
-<p>在 Laravel 生態系統中，主要使用 PHP 建立現代化、動態前端的需求促使了 <a href="https://livewire.laravel.com">Laravel Livewire</a> 和 <a href="https://alpinejs.dev/">Alpine.js</a> 的創建。</p>
+<p>然而，隨著使用者對 Web 應用程式的期望不斷提高，許多開發者發現需要建立更具動態性的前端，使互動感覺更加精緻。鑑於此，一些開發者選擇開始使用 React、Svelte 和 Vue 等 JavaScript 框架建立應用程式的前端。</p>
+<p>其他開發者則偏好堅持使用他們熟悉的後端語言，開發了允許建立現代 Web 應用程式 UI 的解決方案，同時仍主要使用其選擇的後端語言。例如，在 <a href="https://rubyonrails.org/">Rails</a> 生態系統中，這促使了 <a href="https://turbo.hotwired.dev/">Turbo</a>、<a href="https://hotwired.dev/">Hotwire</a> 和 <a href="https://stimulus.hotwired.dev/">Stimulus</a> 等函式庫的建立。</p>
+<p>在 Laravel 生態系統中，主要使用 PHP 建立現代化、動態前端的需求促使了 <a href="https://livewire.laravel.com">Laravel Livewire</a> 和 <a href="https://alpinejs.dev/">Alpine.js</a> 的建立。</p>
 <p><a name="livewire"></a></p>
 <h3>Livewire</h3>
-<p><a href="https://livewire.laravel.com">Laravel Livewire</a> 是一個用於構建 Laravel 驅動前端的框架，使其感覺動態、現代且充滿活力，就像使用 React、Svelte 和 Vue 等現代 JavaScript 框架構建的前端一樣。</p>
-<p>使用 Livewire 時，您將創建 Livewire「元件」，這些元件渲染 UI 的離散部分，並暴露可以從應用程式前端調用和互動的方法和資料。例如，一個簡單的「計數器」元件可能如下所示：</p>
+<p><a href="https://livewire.laravel.com">Laravel Livewire</a> 是一個用於建立 Laravel 驅動前端的框架，使其感覺動態、現代且充滿活力，就像使用 React、Svelte 和 Vue 等現代 JavaScript 框架建立的前端一樣。</p>
+<p>使用 Livewire 時，您將建立 Livewire「元件」，這些元件渲染 UI 的離散部分，並暴露可以從應用程式前端調用和互動的方法和資料。例如，一個簡單的「計數器」元件可能如下所示：</p>
 <pre><code class="language-php">&lt;?php
 
 use Livewire\\Component;
@@ -70,19 +70,19 @@ new class extends Component
 &lt;/div&gt;
 </code></pre>
 <p>如您所見，Livewire 使您能夠編寫新的 HTML 屬性，如 <code>wire:click</code>，將 Laravel 應用程式的前端和後端連接起來。此外，您可以使用簡單的 Blade 表達式渲染元件的當前狀態。</p>
-<p>對許多人來說，Livewire 徹底改變了 Laravel 的前端開發，使他們能夠在構建現代化、動態 Web 應用程式的同時，保持在 Laravel 的舒適環境中。通常，使用 Livewire 的開發者也會使用 <a href="https://alpinejs.dev/">Alpine.js</a> 在前端只需要的地方「點綴」JavaScript，例如為了渲染對話框窗口。</p>
+<p>對許多人來說，Livewire 徹底改變了 Laravel 的前端開發，使他們能夠在建立現代化、動態 Web 應用程式的同時，保持在 Laravel 的舒適環境中。通常，使用 Livewire 的開發者也會使用 <a href="https://alpinejs.dev/">Alpine.js</a> 在前端只需要的地方「點綴」JavaScript，例如為了渲染對話框窗口。</p>
 <p>如果您是 Laravel 新手，我們建議您熟悉<a href="/docs/views">視圖</a>和 <a href="/docs/blade">Blade</a> 的基本用法。然後，查閱官方 <a href="https://livewire.laravel.com/docs">Laravel Livewire 文檔</a>，了解如何使用互動式 Livewire 元件將您的應用程式提升到更高水平。</p>
 <p><a name="php-starter-kits"></a></p>
 <h3>入門套件</h3>
-<p>如果您想使用 PHP 和 Livewire 構建前端，您可以利用我們的 <a href="/docs/starter-kits">Livewire 入門套件</a>來快速啟動應用程式的開發。</p>
+<p>如果您想使用 PHP 和 Livewire 建立前端，您可以利用我們的 <a href="/docs/starter-kits">Livewire 入門套件</a>來快速啟動應用程式的開發。</p>
 <p><a name="using-react-svelte-or-vue"></a></p>
 <h2>使用 React、Svelte 或 Vue</h2>
-<p>雖然可以使用 Laravel 和 Livewire 構建現代化前端，但許多開發者仍然偏好利用 React、Svelte 或 Vue 等 JavaScript 框架的強大功能。這使開發者能夠利用透過 NPM 提供的豐富 JavaScript 套件和工具生態系統。</p>
+<p>雖然可以使用 Laravel 和 Livewire 建立現代化前端，但許多開發者仍然偏好利用 React、Svelte 或 Vue 等 JavaScript 框架的強大功能。這使開發者能夠利用透過 NPM 提供的豐富 JavaScript 套件和工具生態系統。</p>
 <p>然而，沒有額外的工具，將 Laravel 與 React、Svelte 或 Vue 配對將使我們需要解決各種複雜的問題，如客戶端路由、資料填充和身份驗證。客戶端路由通常透過使用 <a href="https://nextjs.org/">Next</a> 和 <a href="https://nuxt.com/">Nuxt</a> 等有主見的 React / Svelte / Vue 框架來簡化；然而，將 Laravel 等後端框架與這些前端框架配對時，資料填充和身份驗證仍然是複雜且繁瑣的問題。</p>
 <p>此外，開發者需要維護兩個獨立的程式碼儲存庫，通常需要在兩個儲存庫之間協調維護、發佈和部署。雖然這些問題並非不可克服，但我們認為這不是一種高效或愉快的開發應用程式的方式。</p>
 <p><a name="inertia"></a></p>
 <h3>Inertia</h3>
-<p>幸運的是，Laravel 提供了兩全其美的解決方案。<a href="https://inertiajs.com">Inertia</a> 填補了 Laravel 應用程式與現代 React、Svelte 或 Vue 前端之間的差距，允許您使用 React、Svelte 或 Vue 構建功能齊全的現代化前端，同時利用 Laravel 路由和控制器進行路由、資料填充和身份驗證——全部在一個程式碼儲存庫中。使用這種方法，您可以享受 Laravel 和 React / Svelte / Vue 的全部功能，而不會削弱任何一個工具的能力。</p>
+<p>幸運的是，Laravel 提供了兩全其美的解決方案。<a href="https://inertiajs.com">Inertia</a> 填補了 Laravel 應用程式與現代 React、Svelte 或 Vue 前端之間的差距，允許您使用 React、Svelte 或 Vue 建立功能齊全的現代化前端，同時利用 Laravel 路由和控制器進行路由、資料填充和身份驗證——全部在一個程式碼儲存庫中。使用這種方法，您可以享受 Laravel 和 React / Svelte / Vue 的全部功能，而不會削弱任何一個工具的能力。</p>
 <p>將 Inertia 安裝到 Laravel 應用程式後，您可以正常編寫路由和控制器。但是，您將返回一個 Inertia 頁面，而不是從控制器返回 Blade 模板：</p>
 <pre><code class="language-php">&lt;?php
 
@@ -95,7 +95,7 @@ use Inertia\\Response;
 class UserController extends Controller
 {
     /**
-     * 顯示給定用戶的個人資料。
+     * 顯示給定使用者的個人資料。
      */
     public function show(string $id): Response
     {
@@ -119,16 +119,16 @@ export default function Show({ user }) {
     )
 }
 </code></pre>
-<p>如您所見，Inertia 允許您在構建前端時充分利用 React、Svelte 或 Vue 的強大功能，同時在 Laravel 驅動的後端和 JavaScript 驅動的前端之間提供輕量級橋樑。</p>
+<p>如您所見，Inertia 允許您在建立前端時充分利用 React、Svelte 或 Vue 的強大功能，同時在 Laravel 驅動的後端和 JavaScript 驅動的前端之間提供輕量級橋樑。</p>
 <h4>伺服器端渲染</h4>
 <p>如果您因為應用程式需要伺服器端渲染而對深入使用 Inertia 感到擔憂，請不要擔心。Inertia 提供了<a href="https://inertiajs.com/server-side-rendering">伺服器端渲染支援</a>。並且，透過 <a href="https://cloud.laravel.com">Laravel Cloud</a> 或 <a href="https://forge.laravel.com">Laravel Forge</a> 部署應用程式時，確保 Inertia 的伺服器端渲染過程始終運行非常簡單。</p>
 <p><a name="inertia-starter-kits"></a></p>
 <h3>入門套件</h3>
-<p>如果您想使用 Inertia 和 React / Svelte / Vue 構建前端，您可以利用我們的 <a href="/docs/starter-kits">React、Svelte 或 Vue 應用程式入門套件</a>來快速啟動應用程式的開發。這些入門套件使用 Inertia、React / Svelte / Vue、<a href="https://tailwindcss.com">Tailwind</a> 和 <a href="https://vitejs.dev">Vite</a> 為應用程式的後端和前端身份驗證流程搭建腳手架，以便您可以開始構建下一個偉大的想法。</p>
+<p>如果您想使用 Inertia 和 React / Svelte / Vue 建立前端，您可以利用我們的 <a href="/docs/starter-kits">React、Svelte 或 Vue 應用程式入門套件</a>來快速啟動應用程式的開發。這些入門套件使用 Inertia、React / Svelte / Vue、<a href="https://tailwindcss.com">Tailwind</a> 和 <a href="https://vitejs.dev">Vite</a> 為應用程式的後端和前端身份驗證流程搭建腳手架，以便您可以開始建立下一個偉大的想法。</p>
 <p><a name="bundling-assets"></a></p>
 <h2>打包資源</h2>
-<p>無論您選擇使用 Blade 和 Livewire 還是 React / Svelte / Vue 和 Inertia 開發前端，您都可能需要將應用程式的 CSS 打包為生產就緒的資源。當然，如果您選擇使用 React、Svelte 或 Vue 構建應用程式的前端，您還需要將元件打包為瀏覽器就緒的 JavaScript 資源。</p>
-<p>預設情況下，Laravel 使用 <a href="https://vitejs.dev">Vite</a> 來打包您的資源。Vite 提供了閃電般的構建時間和在本機開發期間近乎即時的熱模組替換（HMR）。在所有新的 Laravel 應用程式中，包括使用我們<a href="/docs/starter-kits">入門套件</a>的應用程式，您將找到一個 <code>vite.config.js</code> 檔案，該檔案載入我們輕量級的 Laravel Vite 插件，使 Vite 與 Laravel 應用程式的配合使用成為一種享受。</p>
+<p>無論您選擇使用 Blade 和 Livewire 還是 React / Svelte / Vue 和 Inertia 開發前端，您都可能需要將應用程式的 CSS 打包為生產就緒的資源。當然，如果您選擇使用 React、Svelte 或 Vue 建立應用程式的前端，您還需要將元件打包為瀏覽器就緒的 JavaScript 資源。</p>
+<p>預設情況下，Laravel 使用 <a href="https://vitejs.dev">Vite</a> 來打包您的資源。Vite 提供了閃電般的建立時間和在本機開發期間近乎即時的熱模組替換（HMR）。在所有新的 Laravel 應用程式中，包括使用我們<a href="/docs/starter-kits">入門套件</a>的應用程式，您將找到一個 <code>vite.config.js</code> 檔案，該檔案載入我們輕量級的 Laravel Vite 插件，使 Vite 與 Laravel 應用程式的配合使用成為一種享受。</p>
 <p>開始使用 Laravel 和 Vite 的最快方法是使用<a href="/docs/starter-kits">我們的應用程式入門套件</a>開始應用程式的開發，這些入門套件透過提供前端和後端身份驗證腳手架來快速啟動您的應用程式。</p>
 <blockquote>
 <p>[!NOTE]

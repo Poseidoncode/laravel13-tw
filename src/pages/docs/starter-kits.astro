@@ -21,7 +21,7 @@ const content = `<h1>入門套件</h1>
 </li>
 <li><a href="#authentication">身份驗證</a><ul>
 <li><a href="#enabling-and-disabling-features">啟用和禁用功能</a></li>
-<li><a href="#customizing-actions">自訂用戶創建和密碼重設</a></li>
+<li><a href="#customizing-actions">自訂使用者建立和密碼重設</a></li>
 <li><a href="#two-factor-authentication">雙因素身份驗證</a></li>
 <li><a href="#rate-limiting">速率限制</a></li>
 </ul>
@@ -34,8 +34,8 @@ const content = `<h1>入門套件</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>為了給您一個構建新 Laravel 應用程式的良好開頭，我們很高興提供<a href="https://laravel.com/starter-kits">應用程式入門套件</a>。這些入門套件為您構建下一個 Laravel 應用程式提供了一個良好的開頭，並包含註冊和驗證應用程式用戶所需的路由、控制器和視圖。入門套件使用 <a href="/docs/fortify">Laravel Fortify</a> 來提供身份驗證。</p>
-<p>雖然歡迎使用這些入門套件，但它們並非必需。您可以透過簡單地安裝 Laravel 的全新副本從零開始構建自己的應用程式。無論哪種方式，我們知道您都會構建出一些很棒的東西！</p>
+<p>為了給您一個建立新 Laravel 應用程式的良好開頭，我們很高興提供<a href="https://laravel.com/starter-kits">應用程式入門套件</a>。這些入門套件為您建立下一個 Laravel 應用程式提供了一個良好的開頭，並包含註冊和驗證應用程式使用者所需的路由、控制器和視圖。入門套件使用 <a href="/docs/fortify">Laravel Fortify</a> 來提供身份驗證。</p>
+<p>雖然歡迎使用這些入門套件，但它們並非必需。您可以透過簡單地安裝 Laravel 的全新副本從零開始建立自己的應用程式。無論哪種方式，我們知道您都會建立出一些很棒的東西！</p>
 <p><a name="creating-an-application"></a></p>
 <h2>使用入門套件建立應用程式</h2>
 <p>要使用我們的其中一個入門套件建立新的 Laravel 應用程式，您應該首先<a href="/docs/installation#installing-php">安裝 PHP 和 Laravel CLI 工具</a>。如果您已經安裝了 PHP 和 Composer，您可以透過 Composer 安裝 Laravel 安裝器 CLI 工具：</p>
@@ -54,29 +54,29 @@ composer run dev
 <h2>可用的入門套件</h2>
 <p><a name="react"></a></p>
 <h3>React</h3>
-<p>我們的 React 入門套件為使用 <a href="https://inertiajs.com">Inertia</a> 構建具有 React 前端的 Laravel 應用程式提供了一個強大、現代的起點。</p>
-<p>Inertia 允許您使用經典的伺服器端路由和控制器構建現代化的單頁 React 應用程式。這讓您可以享受 React 的前端功能，結合 Laravel 驅人的後端生產力和閃電般的 Vite 編譯。</p>
+<p>我們的 React 入門套件為使用 <a href="https://inertiajs.com">Inertia</a> 建立具有 React 前端的 Laravel 應用程式提供了一個強大、現代的起點。</p>
+<p>Inertia 允許您使用經典的伺服器端路由和控制器建立現代化的單頁 React 應用程式。這讓您可以享受 React 的前端功能，結合 Laravel 驅人的後端生產力和閃電般的 Vite 編譯。</p>
 <p>React 入門套件使用 React 19、TypeScript、Tailwind 和 <a href="https://ui.shadcn.com">shadcn/ui</a> 元件庫。</p>
 <p><a name="svelte"></a></p>
 <h3>Svelte</h3>
-<p>我們的 Svelte 入門套件為使用 <a href="https://inertiajs.com">Inertia</a> 構建具有 Svelte 前端的 Laravel 應用程式提供了一個強大、現代的起點。</p>
-<p>Inertia 允許您使用經典的伺服器端路由和控制器構建現代化的單頁 Svelte 應用程式。這讓您可以享受 Svelte 的前端功能，結合 Laravel 驅人的後端生產力和閃電般的 Vite 編譯。</p>
+<p>我們的 Svelte 入門套件為使用 <a href="https://inertiajs.com">Inertia</a> 建立具有 Svelte 前端的 Laravel 應用程式提供了一個強大、現代的起點。</p>
+<p>Inertia 允許您使用經典的伺服器端路由和控制器建立現代化的單頁 Svelte 應用程式。這讓您可以享受 Svelte 的前端功能，結合 Laravel 驅人的後端生產力和閃電般的 Vite 編譯。</p>
 <p>Svelte 入門套件使用 Svelte 5、TypeScript、Tailwind 和 <a href="https://www.shadcn-svelte.com/">shadcn-svelte</a> 元件庫。</p>
 <p><a name="vue"></a></p>
 <h3>Vue</h3>
-<p>我們的 Vue 入門套件為使用 <a href="https://inertiajs.com">Inertia</a> 構建具有 Vue 前端的 Laravel 應用程式提供了一個良好的起點。</p>
-<p>Inertia 允許您使用經典的伺服器端路由和控制器構建現代化的單頁 Vue 應用程式。這讓您可以享受 Vue 的前端功能，結合 Laravel 驅人的後端生產力和閃電般的 Vite 編譯。</p>
+<p>我們的 Vue 入門套件為使用 <a href="https://inertiajs.com">Inertia</a> 建立具有 Vue 前端的 Laravel 應用程式提供了一個良好的起點。</p>
+<p>Inertia 允許您使用經典的伺服器端路由和控制器建立現代化的單頁 Vue 應用程式。這讓您可以享受 Vue 的前端功能，結合 Laravel 驅人的後端生產力和閃電般的 Vite 編譯。</p>
 <p>Vue 入門套件使用 Vue Composition API、TypeScript、Tailwind 和 <a href="https://www.shadcn-vue.com/">shadcn-vue</a> 元件庫。</p>
 <p><a name="livewire"></a></p>
 <h3>Livewire</h3>
-<p>我們的 Livewire 入門套件為使用 <a href="https://livewire.laravel.com">Laravel Livewire</a> 前端構建 Laravel 應用程式提供了一個完美的起點。</p>
-<p>Livewire 是一種僅使用 PHP 構建動態、響應式前端 UI 的強大方式。它非常適合主要使用 Blade 模板並正在尋找像 React、Svelte 和 Vue 這樣的 JavaScript 驅動 SPA 框架更簡單替代方案的團隊。</p>
+<p>我們的 Livewire 入門套件為使用 <a href="https://livewire.laravel.com">Laravel Livewire</a> 前端建立 Laravel 應用程式提供了一個完美的起點。</p>
+<p>Livewire 是一種僅使用 PHP 建立動態、響應式前端 UI 的強大方式。它非常適合主要使用 Blade 模板並正在尋找像 React、Svelte 和 Vue 這樣的 JavaScript 驅動 SPA 框架更簡單替代方案的團隊。</p>
 <p>Livewire 入門套件使用 Livewire、Tailwind 和 <a href="https://fluxui.dev">Flux UI</a> 元件庫。</p>
 <p><a name="starter-kit-customization"></a></p>
 <h2>入門套件自訂</h2>
 <p><a name="react-customization"></a></p>
 <h3>React</h3>
-<p>我們的 React 入門套件使用 Inertia 3、React 19、Tailwind 4 和 <a href="https://ui.shadcn.com">shadcn/ui</a> 構建。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
+<p>我們的 React 入門套件使用 Inertia 3、React 19、Tailwind 4 和 <a href="https://ui.shadcn.com">shadcn/ui</a> 建立。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
 <p>大多數前端程式碼位於 <code>resources/js</code> 目錄中。您可以自由修改任何程式碼來自訂應用程式的外觀和行為：</p>
 <pre><code class="language-text">resources/js/
 ├── components/    # 可重用的 React 元件
@@ -123,7 +123,7 @@ import AuthLayoutTemplate from &#39;@/layouts/auth/auth-split-layout&#39;; // [t
 </code></pre>
 <p><a name="svelte-customization"></a></p>
 <h3>Svelte</h3>
-<p>我們的 Svelte 入門套件使用 Inertia 3、Svelte 5、Tailwind 和 <a href="https://www.shadcn-svelte.com/">shadcn-svelte</a> 構建。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
+<p>我們的 Svelte 入門套件使用 Inertia 3、Svelte 5、Tailwind 和 <a href="https://www.shadcn-svelte.com/">shadcn-svelte</a> 建立。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
 <p>大多數前端程式碼位於 <code>resources/js</code> 目錄中。您可以自由修改任何程式碼來自訂應用程式的外觀和行為：</p>
 <pre><code class="language-text">resources/js/
 ├── components/    # 可重用的 Svelte 元件
@@ -165,7 +165,7 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.svelte&#39;; // [tl! 
 </code></pre>
 <p><a name="vue-customization"></a></p>
 <h3>Vue</h3>
-<p>我們的 Vue 入門套件使用 Inertia 3、Vue 3 Composition API、Tailwind 和 <a href="https://www.shadcn-vue.com/">shadcn-vue</a> 構建。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
+<p>我們的 Vue 入門套件使用 Inertia 3、Vue 3 Composition API、Tailwind 和 <a href="https://www.shadcn-vue.com/">shadcn-vue</a> 建立。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
 <p>大多數前端程式碼位於 <code>resources/js</code> 目錄中。您可以自由修改任何程式碼來自訂應用程式的外觀和行為：</p>
 <pre><code class="language-text">resources/js/
 ├── components/    # 可重用的 Vue 元件
@@ -210,7 +210,7 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
 </code></pre>
 <p><a name="livewire-customization"></a></p>
 <h3>Livewire</h3>
-<p>我們的 Livewire 入門套件使用 Livewire 4、Tailwind 和 <a href="https://fluxui.dev/">Flux UI</a> 構建。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
+<p>我們的 Livewire 入門套件使用 Livewire 4、Tailwind 和 <a href="https://fluxui.dev/">Flux UI</a> 建立。與我們所有的入門套件一樣，所有後端和前端程式碼都存在於您的應用程式中，以允許完全自訂。</p>
 <p>大多數前端程式碼位於 <code>resources/views</code> 目錄中。您可以自由修改任何程式碼來自訂應用程式的外觀和行為：</p>
 <pre><code class="language-text">resources/views
 ├── components            # 可重用元件
@@ -218,7 +218,7 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
 ├── layouts               # 應用程式佈局
 ├── pages                 # Livewire 頁面
 ├── partials              # 可重用的 Blade 局部視圖
-├── dashboard.blade.php   # 已驗證用戶儀表板
+├── dashboard.blade.php   # 已驗證使用者儀表板
 ├── welcome.blade.php     # 訪客歡迎頁面
 </code></pre>
 <p><a name="livewire-available-layouts"></a></p>
@@ -258,12 +258,12 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
 <tr>
 <td><code>/login</code></td>
 <td><code>POST</code></td>
-<td>驗證用戶</td>
+<td>驗證使用者</td>
 </tr>
 <tr>
 <td><code>/logout</code></td>
 <td><code>POST</code></td>
-<td>登出用戶</td>
+<td>登出使用者</td>
 </tr>
 <tr>
 <td><code>/register</code></td>
@@ -273,7 +273,7 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
 <tr>
 <td><code>/register</code></td>
 <td><code>POST</code></td>
-<td>創建新用戶</td>
+<td>建立新使用者</td>
 </tr>
 <tr>
 <td><code>/forgot-password</code></td>
@@ -347,11 +347,11 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
     ]),
 ],
 </code></pre>
-<p>要禁用功能，請註解掉或從 <code>features</code> 數組中移除該功能條目。例如，移除 <code>Features::registration()</code> 以禁用公共註冊。</p>
-<p>使用 <a href="#react">React</a>、<a href="#svelte">Svelte</a> 或 <a href="#vue">Vue</a> 入門套件時，您還需要從前端程式碼中移除對已禁用功能路由的任何引用。例如，如果您禁用電子郵件驗證，您應該從 React、Svelte 或 Vue 元件中移除對 <code>verification</code> 路由的導入和引用。這是必要的，因為這些入門套件使用 Wayfinder 進行類型安全的路由，它在構建時生成路由定義。如果您引用了不再存在的路由，您的應用程式將無法構建。</p>
+<p>要禁用功能，請註解掉或從 <code>features</code> 陣列中移除該功能條目。例如，移除 <code>Features::registration()</code> 以禁用公共註冊。</p>
+<p>使用 <a href="#react">React</a>、<a href="#svelte">Svelte</a> 或 <a href="#vue">Vue</a> 入門套件時，您還需要從前端程式碼中移除對已禁用功能路由的任何引用。例如，如果您禁用電子郵件驗證，您應該從 React、Svelte 或 Vue 元件中移除對 <code>verification</code> 路由的導入和引用。這是必要的，因為這些入門套件使用 Wayfinder 進行類型安全的路由，它在建立時生成路由定義。如果您引用了不再存在的路由，您的應用程式將無法建立。</p>
 <p><a name="customizing-actions"></a></p>
-<h3>自訂用戶創建和密碼重設</h3>
-<p>當用戶註冊或重設密碼時，Fortify 會調用位於應用程式 <code>app/Actions/Fortify</code> 目錄中的動作類別：</p>
+<h3>自訂使用者建立和密碼重設</h3>
+<p>當使用者註冊或重設密碼時，Fortify 會調用位於應用程式 <code>app/Actions/Fortify</code> 目錄中的動作類別：</p>
 <div class="overflow-auto"><table>
 <thead>
 <tr>
@@ -361,11 +361,11 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
 </thead>
 <tbody><tr>
 <td><code>CreateNewUser.php</code></td>
-<td>驗證並創建新用戶</td>
+<td>驗證並建立新使用者</td>
 </tr>
 <tr>
 <td><code>ResetUserPassword.php</code></td>
-<td>驗證並更新用戶密碼</td>
+<td>驗證並更新使用者密碼</td>
 </tr>
 <tr>
 <td><code>PasswordValidationRules.php</code></td>
@@ -392,8 +392,8 @@ import AuthLayout from &#39;@/layouts/auth/AuthSplitLayout.vue&#39;; // [tl! add
 </code></pre>
 <p><a name="two-factor-authentication"></a></p>
 <h3>雙因素身份驗證</h3>
-<p>入門套件包含內建的雙因素身份驗證（2FA），允許用戶使用任何 TOTP 相容的身份驗證器應用程式來保護其帳戶。2FA 預設透過應用程式 <code>config/fortify.php</code> 配置檔案中的 <code>Features::twoFactorAuthentication()</code> 啟用。</p>
-<p><code>confirm</code> 選項要求用戶在 2FA 完全啟用之前驗證代碼，而 <code>confirmPassword</code> 要求在啟用或禁用 2FA 之前確認密碼。更多詳情，請參閱 <a href="/docs/fortify#two-factor-authentication">Fortify 的雙因素身份驗證文檔</a>。</p>
+<p>入門套件包含內建的雙因素身份驗證（2FA），允許使用者使用任何 TOTP 相容的身份驗證器應用程式來保護其帳戶。2FA 預設透過應用程式 <code>config/fortify.php</code> 配置檔案中的 <code>Features::twoFactorAuthentication()</code> 啟用。</p>
+<p><code>confirm</code> 選項要求使用者在 2FA 完全啟用之前驗證代碼，而 <code>confirmPassword</code> 要求在啟用或禁用 2FA 之前確認密碼。更多詳情，請參閱 <a href="/docs/fortify#two-factor-authentication">Fortify 的雙因素身份驗證文檔</a>。</p>
 <p><a name="rate-limiting"></a></p>
 <h3>速率限制</h3>
 <p>速率限制可防止暴力破解和重複登入嘗試壓垮您的身份驗證端點。您可以在應用程式的 <code>FortifyServiceProvider</code> 中自訂 Fortify 的速率限制行為：</p>
@@ -406,10 +406,10 @@ RateLimiter::for(&#39;login&#39;, function ($request) {
 </code></pre>
 <p><a name="teams"></a></p>
 <h2>團隊</h2>
-<p>React、Svelte、Vue 和 Livewire 入門套件也可以在啟用團隊支援的情況下生成。當啟用團隊功能時，每個用戶屬於一個或多個團隊並有一個當前團隊。在註冊期間，新用戶會自動獲得一個個人團隊。入門套件還包括團隊管理畫面，用於創建團隊、在團隊之間切換、邀請成員和更新團隊詳情。</p>
-<p>當路由作用域設定為當前團隊時，當前團隊的 slug 包含在 URL 中。例如，儀表板路由變為 <code>/{current_team}/dashboard</code>，而團隊管理頁面使用如 <code>settings/teams/{team}</code> 的路由。使用 <code>{current_team}</code> 和 <code>{team}</code> 路由參數時，入門套件會自動確保已驗證的用戶在允許存取路由之前屬於請求的團隊。</p>
-<p>為了使生成團隊感知的 URL 更加方便，入門套件為已驗證用戶的當前團隊註冊了 URL 預設值。這允許對 <code>route('dashboard')</code> 等輔助函數的呼叫自動包含當前團隊的 slug。當用戶登入、註冊或切換團隊時，入門套件會更新當前團隊並刷新這些 URL 預設值，以便生成的連結繼續使用正確的團隊上下文。</p>
-<p>創建或重新命名團隊時，入門套件還會阻止用戶選擇可能產生不安全或衝突路由段的保留名稱。例如，名稱不能與路由前綴（如 <code>settings</code>、<code>login</code> 或 <code>dashboard</code>）衝突。</p>
+<p>React、Svelte、Vue 和 Livewire 入門套件也可以在啟用團隊支援的情況下生成。當啟用團隊功能時，每個使用者屬於一個或多個團隊並有一個當前團隊。在註冊期間，新使用者會自動獲得一個個人團隊。入門套件還包括團隊管理畫面，用於建立團隊、在團隊之間切換、邀請成員和更新團隊詳情。</p>
+<p>當路由作用域設定為當前團隊時，當前團隊的 slug 包含在 URL 中。例如，儀表板路由變為 <code>/{current_team}/dashboard</code>，而團隊管理頁面使用如 <code>settings/teams/{team}</code> 的路由。使用 <code>{current_team}</code> 和 <code>{team}</code> 路由參數時，入門套件會自動確保已驗證的使用者在允許存取路由之前屬於請求的團隊。</p>
+<p>為了使生成團隊感知的 URL 更加方便，入門套件為已驗證使用者的當前團隊註冊了 URL 預設值。這允許對 <code>route('dashboard')</code> 等輔助函數的呼叫自動包含當前團隊的 slug。當使用者登入、註冊或切換團隊時，入門套件會更新當前團隊並刷新這些 URL 預設值，以便生成的連結繼續使用正確的團隊上下文。</p>
+<p>建立或重新命名團隊時，入門套件還會阻止使用者選擇可能產生不安全或衝突路由段的保留名稱。例如，名稱不能與路由前綴（如 <code>settings</code>、<code>login</code> 或 <code>dashboard</code>）衝突。</p>
 <p><a name="workos"></a></p>
 <h2>WorkOS AuthKit 身份驗證</h2>
 <p>預設情況下，React、Svelte、Vue 和 Livewire 入門套件都使用 Laravel 的內建身份驗證系統來提供登入、註冊、密碼重設、電子郵件驗證等功能。此外，我們還提供每個入門套件的 <a href="https://authkit.com">WorkOS AuthKit</a> 驅動版本，提供：</p>
@@ -419,7 +419,7 @@ RateLimiter::for(&#39;login&#39;, function ($request) {
 <li>基於電子郵件的「Magic Auth」</li>
 <li>SSO</li>
 </ul>
-</div><p>使用 WorkOS 作為您的身份驗證供應商<a href="https://workos.com">需要 WorkOS 帳戶</a>。WorkOS 為每月最多 100 萬個活躍用戶的應用程式提供免費身份驗證。</p>
+</div><p>使用 WorkOS 作為您的身份驗證供應商<a href="https://workos.com">需要 WorkOS 帳戶</a>。WorkOS 為每月最多 100 萬個活躍使用者的應用程式提供免費身份驗證。</p>
 <p>要使用 WorkOS AuthKit 作為應用程式的身份驗證供應商，請在透過 <code>laravel new</code> 建立新的入門套件驅動應用程式時選擇 WorkOS 選項。</p>
 <h3>配置您的 WorkOS 入門套件</h3>
 <p>使用 WorkOS 驅動的入門套件建立新的應用程式後，您應該在應用程式的 <code>.env</code> 檔案中設定 <code>WORKOS_CLIENT_ID</code>、<code>WORKOS_API_KEY</code> 和 <code>WORKOS_REDIRECT_URL</code> 環境變數。這些變數應與您在 WorkOS 儀表板中為應用程式提供的值匹配：</p>
@@ -427,19 +427,19 @@ RateLimiter::for(&#39;login&#39;, function ($request) {
 WORKOS_API_KEY=your-api-key
 WORKOS_REDIRECT_URL=&quot;\${APP_URL}/authenticate&quot;
 </code></pre>
-<p>此外，您應該在 WorkOS 儀表板中配置應用程式首頁 URL。此 URL 是用戶登出應用程式後將被重定向到的地方。</p>
+<p>此外，您應該在 WorkOS 儀表板中配置應用程式首頁 URL。此 URL 是使用者登出應用程式後將被重定向到的地方。</p>
 <p><a name="configuring-authkit-authentication-methods"></a></p>
 <h4>配置 AuthKit 身份驗證方法</h4>
-<p>使用 WorkOS 驅動的入門套件時，我們建議您在應用程式的 WorkOS AuthKit 配置設定中禁用「電子郵件 + 密碼」身份驗證，僅允許用戶透過社交身份驗證供應商、通行證、「Magic Auth」和 SSO 進行身份驗證。這使您的應用程式可以完全避免處理用戶密碼。</p>
+<p>使用 WorkOS 驅動的入門套件時，我們建議您在應用程式的 WorkOS AuthKit 配置設定中禁用「電子郵件 + 密碼」身份驗證，僅允許使用者透過社交身份驗證供應商、通行證、「Magic Auth」和 SSO 進行身份驗證。這使您的應用程式可以完全避免處理使用者密碼。</p>
 <p><a name="configuring-authkit-session-timeouts"></a></p>
 <h4>配置 AuthKit Session 逾時</h4>
 <p>此外，我們建議您將 WorkOS AuthKit Session 閒置逾時設定為與 Laravel 應用程式配置的 Session 逾時閾值匹配，通常為兩小時。</p>
 <p><a name="inertia-ssr"></a></p>
 <h3>Inertia SSR</h3>
-<p>React、Svelte 和 Vue 入門套件與 Inertia 的<a href="https://inertiajs.com/server-side-rendering">伺服器端渲染</a>功能相容。要為您的應用程式構建 Inertia SSR 相容套件，請執行 <code>build:ssr</code> 命令：</p>
+<p>React、Svelte 和 Vue 入門套件與 Inertia 的<a href="https://inertiajs.com/server-side-rendering">伺服器端渲染</a>功能相容。要為您的應用程式建立 Inertia SSR 相容套件，請執行 <code>build:ssr</code> 命令：</p>
 <pre><code class="language-shell">npm run build:ssr
 </code></pre>
-<p>為了方便起見，還提供了 <code>composer dev:ssr</code> 命令。此命令將在為您的應用程式構建 SSR 相容套件後啟動 Laravel 開發伺服器和 Inertia SSR 伺服器，允許您使用 Inertia 的伺服器端渲染引擎在本機測試您的應用程式：</p>
+<p>為了方便起見，還提供了 <code>composer dev:ssr</code> 命令。此命令將在為您的應用程式建立 SSR 相容套件後啟動 Laravel 開發伺服器和 Inertia SSR 伺服器，允許您使用 Inertia 的伺服器端渲染引擎在本機測試您的應用程式：</p>
 <pre><code class="language-shell">composer dev:ssr
 </code></pre>
 <p><a name="community-maintained-starter-kits"></a></p>
@@ -448,13 +448,13 @@ WORKOS_REDIRECT_URL=&quot;\${APP_URL}/authenticate&quot;
 <pre><code class="language-shell">laravel new my-app --using=example/starter-kit
 </code></pre>
 <p><a name="creating-starter-kits"></a></p>
-<h4>創建入門套件</h4>
+<h4>建立入門套件</h4>
 <p>為了確保您的入門套件可供其他人使用，您需要將其發佈到 <a href="https://packagist.org">Packagist</a>。您的入門套件應在其 <code>.env.example</code> 檔案中定義所需的環境變數，任何必要的安裝後命令應列在入門套件的 <code>composer.json</code> 檔案的 <code>post-create-project-cmd</code> 陣列中。</p>
 <p><a name="faqs"></a></p>
 <h3>常見問題</h3>
 <p><a name="faq-upgrade"></a></p>
 <h4>如何升級？</h4>
-<p>每個入門套件都為您的下一個應用程式提供了一個良好的起點。由於完全擁有程式碼，您可以完全按照您的構想來調整、自訂和構建您的應用程式。但是，無需更新入門套件本身。</p>
+<p>每個入門套件都為您的下一個應用程式提供了一個良好的起點。由於完全擁有程式碼，您可以完全按照您的構想來調整、自訂和建立您的應用程式。但是，無需更新入門套件本身。</p>
 <p><a name="faq-enable-email-verification"></a></p>
 <h4>如何啟用電子郵件驗證？</h4>
 <p>可以透過取消註解 <code>App/Models/User.php</code> 模型中的 <code>MustVerifyEmail</code> 導入並確保模型實現 <code>MustVerifyEmail</code> 介面來添加電子郵件驗證：</p>
@@ -470,7 +470,7 @@ class User extends Authenticatable implements MustVerifyEmail
     // ...
 }
 </code></pre>
-<p>註冊後，用戶將收到驗證電子郵件。要限制對某些路由的存取直到用戶的電子郵件地址被驗證，請向路由添加 <code>verified</code> 中介層：</p>
+<p>註冊後，使用者將收到驗證電子郵件。要限制對某些路由的存取直到使用者的電子郵件地址被驗證，請向路由添加 <code>verified</code> 中介層：</p>
 <pre><code class="language-php">Route::middleware([&#39;auth&#39;, &#39;verified&#39;])-&gt;group(function () {
     Route::get(&#39;dashboard&#39;, function () {
         return Inertia::render(&#39;dashboard&#39;);

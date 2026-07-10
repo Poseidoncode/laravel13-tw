@@ -10,7 +10,7 @@ const content = `<h1>版本說明</h1>
 <p><a name="versioning-scheme"></a></p>
 <h2>版本控制方案</h2>
 <p>Laravel 及其其他一方套件遵循<a href="https://semver.org">語義化版本控制</a>。主要框架版本每年發布一次（約 Q1），而次要和補丁版本可能每週發布一次。次要和補丁版本<strong>不應</strong>包含破壞性變更。</p>
-<p>從您的應用程式或套件引用 Laravel 框架或其組件時，您應始終使用版本約束（如 <code>^13.0</code>），因為 Laravel 的主要版本確實包含破壞性變更。但是，我們努力始終確保您可以在一天或更短時間內更新到新的主要版本。</p>
+<p>從您的應用程式或套件引用 Laravel 框架或其元件時，您應始終使用版本約束（如 <code>^13.0</code>），因為 Laravel 的主要版本確實包含破壞性變更。但是，我們努力始終確保您可以在一天或更短時間內更新到新的主要版本。</p>
 <p><a name="named-arguments"></a></p>
 <h4>命名參數</h4>
 <p><a href="https://www.php.net/manual/en/functions.arguments.php#functions.named-arguments">命名參數</a>不在 Laravel 的向後相容性指南範圍內。為了改善 Laravel 程式碼庫，我們可能會在必要時重新命名函數參數。因此，在呼叫 Laravel 方法時使用命名參數應謹慎進行，並了解參數名稱可能會在未來發生變化。</p>
@@ -79,7 +79,7 @@ const content = `<h1>版本說明</h1>
 <p><a name="ai-sdk"></a></p>
 <h3>Laravel AI SDK</h3>
 <p>Laravel 13 引入了一方 <a href="https://laravel.com/ai">Laravel AI SDK</a>，為文字生成、工具呼叫代理、嵌入、音訊、圖片和向量儲存整合提供了統一的 API。</p>
-<p>使用 AI SDK，您可以構建與供應商無關的 AI 功能，同時保持一致的、Laravel 原生的開發者體驗。</p>
+<p>使用 AI SDK，您可以建立與供應商無關的 AI 功能，同時保持一致的、Laravel 原生的開發者體驗。</p>
 <p>例如，一個基本的代理可以透過單次呼叫進行提示：</p>
 <pre><code class="language-php">use App\\Ai\\Agents\\SalesCoach;
 
@@ -88,7 +88,7 @@ $response = SalesCoach::make()-&gt;prompt(&#39;分析此銷售記錄...&#39;);
 return (string) $response;
 </code></pre>
 <p>Laravel AI SDK 還可以生成圖片、音訊和嵌入：</p>
-<p>對於視覺生成用例，SDK 提供了一個簡潔的 API，用於從自然語言提示創建圖片：</p>
+<p>對於視覺生成用例，SDK 提供了一個簡潔的 API，用於從自然語言提示建立圖片：</p>
 <pre><code class="language-php">use Laravel\\Ai\\Image;
 
 $image = Image::of(&#39;一個放在廚房櫃檯上的甜甜圈&#39;)-&gt;generate();
@@ -151,7 +151,7 @@ class CommentController
 <p><a name="semantic-search"></a></p>
 <h3>語義/向量搜尋</h3>
 <p>Laravel 13 透過原生向量查詢支援、嵌入工作流程以及在 <a href="/docs/search#semantic-vector-search">搜尋</a>、<a href="/docs/queries#vector-similarity-clauses">查詢</a>和 <a href="/docs/ai-sdk#embeddings">AI SDK</a> 中記錄的相關 API，深化了其語義搜尋故事。</p>
-<p>這些功能使得使用 PostgreSQL + <code>pgvector</code> 構建 AI 驅動的搜尋體驗變得簡單，包括對直接從字串生成的嵌入進行相似性搜尋。</p>
+<p>這些功能使得使用 PostgreSQL + <code>pgvector</code> 建立 AI 驅動的搜尋體驗變得簡單，包括對直接從字串生成的嵌入進行相似性搜尋。</p>
 <p>例如，您可以直接從查詢建構器運行語義相似性搜尋：</p>
 <pre><code class="language-php">$documents = DB::table(&#39;documents&#39;)
     -&gt;whereVectorSimilarTo(&#39;embedding&#39;, &#39;納帕谷最好的酒莊&#39;)

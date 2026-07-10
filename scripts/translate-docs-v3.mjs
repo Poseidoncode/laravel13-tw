@@ -1329,7 +1329,7 @@ const pageTitles = {
   'fortify': 'Fortify',
   'helpers': '輔助函式',
   'homestead': 'Homestead',
-  'http-client': 'HTTP 用戶端',
+  'http-client': 'HTTP 客戶端',
   'license': '授權條款',
   'lifecycle': '生命週期',
   'localization': '本地化',

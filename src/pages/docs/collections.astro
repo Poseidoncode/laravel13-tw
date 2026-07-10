@@ -4,7 +4,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 const content = `<h1>集合</h1>
 <ul>
 <li><a href="#introduction">簡介</a><ul>
-<li><a href="#creating-collections">創建集合</a></li>
+<li><a href="#creating-collections">建立集合</a></li>
 <li><a href="#extending-collections">擴展集合</a></li>
 </ul>
 </li>
@@ -13,7 +13,7 @@ const content = `<h1>集合</h1>
 <li><a href="#higher-order-messages">高階消息</a></li>
 <li><a href="#lazy-collections">延遲集合</a><ul>
 <li><a href="#lazy-collection-introduction">簡介</a></li>
-<li><a href="#creating-lazy-collections">創建延遲集合</a></li>
+<li><a href="#creating-lazy-collections">建立延遲集合</a></li>
 <li><a href="#the-enumerable-contract">Enumerable 合約</a></li>
 <li><a href="#lazy-collection-methods">延遲集合方法</a></li>
 </ul>
@@ -21,7 +21,7 @@ const content = `<h1>集合</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p><code>Illuminate\\Support\\Collection</code> 類別為處理資料陣列提供了一個流暢、便利的包裝器。例如，查看以下程式碼。我們將使用 <code>collect</code> 輔助函數從陣列創建一個新的集合實例，對每個元素運行 <code>strtoupper</code> 函數，然後移除所有空元素：</p>
+<p><code>Illuminate\\Support\\Collection</code> 類別為處理資料陣列提供了一個流暢、便利的包裝器。例如，查看以下程式碼。我們將使用 <code>collect</code> 輔助函數從陣列建立一個新的集合實例，對每個元素運行 <code>strtoupper</code> 函數，然後移除所有空元素：</p>
 <pre><code class="language-php">$collection = collect([&#39;Taylor&#39;, &#39;Abigail&#39;, null])-&gt;map(function (?string $name) {
     return strtoupper($name);
 })-&gt;reject(function (string $name) {
@@ -30,11 +30,11 @@ const content = `<h1>集合</h1>
 </code></pre>
 <p>如您所見，<code>Collection</code> 類別允許您鏈接其方法以對底層陣列執行流暢的映射和歸約操作。通常，集合是不可變的，這意味著每個 <code>Collection</code> 方法都返回一個全新的 <code>Collection</code> 實例。</p>
 <p><a name="creating-collections"></a></p>
-<h3>創建集合</h3>
-<p>如上所述，<code>collect</code> 輔助函數為給定的陣列返回一個新的 <code>Illuminate\\Support\\Collection</code> 實例。因此，創建集合就像這樣簡單：</p>
+<h3>建立集合</h3>
+<p>如上所述，<code>collect</code> 輔助函數為給定的陣列返回一個新的 <code>Illuminate\\Support\\Collection</code> 實例。因此，建立集合就像這樣簡單：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 </code></pre>
-<p>您還可以使用 <a href="#method-make">make</a> 和 <a href="#method-fromjson">fromJson</a> 方法創建集合。</p>
+<p>您還可以使用 <a href="#method-make">make</a> 和 <a href="#method-fromjson">fromJson</a> 方法建立集合。</p>
 <blockquote>
 <p>[!NOTE]
 <a href="/docs/eloquent">Eloquent</a> 查詢的結果總是作為 <code>Collection</code> 實例返回。</p>
@@ -351,7 +351,7 @@ $chunks-&gt;all();
 </code></pre>
 <p><a name="method-chunkwhile"></a></p>
 <h4><code>chunkWhile()</code> {.collection-method}</h4>
-<p><code>chunkWhile</code> 方法根據給定回調的評估將集合分割為多個較小的集合。傳遞給閉包的 <code>$chunk</code> 變數可用於檢查前一個元素：</p>
+<p><code>chunkWhile</code> 方法根據給定回呼的評估將集合分割為多個較小的集合。傳遞給閉包的 <code>$chunk</code> 變數可用於檢查前一個元素：</p>
 <pre><code class="language-php">$collection = collect(str_split(&#39;AABBCCCD&#39;));
 
 $chunks = $collection-&gt;chunkWhile(function (string $value, int $key, Collection $chunk) {
@@ -614,7 +614,7 @@ $diff-&gt;all();
 </code></pre>
 <p><a name="method-diffassocusing"></a></p>
 <h4><code>diffAssocUsing()</code> {.collection-method}</h4>
-<p><code>diffAssocUsing</code> 方法使用給定的回調進行金鑰比較，將集合與另一個集合或普通 PHP <code>array</code> 進行比較：</p>
+<p><code>diffAssocUsing</code> 方法使用給定的回呼進行金鑰比較，將集合與另一個集合或普通 PHP <code>array</code> 進行比較：</p>
 <pre><code class="language-php">$collection = collect([
     &#39;color&#39; =&gt; &#39;orange&#39;,
     &#39;type&#39; =&gt; &#39;fruit&#39;,
@@ -755,14 +755,14 @@ $employees-&gt;duplicates(&#39;department&#39;);
 <p>此方法具有與 <a href="#method-duplicates">duplicates</a> 方法相同的簽名；但是，所有值都使用「嚴格」比較進行比較。</p>
 <p><a name="method-each"></a></p>
 <h4><code>each()</code> {.collection-method}</h4>
-<p><code>each</code> 方法遍歷集合中的項目，將每個項目傳遞給回調：</p>
+<p><code>each</code> 方法遍歷集合中的項目，將每個項目傳遞給回呼：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $collection-&gt;each(function (int $item, int $key) {
     //
 });
 </code></pre>
-<p>如果要從回調中停止遍歷集合中的其餘項目，您的回調應返回 <code>false</code>：</p>
+<p>如果要從回呼中停止遍歷集合中的其餘項目，您的回呼應返回 <code>false</code>：</p>
 <pre><code class="language-php">$collection-&gt;each(function (int $item, int $key) {
     if ($key === 1) {
         return false;
@@ -771,14 +771,14 @@ $collection-&gt;each(function (int $item, int $key) {
 </code></pre>
 <p><a name="method-eachspread"></a></p>
 <h4><code>eachSpread()</code> {.collection-method}</h4>
-<p><code>eachSpread</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回調：</p>
+<p><code>eachSpread</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回呼：</p>
 <pre><code class="language-php">$collection = collect([[&#39;Taylor&#39;, &#39;Otwell&#39;], [&#39;Dayle&#39;, &#39;Rees&#39;]]);
 
 $collection-&gt;eachSpread(function (string $firstName, string $lastName) {
     //
 });
 </code></pre>
-<p>如果要從回調中停止遍歷集合中的其餘項目，您的回調應返回 <code>false</code>：</p>
+<p>如果要從回呼中停止遍歷集合中的其餘項目，您的回呼應返回 <code>false</code>：</p>
 <pre><code class="language-php">$collection-&gt;eachSpread(function (string $firstName, string $lastName, int $key) {
     if ($key === 0) {
         return false;
@@ -819,7 +819,7 @@ $filtered-&gt;all();
 <p><code>except</code> 方法的相反操作是 <a href="#method-only">only</a> 方法。</p>
 <p><a name="method-filter"></a></p>
 <h4><code>filter()</code> {.collection-method}</h4>
-<p><code>filter</code> 方法使用給定的回調過濾集合，保留通過真值測試的項目：</p>
+<p><code>filter</code> 方法使用給定的回呼過濾集合，保留通過真值測試的項目：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $filtered = $collection-&gt;filter(function (int $value, int $key) {
@@ -830,7 +830,7 @@ $filtered-&gt;all();
 
 // [3, 4]
 </code></pre>
-<p>如果不向 <code>filter</code> 方法傳遞回調，它將返回集合中所有不是 <code>false</code>、<code>null</code> 或 <code>0</code> 的項目：</p>
+<p>如果不向 <code>filter</code> 方法傳遞回呼，它將返回集合中所有不是 <code>false</code>、<code>null</code> 或 <code>0</code> 的項目：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 0, null, false, &#39;&#39;]);
 
 $collection-&gt;filter()-&gt;all();
@@ -885,7 +885,7 @@ $collection-&gt;firstWhere(&#39;name&#39;, &#39;Taylor&#39;);
 </code></pre>
 <p><a name="method-flatmap"></a></p>
 <h4><code>flatMap()</code> {.collection-method}</h4>
-<p><code>flatMap</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回調，然後將結果展平為單一陣列：</p>
+<p><code>flatMap</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回呼，然後將結果展平為單一陣列：</p>
 <pre><code class="language-php">$collection = collect([
     [&#39;name&#39; =&gt; &#39;Taylor&#39;],
     [&#39;name&#39; =&gt; &#39;Dayle&#39;],
@@ -967,7 +967,7 @@ $collection-&gt;forPage(2, 3)-&gt;all();
 </code></pre>
 <p><a name="method-fromjson"></a></p>
 <h4><code>fromJson()</code> {.collection-method}</h4>
-<p><code>fromJson</code> 方法從給定的 JSON 字串創建一個集合：</p>
+<p><code>fromJson</code> 方法從給定的 JSON 字串建立一個集合：</p>
 <pre><code class="language-php">$collection = Collection::fromJson(&#39;[1,2,3]&#39;);
 
 $collection-&gt;all();
@@ -989,7 +989,7 @@ $collection-&gt;get(&#39;price&#39;, 0);
 </code></pre>
 <p><a name="method-groupby"></a></p>
 <h4><code>groupBy()</code> {.collection-method}</h4>
-<p><code>groupBy</code> 方法根據給定的金鑰或回調將集合中的項目分組：</p>
+<p><code>groupBy</code> 方法根據給定的金鑰或回呼將集合中的項目分組：</p>
 <pre><code class="language-php">$collection = collect([
     [&#39;account_id&#39; =&gt; 1, &#39;product&#39; =&gt; &#39;Desk&#39;, &#39;amount&#39; =&gt; 50],
     [&#39;account_id&#39; =&gt; 2, &#39;product&#39; =&gt; &#39;Chair&#39;, &#39;amount&#39; =&gt; 200],
@@ -1014,7 +1014,7 @@ $grouped-&gt;all();
     ]
 */
 </code></pre>
-<p>除了金鑰名稱之外，您還可以傳遞一個回調來確定金鑰的值：</p>
+<p>除了金鑰名稱之外，您還可以傳遞一個回呼來確定金鑰的值：</p>
 <pre><code class="language-php">$grouped = $collection-&gt;groupBy(function (array $item, int $key) {
     return substr($item[&#39;product&#39;], 0, 3);
 });
@@ -1088,7 +1088,7 @@ $collection-&gt;hasSole([&#39;name&#39;, &#39;product_id&#39;]);
 </code></pre>
 <p><a name="method-implode"></a></p>
 <h4><code>implode()</code> {.collection-method}</h4>
-<p><code>implode</code> 方法使用字串連接集合中的項目。您可以傳遞一個陣列的金鑰和連接字元，或者一個回調：</p>
+<p><code>implode</code> 方法使用字串連接集合中的項目。您可以傳遞一個陣列的金鑰和連接字元，或者一個回呼：</p>
 <pre><code class="language-php">$collection = collect([
     [&#39;account_id&#39; =&gt; 1, &#39;product&#39; =&gt; &#39;Desk&#39;],
     [&#39;account_id&#39; =&gt; 2, &#39;product&#39; =&gt; &#39;Chair&#39;],
@@ -1122,7 +1122,7 @@ $filtered-&gt;all();
 </code></pre>
 <p><a name="method-intersectusing"></a></p>
 <h4><code>intersectUsing()</code> {.collection-method}</h4>
-<p><code>intersectUsing</code> 方法從另一個陣列或集合中移除不在集合中的所有值，使用給定的回調來比較值：</p>
+<p><code>intersectUsing</code> 方法從另一個陣列或集合中移除不在集合中的所有值，使用給定的回呼來比較值：</p>
 <pre><code class="language-php">$collection = collect([&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]);
 
 $filtered = $collection-&gt;intersectUsing([&#39;desk&#39;, &#39;chair&#39;, &#39;bookcase&#39;], &#39;strcasecmp&#39;);
@@ -1155,7 +1155,7 @@ $diff-&gt;all();
 </code></pre>
 <p><a name="method-intersectassocusing"></a></p>
 <h4><code>intersectAssocUsing()</code> {.collection-method}</h4>
-<p><code>intersectAssocUsing</code> 方法從另一個陣列或集合中移除不在集合中的所有金鑰/值對，使用給定的回調來比較值：</p>
+<p><code>intersectAssocUsing</code> 方法從另一個陣列或集合中移除不在集合中的所有金鑰/值對，使用給定的回呼來比較值：</p>
 <pre><code class="language-php">$collection = collect([
     &#39;color&#39; =&gt; &#39;orange&#39;,
     &#39;type&#39; =&gt; &#39;fruit&#39;,
@@ -1270,7 +1270,7 @@ $collection-&gt;last(function (int $value, int $key) {
 </code></pre>
 <p><a name="method-lazy"></a></p>
 <h4><code>lazy()</code> {.collection-method}</h4>
-<p><code>lazy</code> 方法從給定的陣列創建一個延遲集合：</p>
+<p><code>lazy</code> 方法從給定的陣列建立一個延遲集合：</p>
 <pre><code class="language-php">$collection = collect([&#39;Taylor&#39;, &#39;Dayle&#39;])-&gt;lazy();
 
 $collection::class;
@@ -1300,7 +1300,7 @@ $collection-&gt;toUpperCase();
 </code></pre>
 <p><a name="method-make"></a></p>
 <h4><code>make()</code> {.collection-method}</h4>
-<p><code>make</code> 方法從給定的值創建一個新的 <code>Collection</code> 實例：</p>
+<p><code>make</code> 方法從給定的值建立一個新的 <code>Collection</code> 實例：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Collection;
 
 $collection = Collection::make(&#39;Taylor&#39;);
@@ -1311,7 +1311,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-map"></a></p>
 <h4><code>map()</code> {.collection-method}</h4>
-<p><code>map</code> 方法遍歷集合中的項目，將每個項目傳遞給回調。集合由回調返回的值取代：</p>
+<p><code>map</code> 方法遍歷集合中的項目，將每個項目傳遞給回呼。集合由回呼返回的值取代：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4, 5]);
 
 $multiplied = $collection-&gt;map(function (int $item, int $key) {
@@ -1328,14 +1328,14 @@ $multiplied-&gt;all();
 </blockquote>
 <p><a name="method-mapinto"></a></p>
 <h4><code>mapInto()</code> {.collection-method}</h4>
-<p><code>mapInto</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回調，使用結果填充新的實例：</p>
+<p><code>mapInto</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回呼，使用結果填充新的實例：</p>
 <pre><code class="language-php">$collection = collect([&#39;class-1&#39;, &#39;class-2&#39;, &#39;class-3&#39;]);
 
 $collection-&gt;mapInto(CssClass::class);
 </code></pre>
 <p><a name="method-mapspread"></a></p>
 <h4><code>mapSpread()</code> {.collection-method}</h4>
-<p><code>mapSpread</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回調，然後使用結果填充一個新的實例：</p>
+<p><code>mapSpread</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回呼，然後使用結果填充一個新的實例：</p>
 <pre><code class="language-php">$collection = collect([
     [15, 25, 35],
     [10, 20, 30],
@@ -1349,7 +1349,7 @@ $collection-&gt;mapSpread(function (int $odd, int $even, int $key) {
 </code></pre>
 <p><a name="method-maptogroups"></a></p>
 <h4><code>mapToGroups()</code> {.collection-method}</h4>
-<p><code>mapToGroups</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回調，使用結果填充一個以鍵分組的新集合：</p>
+<p><code>mapToGroups</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回呼，使用結果填充一個以鍵分組的新集合：</p>
 <pre><code class="language-php">$collection = collect([
     [&#39;name&#39; =&gt; &#39;John Doe&#39;, &#39;department&#39; =&gt; &#39;Sales&#39;],
     [&#39;name&#39; =&gt; &#39;Jane Doe&#39;, &#39;department&#39; =&gt; &#39;Marketing&#39;],
@@ -1369,7 +1369,7 @@ $grouped-&gt;all();
 </code></pre>
 <p><a name="method-mapwithkeys"></a></p>
 <h4><code>mapWithKeys()</code> {.collection-method}</h4>
-<p><code>mapWithKeys</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回調，然後將結果填充為一個新的集合：</p>
+<p><code>mapWithKeys</code> 方法遍歷集合中的項目，將每個展開的參數傳遞給回呼，然後將結果填充為一個新的集合：</p>
 <pre><code class="language-php">$collection = collect([
     [
         &#39;name&#39; =&gt; &#39;John&#39;,
@@ -1480,7 +1480,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-multiply"></a></p>
 <h4><code>multiply()</code> {.collection-method}</h4>
-<p><code>multiply</code> 方法創建一個新的空集合，並使用給定的值和計數填充它：</p>
+<p><code>multiply</code> 方法建立一個新的空集合，並使用給定的值和計數填充它：</p>
 <pre><code class="language-php">$collection = collect()-&gt;multiply(&#39;foo&#39;, 3);
 
 $collection-&gt;all();
@@ -1532,7 +1532,7 @@ $collection-&gt;pad(-5, &#39;0&#39;);
 </code></pre>
 <p><a name="method-partition"></a></p>
 <h4><code>partition()</code> {.collection-method}</h4>
-<p><code>partition</code> 方法根據真值回調將集合分割為兩個集合：</p>
+<p><code>partition</code> 方法根據真值回呼將集合分割為兩個集合：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4, 5, 6]);
 
 [$underThree, $overThree] = $collection-&gt;partition(function (int $item) {
@@ -1549,7 +1549,7 @@ $overThree-&gt;all();
 </code></pre>
 <p><a name="method-percentage"></a></p>
 <h4><code>percentage()</code> {.collection-method}</h4>
-<p><code>percentage</code> 方法計算匹配給定回調的項目百分比：</p>
+<p><code>percentage</code> 方法計算匹配給定回呼的項目百分比：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $percentage = $collection-&gt;percentage(function (int $item) {
@@ -1560,7 +1560,7 @@ $percentage = $collection-&gt;percentage(function (int $item) {
 </code></pre>
 <p><a name="method-pipe"></a></p>
 <h4><code>pipe()</code> {.collection-method}</h4>
-<p><code>pipe</code> 方法將集合傳遞給給定的回調並返回結果：</p>
+<p><code>pipe</code> 方法將集合傳遞給給定的回呼並返回結果：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $piped = $collection-&gt;pipe(function (Collection $collection) {
@@ -1571,7 +1571,7 @@ $piped = $collection-&gt;pipe(function (Collection $collection) {
 </code></pre>
 <p><a name="method-pipeinto"></a></p>
 <h4><code>pipeInto()</code> {.collection-method}</h4>
-<p><code>pipeInto</code> 方法將集合傳遞給給定類別的構造函數，使用結果創建一個新實例：</p>
+<p><code>pipeInto</code> 方法將集合傳遞給給定類別的構造函數，使用結果建立一個新實例：</p>
 <pre><code class="language-php">use App\\Collection;
 
 $collection = collect([1, 2, 3]);
@@ -1710,7 +1710,7 @@ $collection-&gt;random(3);
 </code></pre>
 <p><a name="method-range"></a></p>
 <h4><code>range()</code> {.collection-method}</h4>
-<p><code>range</code> 方法創建一個包含給定範圍內整數的集合：</p>
+<p><code>range</code> 方法建立一個包含給定範圍內整數的集合：</p>
 <pre><code class="language-php">$collection = collect()-&gt;range(3, 7);
 
 $collection-&gt;all();
@@ -1719,7 +1719,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-reduce"></a></p>
 <h4><code>reduce()</code> {.collection-method}</h4>
-<p><code>reduce</code> 方法將集合簡化為單一值，將回調的結果傳遞給下一次迭代：</p>
+<p><code>reduce</code> 方法將集合簡化為單一值，將回呼的結果傳遞給下一次迭代：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $total = $collection-&gt;reduce(function (int $carry, int $item) {
@@ -1728,7 +1728,7 @@ $total = $collection-&gt;reduce(function (int $carry, int $item) {
 
 // 6
 </code></pre>
-<p>傳遞給回調的 <code>$carry</code> 值是上一次迭代的結果。您可以透過向 <code>reduce</code> 方法提供第二個參數來指定初始值：</p>
+<p>傳遞給回呼的 <code>$carry</code> 值是上一次迭代的結果。您可以透過向 <code>reduce</code> 方法提供第二個參數來指定初始值：</p>
 <pre><code class="language-php">$collection-&gt;reduce(function (int $carry, int $item) {
     return $carry + $item;
 }, 4);
@@ -1737,7 +1737,7 @@ $total = $collection-&gt;reduce(function (int $carry, int $item) {
 </code></pre>
 <p><a name="method-reduce-spread"></a></p>
 <h4><code>reduceSpread()</code> {.collection-method}</h4>
-<p><code>reduceSpread</code> 方法將集合簡化為單一值，將回調的結果傳遞給下一次迭代：</p>
+<p><code>reduceSpread</code> 方法將集合簡化為單一值，將回呼的結果傳遞給下一次迭代：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $reduced = $collection-&gt;reduceSpread(function (int $carry, int $value) {
@@ -1750,7 +1750,7 @@ $reduced;
 </code></pre>
 <p><a name="method-reject"></a></p>
 <h4><code>reject()</code> {.collection-method}</h4>
-<p><code>reject</code> 方法使用給定的回調過濾集合，移除通過真值測試的項目：</p>
+<p><code>reject</code> 方法使用給定的回呼過濾集合，移除通過真值測試的項目：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $filtered = $collection-&gt;reject(function (int $value, int $key) {
@@ -1818,7 +1818,7 @@ $collection-&gt;search(&#39;foo&#39;);
 
 // false
 </code></pre>
-<p>您可以傳遞一個回調作為第二個參數來自訂搜尋邏輯：</p>
+<p>您可以傳遞一個回呼作為第二個參數來自訂搜尋邏輯：</p>
 <pre><code class="language-php">$collection = collect([
     &#39;color&#39; =&gt; &#39;orange&#39;,
     &#39;type&#39; =&gt; &#39;fruit&#39;,
@@ -1882,7 +1882,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-skipuntil"></a></p>
 <h4><code>skipUntil()</code> {.collection-method}</h4>
-<p><code>skipUntil</code> 方法跳過項目直到回調返回 <code>true</code>：</p>
+<p><code>skipUntil</code> 方法跳過項目直到回呼返回 <code>true</code>：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $collection = $collection-&gt;skipUntil(function (int $item) {
@@ -1895,7 +1895,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-skipwhile"></a></p>
 <h4><code>skipWhile()</code> {.collection-method}</h4>
-<p><code>skipWhile</code> 方法跳過項目直到回調返回 <code>false</code>：</p>
+<p><code>skipWhile</code> 方法跳過項目直到回呼返回 <code>false</code>：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $collection = $collection-&gt;skipWhile(function (int $item) {
@@ -1966,7 +1966,7 @@ $sorted-&gt;values()-&gt;all();
 // [1, 2, 3, 4, 5]
 </code></pre>
 <p>排序的結果將按照數字金鑰重新索引，就像它已經使用 <a href="#method-values">values</a> 方法過濾過一樣。</p>
-<p>如果您的排序標準基於更複雜的比較，您可以將一個回調傳遞給 <code>sort</code>。請參閱 PHP 的 <a href="https://www.php.net/manual/en/function.usort.php#refsect1-function.usort-parameters">usort</a> 文件，它將被 <code>sort</code> 方法用於確定排序順序。</p>
+<p>如果您的排序標準基於更複雜的比較，您可以將一個回呼傳遞給 <code>sort</code>。請參閱 PHP 的 <a href="https://www.php.net/manual/en/function.usort.php#refsect1-function.usort-parameters">usort</a> 文件，它將被 <code>sort</code> 方法用於確定排序順序。</p>
 <p><a name="method-sortby"></a></p>
 <h4><code>sortBy()</code> {.collection-method}</h4>
 <p><code>sortBy</code> 方法按給定金鑰對集合中的項目進行排序：</p>
@@ -1986,7 +1986,7 @@ $sorted-&gt;values()-&gt;all();
 //     [&#39;name&#39; =&gt; &#39;Steve&#39;, &#39;age&#39; =&gt; 35],
 // ]
 </code></pre>
-<p>您可以傳遞回調來定義用於排序的值：</p>
+<p>您可以傳遞回呼來定義用於排序的值：</p>
 <pre><code class="language-php">$collection = collect([
     &#39;name&#39; =&gt; &#39;Steve&#39;,
     &#39;age&#39; =&gt; 25,
@@ -2071,7 +2071,7 @@ $sorted-&gt;all();
 </code></pre>
 <p><a name="method-sortkeysusing"></a></p>
 <h4><code>sortKeysUsing()</code> {.collection-method}</h4>
-<p><code>sortKeysUsing</code> 方法使用給定的回調按金鑰對集合中的項目進行排序：</p>
+<p><code>sortKeysUsing</code> 方法使用給定的回呼按金鑰對集合中的項目進行排序：</p>
 <pre><code class="language-php">$collection = collect([
     &#39;name&#39; =&gt; &#39;Taylor&#39;,
     &#39;framework&#39; =&gt; &#39;Laravel&#39;,
@@ -2103,7 +2103,7 @@ $collection-&gt;all();
 
 // [1, 2]
 </code></pre>
-<p>您可以通過傳遞第三個參數來限制從中移除的項目數量：</p>
+<p>您可以透過傳遞第三個參數來限制從中移除的項目數量：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4, 5]);
 
 $chunk = $collection-&gt;splice(2, 1);
@@ -2168,7 +2168,7 @@ $collection-&gt;sum(&#39;price&#39;);
 
 // 350
 </code></pre>
-<p>如果需要，您可以向 <code>sum</code> 方法傳遞一個回調：</p>
+<p>如果需要，您可以向 <code>sum</code> 方法傳遞一個回呼：</p>
 <pre><code class="language-php">$collection = collect([
     [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;articles&#39; =&gt; 162],
     [&#39;name&#39; =&gt; &#39;Dayle&#39;, &#39;articles&#39; =&gt; 46],
@@ -2200,7 +2200,7 @@ $chunk-&gt;all();
 </code></pre>
 <p><a name="method-takeuntil"></a></p>
 <h4><code>takeUntil()</code> {.collection-method}</h4>
-<p><code>takeUntil</code> 方法從集合中取出項目直到回調返回 <code>true</code>：</p>
+<p><code>takeUntil</code> 方法從集合中取出項目直到回呼返回 <code>true</code>：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $collection = $collection-&gt;takeUntil(function (int $item) {
@@ -2213,7 +2213,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-takewhile"></a></p>
 <h4><code>takeWhile()</code> {.collection-method}</h4>
-<p><code>takeWhile</code> 方法從集合中取出項目直到回調返回 <code>false</code>：</p>
+<p><code>takeWhile</code> 方法從集合中取出項目直到回呼返回 <code>false</code>：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $collection = $collection-&gt;takeWhile(function (int $item) {
@@ -2226,7 +2226,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-tap"></a></p>
 <h4><code>tap()</code> {.collection-method}</h4>
-<p><code>tap</code> 方法將集合傳遞給給定的回調並返回集合本身。回調可以對集合執行任何操作而無需修改集合本身：</p>
+<p><code>tap</code> 方法將集合傳遞給給定的回呼並返回集合本身。回呼可以對集合執行任何操作而無需修改集合本身：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4]);
 
 $collection
@@ -2245,7 +2245,7 @@ $collection-&gt;all();
 </code></pre>
 <p><a name="method-times"></a></p>
 <h4><code>times()</code> {.collection-method}</h4>
-<p><code>times</code> 方法創建一個新的集合，並使用給定的回調結果填充它，該回調被給定的次數調用：</p>
+<p><code>times</code> 方法建立一個新的集合，並使用給定的回呼結果填充它，該回呼被給定的次數調用：</p>
 <pre><code class="language-php">$collection = collect()-&gt;times(3, function (int $number) {
     return $number * 9;
 });
@@ -2287,7 +2287,7 @@ $collection-&gt;toPrettyJson();
 </code></pre>
 <p><a name="method-transform"></a></p>
 <h4><code>transform()</code> {.collection-method}</h4>
-<p><code>transform</code> 方法使用給定的回調遍歷集合中的項目，並使用回調的結果替換每個項目。此方法在映射或修改集合中的項目時非常有用：</p>
+<p><code>transform</code> 方法使用給定的回呼遍歷集合中的項目，並使用回呼的結果替換每個項目。此方法在映射或修改集合中的項目時非常有用：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3, 4, 5]);
 
 $collection = $collection-&gt;transform(function (int $item, int $key) {
@@ -2364,7 +2364,7 @@ $uniqueEmployees-&gt;values()-&gt;all();
 </blockquote>
 <p><a name="method-unless"></a></p>
 <h4><code>unless()</code> {.collection-method}</h4>
-<p><code>unless</code> 方法在給定的布林條件為 false 時對集合執行給定的回調：</p>
+<p><code>unless</code> 方法在給定的布林條件為 false 時對集合執行給定的回呼：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection-&gt;unless(false, function (Collection $collection) {
@@ -2373,7 +2373,7 @@ $collection-&gt;unless(false, function (Collection $collection) {
 
 // [1, 2, 3, 4]
 </code></pre>
-<p>如果未傳遞回調，<code>unless</code> 方法將在布林條件為 false 時返回給定的值：</p>
+<p>如果未傳遞回呼，<code>unless</code> 方法將在布林條件為 false 時返回給定的值：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection = $collection-&gt;unless(false);
@@ -2427,7 +2427,7 @@ $values-&gt;all();
 </code></pre>
 <p><a name="method-when"></a></p>
 <h4><code>when()</code> {.collection-method}</h4>
-<p><code>when</code> 方法在給定的布林條件為 true 時對集合執行給定的回調：</p>
+<p><code>when</code> 方法在給定的布林條件為 true 時對集合執行給定的回呼：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection-&gt;when(true, function (Collection $collection, int $value) {
@@ -2436,7 +2436,7 @@ $collection-&gt;when(true, function (Collection $collection, int $value) {
 
 // [1, 2, 3, 4]
 </code></pre>
-<p>如果未傳遞回調，<code>when</code> 方法將在布林條件為 true 時返回給定的值：</p>
+<p>如果未傳遞回呼，<code>when</code> 方法將在布林條件為 true 時返回給定的值：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection = $collection-&gt;when(true);
@@ -2445,7 +2445,7 @@ $collection = $collection-&gt;when(true);
 </code></pre>
 <p><a name="method-whenempty"></a></p>
 <h4><code>whenEmpty()</code> {.collection-method}</h4>
-<p><code>whenEmpty</code> 方法在集合為空時對集合執行給定的回調：</p>
+<p><code>whenEmpty</code> 方法在集合為空時對集合執行給定的回呼：</p>
 <pre><code class="language-php">$collection = collect([]);
 
 $collection-&gt;whenEmpty(function (Collection $collection) {
@@ -2454,7 +2454,7 @@ $collection-&gt;whenEmpty(function (Collection $collection) {
 
 // [&#39;Taylor&#39;]
 </code></pre>
-<p>如果未傳遞回調，<code>whenEmpty</code> 方法將在集合為空時返回一個新的空集合：</p>
+<p>如果未傳遞回呼，<code>whenEmpty</code> 方法將在集合為空時返回一個新的空集合：</p>
 <pre><code class="language-php">$collection = collect([]);
 
 $collection = $collection-&gt;whenEmpty();
@@ -2463,7 +2463,7 @@ $collection = $collection-&gt;whenEmpty();
 </code></pre>
 <p><a name="method-whennotempty"></a></p>
 <h4><code>whenNotEmpty()</code> {.collection-method}</h4>
-<p><code>whenNotEmpty</code> 方法在集合不為空時對集合執行給定的回調：</p>
+<p><code>whenNotEmpty</code> 方法在集合不為空時對集合執行給定的回呼：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection-&gt;whenNotEmpty(function (Collection $collection, int $value) {
@@ -2472,7 +2472,7 @@ $collection-&gt;whenNotEmpty(function (Collection $collection, int $value) {
 
 // [1, 2, 3, 4]
 </code></pre>
-<p>如果未傳遞回調，<code>whenNotEmpty</code> 方法將在集合不為空時返回給定的值：</p>
+<p>如果未傳遞回呼，<code>whenNotEmpty</code> 方法將在集合不為空時返回給定的值：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection = $collection-&gt;whenNotEmpty();
@@ -2715,7 +2715,7 @@ $orders-&gt;filter-&gt;books-&gt;isEmpty();
 <h2>延遲集合</h2>
 <p><a name="lazy-collection-introduction"></a></p>
 <h3>簡介</h3>
-<p>延遲集合允許您以程式碼的方式處理可能無法放入記憶體的結果。例如，<code>eloquent</code> cursor 方法使用延遲集合，從而減少對資料庫的記憶體使用量。延遲集合提供的大多數方法與其不可變的集合對應物相同；然而，延遲集合的內部迭代器不會一直被緩存到記憶體中。這允許在使用數十億個項目的集合時，在記憶體佔用量上實現巨大的效率提升：</p>
+<p>延遲集合允許您以程式碼的方式處理可能無法放入記憶體的結果。例如，<code>eloquent</code> cursor 方法使用延遲集合，從而減少對資料庫的記憶體使用量。延遲集合提供的大多數方法與其不可變的集合對應物相同；然而，延遲集合的內部迭代器不會一直被快取到記憶體中。這允許在使用數十億個項目的集合時，在記憶體佔用量上實現巨大的效率提升：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Collection;
 
 $collection = collect(range(1, 1000000));
@@ -2736,8 +2736,8 @@ $collection-&gt;each(function (int $number) {
 // 1234567891011121314151617181920212223...
 </code></pre>
 <p><a name="creating-lazy-collections"></a></p>
-<h3>創建延遲集合</h3>
-<p>延遲集合可以從 <code>LazyCollection</code> 類別直接創建：</p>
+<h3>建立延遲集合</h3>
+<p>延遲集合可以從 <code>LazyCollection</code> 類別直接建立：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = LazyCollection::range(1, 1000000);
@@ -2748,7 +2748,7 @@ $lazyCollection-&gt;each(function (int $number) {
 
 // 1234567891011121314151617181920212223...
 </code></pre>
-<p>或者，您可以從集合或陣列創建延遲集合：</p>
+<p>或者，您可以從集合或陣列建立延遲集合：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Collection;
 use Illuminate\\Support\\LazyCollection;
 
@@ -2764,7 +2764,7 @@ $lazyCollection-&gt;toArray();
 
 // [1, 2, 3, 4, 5]
 </code></pre>
-<p>您還可以從陣列創建延遲集合：</p>
+<p>您還可以從陣列建立延遲集合：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = LazyCollection::times(10, function (int $number) {
@@ -2783,7 +2783,7 @@ $lazyCollection-&gt;toArray();
 <p><code>LazyCollection</code> 類別提供了多種用於延遲集合的方法。以下列出了其中的一些：</p>
 <p><a name="method-lazy-remember"></a></p>
 <h4><code>remember()</code> {.collection-method .first-collection-method}</h4>
-<p><code>remember</code> 方法將延遲集合的值緩存在記憶體中，以便它們在後續迭代期間不會重新生成：</p>
+<p><code>remember</code> 方法將延遲集合的值快取在記憶體中，以便它們在後續迭代期間不會重新生成：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = LazyCollection::times(10, function (int $number) {
@@ -2807,7 +2807,7 @@ $lazyCollection-&gt;take(5)-&gt;all();
 </code></pre>
 <p><a name="method-lazy-until"></a></p>
 <h4><code>until()</code> {.collection-method}</h4>
-<p><code>until</code> 方法從延遲集合中取出項目直到回調返回 <code>true</code>：</p>
+<p><code>until</code> 方法從延遲集合中取出項目直到回呼返回 <code>true</code>：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = LazyCollection::range(1, 10);
@@ -2829,7 +2829,7 @@ $lazyCollection-&gt;peek()-&gt;all();
 </code></pre>
 <p><a name="method-lazy-collect"></a></p>
 <h4><code>collect()</code> {.collection-method}</h4>
-<p><code>collect</code> 方法將延遲集合緩存在記憶體中，並將其作為一個常規的 <code>Collection</code> 實例返回：</p>
+<p><code>collect</code> 方法將延遲集合快取在記憶體中，並將其作為一個常規的 <code>Collection</code> 實例返回：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = collect([1, 2, 3])-&gt;lazy();
@@ -2875,7 +2875,7 @@ $lazyCollection-&gt;dd();
 </code></pre>
 <p><a name="method-lazy-filter"></a></p>
 <h4><code>filter()</code> {.collection-method}</h4>
-<p><code>filter</code> 方法使用給定的回調過濾延遲集合：</p>
+<p><code>filter</code> 方法使用給定的回呼過濾延遲集合：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = collect([1, 2, 3, 4, 5])-&gt;lazy();
@@ -2901,7 +2901,7 @@ $lazyCollection-&gt;first();
 </code></pre>
 <p><a name="method-lazy-for-each"></a></p>
 <h4><code>forEach()</code> {.collection-method}</h4>
-<p><code>forEach</code> 方法遍歷延遲集合中的項目，將每個項目傳遞給回調：</p>
+<p><code>forEach</code> 方法遍歷延遲集合中的項目，將每個項目傳遞給回呼：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = collect([1, 2, 3, 4, 5])-&gt;lazy();
@@ -2957,7 +2957,7 @@ $lazyCollection-&gt;implode(&#39;, &#39;);
 </code></pre>
 <p><a name="method-lazy-map"></a></p>
 <h4><code>map()</code> {.collection-method}</h4>
-<p><code>map</code> 方法遍歷延遲集合中的項目，將每個項目傳遞給回調，然後使用結果填充一個新的實例：</p>
+<p><code>map</code> 方法遍歷延遲集合中的項目，將每個項目傳遞給回呼，然後使用結果填充一個新的實例：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = collect([1, 2, 3, 4, 5])-&gt;lazy();
@@ -3006,7 +3006,7 @@ $lazyCollection-&gt;all();
 </code></pre>
 <p><a name="method-lazy-reduce"></a></p>
 <h4><code>reduce()</code> {.collection-method}</h4>
-<p><code>reduce</code> 方法將延遲集合簡化為單一值，將回調的結果傳遞給下一次迭代：</p>
+<p><code>reduce</code> 方法將延遲集合簡化為單一值，將回呼的結果傳遞給下一次迭代：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = collect([1, 2, 3, 4, 5])-&gt;lazy();
@@ -3043,7 +3043,7 @@ $lazyCollection-&gt;sum();
 </code></pre>
 <p><a name="method-lazy-toarray"></a></p>
 <h4><code>toArray()</code> {.collection-method}</h4>
-<p><code>toArray</code> 方法將延遲集合緩存在記憶體中並返回底層陣列：</p>
+<p><code>toArray</code> 方法將延遲集合快取在記憶體中並返回底層陣列：</p>
 <pre><code class="language-php">use Illuminate\\Support\\LazyCollection;
 
 $lazyCollection = collect([1, 2, 3, 4, 5])-&gt;lazy();

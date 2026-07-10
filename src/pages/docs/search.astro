@@ -31,7 +31,7 @@ const content = `<h1>搜尋</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>幾乎每個應用程式都需要搜尋功能。無論您的用戶是在知識庫中搜尋相關文章、瀏覽產品目錄，還是對文件語料庫提出自然語言問題，Laravel 都提供了內建工具來處理這些場景 — 而且您通常不需要任何外部服務就能實現。</p>
+<p>幾乎每個應用程式都需要搜尋功能。無論您的使用者是在知識庫中搜尋相關文章、瀏覽產品目錄，還是對文件語料庫提出自然語言問題，Laravel 都提供了內建工具來處理這些場景 — 而且您通常不需要任何外部服務就能實現。</p>
 <p>大多數應用程式會發現 Laravel 提供的內建資料庫驅動選項已綽綽有餘 — 外部搜尋服務僅在您需要大規模的拼字容錯、分面篩選或地理搜尋等進階功能時才必要。</p>
 <p><a name="introduction-full-text-search"></a></p>
 <h4>全文搜尋</h4>
@@ -84,7 +84,7 @@ const content = `<h1>搜尋</h1>
 <p><a name="semantic-vector-search"></a></p>
 <h2>語意向量搜尋</h2>
 <p>全文搜尋依賴關鍵字匹配 — 查詢中的詞語必須以某種形式出現在資料中。語意搜尋採用完全不同的方法：它使用 AI 生成的向量嵌入將文字的*含義*表示為數字陣列，然後找到含義與查詢最相似的結果。例如，搜尋「Napa Valley 最好的酒莊」可以浮現一篇標題為「頂級必訪酒莊」的文章 — 即使詞語完全不重疊。</p>
-<p>向量搜尋的基本工作流程是：為每個內容生成一個嵌入向量（數字陣列）並與資料一起儲存，然後在搜尋時為用戶的查詢生成一個嵌入向量，並在向量空間中找到與之最接近的已儲存嵌入向量。</p>
+<p>向量搜尋的基本工作流程是：為每個內容生成一個嵌入向量（數字陣列）並與資料一起儲存，然後在搜尋時為使用者的查詢生成一個嵌入向量，並在向量空間中找到與之最接近的已儲存嵌入向量。</p>
 <blockquote>
 <p>[!NOTE]
 向量搜尋需要 <a href="/docs/ai-sdk">Laravel AI SDK</a>，由 PostgreSQL（需要 <code>pgvector</code> 擴充功能）和 MongoDB（需要 <a href="https://laravel.com/docs/13.x/mongodb">Laravel MongoDB 套件</a>）支援。<a href="https://laravel.com/cloud">Laravel Cloud</a> 上的所有 Postgres 資料庫都已安裝 <code>pgvector</code>。</p>
@@ -138,7 +138,7 @@ Schema::create('documents', function (Blueprint $table) {
     ->limit(10)
     ->get();
 </code></pre>
-<p>作為便利功能，當給定純文字字串而非嵌入向量陣列時，Laravel 將使用您設定的嵌入提供者自動為您生成嵌入向量。這意味著您可以直接傳遞用戶的搜尋查詢，而無需先手動將其轉換為嵌入向量：</p>
+<p>作為便利功能，當給定純文字字串而非嵌入向量陣列時，Laravel 將使用您設定的嵌入提供者自動為您生成嵌入向量。這意味著您可以直接傳遞使用者的搜尋查詢，而無需先手動將其轉換為嵌入向量：</p>
 <pre><code class="language-php">$documents = Document::query()
     ->whereVectorSimilarTo('embedding', 'best wineries in Napa Valley')
     ->limit(10)

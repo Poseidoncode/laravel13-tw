@@ -37,15 +37,15 @@ const content = `<h1>安裝</h1>
 </ul>
 <p><a name="meet-laravel"></a></p>
 <h2>認識 Laravel</h2>
-<p>Laravel 是一個具有表達性、優雅語法的 Web 應用程式框架。Web 框架為創建應用程式提供了結構和起點，讓您可以專注於創建令人驚嘆的內容，而我們則處理細節。</p>
+<p>Laravel 是一個具有表達性、優雅語法的 Web 應用程式框架。Web 框架為建立應用程式提供了結構和起點，讓您可以專注於建立令人驚嘆的內容，而我們則處理細節。</p>
 <p>Laravel 致力於提供令人驚嘆的開發者體驗，同時提供強大的功能，如徹底的依賴注入、表達性的資料庫抽象層、佇列和排程任務、單元測試和整合測試等。</p>
-<p>無論您是 PHP Web 框架的新手還是有多年經驗，Laravel 都是一個可以與您一起成長的框架。我們將幫助您踏出成為 Web 開發者的第一步，或在您將專業知識提升到更高水平時給您助力。我們迫不及待想看看您會構建什麼。</p>
+<p>無論您是 PHP Web 框架的新手還是有多年經驗，Laravel 都是一個可以與您一起成長的框架。我們將幫助您踏出成為 Web 開發者的第一步，或在您將專業知識提升到更高水平時給您助力。我們迫不及待想看看您會建立什麼。</p>
 <p><a name="why-laravel"></a></p>
 <h3>為什麼選擇 Laravel？</h3>
-<p>在構建 Web 應用程式時，您有各種工具和框架可供選擇。然而，我們相信 Laravel 是構建現代化全端 Web 應用程式的最佳選擇。</p>
+<p>在建立 Web 應用程式時，您有各種工具和框架可供選擇。然而，我們相信 Laravel 是建立現代化全端 Web 應用程式的最佳選擇。</p>
 <h4>漸進式框架</h4>
 <p>我們喜歡稱 Laravel 為「漸進式」框架。我們的意思是 Laravel 會與您一起成長。如果您剛踏出進入 Web 開發的第一步，Laravel 廣泛的文檔庫、指南和 <a href="https://laracasts.com">影片教程</a>將幫助您學習基礎知識而不會感到不知所措。</p>
-<p>如果您是資深開發者，Laravel 為 <a href="/docs/container">依賴注入</a>、<a href="/docs/testing">單元測試</a>、<a href="/docs/queues">佇列</a>、<a href="/docs/broadcasting">即時事件</a>等提供了強大的工具。Laravel 專為構建專業 Web 應用程式而精心調校，並準備好處理企業級工作負載。</p>
+<p>如果您是資深開發者，Laravel 為 <a href="/docs/container">依賴注入</a>、<a href="/docs/testing">單元測試</a>、<a href="/docs/queues">佇列</a>、<a href="/docs/broadcasting">即時事件</a>等提供了強大的工具。Laravel 專為建立專業 Web 應用程式而精心調校，並準備好處理企業級工作負載。</p>
 <h4>可擴展框架</h4>
 <p>Laravel 具有令人難以置信的可擴展性。得益於 PHP 的可擴展特性和 Laravel 對快速分散式快取系統（如 Redis）的內建支援，使用 Laravel 進行水平擴展輕而易舉。事實上，Laravel 應用程式已被輕鬆擴展到每月處理數億個請求。</p>
 <p>需要極端擴展？像 <a href="https://cloud.laravel.com">Laravel Cloud</a> 這樣的平台允許您以近乎無限的規模執行您的 Laravel 應用程式。</p>
@@ -115,7 +115,7 @@ composer run dev
 <p><a name="databases-and-migrations"></a></p>
 <h3>資料庫和遷移</h3>
 <p>現在您已經建立了 Laravel 應用程式，您可能想要在資料庫中儲存一些資料。預設情況下，應用程式的 <code>.env</code> 配置檔案指定 Laravel 將與 SQLite 資料庫進行互動。</p>
-<p>在建立應用程式期間，Laravel 為您創建了一個 <code>database/database.sqlite</code> 檔案，並運行了必要的遷移來建立應用程式的資料庫表格。</p>
+<p>在建立應用程式期間，Laravel 為您建立了一個 <code>database/database.sqlite</code> 檔案，並運行了必要的遷移來建立應用程式的資料庫表格。</p>
 <p>如果您偏好使用其他資料庫驅動程式（如 MySQL 或 PostgreSQL），您可以更新 <code>.env</code> 配置檔案以使用適當的資料庫。例如，如果您希望使用 MySQL，請像這樣更新 <code>.env</code> 配置檔案的 <code>DB_*</code> 變數：</p>
 <pre><code class="language-ini">DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -145,7 +145,7 @@ DB_PASSWORD=
 <p><a name="herd-on-macos"></a></p>
 <h3>macOS 上的 Herd</h3>
 <p>如果您在 macOS 上開發，您可以從 <a href="https://herd.laravel.com">Herd 網站</a>下載 Herd 安裝器。安裝器會自動下載最新版本的 PHP 並配置您的 Mac 始終在背景運行 <a href="https://www.nginx.com/">Nginx</a>。</p>
-<p>macOS 上的 Herd 使用 <a href="https://en.wikipedia.org/wiki/Dnsmasq">dnsmasq</a> 來支援「停放」目錄。停放目錄中的任何 Laravel 應用程式都將由 Herd 自動提供服務。預設情況下，Herd 在 <code>~/Herd</code> 創建一個停放目錄，您可以使用目錄名稱在 <code>.test</code> 網域上存取此目錄中的任何 Laravel 應用程式。</p>
+<p>macOS 上的 Herd 使用 <a href="https://en.wikipedia.org/wiki/Dnsmasq">dnsmasq</a> 來支援「停放」目錄。停放目錄中的任何 Laravel 應用程式都將由 Herd 自動提供服務。預設情況下，Herd 在 <code>~/Herd</code> 建立一個停放目錄，您可以使用目錄名稱在 <code>.test</code> 網域上存取此目錄中的任何 Laravel 應用程式。</p>
 <p>安裝 Herd 後，建立新 Laravel 應用程式的最快方法是使用 Laravel CLI，它與 Herd 捆綁在一起：</p>
 <pre><code class="language-shell">cd ~/Herd
 laravel new my-app
@@ -157,8 +157,8 @@ herd open
 <p><a name="herd-on-windows"></a></p>
 <h3>Windows 上的 Herd</h3>
 <p>您可以從 <a href="https://herd.laravel.com/windows">Herd 網站</a>下載 Windows 版的 Herd 安裝器。安裝完成後，您可以啟動 Herd 以完成入門流程並首次存取 Herd UI。</p>
-<p>透過左鍵點擊 Herd 的系統托盤圖標即可存取 Herd UI。右鍵點擊可打開快速選單，存取您日常所需的所有工具。</p>
-<p>安裝期間，Herd 在您的主目錄中創建一個「停放」目錄 <code>%USERPROFILE%\\Herd</code>。停放目錄中的任何 Laravel 應用程式都將由 Herd 自動提供服務，您可以使用目錄名稱在 <code>.test</code> 網域上存取此目錄中的任何 Laravel 應用程式。</p>
+<p>透過左鍵點選 Herd 的系統托盤圖標即可存取 Herd UI。右鍵點選可打開快速選單，存取您日常所需的所有工具。</p>
+<p>安裝期間，Herd 在您的主目錄中建立一個「停放」目錄 <code>%USERPROFILE%\\Herd</code>。停放目錄中的任何 Laravel 應用程式都將由 Herd 自動提供服務，您可以使用目錄名稱在 <code>.test</code> 網域上存取此目錄中的任何 Laravel 應用程式。</p>
 <p>安裝 Herd 後，建立新 Laravel 應用程式的最快方法是使用 Laravel CLI，它與 Herd 捆綁在一起。首先，打開 Powershell 並執行以下命令：</p>
 <pre><code class="language-shell">cd ~\\Herd
 laravel new my-app
@@ -170,7 +170,7 @@ herd open
 <h2>IDE 支援</h2>
 <p>開發 Laravel 應用程式時，您可以自由使用任何您喜歡的程式碼編輯器。如果您正在尋找輕量級且可擴展的編輯器，<a href="https://code.visualstudio.com">VS Code</a> 或 <a href="https://cursor.com">Cursor</a> 結合官方 <a href="https://marketplace.visualstudio.com/items?itemName=laravel.vscode-laravel">Laravel VS Code 擴充套件</a>提供了出色的 Laravel 支援，具有語法高亮、程式碼片段、Artisan 命令整合以及 Eloquent 模型、路由、中介層、資源、配置和 Inertia.js 的智慧自動完成等功能。</p>
 <p>有關 Laravel 的廣泛和強大支援，請查看 JetBrains IDE <a href="https://www.jetbrains.com/phpstorm/laravel/?utm_source=laravel.com&utm_medium=link&utm_campaign=laravel-2025&utm_content=partner&ref=laravel-2025">PhpStorm</a>。PhpStorm 的內建 Laravel 框架支援包括 Blade 模板、Eloquent 模型、路由、視圖、翻譯和元件的智慧自動完成，以及強大的程式碼生成和跨 Laravel 專案的導航。</p>
-<p>對於尋求基於雲端開發體驗的人，<a href="https://firebase.studio/">Firebase Studio</a> 提供了直接在瀏覽器中使用 Laravel 構建的即時存取。無需任何設定，Firebase Studio 使從任何設備開始構建 Laravel 應用程式變得輕而易舉。</p>
+<p>對於尋求基於雲端開發體驗的人，<a href="https://firebase.studio/">Firebase Studio</a> 提供了直接在瀏覽器中使用 Laravel 建立的即時存取。無需任何設定，Firebase Studio 使從任何設備開始建立 Laravel 應用程式變得輕而易舉。</p>
 <p><a name="laravel-and-ai"></a></p>
 <h2>Laravel 與 AI</h2>
 <p><a href="https://github.com/laravel/boost">Laravel Boost</a> 是一個強大的工具，它填補了 AI 編碼代理與 Laravel 應用程式之間的差距。Boost 為 AI 代理提供 Laravel 特定的上下文、工具和指南，使它們能夠生成更準確、特定版本且遵循 Laravel 規範的程式碼。</p>
@@ -212,7 +212,7 @@ herd open
 <p>如果您將 Laravel 作為全端框架使用，我們還強烈鼓勵您學習如何使用 <a href="/docs/vite">Vite</a> 編譯應用程式的 CSS 和 JavaScript。</p>
 <blockquote>
 <p>[!NOTE]
-如果您想在構建應用程式時有個良好的開頭，請查看我們的其中一個官方 <a href="/docs/starter-kits">應用程式入門套件</a>。</p>
+如果您想在建立應用程式時有個良好的開頭，請查看我們的其中一個官方 <a href="/docs/starter-kits">應用程式入門套件</a>。</p>
 </blockquote>
 <p><a name="laravel-the-api-backend"></a></p>
 <h3>Laravel API 後端</h3>

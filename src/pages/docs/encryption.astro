@@ -18,18 +18,18 @@ const content = `<h1>加密</h1>
 <p>使用 Laravel 的加密器之前，您必須在 <code>config/app.php</code> 設定檔中設定 <code>key</code> 設定選項。此設定值由 <code>APP_KEY</code> 環境變數驅動。您應該使用 <code>php artisan key:generate</code> 命令來生成此變數的值，因為 <code>key:generate</code> 命令將使用 PHP 的安全隨機位元組生成器來為您的應用程式建構一個密碼學安全的金鑰。通常，<code>APP_KEY</code> 環境變數的值會在<a href="/docs/installation">Laravel 安裝</a>期間為您生成。</p>
 <p><a name="gracefully-rotating-encryption-keys"></a></p>
 <h3>優雅地輪替加密金鑰</h3>
-<p>如果您變更了應用程式的加密金鑰，所有已認證的用戶 Session 都將被登出您的應用程式。這是因為所有 cookie（包括 Session cookie）都由 Laravel 加密。此外，將無法再解密使用先前加密金鑰加密的任何資料。</p>
+<p>如果您變更了應用程式的加密金鑰，所有已認證的使用者 Session 都將被登出您的應用程式。這是因為所有 cookie（包括 Session cookie）都由 Laravel 加密。此外，將無法再解密使用先前加密金鑰加密的任何資料。</p>
 <p>為了緩解此問題，Laravel 允許您在應用程式的 <code>APP_PREVIOUS_KEYS</code> 環境變數中列出先前的加密金鑰。此變數可以包含以逗號分隔的所有先前加密金鑰清單：</p>
 <pre><code class="language-ini">APP_KEY="base64:J63qRTDLub5NuZvP+kb8YIorGS6qFYHKVo6u7179stY="
 APP_PREVIOUS_KEYS="base64:2nLsGFGzyoae2ax3EF2Lyq/hH6QghBGLIq5uL+Gp8/w="
 </code></pre>
 <p>設定此環境變數後，Laravel 在加密值時始終會使用「當前」加密金鑰。但是，在解密值時，Laravel 會先嘗試使用當前金鑰，如果使用當前金鑰解密失敗，Laravel 將嘗試所有先前的金鑰，直到其中一個金鑰能夠解密該值。</p>
-<p>這種優雅解密的方法使用戶即使在加密金鑰被輪替後也能繼續不中斷地使用您的應用程式。</p>
+<p>這種優雅解密的方法使使用者即使在加密金鑰被輪替後也能繼續不中斷地使用您的應用程式。</p>
 <p><a name="using-the-encrypter"></a></p>
 <h2>使用加密器</h2>
 <p><a name="encrypting-a-value"></a></p>
 <h4>加密值</h4>
-<p>您可以使用 <code>Crypt</code> facade 提供的 <code>encryptString</code> 方法來加密值。所有加密值都使用 OpenSSL 和 AES-256-CBC 演算法加密。此外，所有加密值都使用訊息認證碼（MAC）簽署。整合的訊息認證碼將防止解密被惡意用戶篡改的任何值：</p>
+<p>您可以使用 <code>Crypt</code> facade 提供的 <code>encryptString</code> 方法來加密值。所有加密值都使用 OpenSSL 和 AES-256-CBC 演算法加密。此外，所有加密值都使用訊息認證碼（MAC）簽署。整合的訊息認證碼將防止解密被惡意使用者篡改的任何值：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Http\\Controllers;

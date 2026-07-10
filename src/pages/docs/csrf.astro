@@ -14,11 +14,11 @@ const content = `<h1>CSRF 保護</h1>
 </ul>
 <p><a name="csrf-introduction"></a></p>
 <h2>簡介</h2>
-<p>跨站請求偽造（CSRF）是一類惡意攻擊，攻擊者利用此漏洞以已驗證用戶的名義執行未授權的命令。幸運的是，Laravel 讓您能輕鬆保護應用程式免受<a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">跨站請求偽造</a>（CSRF）攻擊。</p>
+<p>跨站請求偽造（CSRF）是一類惡意攻擊，攻擊者利用此漏洞以已驗證使用者的名義執行未授權的命令。幸運的是，Laravel 讓您能輕鬆保護應用程式免受<a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">跨站請求偽造</a>（CSRF）攻擊。</p>
 <p><a name="csrf-explanation"></a></p>
 <h4>漏洞說明</h4>
-<p>如果您不熟悉跨站請求偽造，讓我們討論一個範例來說明如何利用此漏洞。假設您的應用程式有一個 <code>/user/email</code> 路由，該路由接受一個 <code>POST</code> 請求來變更已驗證用戶的電子郵件地址。此路由通常會期望一個 <code>email</code> 輸入欄位包含用戶想要開始使用的電子郵件地址。</p>
-<p>如果沒有 CSRF 保護，惡意網站可以建立一個 HTML 表單，指向您應用程式的 <code>/user/email</code> 路由，並提交惡意用戶自己的電子郵件地址：</p>
+<p>如果您不熟悉跨站請求偽造，讓我們討論一個範例來說明如何利用此漏洞。假設您的應用程式有一個 <code>/user/email</code> 路由，該路由接受一個 <code>POST</code> 請求來變更已驗證使用者的電子郵件地址。此路由通常會期望一個 <code>email</code> 輸入欄位包含使用者想要開始使用的電子郵件地址。</p>
+<p>如果沒有 CSRF 保護，惡意網站可以建立一個 HTML 表單，指向您應用程式的 <code>/user/email</code> 路由，並提交惡意使用者自己的電子郵件地址：</p>
 <pre><code class="language-blade">&lt;form action="https://your-application.com/user/email" method="POST"&gt;
     &lt;input type="email" value="malicious-email@example.com"&gt;
 &lt;/form&gt;
@@ -27,14 +27,14 @@ const content = `<h1>CSRF 保護</h1>
     document.forms[0].submit();
 &lt;/script&gt;
 </code></pre>
-<p>如果惡意網站在頁面載入時自動提交表單，惡意用戶只需要誘騙您應用程式的一個毫無戒心的用戶拜訪他們的網站，該用戶的電子郵件地址就會在您的應用程式中被變更。</p>
+<p>如果惡意網站在頁面載入時自動提交表單，惡意使用者只需要誘騙您應用程式的一個毫無戒心的使用者拜訪他們的網站，該使用者的電子郵件地址就會在您的應用程式中被變更。</p>
 <p>為了防止此漏洞，我們需要檢查每個傳入的 <code>POST</code>、<code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 請求中的機密 session 值，而惡意應用程式無法存取此值。</p>
 <p><a name="preventing-csrf-requests"></a></p>
 <h2>防止 CSRF 請求</h2>
 <p><code>Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery</code> <a href="/docs/middleware">中介層</a>預設包含在 <code>web</code> 中介層群組中，它使用雙層方法來保護您的應用程式免受跨站請求偽造攻擊。</p>
 <p>首先，中介層會檢查瀏覽器的 <code>Sec-Fetch-Site</code> 標頭。現代瀏覽器會自動在每個請求上設定此標頭，指示該請求是來自相同來源、相同網站還是跨站來源。如果標頭指示請求來自相同來源，則請求會立即被允許，無需任何令牌驗證。</p>
 <p>如果來源驗證未通過 — 例如，因為請求來自較舊的瀏覽器，該瀏覽器不會傳送 <code>Sec-Fetch-Site</code> 標頭，或因為連線不安全 — 中介層會回退到傳統的 CSRF 令牌驗證。</p>
-<p>Laravel 會自動為應用程式管理的每個活躍<a href="/docs/session">用戶 session</a> 生成一個 CSRF「令牌」。此令牌用於驗證已驗證的用戶是否為實際向應用程式發出請求的人。由於此令牌儲存在用戶的 session 中，並且每次 session 重新生成時都會變更，惡意應用程式無法存取它。</p>
+<p>Laravel 會自動為應用程式管理的每個活躍<a href="/docs/session">使用者 session</a> 生成一個 CSRF「令牌」。此令牌用於驗證已驗證的使用者是否為實際向應用程式發出請求的人。由於此令牌儲存在使用者的 session 中，並且每次 session 重新生成時都會變更，惡意應用程式無法存取它。</p>
 <p>可以透過請求的 session 或 <code>csrf_token</code> 輔助函數來存取當前 session 的 CSRF 令牌：</p>
 <pre><code class="language-php">use Illuminate\\Http\\Request;
 

@@ -157,7 +157,7 @@ use Laravel\\Reverb\\Pulse\\Recorders\\ReverbMessages;
 <p>在基於 Unix 的作業系統上，您可以使用 <code>ulimit</code> 命令來判斷允許的開啟檔案數量：</p>
 <pre><code class="language-shell">ulimit -n
 </code></pre>
-<p>此命令將顯示不同用戶允許的開啟檔案限制。您可以透過編輯 <code>/etc/security/limits.conf</code> 檔案來更新這些值。例如，將 <code>forge</code> 用戶的最大開啟檔案數更新為 10,000 如下所示：</p>
+<p>此命令將顯示不同使用者允許的開啟檔案限制。您可以透過編輯 <code>/etc/security/limits.conf</code> 檔案來更新這些值。例如，將 <code>forge</code> 使用者的最大開啟檔案數更新為 10,000 如下所示：</p>
 <pre><code class="language-ini"># /etc/security/limits.conf
 forge        soft  nofile  10000
 forge        hard  nofile  10000

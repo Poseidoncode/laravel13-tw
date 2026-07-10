@@ -34,8 +34,8 @@ const content = `<h1>Laravel Dusk</h1>
 <li><a href="#text-values-and-attributes">文字、值和屬性</a></li>
 <li><a href="#interacting-with-forms">與表單互動</a></li>
 <li><a href="#attaching-files">附加檔案</a></li>
-<li><a href="#pressing-buttons">按鈕點擊</a></li>
-<li><a href="#clicking-links">點擊連結</a></li>
+<li><a href="#pressing-buttons">按鈕點選</a></li>
+<li><a href="#clicking-links">點選連結</a></li>
 <li><a href="#using-the-keyboard">使用鍵盤</a></li>
 <li><a href="#using-the-mouse">使用滑鼠</a></li>
 <li><a href="#javascript-dialogs">JavaScript 對話框</a></li>
@@ -85,7 +85,7 @@ const content = `<h1>Laravel Dusk</h1>
 </blockquote>
 <p><a name="managing-chromedriver-installations"></a></p>
 <h3>管理 ChromeDriver 安裝</h3>
-<p>如果您想安裝與 Laravel Dusk 通過 <code>dusk:install</code> 命令安裝的 ChromeDriver 不同版本，可以使用 <code>dusk:chrome-driver</code> 命令：</p>
+<p>如果您想安裝與 Laravel Dusk 透過 <code>dusk:install</code> 命令安裝的 ChromeDriver 不同版本，可以使用 <code>dusk:chrome-driver</code> 命令：</p>
 <pre><code class="language-shell"># Install the latest version of ChromeDriver for your OS...
 php artisan dusk:chrome-driver
 
@@ -196,11 +196,11 @@ Dusk 要求 <code>chromedriver</code> 二進位檔案可執行。如果您在執
 <h3>附加檔案</h3>
 <p>使用 <code>attach</code> 方法將檔案附加到 <code>file</code> 輸入元素。</p>
 <p><a name="pressing-buttons"></a></p>
-<h3>按鈕點擊</h3>
-<p>使用 <code>press</code> 方法點擊按鈕元素。使用 <code>pressAndWaitFor</code> 方法點擊按鈕並等待其重新啟用。</p>
+<h3>按鈕點選</h3>
+<p>使用 <code>press</code> 方法點選按鈕元素。使用 <code>pressAndWaitFor</code> 方法點選按鈕並等待其重新啟用。</p>
 <p><a name="clicking-links"></a></p>
-<h3>點擊連結</h3>
-<p>使用 <code>clickLink</code> 方法點擊具有給定顯示文字的連結。使用 <code>seeLink</code> 方法檢查連結是否可見。</p>
+<h3>點選連結</h3>
+<p>使用 <code>clickLink</code> 方法點選具有給定顯示文字的連結。使用 <code>seeLink</code> 方法檢查連結是否可見。</p>
 <p><a name="using-the-keyboard"></a></p>
 <h3>使用鍵盤</h3>
 <p>使用 <code>keys</code> 方法提供複雜的輸入序列。使用 <code>withKeyboard</code> 方法進行流暢的鍵盤互動。使用 <code>Keyboard::macro</code> 定義自訂鍵盤巨集。</p>

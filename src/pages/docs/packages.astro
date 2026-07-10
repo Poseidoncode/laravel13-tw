@@ -49,7 +49,7 @@ const content = `<h1>套件開發</h1>
     }
 },
 </code></pre>
-<p>一旦您的套件配置了自動發現，Laravel 將在安裝時自動註冊其服務提供者和外觀，為套件使用者創建便利的安裝體驗。</p>
+<p>一旦您的套件配置了自動發現，Laravel 將在安裝時自動註冊其服務提供者和外觀，為套件使用者建立便利的安裝體驗。</p>
 <p><a name="opting-out-of-package-discovery"></a></p>
 <h4>選擇退出套件自動發現</h4>
 <p>如果您是套件的使用者並希望禁用某個套件的套件自動發現，您可以在應用程式的 <code>composer.json</code> 檔案的 <code>extra</code> 部分列出套件名稱：</p>
@@ -214,7 +214,7 @@ public function boot(): void
 <p>現在，當套件使用者執行 Laravel 的 <code>vendor:publish</code> Artisan 命令時，套件的視圖將被複製到指定的發佈位置。</p>
 <p><a name="view-components"></a></p>
 <h3>視圖元件</h3>
-<p>如果您正在構建一個使用 Blade 元件或將元件放置在非傳統目錄中的套件，則需要手動註冊元件類別及其 HTML 標籤別名，以便 Laravel 知道在哪裡找到該元件。您通常應該在套件服務提供者的 <code>boot</code> 方法中註冊元件：</p>
+<p>如果您正在建立一個使用 Blade 元件或將元件放置在非傳統目錄中的套件，則需要手動註冊元件類別及其 HTML 標籤別名，以便 Laravel 知道在哪裡找到該元件。您通常應該在套件服務提供者的 <code>boot</code> 方法中註冊元件：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Blade;
 use VendorPackage\\View\\Components\\AlertComponent;
 

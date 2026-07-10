@@ -98,7 +98,7 @@ const content = `<h1>日誌記錄</h1>
 <p>預設情況下，Slack 僅接收 <code>critical</code> 等級及以上的日誌；但是，您可以使用 <code>LOG_LEVEL</code> 環境變數或修改 Slack 日誌管道配置陣列中的 <code>level</code> 配置選項來調整。</p>
 <p><a name="logging-deprecation-warnings"></a></p>
 <h3>記錄棄用警告</h3>
-<p>PHP、Laravel 和其他函式庫通常會通知用戶它們的某些功能已被棄用，並將在未來版本中移除。如果您想記錄這些棄用警告，可以使用 <code>LOG_DEPRECATIONS_CHANNEL</code> 環境變數或在應用程式的 <code>config/logging.php</code> 配置檔中指定您首選的 <code>deprecations</code> 日誌管道：</p>
+<p>PHP、Laravel 和其他函式庫通常會通知使用者它們的某些功能已被棄用，並將在未來版本中移除。如果您想記錄這些棄用警告，可以使用 <code>LOG_DEPRECATIONS_CHANNEL</code> 環境變數或在應用程式的 <code>config/logging.php</code> 配置檔中指定您首選的 <code>deprecations</code> 日誌管道：</p>
 <pre><code class="language-php">'deprecations' => [
     'channel' => env('LOG_DEPRECATIONS_CHANNEL', 'null'),
     'trace' => env('LOG_DEPRECATIONS_TRACE', false),
@@ -463,7 +463,7 @@ Laravel Pail 需要 <a href="https://www.php.net/manual/en/book.pcntl.php">PCNTL
 </code></pre>
 <p><a name="pail-filtering-logs-user-option"></a></p>
 <h4><code>--user</code></h4>
-<p>要僅顯示在給定用戶已認證時寫入的日誌，可以將用戶的 ID 傳遞給 <code>--user</code> 選項：</p>
+<p>要僅顯示在給定使用者已認證時寫入的日誌，可以將使用者的 ID 傳遞給 <code>--user</code> 選項：</p>
 <pre><code class="language-shell">php artisan pail --user=1
 </code></pre>
 `;

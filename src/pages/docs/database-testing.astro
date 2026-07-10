@@ -13,7 +13,7 @@ const content = `<h1>資料庫測試</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>Laravel 提供了多種有用的工具和斷言，使測試您的資料庫驅動應用程式變得更加容易。此外，Laravel 模型工廠和種子填充器使使用應用程式的 Eloquent 模型和關聯來創建測試資料庫記錄變得毫不費力。我們將在以下文檔中討論這些強大的功能。</p>
+<p>Laravel 提供了多種有用的工具和斷言，使測試您的資料庫驅動應用程式變得更加容易。此外，Laravel 模型工廠和種子填充器使使用應用程式的 Eloquent 模型和關聯來建立測試資料庫記錄變得毫不費力。我們將在以下文檔中討論這些強大的功能。</p>
 <p><a name="resetting-the-database-after-each-test"></a></p>
 <h3>每次測試後重設資料庫</h3>
 <p>在繼續之前，讓我們討論如何在每次測試後重設資料庫，以便先前測試的資料不會干擾後續測試。Laravel 附帶的 <code>Illuminate\\Foundation\\Testing\\RefreshDatabase</code> trait 將為您處理這一切。只需在測試類別上使用該 trait：</p>
@@ -55,8 +55,8 @@ class ExampleTest extends TestCase
 <p>如果您希望完全重設資料庫，可以改用 <code>Illuminate\\Foundation\\Testing\\DatabaseMigrations</code> 或 <code>Illuminate\\Foundation\\Testing\\DatabaseTruncation</code> trait。但是，這兩個選項都比 <code>RefreshDatabase</code> trait 慢得多。</p>
 <p><a name="model-factories"></a></p>
 <h2>模型工廠</h2>
-<p>測試時，您可能需要在執行測試之前向資料庫中插入一些記錄。與其在創建此測試資料時手動指定每個欄位的值，Laravel 允許您使用<a href="/docs/eloquent-factories">模型工廠</a>為每個<a href="/docs/eloquent"> Eloquent 模型</a>定義一組預設屬性。</p>
-<p>有關創建和利用模型工廠來創建模型的更多資訊，請查閱完整的<a href="/docs/eloquent-factories">模型工廠文檔</a>。定義好模型工廠後，您可以在測試中利用工廠來創建模型：</p>
+<p>測試時，您可能需要在執行測試之前向資料庫中插入一些記錄。與其在建立此測試資料時手動指定每個欄位的值，Laravel 允許您使用<a href="/docs/eloquent-factories">模型工廠</a>為每個<a href="/docs/eloquent"> Eloquent 模型</a>定義一組預設屬性。</p>
+<p>有關建立和利用模型工廠來建立模型的更多資訊，請查閱完整的<a href="/docs/eloquent-factories">模型工廠文檔</a>。定義好模型工廠後，您可以在測試中利用工廠來建立模型：</p>
 <pre><code class="language-php">use App\\Models\\User;
 
 test('models can be instantiated', function () {
@@ -116,7 +116,7 @@ class ExampleTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * 測試創建一個新的訂單。
+     * 測試建立一個新的訂單。
      */
     public function test_orders_can_be_created(): void
     {

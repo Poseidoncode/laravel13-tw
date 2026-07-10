@@ -45,9 +45,9 @@ const content = `<h1>Blade 範本</h1>
 <li><a href="#anonymous-component-paths">匿名元件路徑</a></li>
 </ul>
 </li>
-<li><a href="#building-layouts">構建佈局</a><ul>
-<li><a href="#layouts-using-components">使用元件構建佈局</a></li>
-<li><a href="#layouts-using-template-inheritance">使用模板繼承構建佈局</a></li>
+<li><a href="#building-layouts">建立佈局</a><ul>
+<li><a href="#layouts-using-components">使用元件建立佈局</a></li>
+<li><a href="#layouts-using-template-inheritance">使用模板繼承建立佈局</a></li>
 </ul>
 </li>
 <li><a href="#forms">表單</a><ul>
@@ -76,7 +76,7 @@ const content = `<h1>Blade 範本</h1>
 </code></pre>
 <p><a name="supercharging-blade-with-livewire"></a></p>
 <h3>使用 Livewire 增強 Blade</h3>
-<p>想要將您的 Blade 範本提升到更高層級並輕鬆構建動態介面嗎？請查看 <a href="https://livewire.laravel.com">Laravel Livewire</a>。Livewire 允許您編寫增強了動態功能的 Blade 元件，這些功能通常只能透過像 React、Svelte 或 Vue 這樣的前端框架實現，提供了一種構建現代、響應式前端的好方法，而無需許多 JavaScript 框架的複雜性、客戶端渲染或構建步驟。</p>
+<p>想要將您的 Blade 範本提升到更高層級並輕鬆建立動態介面嗎？請查看 <a href="https://livewire.laravel.com">Laravel Livewire</a>。Livewire 允許您編寫增強了動態功能的 Blade 元件，這些功能通常只能透過像 React、Svelte 或 Vue 這樣的前端框架實現，提供了一種建立現代、響應式前端的好方法，而無需許多 JavaScript 框架的複雜性、客戶端渲染或建立步驟。</p>
 <p><a name="displaying-data"></a></p>
 <h2>顯示資料</h2>
 <p>您可以透過將變數包裝在花括號中來顯示傳遞給 Blade 視圖的資料。例如，給定以下路由：</p>
@@ -122,7 +122,7 @@ class AppServiceProvider extends ServiceProvider
 </code></pre>
 <blockquote>
 <p>[!WARNING]
-在 echo 由應用程式用戶提供的內容時要非常小心。顯示用戶提供的資料時，您通常應使用轉義的、雙花括號語法來防止 XSS 攻擊。</p>
+在 echo 由應用程式使用者提供的內容時要非常小心。顯示使用者提供的資料時，您通常應使用轉義的、雙花括號語法來防止 XSS 攻擊。</p>
 </blockquote>
 <p><a name="blade-and-javascript-frameworks"></a></p>
 <h3>Blade 和 JavaScript 框架</h3>
@@ -174,7 +174,7 @@ Hello, @{{ name }}.
 <p>除了模板繼承和顯示資料外，Blade 還為常見的 PHP 控制結構提供了便利的捷徑，例如條件語句和迴圈。這些捷徑提供了一種非常乾淨、簡潔的方式來處理 PHP 控制結構，同時也與其 PHP 對應物保持一致。</p>
 <p><a name="if-statements"></a></p>
 <h3>If 語句</h3>
-<p>您可以使用 <code>@if</code>、<code>@elseif</code>、<code>@else</code> 和 <code>@endif</code> 指令來構建 <code>if</code> 語句。這些指令的功能與其 PHP 對應物完全相同：</p>
+<p>您可以使用 <code>@if</code>、<code>@elseif</code>、<code>@else</code> 和 <code>@endif</code> 指令來建立 <code>if</code> 語句。這些指令的功能與其 PHP 對應物完全相同：</p>
 <pre><code class="language-blade">@if (count($records) === 1)
     I have one record!
 @elseif (count($records) &gt; 1)
@@ -199,22 +199,22 @@ Hello, @{{ name }}.
 </code></pre>
 <p><a name="authentication-directives"></a></p>
 <h4>身份驗證指令</h4>
-<p><code>@auth</code> 和 <code>@guest</code> 指令可用於快速判斷當前用戶是否已<a href="/docs/authentication">通過身份驗證</a>或是否為訪客：</p>
+<p><code>@auth</code> 和 <code>@guest</code> 指令可用於快速判斷當前使用者是否已<a href="/docs/authentication">透過身份驗證</a>或是否為訪客：</p>
 <pre><code class="language-blade">@auth
-    // 用戶已通過身份驗證...
+    // 使用者已通過身份驗證...
 @endauth
 
 @guest
-    // 用戶未通過身份驗證...
+    // 使用者未通過身份驗證...
 @endguest
 </code></pre>
 <p>如有需要，您可以在使用 <code>@auth</code> 和 <code>@guest</code> 指令時指定應檢查的身份驗證守衛：</p>
 <pre><code class="language-blade">@auth(&#39;admin&#39;)
-    // 用戶已通過身份驗證...
+    // 使用者已通過身份驗證...
 @endauth
 
 @guest(&#39;admin&#39;)
-    // 用戶未通過身份驗證...
+    // 使用者未通過身份驗證...
 @endguest
 </code></pre>
 <p><a name="environment-directives"></a></p>
@@ -269,7 +269,7 @@ Hello, @{{ name }}.
 </code></pre>
 <p><a name="switch-statements"></a></p>
 <h3>Switch 語句</h3>
-<p>可以使用 <code>@switch</code>、<code>@case</code>、<code>@break</code>、<code>@default</code> 和 <code>@endswitch</code> 指令來構建 Switch 語句：</p>
+<p>可以使用 <code>@switch</code>、<code>@case</code>、<code>@break</code>、<code>@default</code> 和 <code>@endswitch</code> 指令來建立 Switch 語句：</p>
 <pre><code class="language-blade">@switch($i)
     @case(1)
         First case...
@@ -405,7 +405,7 @@ Hello, @{{ name }}.
 </tbody></table>
 </div><p><a name="conditional-classes"></a></p>
 <h3>條件類別和樣式</h3>
-<p><code>@class</code> 指令有條件地編譯一個 CSS 類別字串。該指令接受一個類別數組，其中數組鍵包含您希望添加的類別或類別，而值是一個布林表達式。如果數組元素具有數字鍵，它將始終包含在渲染的類別列表中：</p>
+<p><code>@class</code> 指令有條件地編譯一個 CSS 類別字串。該指令接受一個類別陣列，其中陣列鍵包含您希望添加的類別或類別，而值是一個布林表達式。如果陣列元素具有數字鍵，它將始終包含在渲染的類別列表中：</p>
 <pre><code class="language-blade">@php
     $isActive = false;
     $hasError = true;
@@ -485,7 +485,7 @@ Hello, @{{ name }}.
     &lt;/form&gt;
 &lt;/div&gt;
 </code></pre>
-<p>即使包含的視圖將繼承父視圖中可用的所有資料，您還可以傳遞一個應在包含的視圖中可用的額外資料數組：</p>
+<p>即使包含的視圖將繼承父視圖中可用的所有資料，您還可以傳遞一個應在包含的視圖中可用的額外資料陣列：</p>
 <pre><code class="language-blade">@include(&#39;view.name&#39;, [&#39;status&#39; =&gt; &#39;complete&#39;])
 </code></pre>
 <p>如果您嘗試 <code>@include</code> 一個不存在的視圖，Laravel 將拋出一個錯誤。如果您想包含一個可能存在也可能不存在的視圖，您應該使用 <code>@includeIf</code> 指令：</p>
@@ -496,7 +496,7 @@ Hello, @{{ name }}.
 
 @includeUnless($boolean, &#39;view.name&#39;, [&#39;status&#39; =&gt; &#39;complete&#39;])
 </code></pre>
-<p>要從給定的視圖數組中包含第一個存在的視圖，您可以使用 <code>includeFirst</code> 指令：</p>
+<p>要從給定的視圖陣列中包含第一個存在的視圖，您可以使用 <code>includeFirst</code> 指令：</p>
 <pre><code class="language-blade">@includeFirst([&#39;custom.admin&#39;, &#39;admin&#39;], [&#39;status&#39; =&gt; &#39;complete&#39;])
 </code></pre>
 <p>如果您想包含一個視圖而不從父視圖繼承任何變數，您可以使用 <code>@includeIsolated</code> 指令。包含的視圖將只能存取您明確傳遞的變數：</p>
@@ -606,18 +606,18 @@ Hello, @{{ name }}.
 <p><a name="components"></a></p>
 <h2>元件</h2>
 <p>元件和插槽提供了與區段、佈局和包含類似的好處；但是，有些人可能發現元件和插槽的心智模型更容易理解。編寫元件有兩種方法：基於類別的元件和匿名元件。</p>
-<p>要創建基於類別的元件，您可以使用 <code>make:component</code> Artisan 命令。為了說明如何使用元件，我們將創建一個簡單的 <code>Alert</code> 元件。<code>make:component</code> 命令將把元件放在 <code>app/View/Components</code> 目錄中：</p>
+<p>要建立基於類別的元件，您可以使用 <code>make:component</code> Artisan 命令。為了說明如何使用元件，我們將建立一個簡單的 <code>Alert</code> 元件。<code>make:component</code> 命令將把元件放在 <code>app/View/Components</code> 目錄中：</p>
 <pre><code class="language-shell">php artisan make:component Alert
 </code></pre>
-<p><code>make:component</code> 命令還將為元件創建一個視圖模板。視圖將放在 <code>resources/views/components</code> 目錄中。為您自己的應用程式編寫元件時，元件會在 <code>app/View/Components</code> 目錄和 <code>resources/views/components</code> 目錄中被自動發現，因此通常不需要進一步的元件註冊。</p>
-<p>您還可以在子目錄中創建元件：</p>
+<p><code>make:component</code> 命令還將為元件建立一個視圖模板。視圖將放在 <code>resources/views/components</code> 目錄中。為您自己的應用程式編寫元件時，元件會在 <code>app/View/Components</code> 目錄和 <code>resources/views/components</code> 目錄中被自動發現，因此通常不需要進一步的元件註冊。</p>
+<p>您還可以在子目錄中建立元件：</p>
 <pre><code class="language-shell">php artisan make:component Forms/Input
 </code></pre>
-<p>上面的命令將在 <code>app/View/Components/Forms</code> 目錄中創建一個 <code>Input</code> 元件，視圖將放在 <code>resources/views/components/forms</code> 目錄中。</p>
+<p>上面的命令將在 <code>app/View/Components/Forms</code> 目錄中建立一個 <code>Input</code> 元件，視圖將放在 <code>resources/views/components/forms</code> 目錄中。</p>
 <p><a name="manually-registering-package-components"></a></p>
 <h4>手動註冊套件元件</h4>
 <p>為您自己的應用程式編寫元件時，元件會在 <code>app/View/Components</code> 目錄和 <code>resources/views/components</code> 目錄中被自動發現。</p>
-<p>但是，如果您正在構建一個使用 Blade 元件的套件，您需要手動註冊您的元件類別及其 HTML 標籤別名。您應該通常在套件的服務提供者的 <code>boot</code> 方法中註冊您的元件：</p>
+<p>但是，如果您正在建立一個使用 Blade 元件的套件，您需要手動註冊您的元件類別及其 HTML 標籤別名。您應該通常在套件的服務提供者的 <code>boot</code> 方法中註冊您的元件：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Blade;
 
 /**
@@ -655,10 +655,10 @@ public function boot(): void
 <p>您可以使用 <code>.</code> 字元來指示元件是否巢狀在 <code>components</code> 目錄的更深處。例如，假設元件定義在 <code>resources/views/components/inputs/button.blade.php</code>，您可以像這樣渲染它：</p>
 <pre><code class="language-blade">&lt;x-inputs.button/&gt;
 </code></pre>
-<p>要透過 Artisan 創建匿名元件，您可以在呼叫 <code>make:component</code> 命令時使用 <code>--view</code> 標誌：</p>
+<p>要透過 Artisan 建立匿名元件，您可以在呼叫 <code>make:component</code> 命令時使用 <code>--view</code> 標誌：</p>
 <pre><code class="language-shell">php artisan make:component forms.input --view
 </code></pre>
-<p>上面的命令將在 <code>resources/views/components/forms/input.blade.php</code> 創建一個 Blade 檔案，可以透過 <code>&lt;x-forms.input /&gt;</code> 作為元件渲染。</p>
+<p>上面的命令將在 <code>resources/views/components/forms/input.blade.php</code> 建立一個 Blade 檔案，可以透過 <code>&lt;x-forms.input /&gt;</code> 作為元件渲染。</p>
 <p><a name="anonymous-index-components"></a></p>
 <h3>匿名索引元件</h3>
 <p>有時，當一個元件由多個 Blade 模板組成時，您可能希望將給定元件的模板分組在單個目錄中。例如，想像一個具有以下目錄結構的「手風琴」元件：</p>
@@ -680,7 +680,7 @@ public function boot(): void
 <p><a name="data-properties-attributes"></a></p>
 <h3>資料屬性 / 屬性</h3>
 <p>由於匿名元件沒有任何關聯的類別，您可能想知道如何區分哪些資料應作為變數傳遞給元件，以及哪些屬性應放在元件的<a href="#component-attributes">屬性包</a>中。</p>
-<p>您可以使用 <code>@props</code> 指令在元件的 Blade 模板頂部指定哪些屬性應被視為資料變數。元件上的所有其他屬性將透過元件的屬性包可用。如果您想給資料變數一個預設值，您可以將變數名稱指定為數組鍵，將預設值指定為數組值：</p>
+<p>您可以使用 <code>@props</code> 指令在元件的 Blade 模板頂部指定哪些屬性應被視為資料變數。元件上的所有其他屬性將透過元件的屬性包可用。如果您想給資料變數一個預設值，您可以將變數名稱指定為陣列鍵，將預設值指定為陣列值：</p>
 <pre><code class="language-blade">&lt;!-- /resources/views/components/alert.blade.php --&gt;
 
 @props([&#39;type&#39; =&gt; &#39;info&#39;, &#39;message&#39;])
@@ -694,7 +694,7 @@ public function boot(): void
 </code></pre>
 <p><a name="accessing-parent-data"></a></p>
 <h3>存取父級資料</h3>
-<p>有時您可能希望在子元件內部存取來自父元件的資料。在這些情況下，您可以使用 <code>@aware</code> 指令。例如，想像我們正在構建一個由父級 <code>&lt;x-menu&gt;</code> 和子級 <code>&lt;x-menu.item&gt;</code> 組成的複雜選單元件：</p>
+<p>有時您可能希望在子元件內部存取來自父元件的資料。在這些情況下，您可以使用 <code>@aware</code> 指令。例如，想像我們正在建立一個由父級 <code>&lt;x-menu&gt;</code> 和子級 <code>&lt;x-menu.item&gt;</code> 組成的複雜選單元件：</p>
 <pre><code class="language-blade">&lt;x-menu color=&quot;purple&quot;&gt;
     &lt;x-menu.item&gt;...&lt;/x-menu.item&gt;
     &lt;x-menu.item&gt;...&lt;/x-menu.item&gt;
@@ -744,13 +744,13 @@ public function boot(): void
 <pre><code class="language-blade">&lt;x-dashboard::panel /&gt;
 </code></pre>
 <p><a name="building-layouts"></a></p>
-<h2>構建佈局</h2>
+<h2>建立佈局</h2>
 <p><a name="layouts-using-components"></a></p>
-<h3>使用元件構建佈局</h3>
-<p>大多數 Web 應用程式在各種頁面上維護相同的通用佈局。如果我們必須在我們創建的每個視圖中重複整個佈局 HTML，那將是極其繁瑣且難以維護的。幸運的是，將此佈局定義為單個<a href="#components">Blade 元件</a>然後在整個應用程式中使用它是很方便的。</p>
+<h3>使用元件建立佈局</h3>
+<p>大多數 Web 應用程式在各種頁面上維護相同的通用佈局。如果我們必須在我們建立的每個視圖中重複整個佈局 HTML，那將是極其繁瑣且難以維護的。幸運的是，將此佈局定義為單個<a href="#components">Blade 元件</a>然後在整個應用程式中使用它是很方便的。</p>
 <p><a name="defining-the-layout-component"></a></p>
 <h4>定義佈局元件</h4>
-<p>例如，想像我們正在構建一個「待辦事項」清單應用程式。我們可能會定義一個如下所示的 <code>layout</code> 元件：</p>
+<p>例如，想像我們正在建立一個「待辦事項」清單應用程式。我們可能會定義一個如下所示的 <code>layout</code> 元件：</p>
 <pre><code class="language-blade">&lt;!-- resources/views/components/layout.blade.php --&gt;
 
 &lt;html&gt;
@@ -766,7 +766,7 @@ public function boot(): void
 </code></pre>
 <p><a name="applying-the-layout-component"></a></p>
 <h4>應用佈局元件</h4>
-<p>定義 <code>layout</code> 元件後，我們可以創建一個使用該元件的 Blade 視圖。在此範例中，我們將定義一個顯示任務清單的簡單視圖：</p>
+<p>定義 <code>layout</code> 元件後，我們可以建立一個使用該元件的 Blade 視圖。在此範例中，我們將定義一個顯示任務清單的簡單視圖：</p>
 <pre><code class="language-blade">&lt;!-- resources/views/tasks.blade.php --&gt;
 
 &lt;x-layout&gt;
@@ -796,10 +796,10 @@ Route::get(&#39;/tasks&#39;, function () {
 });
 </code></pre>
 <p><a name="layouts-using-template-inheritance"></a></p>
-<h3>使用模板繼承構建佈局</h3>
+<h3>使用模板繼承建立佈局</h3>
 <p><a name="defining-a-layout"></a></p>
 <h4>定義佈局</h4>
-<p>佈局也可以透過「模板繼承」來創建。這是<a href="#components">元件</a>引入之前構建應用程式的主要方式。</p>
+<p>佈局也可以透過「模板繼承」來建立。這是<a href="#components">元件</a>引入之前建立應用程式的主要方式。</p>
 <p>首先，讓我們看一個簡單的範例。首先，我們將檢查一個頁面佈局。由於大多數 Web 應用程式在各種頁面上維護相同的通用佈局，將此佈局定義為單個 Blade 視圖是很方便的：</p>
 <pre><code class="language-blade">&lt;!-- resources/views/layouts/app.blade.php --&gt;
 
@@ -860,7 +860,7 @@ Route::get(&#39;/tasks&#39;, function () {
 </code></pre>
 <p><a name="method-field"></a></p>
 <h3>方法欄位</h3>
-<p>由於 HTML 表單不能發出 <code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 請求，您將需要添加一個隱藏的 <code>_method</code> 欄位來欺騙這些 HTTP 動詞。<code>@method</code> Blade 指令可以為您創建此欄位：</p>
+<p>由於 HTML 表單不能發出 <code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 請求，您將需要添加一個隱藏的 <code>_method</code> 欄位來欺騙這些 HTTP 動詞。<code>@method</code> Blade 指令可以為您建立此欄位：</p>
 <pre><code class="language-blade">&lt;form action=&quot;/foo/bar&quot; method=&quot;POST&quot;&gt;
     @method(&#39;PUT&#39;)
 
@@ -958,7 +958,7 @@ Route::get(&#39;/tasks&#39;, function () {
 </code></pre>
 <p><a name="rendering-inline-blade-templates"></a></p>
 <h2>渲染內聯 Blade 範本</h2>
-<p>有時您可能需要將原始 Blade 範本字串轉換為有效的 HTML。您可以使用 <code>Blade</code> Facade 提供的 <code>render</code> 方法來完成此操作。<code>render</code> 方法接受 Blade 範本字串和一個可選的資料數組來提供給模板：</p>
+<p>有時您可能需要將原始 Blade 範本字串轉換為有效的 HTML。您可以使用 <code>Blade</code> Facade 提供的 <code>render</code> 方法來完成此操作。<code>render</code> 方法接受 Blade 範本字串和一個可選的資料陣列來提供給模板：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Blade;
 
 return Blade::render(&#39;Hello, {{ $name }}&#39;, [&#39;name&#39; =&gt; &#39;Julian Bashir&#39;]);
@@ -1000,8 +1000,8 @@ view(&#39;dashboard&#39;, [&#39;users&#39; =&gt; $users])
 </code></pre>
 <p><a name="extending-blade"></a></p>
 <h2>擴展 Blade</h2>
-<p>Blade 允許您使用 <code>directive</code> 方法定義自己的自訂指令。當 Blade 編譯器遇到自訂指令時，它將使用指令包含的表達式呼叫提供的回調。</p>
-<p>以下範例創建一個 <code>@datetime($var)</code> 指令，該指令格式化給定的 <code>$var</code>，它應該是 <code>DateTime</code> 的實例：</p>
+<p>Blade 允許您使用 <code>directive</code> 方法定義自己的自訂指令。當 Blade 編譯器遇到自訂指令時，它將使用指令包含的表達式呼叫提供的回呼。</p>
+<p>以下範例建立一個 <code>@datetime($var)</code> 指令，該指令格式化給定的 <code>$var</code>，它應該是 <code>DateTime</code> 的實例：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Providers;

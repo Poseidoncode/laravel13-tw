@@ -46,7 +46,7 @@ const content = `<h1>快取</h1>
 <h3>驅動程式先決條件</h3>
 <p><a name="prerequisites-database"></a></p>
 <h4>資料庫</h4>
-<p>使用 <code>database</code> 快取驅動程式時，您需要一個資料庫表來包含快取資料。通常，這包含在 Laravel 的預設 <code>0001_01_01_000001_create_cache_table.php</code><a href="/docs/migrations">資料庫遷移</a>中；但是，如果您的應用程式不包含此遷移，您可以使用 <code>make:cache-table</code> Artisan 命令來創建它：</p>
+<p>使用 <code>database</code> 快取驅動程式時，您需要一個資料庫表來包含快取資料。通常，這包含在 Laravel 的預設 <code>0001_01_01_000001_create_cache_table.php</code><a href="/docs/migrations">資料庫遷移</a>中；但是，如果您的應用程式不包含此遷移，您可以使用 <code>make:cache-table</code> Artisan 命令來建立它：</p>
 <pre><code class="language-shell">php artisan make:cache-table
 
 php artisan migrate
@@ -94,7 +94,7 @@ php artisan migrate
 </code></pre>
 <p><a name="dynamodb"></a></p>
 <h4>DynamoDB</h4>
-<p>在使用 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 快取驅動程式之前，您必須創建一個 DynamoDB 表來儲存所有快取資料。通常，此表應命名為 <code>cache</code>。但是，您應該根據 <code>cache</code> 配置檔案中的 <code>stores.dynamodb.table</code> 配置值來命名該表。表名也可以透過 <code>DYNAMODB_CACHE_TABLE</code> 環境變數設定。</p>
+<p>在使用 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 快取驅動程式之前，您必須建立一個 DynamoDB 表來儲存所有快取資料。通常，此表應命名為 <code>cache</code>。但是，您應該根據 <code>cache</code> 配置檔案中的 <code>stores.dynamodb.table</code> 配置值來命名該表。表名也可以透過 <code>DYNAMODB_CACHE_TABLE</code> 環境變數設定。</p>
 <p>此表還應有一個字串分割索引鍵，其名稱對應於應用程式 <code>cache</code> 配置檔案中的 <code>stores.dynamodb.attributes.key</code> 配置項的值。預設情況下，分割索引鍵應命名為 <code>key</code>。</p>
 <p>通常，DynamoDB 不會主動從表中移除過期的項目。因此，您應該在表上<a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html">啟用生存時間（TTL）</a>。配置表的 TTL 設定時，您應將 TTL 屬性名稱設定為 <code>expires_at</code>。</p>
 <p>接下來，安裝 AWS SDK，以便您的 Laravel 應用程式可以與 DynamoDB 通訊：</p>
@@ -351,7 +351,7 @@ $anne = Cache::tags(['people', 'authors'])->get('Anne');
 </blockquote>
 <p><a name="managing-locks"></a></p>
 <h3>管理鎖</h3>
-<p>原子鎖允許在不擔心競爭條件的情況下操作分散式鎖。例如，<a href="https://cloud.laravel.com">Laravel Cloud</a> 使用原子鎖來確保一次只有一個遠端任務在伺服器上執行。您可以使用 <code>Cache::lock</code> 方法來創建和管理鎖：</p>
+<p>原子鎖允許在不擔心競爭條件的情況下操作分散式鎖。例如，<a href="https://cloud.laravel.com">Laravel Cloud</a> 使用原子鎖來確保一次只有一個遠端任務在伺服器上執行。您可以使用 <code>Cache::lock</code> 方法來建立和管理鎖：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
 
 $lock = Cache::lock('foo', 10);
@@ -493,7 +493,7 @@ try {
 <h2>添加自訂快取驅動程式</h2>
 <p><a name="writing-the-driver"></a></p>
 <h3>編寫驅動程式</h3>
-<p>要創建我們的自訂快取驅動程式，我們首先需要實現 <code>Illuminate\\Contracts\\Cache\\Store</code><a href="/docs/contracts">合約</a>。因此，MongoDB 快取實現可能看起來像這樣：</p>
+<p>要建立我們的自訂快取驅動程式，我們首先需要實現 <code>Illuminate\\Contracts\\Cache\\Store</code><a href="/docs/contracts">合約</a>。因此，MongoDB 快取實現可能看起來像這樣：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Extensions;
@@ -521,7 +521,7 @@ class MongoStore implements Store
 </code></pre>
 <blockquote>
 <p>[!NOTE]
-如果您想知道將自訂快取驅動程式代碼放在哪裡，可以在 <code>app</code> 目錄中創建一個 <code>Namespaces</code> 命名空間。但是，請記住 Laravel 沒有嚴格的應用程式結構，您可以根據自己的偏好來組織應用程式。</p>
+如果您想知道將自訂快取驅動程式代碼放在哪裡，可以在 <code>app</code> 目錄中建立一個 <code>Namespaces</code> 命名空間。但是，請記住 Laravel 沒有嚴格的應用程式結構，您可以根據自己的偏好來組織應用程式。</p>
 </blockquote>
 <p><a name="registering-the-driver"></a></p>
 <h3>註冊驅動程式</h3>

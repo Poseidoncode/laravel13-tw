@@ -12,7 +12,7 @@ const content = `<h1>授權</h1>
 <li><a href="#inline-authorization">行內授權</a></li>
 </ul>
 </li>
-<li><a href="#creating-policies">創建策略</a><ul>
+<li><a href="#creating-policies">建立策略</a><ul>
 <li><a href="#generating-policies">生成策略</a></li>
 <li><a href="#registering-policies">註冊策略</a></li>
 </ul>
@@ -39,17 +39,17 @@ const content = `<h1>授權</h1>
 <h2>簡介</h2>
 <p>除了提供內建的<a href="/docs/authentication">認證</a>服務外，Laravel 還提供了一種簡單的方式來根據給定的資源授權使用者操作。例如，即使使用者已認證，他們可能未被授權更新或刪除由應用程式管理的某些 Eloquent 模型或資料庫記錄。Laravel 的授權功能提供了一種簡單、有組織的方式來管理這些類型的授權檢查。</p>
 <p>Laravel 提供了兩種主要的授權操作方式：<a href="#gates">大門</a>和<a href="#creating-policies">策略</a>。可以將大門和策略想像為路由和控制器。大門提供了一種簡單的、基於閉包的授權方法，而策略像控制器一樣，圍繞特定模型或資源組織邏輯。在本文檔中，我們將首先探討大門，然後研究策略。</p>
-<p>構建應用程式時，您不需要在完全使用大門或完全使用策略之間做出選擇。大多數應用程式很可能包含大門和策略的某種混合，這完全沒問題！大門最適用於與任何模型或資源無關的操作，例如查看管理員儀表板。相比之下，當您希望為特定模型或資源授權操作時，應使用策略。</p>
+<p>建立應用程式時，您不需要在完全使用大門或完全使用策略之間做出選擇。大多數應用程式很可能包含大門和策略的某種混合，這完全沒問題！大門最適用於與任何模型或資源無關的操作，例如查看管理員儀表板。相比之下，當您希望為特定模型或資源授權操作時，應使用策略。</p>
 <p><a name="gates"></a></p>
 <h2>大門</h2>
 <p><a name="writing-gates"></a></p>
 <h3>編寫大門</h3>
 <blockquote>
 <p>[!WARNING]
-大門是學習 Laravel 授權功能基礎知識的好方法；但是，在構建穩健的 Laravel 應用程式時，您應該考慮使用<a href="#creating-policies">策略</a>來組織您的授權規則。</p>
+大門是學習 Laravel 授權功能基礎知識的好方法；但是，在建立穩健的 Laravel 應用程式時，您應該考慮使用<a href="#creating-policies">策略</a>來組織您的授權規則。</p>
 </blockquote>
 <p>大門只是決定使用者是否有權執行給定操作的閉包。通常，大門使用 <code>Gate</code> 外觀在 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中定義。大門始終接收一個使用者實例作為其第一個參數，並可以選擇性地接收額外的參數（如相關的 Eloquent 模型）。</p>
-<p>在此範例中，我們將定義一個大門來判斷使用者是否可以更新給定的 <code>App\\Models\\Post</code> 模型。大門將透過將使用者的 <code>id</code> 與創建該帖子的使用者的 <code>user_id</code> 進行比較來實現這一點：</p>
+<p>在此範例中，我們將定義一個大門來判斷使用者是否可以更新給定的 <code>App\\Models\\Post</code> 模型。大門將透過將使用者的 <code>id</code> 與建立該帖子的使用者的 <code>user_id</code> 進行比較來實現這一點：</p>
 <pre><code class="language-php">use App\\Models\\Post;
 use App\\Models\\User;
 use Illuminate\\Support\\Facades\\Gate;
@@ -148,7 +148,7 @@ Gate::define('create-post', function (User $user, Category $category, bool $pinn
 });
 
 if (Gate::check('create-post', [$category, $pinned])) {
-    // 使用者可以創建帖子...
+    // 使用者可以建立帖子...
 }
 </code></pre>
 <p><a name="gate-responses"></a></p>
@@ -237,14 +237,14 @@ Gate::denyIf(fn (User $user) => $user->banned());
 </code></pre>
 <p>如果操作未被授權或當前沒有認證使用者，Laravel 將自動拋出 <code>Illuminate\\Auth\\Access\\AuthorizationException</code> 異常。<code>AuthorizationException</code> 的實例會自動被 Laravel 的異常處理器轉換為 403 HTTP 回應。</p>
 <p><a name="creating-policies"></a></p>
-<h2>創建策略</h2>
+<h2>建立策略</h2>
 <p><a name="generating-policies"></a></p>
 <h3>生成策略</h3>
-<p>策略是圍繞特定模型或資源組織授權邏輯的類別。例如，如果您的應用程式是一個部落格，您可能有一個 <code>App\\Models\\Post</code> 模型和一個相應的 <code>App\\Policies\\PostPolicy</code> 來授權使用者操作（如創建或更新帖子）。</p>
-<p>您可以使用 <code>make:policy</code> Artisan 命令來生成策略。生成的策略將放置在 <code>app/Policies</code> 目錄中。如果此目錄在您的應用程式中不存在，Laravel 將為您創建它：</p>
+<p>策略是圍繞特定模型或資源組織授權邏輯的類別。例如，如果您的應用程式是一個部落格，您可能有一個 <code>App\\Models\\Post</code> 模型和一個相應的 <code>App\\Policies\\PostPolicy</code> 來授權使用者操作（如建立或更新帖子）。</p>
+<p>您可以使用 <code>make:policy</code> Artisan 命令來生成策略。生成的策略將放置在 <code>app/Policies</code> 目錄中。如果此目錄在您的應用程式中不存在，Laravel 將為您建立它：</p>
 <pre><code class="language-shell">php artisan make:policy PostPolicy
 </code></pre>
-<p><code>make:policy</code> 命令將生成一個空的策略類別。如果您希望生成一個包含與查看、創建、更新和刪除資源相關的範例策略方法的類別，可以在執行命令時提供 <code>--model</code> 選項：</p>
+<p><code>make:policy</code> 命令將生成一個空的策略類別。如果您希望生成一個包含與查看、建立、更新和刪除資源相關的範例策略方法的類別，可以在執行命令時提供 <code>--model</code> 選項：</p>
 <pre><code class="language-shell">php artisan make:policy PostPolicy --model=Post
 </code></pre>
 <p><a name="registering-policies"></a></p>
@@ -386,9 +386,9 @@ public function update(User $user, Post $post): Response
 </code></pre>
 <p><a name="methods-without-models"></a></p>
 <h3>不帶模型的方法</h3>
-<p>一些策略方法只接收當前已認證使用者的實例。這種情況在授權 <code>create</code> 操作時最常見。例如，如果您正在創建一個部落格，您可能希望判斷使用者是否有權創建任何帖子。在這些情況下，您的策略方法應該只期望接收一個使用者實例：</p>
+<p>一些策略方法只接收當前已認證使用者的實例。這種情況在授權 <code>create</code> 操作時最常見。例如，如果您正在建立一個部落格，您可能希望判斷使用者是否有權建立任何帖子。在這些情況下，您的策略方法應該只期望接收一個使用者實例：</p>
 <pre><code class="language-php">/**
- * 判斷給定的使用者是否可以創建帖子。
+ * 判斷給定的使用者是否可以建立帖子。
  */
 public function create(User $user): bool
 {
@@ -483,7 +483,7 @@ use Illuminate\\Http\\Request;
 class PostController extends Controller
 {
     /**
-     * 創建一個帖子。
+     * 建立一個帖子。
      */
     public function store(Request $request): RedirectResponse
     {
@@ -491,7 +491,7 @@ class PostController extends Controller
             abort(403);
         }
 
-        // 創建帖子...
+        // 建立帖子...
 
         return redirect('/posts');
     }
@@ -536,7 +536,7 @@ use Illuminate\\Http\\Request;
 use Illuminate\\Support\\Facades\\Gate;
 
 /**
- * 創建一個新的部落格帖子。
+ * 建立一個新的部落格帖子。
  *
  * @throws \\Illuminate\\Auth\\Access\\AuthorizationException
  */
@@ -544,7 +544,7 @@ public function create(Request $request): RedirectResponse
 {
     Gate::authorize('create', Post::class);
 
-    // 當前使用者可以創建部落格帖子...
+    // 當前使用者可以建立部落格帖子...
 
     return redirect('/posts');
 }
@@ -579,14 +579,14 @@ public function update(Post $post)
 <h4>不需要模型的操作</h4>
 <p>同樣，一些策略方法（如 <code>create</code>）不需要模型實例。在這些情況下，您可以向中介層傳遞一個類別名稱。該類別名稱將用於判斷在授權操作時使用哪個策略：</p>
 <pre><code class="language-php">Route::post('/post', function () {
-    // 當前使用者可以創建帖子...
+    // 當前使用者可以建立帖子...
 })->middleware('can:create,App\\Models\\Post');
 </code></pre>
 <p>在字串中介層定義中指定完整的類別名稱可能會變得繁瑣。為此，您可以選擇使用 <code>can</code> 方法將 <code>can</code> 中介層附加到路由：</p>
 <pre><code class="language-php">use App\\Models\\Post;
 
 Route::post('/post', function () {
-    // 當前使用者可以創建帖子...
+    // 當前使用者可以建立帖子...
 })->can('create', Post::class);
 </code></pre>
 <p><a name="via-blade-templates"></a></p>
@@ -595,7 +595,7 @@ Route::post('/post', function () {
 <pre><code class="language-blade">@can('update', $post)
     <!-- 當前使用者可以更新帖子... -->
 @elsecan('create', App\\Models\\Post::class)
-    <!-- 當前使用者可以創建新帖子... -->
+    <!-- 當前使用者可以建立新帖子... -->
 @else
     <!-- ... -->
 @endcan
@@ -603,7 +603,7 @@ Route::post('/post', function () {
 @cannot('update', $post)
     <!-- 當前使用者無法更新帖子... -->
 @elsecannot('create', App\\Models\\Post::class)
-    <!-- 當前使用者無法創建新帖子... -->
+    <!-- 當前使用者無法建立新帖子... -->
 @endcannot
 </code></pre>
 <p>這些指令是編寫 <code>@if</code> 和 <code>@unless</code> 語句的便利捷徑。上面的 <code>@can</code> 和 <code>@cannot</code> 語句等效於以下語句：</p>
@@ -619,18 +619,18 @@ Route::post('/post', function () {
 <pre><code class="language-blade">@canany(['update', 'view', 'delete'], $post)
     <!-- 當前使用者可以更新、查看或刪除帖子... -->
 @elsecanany(['create'], \\App\\Models\\Post::class)
-    <!-- 當前使用者可以創建帖子... -->
+    <!-- 當前使用者可以建立帖子... -->
 @endcanany
 </code></pre>
 <p><a name="blade-actions-that-dont-require-models"></a></p>
 <h4>不需要模型的操作</h4>
 <p>像大多數其他授權方法一樣，如果操作不需要模型實例，您可以向 <code>@can</code> 和 <code>@cannot</code> 指令傳遞一個類別名稱：</p>
 <pre><code class="language-blade">@can('create', App\\Models\\Post::class)
-    <!-- 當前使用者可以創建帖子... -->
+    <!-- 當前使用者可以建立帖子... -->
 @endcan
 
 @cannot('create', App\\Models\\Post::class)
-    <!-- 當前使用者無法創建帖子... -->
+    <!-- 當前使用者無法建立帖子... -->
 @endcannot
 </code></pre>
 <p><a name="supplying-additional-context"></a></p>

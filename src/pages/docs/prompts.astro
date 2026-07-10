@@ -92,7 +92,7 @@ $name = text('What is your name?');
     }
 );
 </code></pre>
-<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p>或者，您可以利用 Laravel 的<a href="/docs/validation">驗證器</a>的強大功能。為此，請向 <code>validate</code> 參數提供一個包含屬性名稱和所需驗證規則的陣列：</p>
 <pre><code class="language-php">$name = text(
     label: 'What is your name?',
@@ -139,7 +139,7 @@ $story = textarea('Tell me a story.');
     }
 );
 </code></pre>
-<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p>或者，您可以利用 Laravel 的<a href="/docs/validation">驗證器</a>的強大功能。為此，請向 <code>validate</code> 參數提供一個包含屬性名稱和所需驗證規則的陣列：</p>
 <pre><code class="language-php">$story = textarea(
     label: 'Tell me a story.',
@@ -187,7 +187,7 @@ $number = number('How many copies would you like?');
     }
 );
 </code></pre>
-<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p>或者，您可以利用 Laravel 的<a href="/docs/validation">驗證器</a>的強大功能。為此，請向 <code>validate</code> 參數提供一個包含屬性名稱和所需驗證規則的陣列：</p>
 <pre><code class="language-php">$copies = number(
     label: 'How many copies would you like?',
@@ -233,7 +233,7 @@ $password = password('What is your password?');
     }
 );
 </code></pre>
-<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p>或者，您可以利用 Laravel 的<a href="/docs/validation">驗證器</a>的強大功能。為此，請向 <code>validate</code> 參數提供一個包含屬性名稱和所需驗證規則的陣列：</p>
 <pre><code class="language-php">$password = password(
     label: 'What is your password?',
@@ -347,7 +347,7 @@ $role = select(
             : null
 );
 </code></pre>
-<p>如果 <code>options</code> 參數是一個關聯陣列，則閉包將接收選中的鍵，否則它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>如果 <code>options</code> 參數是一個關聯陣列，則閉包將接收選中的鍵，否則它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p><a name="multiselect"></a></p>
 <h3>多選</h3>
 <p>如果您需要使用者能夠選擇多個選項，可以使用 <code>multiselect</code> 函數：</p>
@@ -439,7 +439,7 @@ $permissions = multiselect(
         : null
 );
 </code></pre>
-<p>如果 <code>options</code> 參數是一個關聯陣列，則閉包將接收選中的鍵，否則它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>如果 <code>options</code> 參數是一個關聯陣列，則閉包將接收選中的鍵，否則它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p><a name="suggest"></a></p>
 <h3>建議</h3>
 <p><code>suggest</code> 函數可用於為可能的選項提供自動完成。使用者仍然可以提供任何答案，無論自動完成提示如何：</p>
@@ -505,7 +505,7 @@ $name = suggest('What is your name?', ['Taylor', 'Dayle']);
     }
 );
 </code></pre>
-<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p>或者，您可以利用 Laravel 的<a href="/docs/validation">驗證器</a>的強大功能。為此，請向 <code>validate</code> 參數提供一個包含屬性名稱和所需驗證規則的陣列：</p>
 <pre><code class="language-php">$name = suggest(
     label: 'What is your name?',
@@ -584,7 +584,7 @@ $selected = search(
     }
 );
 </code></pre>
-<p>如果 <code>options</code> 閉包返回一個關聯陣列，則閉包將接收選中的鍵，否則它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>如果 <code>options</code> 閉包返回一個關聯陣列，則閉包將接收選中的鍵，否則它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p><a name="multisearch"></a></p>
 <h3>多搜尋</h3>
 <p>如果您有大量可搜尋的選項，並且需要使用者能夠選擇多個項目，<code>multisearch</code> 函數允許使用者在使用方向鍵和空格鍵選擇選項之前輸入搜尋查詢來篩選結果：</p>
@@ -676,7 +676,7 @@ $selected = multisearch(
     }
 );
 </code></pre>
-<p>如果 <code>options</code> 閉包返回一個關聯陣列，則閉包將接收選中的鍵；否則，它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>如果 <code>options</code> 閉包返回一個關聯陣列，則閉包將接收選中的鍵；否則，它將接收選中的值。閉包可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p><a name="pause"></a></p>
 <h3>暫停</h4>
 <p><code>pause</code> 函數可用於向使用者顯示資訊文字，並等待他們透過按 Enter/Return 鍵來確認他們希望繼續：</p>
@@ -743,7 +743,7 @@ $name = autocomplete(
     }
 );
 </code></pre>
-<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證通過則返回 <code>null</code>。</p>
+<p>閉包將接收已輸入的值，並可以返回一個錯誤訊息，或者如果驗證透過則返回 <code>null</code>。</p>
 <p><a name="transforming-input-before-validation"></a></p>
 <h2>驗證前轉換輸入</h2>
 <p>有時您可能希望在驗證發生之前轉換提示輸入。例如，您可能希望從任何提供的字串中移除空白。為此，許多提示函數提供了一個 <code>transform</code> 參數，它接受一個閉包：</p>
@@ -759,7 +759,7 @@ $name = autocomplete(
 </code></pre>
 <p><a name="forms"></a></p>
 <h2>表單</h2>
-<p>通常，您會有多個提示按順序顯示，以在執行額外操作之前收集資訊。您可以使用 <code>form</code> 函數來創建一個分組的提示集供使用者完成：</p>
+<p>通常，您會有多個提示按順序顯示，以在執行額外操作之前收集資訊。您可以使用 <code>form</code> 函數來建立一個分組的提示集供使用者完成：</p>
 <pre><code class="language-php">use function Laravel\\Prompts\\form;
 
 $responses = form()
@@ -841,7 +841,7 @@ callout(
 </code></pre>
 <p><a name="callout-rich-content"></a></p>
 <h4>富內容</h4>
-<p>與其傳遞一個字串，您還可以傳遞一個字串和元素的陣列來構建富的、結構化的呼叫框。<code>Element</code> 類別提供了用於創建標題、項目符號列表、編號列表和鍵值列表的工廠方法：</p>
+<p>與其傳遞一個字串，您還可以傳遞一個字串和元素的陣列來建立富的、結構化的呼叫框。<code>Element</code> 類別提供了用於建立標題、項目符號列表、編號列表和鍵值列表的工廠方法：</p>
 <pre><code class="language-php">use Laravel\\Prompts\\Elements\\Element;
 
 use function Laravel\\Prompts\\callout;

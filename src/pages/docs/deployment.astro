@@ -120,7 +120,7 @@ const content = `<h1>部署</h1>
 </code></pre>
 <p><a name="optimizing-route-loading"></a></p>
 <h3>快取路由</h3>
-<p>如果您正在構建一個具有許多路由的大型應用程式，您應該確保在部署過程中運行 <code>route:cache</code> Artisan 命令：</p>
+<p>如果您正在建立一個具有許多路由的大型應用程式，您應該確保在部署過程中運行 <code>route:cache</code> Artisan 命令：</p>
 <pre><code class="language-shell">php artisan route:cache
 </code></pre>
 <p>此命令將您所有的路由註冊簡化為快取檔案中的單個方法呼叫，從而在註冊數百個路由時提高路由註冊的效能。</p>
@@ -142,10 +142,10 @@ const content = `<h1>部署</h1>
 <p>如果您沒有使用 <a href="https://cloud.laravel.com">Laravel Cloud</a>，您應該手動配置一個程序監控器，以便偵測可重新載入程序何時退出並自動重新啟動它們。</p>
 <p><a name="debug-mode"></a></p>
 <h2>除錯模式</h2>
-<p><code>config/app.php</code> 配置檔案中的除錯選項決定實際向用戶顯示多少錯誤資訊。預設情況下，此選項設定為尊重應用程式 <code>.env</code> 檔案中儲存的 <code>APP_DEBUG</code> 環境變數的值。</p>
+<p><code>config/app.php</code> 配置檔案中的除錯選項決定實際向使用者顯示多少錯誤資訊。預設情況下，此選項設定為尊重應用程式 <code>.env</code> 檔案中儲存的 <code>APP_DEBUG</code> 環境變數的值。</p>
 <blockquote>
 <p>[!WARNING]
-<strong>在生產環境中，此值應始終為 <code>false</code>。如果在生產中將 <code>APP_DEBUG</code> 變數設定為 <code>true</code>，您將面臨向應用程式的最終用戶暴露敏感配置值的風險。</strong></p>
+<strong>在生產環境中，此值應始終為 <code>false</code>。如果在生產中將 <code>APP_DEBUG</code> 變數設定為 <code>true</code>，您將面臨向應用程式的最終使用者暴露敏感配置值的風險。</strong></p>
 </blockquote>
 <p><a name="the-health-route"></a></p>
 <h2>健康檢查路由</h2>
@@ -164,11 +164,11 @@ const content = `<h1>部署</h1>
 <p><a name="laravel-cloud"></a></p>
 <h4>Laravel Cloud</h4>
 <p>如果您想要一個專為 Laravel 調校的全託管、自動擴展部署平台，請查看 <a href="https://cloud.laravel.com">Laravel Cloud</a>。Laravel Cloud 是一個強大的 Laravel 部署平台，提供託管計算、資料庫、快取和物件儲存。</p>
-<p>在 Cloud 上啟動您的 Laravel 應用程式，並愛上可擴展的簡潔性。Laravel Cloud 由 Laravel 的創建者精心調校，與框架無縫配合，因此您可以繼續完全按照您習慣的方式編寫 Laravel 應用程式。</p>
+<p>在 Cloud 上啟動您的 Laravel 應用程式，並愛上可擴展的簡潔性。Laravel Cloud 由 Laravel 的建立者精心調校，與框架無縫配合，因此您可以繼續完全按照您習慣的方式編寫 Laravel 應用程式。</p>
 <p><a name="laravel-forge"></a></p>
 <h4>Laravel Forge</h4>
 <p>如果您偏好管理自己的伺服器，但對於配置運行強大 Laravel 應用程式所需的各種服務不太舒適，<a href="https://forge.laravel.com">Laravel Forge</a> 是一個用於 Laravel 應用程式的 VPS 伺服器管理平台。</p>
-<p>Laravel Forge 可以在各種基礎架構提供者（如 DigitalOcean、Linode、AWS 等）上創建伺服器。此外，Forge 安裝和管理構建強大 Laravel 應用程式所需的所有工具，如 Nginx、MySQL、Redis、Memcached、Beanstalk 等。</p>
+<p>Laravel Forge 可以在各種基礎架構提供者（如 DigitalOcean、Linode、AWS 等）上建立伺服器。此外，Forge 安裝和管理建立強大 Laravel 應用程式所需的所有工具，如 Nginx、MySQL、Redis、Memcached、Beanstalk 等。</p>
 `;
 ---
 

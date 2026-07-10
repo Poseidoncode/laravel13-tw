@@ -30,7 +30,7 @@ const content = `<h1>Eloquent: API 資源</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>在構建 API 時，您可能需要一個轉換層，它位於您的 Eloquent 模型與實際返回給應用程式使用者的 JSON 回應之間。例如，您可能希望為某些使用者子集顯示某些屬性而不為其他使用者顯示，或者您可能希望在模型的 JSON 表示中始終包含某些關係。Eloquent 的資源類別允許您以表達性且簡便的方式將您的模型和模型集合轉換為 JSON。</p>
+<p>在建立 API 時，您可能需要一個轉換層，它位於您的 Eloquent 模型與實際返回給應用程式使用者的 JSON 回應之間。例如，您可能希望為某些使用者子集顯示某些屬性而不為其他使用者顯示，或者您可能希望在模型的 JSON 表示中始終包含某些關係。Eloquent 的資源類別允許您以表達性且簡便的方式將您的模型和模型集合轉換為 JSON。</p>
 <p>當然，您可以隨時使用它們的 <code>toJson</code> 方法將 Eloquent 模型或集合轉換為 JSON；但是，Eloquent 資源提供了對模型及其關係的 JSON 序列化的更細粒度和更強大的控制。</p>
 <p><a name="generating-resources"></a></p>
 <h2>生成資源</h2>
@@ -40,7 +40,7 @@ const content = `<h1>Eloquent: API 資源</h1>
 <p><a name="generating-resource-collections"></a></p>
 <h4>資源集合</h4>
 <p>除了生成轉換單個模型的資源外，您還可以生成負責轉換模型集合的資源。這使您的 JSON 回應能夠包含與給定資源的整個集合相關的連結和其他元資訊。</p>
-<p>要建立資源集合，您應該在創建資源時使用 <code>--collection</code> 標誌。或者，在資源名稱中包含單詞 <code>Collection</code> 將向 Laravel 指示它應該創建一個集合資源。集合資源擴展 <code>Illuminate\\Http\\Resources\\Json\\ResourceCollection</code> 類別：</p>
+<p>要建立資源集合，您應該在建立資源時使用 <code>--collection</code> 標誌。或者，在資源名稱中包含單詞 <code>Collection</code> 將向 Laravel 指示它應該建立一個集合資源。集合資源擴展 <code>Illuminate\\Http\\Resources\\Json\\ResourceCollection</code> 類別：</p>
 <pre><code class="language-shell">php artisan make:resource User --collection
 
 php artisan make:resource UserCollection
@@ -111,7 +111,7 @@ class User extends Model
 </code></pre>
 <p><a name="resource-collections"></a></p>
 <h3>資源集合</h3>
-<p>如果您返回一個資源集合或分頁回應，您應該在路由或控制器中創建資源實例時使用資源類別提供的 <code>collection</code> 方法：</p>
+<p>如果您返回一個資源集合或分頁回應，您應該在路由或控制器中建立資源實例時使用資源類別提供的 <code>collection</code> 方法：</p>
 <pre><code class="language-php">use App\\Http\\Resources\\UserResource;
 use App\\Models\\User;
 
@@ -143,7 +143,7 @@ class User extends Model
 </code></pre>
 <p><a name="custom-resource-collections"></a></p>
 <h4>自訂資源集合</h4>
-<p>預設情況下，資源集合不允許添加可能需要隨集合返回的任何自訂元資料。如果您希望自訂資源集合回應，您可以創建一個專用的資源來表示該集合：</p>
+<p>預設情況下，資源集合不允許添加可能需要隨集合返回的任何自訂元資料。如果您希望自訂資源集合回應，您可以建立一個專用的資源來表示該集合：</p>
 <pre><code class="language-shell">php artisan make:resource UserCollection
 </code></pre>
 <p>生成資源集合類別後，您可以輕鬆定義應與回應一起包含的任何元資料：</p>
@@ -526,7 +526,7 @@ public function toArray(Request $request): array
     ];
 }
 </code></pre>
-<p>在此範例中，<code>secret</code> 鍵僅在已認證使用者的 <code>isAdmin</code> 方法返回 <code>true</code> 時才會在最終資源回應中返回。如果該方法返回 <code>false</code>，<code>secret</code> 鍵將在回應發送給客戶端之前從資源回應中移除。<code>when</code> 方法允許您以表達性的方式定義資源，而無需在構建陣列時使用條件語句。</p>
+<p>在此範例中，<code>secret</code> 鍵僅在已認證使用者的 <code>isAdmin</code> 方法返回 <code>true</code> 時才會在最終資源回應中返回。如果該方法返回 <code>false</code>，<code>secret</code> 鍵將在回應發送給客戶端之前從資源回應中移除。<code>when</code> 方法允許您以表達性的方式定義資源，而無需在建立陣列時使用條件語句。</p>
 <p><code>when</code> 方法還接受一個閉包作為其第二個參數，允許您僅在給定條件為 <code>true</code> 時才計算結果值：</p>
 <pre><code class="language-php">'secret' => $this->when($request->user()->isAdmin(), function () {
     return 'secret-value';
@@ -717,8 +717,8 @@ class UserCollection extends ResourceCollection
 }
 </code></pre>
 <p><a name="adding-meta-data-when-constructing-resources"></a></p>
-<h4>創建資源時添加元資料</h4>
-<p>您也可以在路由或控制器中創建資源實例時添加頂層資料。所有資源上都可用的 <code>additional</code> 方法接受一個資料陣列，該資料應添加到資源回應中：</p>
+<h4>建立資源時添加元資料</h4>
+<p>您也可以在路由或控制器中建立資源實例時添加頂層資料。所有資源上都可用的 <code>additional</code> 方法接受一個資料陣列，該資料應添加到資源回應中：</p>
 <pre><code class="language-php">return User::all()
     ->load('roles')
     ->toResourceCollection()

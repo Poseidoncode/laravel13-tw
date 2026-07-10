@@ -73,7 +73,7 @@ Concurrency::run([...], timeout: seconds(30));
 </code></pre>
 <p><a name="deferring-concurrent-tasks"></a></p>
 <h2>延遲並行任務</h2>
-<p>如果您想並行執行一組閉包，但對這些閉包返回的結果不感興趣，應該考慮使用 <code>defer</code> 方法。當 <code>defer</code> 方法被呼叫時，給定的閉包不會立即執行。相反，Laravel 將在 HTTP 響應已傳送到用戶後並行執行這些閉包：</p>
+<p>如果您想並行執行一組閉包，但對這些閉包返回的結果不感興趣，應該考慮使用 <code>defer</code> 方法。當 <code>defer</code> 方法被呼叫時，給定的閉包不會立即執行。相反，Laravel 將在 HTTP 響應已傳送到使用者後並行執行這些閉包：</p>
 <pre><code class="language-php">use App\\Services\\Metrics;
 use Illuminate\\Support\\Facades\\Concurrency;
 

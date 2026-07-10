@@ -66,7 +66,7 @@ const content = `<h1>認證</h1>
 <h3>資料庫考量</h3>
 <p>預設情況下，Laravel 在 <code>app/Models</code> 目錄中包含一個 <code>App\\Models\\User</code> <a href="/docs/eloquent">Eloquent 模型</a>。此模型可用於預設的 Eloquent 認證驅動程式。</p>
 <p>如果您的應用程式不使用 Eloquent，您可以使用 <code>database</code> 認證提供者，它使用 Laravel 查詢建構器。如果您的應用程式使用 MongoDB，請查看 MongoDB 的官方 <a href="https://www.mongodb.com/docs/drivers/php/laravel-mongodb/current/user-authentication/">Laravel 使用者認證文檔</a>。</p>
-<p>構建 <code>App\\Models\\User</code> 模型的資料庫架構時，請確保密碼欄位至少有 60 個字元長度。當然，新的 Laravel 應用程式中附帶的 <code>users</code> 表遷移已經創建了一個超過此長度的欄位。</p>
+<p>建立 <code>App\\Models\\User</code> 模型的資料庫架構時，請確保密碼欄位至少有 60 個字元長度。當然，新的 Laravel 應用程式中附帶的 <code>users</code> 表遷移已經建立了一個超過此長度的欄位。</p>
 <p>此外，您應該驗證您的 <code>users</code>（或等效）表包含一個可空的、100 個字元的字串 <code>remember_token</code> 欄位。此欄位將用於儲存選擇在登入應用程式時「記住我」選項的使用者的令牌。同樣，新的 Laravel 應用程式中附帶的預設 <code>users</code> 表遷移已經包含此欄位。</p>
 <p><a name="ecosystem-overview"></a></p>
 <h3>生態系統概述</h3>
@@ -77,20 +77,20 @@ const content = `<h1>認證</h1>
 <h4>Laravel 的內建瀏覽器認證服務</h4>
 <p>Laravel 包含內建的認證和會話服務，通常透過 <code>Auth</code> 和 <code>Session</code> 外觀存取。這些功能為從 Web 瀏覽器發起的請求提供基於 Cookie 的認證。它們提供了允許您驗證使用者憑據並認證使用者的方法。此外，這些服務將自動在使用者的會話中儲存適當的認證資料，並發送使用者的會話 Cookie。有關如何使用這些服務的討論包含在此文檔中。</p>
 <p><strong>應用程式入門套件</strong></p>
-<p>正如本文檔中所討論的，您可以與這些認證服務互動以構建您自己的認證層。但是，為了幫助您更快地開始，我們發布了<a href="/docs/starter-kits">免費入門套件</a>，提供了整個認證層的強大、現代化的腳手架。</p>
+<p>正如本文檔中所討論的，您可以與這些認證服務互動以建立您自己的認證層。但是，為了幫助您更快地開始，我們發布了<a href="/docs/starter-kits">免費入門套件</a>，提供了整個認證層的強大、現代化的腳手架。</p>
 <p><a name="laravels-api-authentication-services"></a></p>
 <h4>Laravel 的 API 認證服務</h4>
 <p>Laravel 提供了兩個可選套件來協助您管理 API 令牌並驗證使用 API 令牌發出的請求：<a href="/docs/passport">Passport</a> 和 <a href="/docs/sanctum">Sanctum</a>。請注意，這些庫和 Laravel 的內建基於 Cookie 的認證庫並不是互斥的。這些庫主要關注 API 令牌認證，而內建認證服務則關注基於 Cookie 的瀏覽器認證。許多應用程式將同時使用 Laravel 的內建基於 Cookie 的認證服務和 Laravel 的 API 認證套件之一。</p>
 <p><strong>Passport</strong></p>
 <p>Passport 是一個 OAuth2 認證提供者，提供了多種 OAuth2「授權類型」，允許您發行各種類型的令牌。一般來說，這是一個強大且複雜的 API 認證套件。但是，大多數應用程式不需要 OAuth2 規範提供的複雜功能，這可能對使用者和開發者來說都很困惑。此外，開發者歷史上對於如何使用 OAuth2 認證提供者（如 Passport）來認證 SPA 應用程式或行動應用程式感到困惑。</p>
 <p><strong>Sanctum</strong></p>
-<p>為了回應 OAuth2 的複雜性和開發者的困惑，我們著手構建一個更簡單、更精簡的認證套件，它可以處理來自 Web 瀏覽器的第一方 Web 請求和透過令牌的 API 請求。隨著 <a href="/docs/sanctum">Laravel Sanctum</a> 的發布，這個目標得以實現，它應該被認為是將提供第一方 Web UI 和 API 的應用程式、或將由與後端 Laravel 應用程式分開存在的單頁應用程式（SPA）驅動的應用程式、或提供行動客戶端的應用程式的首選和推薦認證套件。</p>
+<p>為了回應 OAuth2 的複雜性和開發者的困惑，我們著手建立一個更簡單、更精簡的認證套件，它可以處理來自 Web 瀏覽器的第一方 Web 請求和透過令牌的 API 請求。隨著 <a href="/docs/sanctum">Laravel Sanctum</a> 的發布，這個目標得以實現，它應該被認為是將提供第一方 Web UI 和 API 的應用程式、或將由與後端 Laravel 應用程式分開存在的單頁應用程式（SPA）驅動的應用程式、或提供行動客戶端的應用程式的首選和推薦認證套件。</p>
 <p>Laravel Sanctum 是一個混合式 Web / API 認證套件，可以管理您應用程式的整個認證過程。這是可能的，因為當基於 Sanctum 的應用程式收到請求時，Sanctum 將首先判斷該請求是否包含引用已認證會話的會話 Cookie。Sanctum 透過呼叫我們之前討論過的 Laravel 內建認證服務來實現這一點。如果請求不是透過會話 Cookie 認證的，Sanctum 將檢查請求是否有 API 令牌。如果存在 API 令牌，Sanctum 將使用該令牌認證請求。要了解更多關於此過程的資訊，請查閱 Sanctum 的<a href="/docs/sanctum#how-it-works">「運作方式」</a>文檔。</p>
 <p><a name="summary-choosing-your-stack"></a></p>
 <h4>概述和選擇您的技術棧</h4>
-<p>總之，如果您的應用程式將使用瀏覽器存取，並且您正在構建一個單體 Laravel 應用程式，則您的應用程式將使用 Laravel 的內建認證服務。</p>
+<p>總之，如果您的應用程式將使用瀏覽器存取，並且您正在建立一個單體 Laravel 應用程式，則您的應用程式將使用 Laravel 的內建認證服務。</p>
 <p>接下來，如果您的應用程式提供一個將被第三方使用的 API，您將在 <a href="/docs/passport">Passport</a> 和 <a href="/docs/sanctum">Sanctum</a> 之間做出選擇，為您的應用程式提供 API 令牌認證。一般來說，應優先選擇 Sanctum，因為它是 API 認證、SPA 認證和行動認證的簡單、完整的解決方案，包括對「範圍」或「能力」的支援。</p>
-<p>如果您正在構建一個將由 Laravel 後端驅動的單頁應用程式（SPA），則應該使用 <a href="/docs/sanctum">Laravel Sanctum</a>。使用 Sanctum 時，您需要<a href="#authenticating-users">手動實現自己的後端認證路由</a>或利用 <a href="/docs/fortify">Laravel Fortify</a> 作為無頭認證後端服務，它為註冊、密碼重設、電子郵件驗證等功能提供路由和控制器。</p>
+<p>如果您正在建立一個將由 Laravel 後端驅動的單頁應用程式（SPA），則應該使用 <a href="/docs/sanctum">Laravel Sanctum</a>。使用 Sanctum 時，您需要<a href="#authenticating-users">手動實現自己的後端認證路由</a>或利用 <a href="/docs/fortify">Laravel Fortify</a> 作為無頭認證後端服務，它為註冊、密碼重設、電子郵件驗證等功能提供路由和控制器。</p>
 <p>當您的應用程式絕對需要 OAuth2 規範提供的所有功能時，可以選擇 Passport。</p>
 <p>而且，如果您想要快速開始，我們很高興推薦<a href="/docs/starter-kits">我們的應用程式入門套件</a>作為快速開始新 Laravel 應用程式的一種方式，該應用程式已經使用了我們首選的 Laravel 內建認證服務認證技術棧。</p>
 <p><a name="authentication-quickstart"></a></p>
@@ -104,7 +104,7 @@ const content = `<h1>認證</h1>
 <p>首先，您應該<a href="/docs/starter-kits">安裝 Laravel 應用程式入門套件</a>。我們的入門套件提供了美麗設計的起點，用於將認證整合到您的全新 Laravel 應用程式中。</p>
 <p><a name="retrieving-the-authenticated-user"></a></p>
 <h3>檢索已認證的使用者</h3>
-<p>從入門套件創建應用程式並允許使用者註冊並使用您的應用程式進行認證後，您通常需要與當前已認證的使用者互動。處理傳入請求時，您可以透過 <code>Auth</code> 外觀的 <code>user</code> 方法存取已認證的使用者：</p>
+<p>從入門套件建立應用程式並允許使用者註冊並使用您的應用程式進行認證後，您通常需要與當前已認證的使用者互動。處理傳入請求時，您可以透過 <code>Auth</code> 外觀的 <code>user</code> 方法存取已認證的使用者：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Auth;
 
 // 檢索當前已認證的使用者...
@@ -406,7 +406,7 @@ Auth::logoutOtherDevices($currentPassword);
 <p>當呼叫 <code>logoutOtherDevices</code> 方法時，使用者的其他會話將完全失效，這意味著他們將從之前認證的所有守衛中「登出」。</p>
 <p><a name="password-confirmation"></a></p>
 <h2>密碼確認</h2>
-<p>在構建應用程式時，您可能偶爾會有需要使用者在執行操作或將使用者重定向到應用程式的敏感區域之前確認其密碼的操作。Laravel 包含內建的中介層來使此過程變得輕而鬆。實現此功能將需要您定義兩個路由：一個路由顯示要求使用者確認其密碼的視圖，另一個路由確認密碼有效並將使用者重定向到其預期目的地。</p>
+<p>在建立應用程式時，您可能偶爾會有需要使用者在執行操作或將使用者重定向到應用程式的敏感區域之前確認其密碼的操作。Laravel 包含內建的中介層來使此過程變得輕而鬆。實現此功能將需要您定義兩個路由：一個路由顯示要求使用者確認其密碼的視圖，另一個路由確認密碼有效並將使用者重定向到其預期目的地。</p>
 <blockquote>
 <p>[!NOTE]
 以下文檔討論了如何直接與 Laravel 的密碼確認功能整合；但是，如果您想要更快地開始，<a href="/docs/starter-kits">Laravel 應用程式入門套件</a>包含對此功能的支援！</p>

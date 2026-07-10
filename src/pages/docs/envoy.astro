@@ -203,8 +203,8 @@ const content = `<h1>Laravel Envoy</h1>
 <h2>通知</h2>
 <p><a name="slack"></a></p>
 <h3>Slack</h3>
-<p>Envoy 支援在每次任務執行後向 <a href="https://slack.com">Slack</a> 傳送通知。<code>@slack</code> 指令接受一個 Slack webhook URL 和一個頻道 / 用戶名稱。您可以透過在 Slack 控制面板中建立「Incoming WebHooks」整合來取得您的 webhook URL。</p>
-<p>您應該將整個 webhook URL 作為傳遞給 <code>@slack</code> 指令的第一個參數。傳遞給 <code>@slack</code> 指令的第二個參數應為頻道名稱（<code>#channel</code>）或用戶名稱（<code>@user</code>）：</p>
+<p>Envoy 支援在每次任務執行後向 <a href="https://slack.com">Slack</a> 傳送通知。<code>@slack</code> 指令接受一個 Slack webhook URL 和一個頻道 / 使用者名稱。您可以透過在 Slack 控制面板中建立「Incoming WebHooks」整合來取得您的 webhook URL。</p>
+<p>您應該將整個 webhook URL 作為傳遞給 <code>@slack</code> 指令的第一個參數。傳遞給 <code>@slack</code> 指令的第二個參數應為頻道名稱（<code>#channel</code>）或使用者名稱（<code>@user</code>）：</p>
 <pre><code class="language-blade">@finished
     @slack('webhook-url', '#bots')
 @endfinished

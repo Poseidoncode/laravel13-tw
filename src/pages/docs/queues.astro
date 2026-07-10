@@ -8,7 +8,7 @@ const content = `<h1>佇列</h1>
 <li><a href="#driver-prerequisites">驅動程式說明和先決條件</a></li>
 </ul>
 </li>
-<li><a href="#creating-jobs">創建作業</a><ul>
+<li><a href="#creating-jobs">建立作業</a><ul>
 <li><a href="#generating-job-classes">生成作業類別</a></li>
 <li><a href="#class-structure">類別結構</a></li>
 <li><a href="#unique-jobs">唯一的作業</a></li>
@@ -83,7 +83,7 @@ const content = `<h1>佇列</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>在構建 Web 應用程式時，您可能有一些任務（例如解析和儲存上傳的 CSV 檔案）需要花費太長時間才能在典型的 Web 請求期間執行。幸運的是，Laravel 允許您輕鬆地創建佇列作業，這些作業可以在背景中處理。透過將時間密集型任務移動到佇列，您的應用程式可以以閃電般的速度回應 Web 請求，並為您的客戶提供更好的使用者體驗。</p>
+<p>在建立 Web 應用程式時，您可能有一些任務（例如解析和儲存上傳的 CSV 檔案）需要花費太長時間才能在典型的 Web 請求期間執行。幸運的是，Laravel 允許您輕鬆地建立佇列作業，這些作業可以在背景中處理。透過將時間密集型任務移動到佇列，您的應用程式可以以閃電般的速度回應 Web 請求，並為您的客戶提供更好的使用者體驗。</p>
 <p>Laravel 佇列提供了跨多種不同佇列後端的統一佇列 API，例如 <a href="https://aws.amazon.com/sqs/">Amazon SQS</a>、<a href="https://redis.io">Redis</a>，甚至是關聯式資料庫。</p>
 <p>Laravel 的佇列配置選項存儲在應用程式的 <code>config/queue.php</code> 配置檔案中。在此檔案中，您將找到框架附帶的每個佇列驅動程式的連接配置，包括資料庫、<a href="https://aws.amazon.com/sqs/">Amazon SQS</a>、<a href="https://redis.io">Redis</a> 和 <a href="https://beanstalkd.github.io/">Beanstalkd</a> 驅動程式，以及一個將立即執行作業的同步驅動程式（用於開發或測試期間）。還包含一個 <code>null</code> 佇列驅動程式，它會丟棄佇列作業。</p>
 <blockquote>
@@ -109,7 +109,7 @@ ProcessPodcast::dispatch()->onQueue('emails');
 <h3>驅動程式說明和先決條件</h3>
 <p><a name="database"></a></p>
 <h4>資料庫</h4>
-<p>要使用 <code>database</code> 佇列驅動程式，您需要一個資料庫表來保存作業。通常，這包含在 Laravel 的預設 <code>0001_01_01_000002_create_jobs_table.php</code><a href="/docs/migrations">資料庫遷移</a>中；但是，如果您的應用程式不包含此遷移，您可以使用 <code>make:queue-table</code> Artisan 命令來創建它：</p>
+<p>要使用 <code>database</code> 佇列驅動程式，您需要一個資料庫表來保存作業。通常，這包含在 Laravel 的預設 <code>0001_01_01_000002_create_jobs_table.php</code><a href="/docs/migrations">資料庫遷移</a>中；但是，如果您的應用程式不包含此遷移，您可以使用 <code>make:queue-table</code> Artisan 命令來建立它：</p>
 <pre><code class="language-shell">php artisan make:queue-table
 
 php artisan migrate
@@ -183,10 +183,10 @@ php artisan migrate
 <li><a href="https://www.mongodb.com/docs/drivers/php/laravel-mongodb/current/queues/">MongoDB</a>：<code>mongodb/laravel-mongodb</code></li>
 </ul>
 </div><p><a name="creating-jobs"></a></p>
-<h2>創建作業</h2>
+<h2>建立作業</h2>
 <p><a name="generating-job-classes"></a></p>
 <h3>生成作業類別</h3>
-<p>預設情況下，應用程式的所有可佇列作業都存儲在 <code>app/Jobs</code> 目錄中。如果 <code>app/Jobs</code> 目錄不存在，當您運行 <code>make:job</code> Artisan 命令時它將被創建：</p>
+<p>預設情況下，應用程式的所有可佇列作業都存儲在 <code>app/Jobs</code> 目錄中。如果 <code>app/Jobs</code> 目錄不存在，當您運行 <code>make:job</code> Artisan 命令時它將被建立：</p>
 <pre><code class="language-shell">php artisan make:job ProcessPodcast
 </code></pre>
 <p>生成的類別將實現 <code>Illuminate\\Contracts\\Queue\\ShouldQueue</code> 介面，向 Laravel 表示應將作業推送到佇列以非同步執行。</p>
@@ -211,7 +211,7 @@ class ProcessPodcast implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(
         public Podcast $podcast,
@@ -249,7 +249,7 @@ $this->app->bindMethod([ProcessPodcast::class, 'handle'], function (ProcessPodca
 <p>由於當作業被放入佇列時，所有加載的 Eloquent 模型關聯也會被序列化，因此序列化的作業字串有時會變得相當大。此外，當作業被反序列化並從資料庫中重新檢索模型關聯時，它們將被完整地檢索。在作業佇列化過程期間在模型序列化之前應用的任何先前關聯約束在作業反序列化時將不會被應用。因此，如果您希望使用給定關聯的子集，您應該在佇列作業中重新約束該關聯。</p>
 <p>或者，要防止關聯被序列化，您可以在設定屬性值時在模型上呼叫 <code>withoutRelations</code> 方法。此方法將返回一個沒有其加載關聯的模型實例：</p>
 <pre><code class="language-php">/**
- * 創建一個新的作業實例。
+ * 建立一個新的作業實例。
  */
 public function __construct(
     Podcast $podcast,
@@ -264,7 +264,7 @@ public function __construct(
 <pre><code class="language-php">use Illuminate\\Queue\\Attributes\\WithoutRelations;
 
 /**
- * 創建一個新的作業實例。
+ * 建立一個新的作業實例。
  */
 public function __construct(
     #[WithoutRelations]
@@ -288,7 +288,7 @@ class ProcessPodcast implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(
         public Podcast $podcast,
@@ -405,7 +405,7 @@ class UpdateSearchIndex implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(public int $productId)
     {
@@ -514,11 +514,11 @@ class RateLimited
 }
 </code></pre>
 <p>正如您所見，像<a href="/docs/middleware">路由中介層</a>一樣，作業中介層接收正在處理的作業和應被呼叫以繼續處理作業的回呼。</p>
-<p>您可以使用 <code>make:job-middleware</code> Artisan 命令生成一個新的作業中介層類別。創建作業中介層後，可以透過從作業的 <code>middleware</code> 方法返回它們將它們附加到作業。此方法不存在於 <code>make:job</code> Artisan 命令搭建的作業上，因此您需要手動將其添加到作業類別：</p>
+<p>您可以使用 <code>make:job-middleware</code> Artisan 命令生成一個新的作業中介層類別。建立作業中介層後，可以透過從作業的 <code>middleware</code> 方法返回它們將它們附加到作業。此方法不存在於 <code>make:job</code> Artisan 命令搭建的作業上，因此您需要手動將其添加到作業類別：</p>
 <pre><code class="language-php">use App\\Jobs\\Middleware\\RateLimited;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -557,7 +557,7 @@ public function boot(): void
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\RateLimited;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -569,7 +569,7 @@ public function middleware(): array
 <p>將受速率限制的作業釋放回佇列仍將增加作業的 <code>attempts</code> 總數。您可能希望相應地調整作業類別上的 <code>Tries</code> 和 <code>MaxExceptions</code> 屬性。或者，您可能希望使用 <a href="#time-based-attempts">retryUntil 方法</a>來定義不應再嘗試作業的時間量。</p>
 <p>使用 <code>releaseAfter</code> 方法，您還可以指定在重新釋放的作業被再次嘗試之前必須經過的秒數：</p>
 <pre><code class="language-php">/**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -580,7 +580,7 @@ public function middleware(): array
 </code></pre>
 <p>如果您不希望作業在受速率限制時被重試，可以使用 <code>dontRelease</code> 方法：</p>
 <pre><code class="language-php">/**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -609,7 +609,7 @@ public function middleware(): array
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\WithoutOverlapping;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -621,7 +621,7 @@ public function middleware(): array
 <p>將重疊的作業釋放回佇列仍將增加作業的嘗試總次數。您可能希望相應地調整作業類別上的 <code>Tries</code> 和 <code>MaxExceptions</code> 屬性。例如，將 <code>Tries</code> 保留為預設值 1 將防止任何重疊的作業稍後被重試。</p>
 <p>任何相同類型的重疊作業都將被釋放回佇列。您還可以指定在重新釋放的作業被再次嘗試之前必須經過的秒數：</p>
 <pre><code class="language-php">/**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -632,7 +632,7 @@ public function middleware(): array
 </code></pre>
 <p>如果您希望立即刪除任何重疊的作業，以便它們不會被重試，可以使用 <code>dontRelease</code> 方法：</p>
 <pre><code class="language-php">/**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -643,7 +643,7 @@ public function middleware(): array
 </code></pre>
 <p><code>WithoutOverlapping</code> 中介層由 Laravel 的原子鎖功能提供支援。有時，您的作業可能會意外失敗或逾時，導致鎖未被釋放。因此，您可以使用 <code>expireAfter</code> 方法明確定義鎖過期時間。例如，下面的範例將指示 Laravel 在作業開始處理三分鐘後釋放 <code>WithoutOverlapping</code> 鎖：</p>
 <pre><code class="language-php">/**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -693,7 +693,7 @@ class ProviderIsUp
 use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -715,7 +715,7 @@ public function retryUntil(): DateTime
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -730,7 +730,7 @@ use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 use Throwable;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -747,7 +747,7 @@ public function middleware(): array
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -761,7 +761,7 @@ public function middleware(): array
 use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -777,7 +777,7 @@ public function middleware(): array
 use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -791,7 +791,7 @@ public function middleware(): array
 use Illuminate\\Queue\\Middleware\\ThrottlesExceptions;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  *
  * @return array<int, object>
  */
@@ -821,7 +821,7 @@ public function middleware(): array
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\Skip;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  */
 public function middleware(): array
 {
@@ -834,7 +834,7 @@ public function middleware(): array
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\Skip;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  */
 public function middleware(): array
 {
@@ -938,7 +938,7 @@ class PodcastController extends Controller
     {
         $podcast = Podcast::create(/* ... */);
 
-        // 創建播客...
+        // 建立播客...
 
         ProcessPodcast::dispatchSync($podcast);
 
@@ -982,7 +982,7 @@ class SyncPodcasts implements PreparesForDispatch, ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(
         public array $podcastIds,
@@ -1001,7 +1001,7 @@ class SyncPodcasts implements PreparesForDispatch, ShouldQueue
 </code></pre>
 <p><a name="jobs-and-database-transactions"></a></p>
 <h3>作業和資料庫交易</h3>
-<p>雖然在資料庫交易內行派發作業完全沒問題，但您應特別注意確保您的作業實際上能夠成功執行。在交易內行派發作業時，作業有可能在父交易提交之前被工作者處理。當這種情況發生時，在資料庫交易期間對模型或資料庫記錄進行的任何更新可能尚未反映在資料庫中。此外，在交易內行創建的任何模型或資料庫記錄可能不存在於資料庫中。</p>
+<p>雖然在資料庫交易內行派發作業完全沒問題，但您應特別注意確保您的作業實際上能夠成功執行。在交易內行派發作業時，作業有可能在父交易提交之前被工作者處理。當這種情況發生時，在資料庫交易期間對模型或資料庫記錄進行的任何更新可能尚未反映在資料庫中。此外，在交易內行建立的任何模型或資料庫記錄可能不存在於資料庫中。</p>
 <p>幸運的是，Laravel 提供了幾種解決此問題的方法。首先，您可以在佇列連接的配置陣列中設定 <code>after_commit</code> 連接選項：</p>
 <pre><code class="language-php">'redis' => [
     'driver' => 'redis',
@@ -1027,7 +1027,7 @@ ProcessPodcast::dispatch($podcast)->afterCommit();
 </code></pre>
 <p><a name="job-chaining"></a></p>
 <h3>作業鏈</h3>
-<p>作業鏈允許您指定一組佇列作業，這些作業應在主作業成功執行後按順序運行。如果序列中的一個作業失敗，則不會運行其餘的作業。要執行佇列作業鏈，您可以使用 <code>Bus</code> 外觀提供的 <code>chain</code> 方法。Laravel 的命令匯流排是構建佇列作業派發的低階元件：</p>
+<p>作業鏈允許您指定一組佇列作業，這些作業應在主作業成功執行後按順序運行。如果序列中的一個作業失敗，則不會運行其餘的作業。要執行佇列作業鏈，您可以使用 <code>Bus</code> 外觀提供的 <code>chain</code> 方法。Laravel 的命令匯流排是建立佇列作業派發的低階元件：</p>
 <pre><code class="language-php">use App\\Jobs\\OptimizePodcast;
 use App\\Jobs\\ProcessPodcast;
 use App\\Jobs\\ReleasePodcast;
@@ -1119,7 +1119,7 @@ class PodcastController extends Controller
     {
         $podcast = Podcast::create(/* ... */);
 
-        // 創建播客...
+        // 建立播客...
 
         ProcessPodcast::dispatch($podcast)->onQueue('processing');
 
@@ -1140,7 +1140,7 @@ class ProcessPodcast implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct()
     {
@@ -1169,7 +1169,7 @@ class PodcastController extends Controller
     {
         $podcast = Podcast::create(/* ... */);
 
-        // 創建播客...
+        // 建立播客...
 
         ProcessPodcast::dispatch($podcast)->onConnection('sqs');
 
@@ -1195,7 +1195,7 @@ class ProcessPodcast implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct()
     {
@@ -1596,7 +1596,7 @@ class SyncChatHistory implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(
         public User $user,
@@ -1617,7 +1617,7 @@ class SyncChatHistory implements ShouldQueue
     }
 
     /**
-     * 獲取作業應通過的中介層。
+     * 獲取作業應透過的中介層。
      */
     public function middleware(): array
     {
@@ -1630,14 +1630,14 @@ class SyncChatHistory implements ShouldQueue
 <p><a name="job-batching"></a></p>
 <h2>作業批次</h2>
 <p>Laravel 的作業批次功能允許您輕鬆地並行執行一組作業，然後在作業批次完成執行時執行某些操作。</p>
-<p>開始之前，您應該創建一個資料庫遷移來構建一個表，該表將包含關於作業批次的元資料資訊，例如它們的完成百分比。可以使用 <code>make:queue-batches-table</code> Artisan 命令生成此遷移：</p>
+<p>開始之前，您應該建立一個資料庫遷移來建立一個表，該表將包含關於作業批次的元資料資訊，例如它們的完成百分比。可以使用 <code>make:queue-batches-table</code> Artisan 命令生成此遷移：</p>
 <pre><code class="language-shell">php artisan make:queue-batches-table
 
 php artisan migrate
 </code></pre>
 <p><a name="defining-batchable-jobs"></a></p>
 <h3>定義可批次作業</h3>
-<p>要定義一個可批次作業，您應該像平常一樣<a href="#creating-jobs">創建一個可佇列作業</a>；但是，您應該將 <code>Illuminate\\Bus\\Batchable</code> trait 添加到作業類別。此 trait 提供對 <code>batch</code> 方法的存取，該方法可用於檢索作業正在其中執行的當前批次：</p>
+<p>要定義一個可批次作業，您應該像平常一樣<a href="#creating-jobs">建立一個可佇列作業</a>；但是，您應該將 <code>Illuminate\\Bus\\Batchable</code> trait 添加到作業類別。此 trait 提供對 <code>batch</code> 方法的存取，該方法可用於檢索作業正在其中執行的當前批次：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Jobs;
@@ -1682,7 +1682,7 @@ $batch = Bus::batch([
     new ImportCsv(301, 400),
     new ImportCsv(401, 500),
 ])->before(function (Batch $batch) {
-    // 批次已創建但尚未添加任何作業...
+    // 批次已建立但尚未添加任何作業...
 })->progress(function (Batch $batch) {
     // 單個作業已成功完成...
 })->then(function (Batch $batch) {
@@ -1857,7 +1857,7 @@ public function handle(): void
 <pre><code class="language-php">use Illuminate\\Queue\\Middleware\\SkipIfBatchCancelled;
 
 /**
- * 獲取作業應通過的中介層。
+ * 獲取作業應透過的中介層。
  */
 public function middleware(): array
 {
@@ -1912,7 +1912,7 @@ Schedule::command('queue:prune-batches --hours=48 --cancelled=72')->daily();
 </code></pre>
 <p><a name="storing-batches-in-dynamodb"></a></p>
 <h3>在 DynamoDB 中儲存批次</h3>
-<p>Laravel 還提供支援在 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 中儲存批次元資料資訊，而不是關聯式資料庫。但是，您必須手動創建一個 DynamoDB 表來儲存所有批次記錄。</p>
+<p>Laravel 還提供支援在 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 中儲存批次元資料資訊，而不是關聯式資料庫。但是，您必須手動建立一個 DynamoDB 表來儲存所有批次記錄。</p>
 <p>通常，此表應命名為 <code>job_batches</code>，但您應該根據應用程式 <code>queue</code> 配置檔案中 <code>queue.batching.table</code> 配置值的值來命名該表。</p>
 <p><a name="dynamodb-batch-table-configuration"></a></p>
 <h4>DynamoDB 批次表配置</h4>
@@ -1989,7 +1989,7 @@ dispatch(function () use ($podcast) {
 <p>如果您希望處理的作業 ID、連接名稱和佇列名稱包含在命令的輸出中，可以在呼叫 <code>queue:work</code> 命令時包含 <code>-v</code> 標誌：</p>
 <pre><code class="language-shell">php artisan queue:work -v
 </code></pre>
-<p>請記住，佇列工作者是長期運行的程序，並將已啟動的應用程式狀態存儲在記憶體中。因此，它們在啟動後不會注意到代碼庫中的更改。因此，在部署過程中，請務必<a href="#queue-workers-and-deployment">重新啟動您的佇列工作者</a>。此外，請記住，應用程式創建或修改的任何靜態狀態都不會在作業之間自動重設。</p>
+<p>請記住，佇列工作者是長期運行的程序，並將已啟動的應用程式狀態存儲在記憶體中。因此，它們在啟動後不會注意到代碼庫中的更改。因此，在部署過程中，請務必<a href="#queue-workers-and-deployment">重新啟動您的佇列工作者</a>。此外，請記住，應用程式建立或修改的任何靜態狀態都不會在作業之間自動重設。</p>
 <p>或者，您可以運行 <code>queue:listen</code> 命令。使用 <code>queue:listen</code> 命令時，當您想要重新載入更新的代碼或重設應用程式狀態時，不必手動重新啟動工作者；但是，此命令比 <code>queue:work</code> 命令效率低得多：</p>
 <pre><code class="language-shell">php artisan queue:listen
 </code></pre>
@@ -2075,7 +2075,7 @@ class ImportProducts implements ShouldQueue, Interruptible
     protected bool $shouldStop = false;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(
         public Import $import,
@@ -2182,7 +2182,7 @@ public function boot(): void
 </blockquote>
 <p><a name="configuring-supervisor"></a></p>
 <h4>配置 Supervisor</h4>
-<p>Supervisor 配置檔案通常存儲在 <code>/etc/supervisor/conf.d</code> 目錄中。在此目錄中，您可以創建任意數量的配置檔案來指示 Supervisor 如何監控您的程序。例如，讓我們創建一個 <code>laravel-worker.conf</code> 檔案來啟動和監控 <code>queue:work</code> 程序：</p>
+<p>Supervisor 配置檔案通常存儲在 <code>/etc/supervisor/conf.d</code> 目錄中。在此目錄中，您可以建立任意數量的配置檔案來指示 Supervisor 如何監控您的程序。例如，讓我們建立一個 <code>laravel-worker.conf</code> 檔案來啟動和監控 <code>queue:work</code> 程序：</p>
 <pre><code class="language-ini">[program:laravel-worker]
 process_name=%(program_name)s_%(process_num)02d
 command=php /home/forge/app.com/artisan queue:work --sleep=3 --tries=3 --max-time=3600
@@ -2203,7 +2203,7 @@ stopwaitsecs=3600
 </blockquote>
 <p><a name="starting-supervisor"></a></p>
 <h4>啟動 Supervisor</h4>
-<p>創建配置檔案後，您可以使用以下命令更新 Supervisor 配置並啟動程序：</p>
+<p>建立配置檔案後，您可以使用以下命令更新 Supervisor 配置並啟動程序：</p>
 <pre><code class="language-shell">sudo supervisorctl reread
 
 sudo supervisorctl update
@@ -2214,7 +2214,7 @@ sudo supervisorctl start "laravel-worker:*"
 <p><a name="dealing-with-failed-jobs"></a></p>
 <h2>處理失敗作業</h2>
 <p>有時您的佇列作業可能會失敗。別擔心，事情並不總是按計劃進行！Laravel 提供了一種便利的方法來<a href="#max-job-attempts-and-timeout">指定作業應被嘗試的最大次數</a>。非同步作業超過此嘗試次數後，將被插入 <code>failed_jobs</code> 資料庫表中。失敗的<a href="/docs/queues#synchronous-dispatching">同步派發作業</a>不會存儲在此表中，其異常會立即被應用程式處理。</p>
-<p>新 Laravel 應用程式中通常已經存在一個用於創建 <code>failed_jobs</code> 表的遷移。但是，如果您的應用程式不包含此表的遷移，您可以使用 <code>make:queue-failed-table</code> 命令來創建遷移：</p>
+<p>新 Laravel 應用程式中通常已經存在一個用於建立 <code>failed_jobs</code> 表的遷移。但是，如果您的應用程式不包含此表的遷移，您可以使用 <code>make:queue-failed-table</code> 命令來建立遷移：</p>
 <pre><code class="language-shell">php artisan make:queue-failed-table
 
 php artisan migrate
@@ -2278,7 +2278,7 @@ class ProcessPodcast implements ShouldQueue
     use Queueable;
 
     /**
-     * 創建一個新的作業實例。
+     * 建立一個新的作業實例。
      */
     public function __construct(
         public Podcast $podcast,
@@ -2368,7 +2368,7 @@ class ProcessPodcast implements ShouldQueue
 </code></pre>
 <p><a name="storing-failed-jobs-in-dynamodb"></a></p>
 <h3>在 DynamoDB 中儲存失敗作業</h3>
-<p>Laravel 還提供在 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 中而不是關聯式資料庫表中儲存失敗作業記錄的支援。但是，您必須手動創建 DynamoDB 表來儲存所有失敗作業記錄。通常，此表應命名為 <code>failed_jobs</code>，但您應該根據應用程式 <code>queue</code> 配置檔案中 <code>queue.failed.table</code> 配置值的值來命名該表。</p>
+<p>Laravel 還提供在 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 中而不是關聯式資料庫表中儲存失敗作業記錄的支援。但是，您必須手動建立 DynamoDB 表來儲存所有失敗作業記錄。通常，此表應命名為 <code>failed_jobs</code>，但您應該根據應用程式 <code>queue</code> 配置檔案中 <code>queue.failed.table</code> 配置值的值來命名該表。</p>
 <p><code>failed_jobs</code> 表應有一個名為 <code>application</code> 的字串主分割索引鍵和一個名為 <code>uuid</code> 的字串主排序鍵。鍵的 <code>application</code> 部分將包含您的應用程式名稱，該名稱由應用程式 <code>app</code> 配置檔案中的 <code>name</code> 配置值定義。由於應用程式名稱是 DynamoDB 表鍵的一部分，您可以使用同一個表為多個 Laravel 應用程式儲存失敗作業。</p>
 <p>此外，請確保安裝 AWS SDK，以便您的 Laravel 應用程式可以與 Amazon DynamoDB 通訊：</p>
 <pre><code class="language-shell">composer require aws/aws-sdk-php

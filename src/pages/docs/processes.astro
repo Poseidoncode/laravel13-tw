@@ -132,7 +132,7 @@ echo $result->errorOutput();
 </code></pre>
 <p><a name="disabling-process-output"></a></p>
 <h4>禁用程序輸出</h4>
-<p>如果您的程式正在寫入大量您不感興趣的輸出，可以透過完全禁用輸出來節省記憶體。為此，請在構建程序時呼叫 <code>quietly</code> 方法：</p>
+<p>如果您的程式正在寫入大量您不感興趣的輸出，可以透過完全禁用輸出來節省記憶體。為此，請在建立程序時呼叫 <code>quietly</code> 方法：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
 
 $result = Process::quietly()->run('bash import.sh');
@@ -376,7 +376,7 @@ class ExampleTest extends TestCase
 <p><a name="faking-specific-processes"></a></p>
 <h3>偽造特定程序</h4>
 <p>正如您可能在之前的範例中注意到的，<code>Process</code> 外觀允許您透過向 <code>fake</code> 方法傳遞一個陣列來為每個程式指定不同的偽造結果。</p>
-<p>陣列的鍵應代表您希望偽造的命令模式及其關聯的結果。<code>*</code> 字元可用作萬用字元。任何未偽造的程式命令都將被實際調用。您可以使用 <code>Process</code> 外觀的 <code>result</code> 方法來為這些命令構建存根/偽造結果：</p>
+<p>陣列的鍵應代表您希望偽造的命令模式及其關聯的結果。<code>*</code> 字元可用作萬用字元。任何未偽造的程式命令都將被實際調用。您可以使用 <code>Process</code> 外觀的 <code>result</code> 方法來為這些命令建立存根/偽造結果：</p>
 <pre><code class="language-php">Process::fake([
     'cat *' => Process::result(
         output: 'Test "cat" output',
@@ -440,7 +440,7 @@ Route::get('/import', function () {
 
 Process::assertRan('ls -la');
 </code></pre>
-<p><code>assertRan</code> 方法還接受一個閉包，該閉包將接收程序實例和程序結果，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code>，斷言將「通過」：</p>
+<p><code>assertRan</code> 方法還接受一個閉包，該閉包將接收程序實例和程序結果，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code>，斷言將「透過」：</p>
 <pre><code class="language-php">Process::assertRan(fn ($process, $result) =>
     $process->command === 'ls -la' &&
     $process->path === __DIR__ &&
@@ -467,7 +467,7 @@ Process::assertDidntRun('ls -la');
 
 Process::assertRanTimes('ls -la', times: 3);
 </code></pre>
-<p><code>assertRanTimes</code> 方法還接受一個閉包，該閉包將接收 <code>PendingProcess</code> 和 <code>ProcessResult</code> 的實例，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code> 且程式已被調用指定的次數，斷言將「通過」：</p>
+<p><code>assertRanTimes</code> 方法還接受一個閉包，該閉包將接收 <code>PendingProcess</code> 和 <code>ProcessResult</code> 的實例，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code> 且程式已被調用指定的次數，斷言將「透過」：</p>
 <pre><code class="language-php">Process::assertRanTimes(function (PendingProcess $process, ProcessResult $result) {
     return $process->command === 'ls -la';
 }, times: 3);

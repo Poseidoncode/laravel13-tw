@@ -26,7 +26,7 @@ const content = `<h1>HTTP Session</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>由於 HTTP 驅動的應用程式是無狀態的，Session 提供了一種在多個請求之間儲存用戶資訊的方式。這些用戶資訊通常放置在持久化儲存 / 後端中，可從後續請求存取。</p>
+<p>由於 HTTP 驅動的應用程式是無狀態的，Session 提供了一種在多個請求之間儲存使用者資訊的方式。這些使用者資訊通常放置在持久化儲存 / 後端中，可從後續請求存取。</p>
 <p>Laravel 附帶了多種 Session 後端，透過表達性、統一的 API 進行存取。支援 Memcached、Redis 和資料庫等熱門後端。</p>
 <p><a name="configuration"></a></p>
 <h3>設定</h3>
@@ -201,7 +201,7 @@ $request->session()->flush();
 </code></pre>
 <p><a name="regenerating-the-session-id"></a></p>
 <h3>重新生成 Session ID</h3>
-<p>重新生成 Session ID 通常是為了防止惡意用戶利用<a href="https://owasp.org/www-community/attacks/Session_fixation">Session 固定</a>攻擊來攻擊您的應用程式。</p>
+<p>重新生成 Session ID 通常是為了防止惡意使用者利用<a href="https://owasp.org/www-community/attacks/Session_fixation">Session 固定</a>攻擊來攻擊您的應用程式。</p>
 <p>如果您使用 Laravel <a href="/docs/starter-kits">應用程式入門套件</a>或 <a href="/docs/fortify">Laravel Fortify</a>，Laravel 會在認證期間自動重新生成 Session ID；但是，如果您需要手動重新生成 Session ID，可以使用 <code>regenerate</code> 方法：</p>
 <pre><code class="language-php">$request->session()->regenerate();
 </code></pre>
@@ -210,8 +210,8 @@ $request->session()->flush();
 </code></pre>
 <p><a name="session-cache"></a></p>
 <h2>Session 快取</h2>
-<p>Laravel 的 Session 快取提供了一種方便的方式來快取限定於個別用戶 Session 的資料。與全域應用程式快取不同，Session 快取資料會自動按 Session 隔離，並在 Session 過期或被銷毀時清理。Session 快取支援所有常見的 <a href="/docs/cache">Laravel 快取方法</a>，如 <code>get</code>、<code>put</code>、<code>remember</code>、<code>forget</code> 等，但限定於當前 Session。</p>
-<p>Session 快取非常適合儲存您希望在同一 Session 內跨多個請求持久化但不需要永久儲存的臨時、用戶特定資料。這包括表單資料、臨時計算、API 響應或任何其他應綁定到特定用戶 Session 的暫時資料。</p>
+<p>Laravel 的 Session 快取提供了一種方便的方式來快取限定於個別使用者 Session 的資料。與全域應用程式快取不同，Session 快取資料會自動按 Session 隔離，並在 Session 過期或被銷毀時清理。Session 快取支援所有常見的 <a href="/docs/cache">Laravel 快取方法</a>，如 <code>get</code>、<code>put</code>、<code>remember</code>、<code>forget</code> 等，但限定於當前 Session。</p>
+<p>Session 快取非常適合儲存您希望在同一 Session 內跨多個請求持久化但不需要永久儲存的臨時、使用者特定資料。這包括表單資料、臨時計算、API 響應或任何其他應綁定到特定使用者 Session 的暫時資料。</p>
 <p>您可以透過 Session 上的 <code>cache</code> 方法存取 Session 快取：</p>
 <pre><code class="language-php">$discount = $request->session()->cache()->get('discount');
 

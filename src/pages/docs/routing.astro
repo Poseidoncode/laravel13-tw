@@ -65,7 +65,7 @@ Route::get('/user', [UserController::class, 'index']);
 <p>如果您的應用程式還將提供無狀態 API，您可以使用 <code>install:api</code> Artisan 命令啟用 API 路由：</p>
 <pre><code class="language-shell">php artisan install:api
 </code></pre>
-<p><code>install:api</code> 命令安裝 <a href="/docs/sanctum">Laravel Sanctum</a>，它提供了一個強大而簡單的 API 令牌認證守衛，可用於認證第三方 API 消費者、SPA 或行動應用程式。此外，<code>install:api</code> 命令創建 <code>routes/api.php</code> 檔案：</p>
+<p><code>install:api</code> 命令安裝 <a href="/docs/sanctum">Laravel Sanctum</a>，它提供了一個強大而簡單的 API 令牌認證守衛，可用於認證第三方 API 消費者、SPA 或行動應用程式。此外，<code>install:api</code> 命令建立 <code>routes/api.php</code> 檔案：</p>
 <pre><code class="language-php">Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -669,7 +669,7 @@ public function boot(): void
     });
 });
 </code></pre>
-<p>由於速率限制器回呼接收傳入的 HTTP 請求實例，您可以根據傳入請求或已認證的使用者動態構建適當的速率限制：</p>
+<p>由於速率限制器回呼接收傳入的 HTTP 請求實例，您可以根據傳入請求或已認證的使用者動態建立適當的速率限制：</p>
 <pre><code class="language-php">RateLimiter::for('uploads', function (Request $request) {
     return $request->user()?->vipCustomer()
         ? Limit::none()
@@ -678,7 +678,7 @@ public function boot(): void
 </code></pre>
 <p><a name="segmenting-rate-limits"></a></p>
 <h4>分割速率限制</h4>
-<p>有時您可能希望按某個任意值分割速率限制。例如，您可能希望允許使用者每分鐘每 IP 位址存取給定路由 100 次。為此，您可以在構建速率限制時使用 <code>by</code> 方法：</p>
+<p>有時您可能希望按某個任意值分割速率限制。例如，您可能希望允許使用者每分鐘每 IP 位址存取給定路由 100 次。為此，您可以在建立速率限制時使用 <code>by</code> 方法：</p>
 <pre><code class="language-php">RateLimiter::for('uploads', function (Request $request) {
     return $request->user()->vipCustomer()
         ? Limit::none()

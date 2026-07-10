@@ -623,7 +623,7 @@ $last = Arr::last($array, $callback, $default);
 </code></pre>
 <p><a name="method-array-map"></a></p>
 <h4><code>Arr::map()</code> {.collection-method}</h4>
-<p><code>Arr::map</code> 方法遍歷陣列並將每個值傳遞給給定的回調。陣列由回調返回的值取代：</p>
+<p><code>Arr::map</code> 方法遍歷陣列並將每個值傳遞給給定的回呼。陣列由回呼返回的值取代：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 
 $prices = [99, 249, 499];
@@ -636,7 +636,7 @@ $prices = Arr::map($prices, function ($price, $key) {
 </code></pre>
 <p><a name="method-array-map-spread"></a></p>
 <h4><code>Arr::mapSpread()</code> {.collection-method}</h4>
-<p><code>Arr::mapSpread</code> 方法遍歷陣列，將每個值展開作為回調的參數。陣列由回調返回的值取代：</p>
+<p><code>Arr::mapSpread</code> 方法遍歷陣列，將每個值展開作為回呼的參數。陣列由回呼返回的值取代：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 
 $half = Arr::mapSpread([100, 250, 125], function ($int) {
@@ -647,7 +647,7 @@ $half = Arr::mapSpread([100, 250, 125], function ($int) {
 </code></pre>
 <p><a name="method-array-map-with-keys"></a></p>
 <h4><code>Arr::mapWithKeys()</code> {.collection-method}</h4>
-<p><code>Arr::mapWithKeys</code> 方法遍歷陣列並將每個值傳遞給給定的回調。回調返回的鍵值對將被添加到返回的陣列中：</p>
+<p><code>Arr::mapWithKeys</code> 方法遍歷陣列並將每個值傳遞給給定的回呼。回呼返回的鍵值對將被添加到返回的陣列中：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 
 $array = [
@@ -696,7 +696,7 @@ $filtered = Arr::onlyValues($array, [&#39;foo&#39;, &#39;baz&#39;]);
 </code></pre>
 <p><a name="method-array-partition"></a></p>
 <h4><code>Arr::partition()</code> {.collection-method}</h4>
-<p><code>Arr::partition</code> 方法根據真值回調將陣列分割為兩個陣列：</p>
+<p><code>Arr::partition</code> 方法根據真值回呼將陣列分割為兩個陣列：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 
 $packages = [
@@ -833,7 +833,7 @@ $random = Arr::random($array, 3);
 </code></pre>
 <p><a name="method-array-reject"></a></p>
 <h4><code>Arr::reject()</code> {.collection-method}</h4>
-<p><code>Arr::reject</code> 方法使用給定的回調過濾陣列：</p>
+<p><code>Arr::reject</code> 方法使用給定的回呼過濾陣列：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 
 $array = [100, 200, 300, 400];
@@ -1067,7 +1067,7 @@ $undotted = Arr::undot($array);
 </code></pre>
 <p><a name="method-array-where"></a></p>
 <h4><code>Arr::where()</code> {.collection-method}</h4>
-<p><code>Arr::where</code> 方法使用給定的回調過濾陣列：</p>
+<p><code>Arr::where</code> 方法使用給定的回呼過濾陣列：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Arr;
 
 $array = [100, &#39;200&#39;, 300, &#39;400&#39;, 500];
@@ -1735,9 +1735,9 @@ $url = url(&#39;user/profile/1&#39;);
 </code></pre>
 <p><a name="method-back"></a></p>
 <h4><code>back()</code> {.collection-method}</h4>
-<p><code>back</code> 方法將用戶重定向到上一個位置：</p>
+<p><code>back</code> 方法將使用者重定向到上一個位置：</p>
 <pre><code class="language-php">Route::post(&#39;/user/profile&#39;, function () {
-    // 更新用戶的設定檔...
+    // 更新使用者的設定檔...
 
     return back()-&gt;with(&#39;status&#39;, &#39;Profile updated!&#39;);
 });
@@ -1778,7 +1778,7 @@ blank([1, 2, 3]); // false
 </code></pre>
 <p><a name="method-cache"></a></p>
 <h4><code>cache()</code> {.collection-method}</h4>
-<p><code>cache</code> 方法可透過<a href="/docs/cache">快取</a>存取各種緩存功能：</p>
+<p><code>cache</code> 方法可透過<a href="/docs/cache">快取</a>存取各種快取功能：</p>
 <pre><code class="language-php">$value = cache(&#39;key&#39;);
 
 cache([&#39;key&#39; =&gt; &#39;value&#39;], 300);
@@ -1787,12 +1787,12 @@ cache()->put(&#39;key&#39;, &#39;value&#39;, 300);
 </code></pre>
 <p><a name="method-class-uses-recursive"></a></p>
 <h4><code>class_uses_recursive()</code> {.collection-method}</h4>
-<p><code>class_uses_recursive</code> 方法返回一個類別使用的 trait（包括其父類別）的數組：</p>
+<p><code>class_uses_recursive</code> 方法返回一個類別使用的 trait（包括其父類別）的陣列：</p>
 <pre><code class="language-php">$traits = class_uses_recursive(SuperClass::class);
 </code></pre>
 <p><a name="method-collect"></a></p>
 <h4><code>collect()</code> {.collection-method}</h4>
-<p><code>collect</code> 方法從給定的值創建一個<a href="/docs/collections">集合</a>實例：</p>
+<p><code>collect</code> 方法從給定的值建立一個<a href="/docs/collections">集合</a>實例：</p>
 <pre><code class="language-php">$collection = collect([&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;age&#39; =&gt; 18]);
 </code></pre>
 <p><a name="method-config"></a></p>
@@ -1817,7 +1817,7 @@ context([&39;key&#39; =&gt; &#39;value&#39;]);
 </code></pre>
 <p><a name="method-cookie"></a></p>
 <h4><code>cookie()</code> {.collection-method}</h4>
-<p><code>cookie</code> 方法可創建一個新的<a href="/docs/requests#cookies">Cookie</a> 實例：</p>
+<p><code>cookie</code> 方法可建立一個新的<a href="/docs/requests#cookies">Cookie</a> 實例：</p>
 <pre><code class="language-php">$cookie = cookie(&#39;name&#39;, &#39;value&#39;, $minutes);
 </code></pre>
 <p><a name="method-csrf-field"></a></p>
@@ -2014,7 +2014,7 @@ $value = request(&#39;name&#39;, &#39;default&#39;);
 </code></pre>
 <p><a name="method-rescue"></a></p>
 <h4><code>rescue()</code> {.collection-method}</h4>
-<p><code>rescue</code> 方法<a href="/docs/errors#handling-exceptions">在給定的回調中捕獲異常</a>並通過<a href="/docs/logging">異常報告服務</a>進行報告。您可以選擇提供將作為異常報告的第二個參數或 <code>false</code> 以完全不報告異常：</p>
+<p><code>rescue</code> 方法<a href="/docs/errors#handling-exceptions">在給定的回呼中捕獲異常</a>並透過<a href="/docs/logging">異常報告服務</a>進行報告。您可以選擇提供將作為異常報告的第二個參數或 <code>false</code> 以完全不報告異常：</p>
 <pre><code class="language-php">return rescue(function () {
     return $this-&gt;doSomething();
 });
@@ -2031,14 +2031,14 @@ $value = request(&#39;name&#39;, &#39;default&#39;);
 </code></pre>
 <p><a name="method-response"></a></p>
 <h4><code>response()</code> {.collection-method}</h4>
-<p><code>response</code> 方法<a href="/docs/responses">創建一個響應</a>的實例或獲取當前響應的實例：</p>
+<p><code>response</code> 方法<a href="/docs/responses">建立一個響應</a>的實例或獲取當前響應的實例：</p>
 <pre><code class="language-php">return response(&#39;Hello World&#39;, 200, [&#39;Content-Type&#39; =&gt; &#39;text/plain&#39;]);
 
 return response()-&gt;json([&#39;name&#39; =&gt; &#39;Steve&#39;, &#39;state&#39; =&gt; &#39;CA&#39;], 200);
 </code></pre>
 <p><a name="method-retry"></a></p>
 <h4><code>retry()</code> {.collection-method}</h4>
-<p><code>retry</code> 方法在給定的回調失敗時重複執行給定的回調：</p>
+<p><code>retry</code> 方法在給定的回呼失敗時重複執行給定的回呼：</p>
 <pre><code class="language-php">return retry(5, function () {
     // 嘗試五次，如果失敗則拋出異常...
 }, 100);
@@ -2053,7 +2053,7 @@ return response()-&gt;json([&#39;name&#39; =&gt; &#39;Steve&#39;, &#39;state&#39
 </code></pre>
 <p><a name="method-tap"></a></p>
 <h4><code>tap()</code> {.collection-method}</h4>
-<p><code>tap</code> 方法將給定的值傳遞給給定的回調並返回該值。回調可以對值執行任何操作而無需修改值本身：</p>
+<p><code>tap</code> 方法將給定的值傳遞給給定的回呼並返回該值。回呼可以對值執行任何操作而無需修改值本身：</p>
 <pre><code class="language-php">use Illuminate\\Support\\User;
 
 $user = tap(User::first(), function ($user) {
@@ -2062,7 +2062,7 @@ $user = tap(User::first(), function ($user) {
     $user-&gt;save();
 });
 </code></pre>
-<p>如果沒有傳遞回調，您可以調用任何方法。每個方法調用將返回 <code>tap</code> 方法的實例，因此您可以將方法調用鏈接在一起：</p>
+<p>如果沒有傳遞回呼，您可以調用任何方法。每個方法調用將返回 <code>tap</code> 方法的實例，因此您可以將方法調用鏈接在一起：</p>
 <pre><code class="language-php">use Illuminate\\Support\\User;
 
 $user = tap(User::first())
@@ -2096,12 +2096,12 @@ throw_unless(
 </code></pre>
 <p><a name="method-trait-uses-recursive"></a></p>
 <h4><code>trait_uses_recursive()</code> {.collection-method}</h4>
-<p><code>trait_uses_recursive</code> 方法返回一個 trait（包括其父 trait）的數組：</p>
+<p><code>trait_uses_recursive</code> 方法返回一個 trait（包括其父 trait）的陣列：</p>
 <pre><code class="language-php">$traits = trait_uses_recursive(SuperTrait::class);
 </code></pre>
 <p><a name="method-transform"></a></p>
 <h4><code>transform()</code> {.collection-method}</h4>
-<p><code>transform</code> 方法根據給定的回調在<a href="/docs/collections">集合</a>或陣列上執行映射和/或過濾操作：</p>
+<p><code>transform</code> 方法根據給定的回呼在<a href="/docs/collections">集合</a>或陣列上執行映射和/或過濾操作：</p>
 <pre><code class="language-php">$collection = collect([&#39;name&#39; =&gt; &#39;John&#39;, &#39;age&#39; =&gt; 17]);
 
 $collection = transform($collection, function ($user, $key) {
@@ -2127,7 +2127,7 @@ $collection = transform($collection, function ($user, $key) {
 </code></pre>
 <p><a name="method-validator"></a></p>
 <h4><code>validator()</code> {.collection-method}</h4>
-<p><code>validator</code> 方法可<a href="/docs/validation#creating-a-validator-instance">創建一個新的驗證器</a>實例：</p>
+<p><code>validator</code> 方法可<a href="/docs/validation#creating-a-validator-instance">建立一個新的驗證器</a>實例：</p>
 <pre><code class="language-php">$validator = validator($data, $rules, $messages);
 </code></pre>
 <p><a name="method-value"></a></p>
@@ -2141,7 +2141,7 @@ $collection = transform($collection, function ($user, $key) {
 </code></pre>
 <p><a name="method-view"></a></p>
 <h4><code>view()</code> {.collection-method}</h4>
-<p><code>view</code> 方法創建一個<a href="/docs/views">視圖</a>響應的實例：</p>
+<p><code>view</code> 方法建立一個<a href="/docs/views">視圖</a>響應的實例：</p>
 <pre><code class="language-php">return view(&#39;welcome&#39;);
 </code></pre>
 <p><a name="method-with"></a></p>
@@ -2157,7 +2157,7 @@ $collection = transform($collection, function ($user, $key) {
 </code></pre>
 <p><a name="method-when"></a></p>
 <h4><code>when()</code> {.collection-method}</h4>
-<p><code>when</code> 方法在給定的布林條件為 true 時對給定的值執行給定的回調：</p>
+<p><code>when</code> 方法在給定的布林條件為 true 時對給定的值執行給定的回呼：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection = $collection-&gt;when(true, function ($collection, $value) {
@@ -2166,7 +2166,7 @@ $collection = $collection-&gt;when(true, function ($collection, $value) {
 
 // [1, 2, 3, 4]
 </code></pre>
-<p>如果未傳遞回調，則 <code>when</code> 方法將在布林條件為 true 時返回給定的值：</p>
+<p>如果未傳遞回呼，則 <code>when</code> 方法將在布林條件為 true 時返回給定的值：</p>
 <pre><code class="language-php">$collection = collect([1, 2, 3]);
 
 $collection = $collection-&gt;when(true);
@@ -2177,7 +2177,7 @@ $collection = $collection-&gt;when(true);
 <h2>其他實用工具</h2>
 <p><a name="benchmarking"></a></p>
 <h3>效能基準測試</h3>
-<p>Laravel 的 <code>benchmark</code> 函數允許您快速衡量給定回調的執行時間：</p>
+<p>Laravel 的 <code>benchmark</code> 函數允許您快速衡量給定回呼的執行時間：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Benchmark;
 
 Benchmark::dd(fn () =&gt; Task::all()); // 10ms (example)
@@ -2201,7 +2201,7 @@ Benchmark::dd(fn () =&gt; Task::all(), 100);
 <p>Laravel 包含各種方便存取和操作日期的輔助函數。這些輔助函數基於 <code>Carbon</code> 類別，後者繼承自 PHP 的 <code>DateTime</code> 類別。</p>
 <p><a name="method-carbon"></a></p>
 <h4><code>carbon()</code> {.collection-method .first-collection-method}</h4>
-<p><code>carbon</code> 方法創建一個 <code>Carbon</code> 實例以允許流暢的日期操作：</p>
+<p><code>carbon</code> 方法建立一個 <code>Carbon</code> 實例以允許流暢的日期操作：</p>
 <pre><code class="language-php">$date = carbon(&#39;2025-07-10&#39;);
 
 $date = carbon()-&gt;addHours(4);
@@ -2225,7 +2225,7 @@ $date = now()->addWeekdays(3);
 </code></pre>
 <p><a name="deferred-functions"></a></p>
 <h3>延遲函數</h3>
-<p>延遲函數允許您將操作推遲到 HTTP 響應發送給用戶之後。這減少了處理時間，因為用戶在任何延遲函數完成之前收到響應。延遲函數通過 <code>defer</code> 輔助函數定義，可以從任何控制器方法中調用：</p>
+<p>延遲函數允許您將操作推遲到 HTTP 響應發送給使用者之後。這減少了處理時間，因為使用者在任何延遲函數完成之前收到響應。延遲函數透過 <code>defer</code> 輔助函數定義，可以從任何控制器方法中調用：</p>
 <pre><code class="language-php">use function Illuminate\\Support\\defer;
 
 Route::get(&#39;/user-profile&#39;, function () {
@@ -2263,7 +2263,7 @@ Lottery::times(10)-&gt;odds(1, 100)-&gt;for(fn () =&gt; $logError());
 
 Lottery::dump()-&gt;odds(1, 100)-&gt;for(fn () =&gt; $logError());
 </code></pre>
-<p>您可以使用 <code>assert</code> 方法驗證是否調用了期望的機率回調：</p>
+<p>您可以使用 <code>assert</code> 方法驗證是否調用了期望的機率回呼：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Lottery;
 
 Lottery::fake();
@@ -2278,7 +2278,7 @@ Lottery::assertNotPassed(fn () =&gt; true);
 </code></pre>
 <p><a name="pipeline"></a></p>
 <h3>Pipeline</h3>
-<p>Laravel 的 <code>Pipeline</code> 類別允許您將一系列操作「管道化」到一個物件上。管道將物件通過處理器類別的管道進行傳遞，讓每個處理器都有機會檢查或修改物件並呼叫管道中的下一個處理器：</p>
+<p>Laravel 的 <code>Pipeline</code> 類別允許您將一系列操作「管道化」到一個物件上。管道將物件透過處理器類別的管道進行傳遞，讓每個處理器都有機會檢查或修改物件並呼叫管道中的下一個處理器：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Pipelines;
@@ -2354,7 +2354,7 @@ Sleep::assertDidntSleep();
 </code></pre>
 <p><a name="timebox"></a></p>
 <h3>Timebox</h3>
-<p>Laravel 的 <code>timebox</code> 函數允許您將操作限制在預定義的時間限制內。當達到時間限制時，時間框將執行回調中提供的任何剩餘操作：</p>
+<p>Laravel 的 <code>timebox</code> 函數允許您將操作限制在預定義的時間限制內。當達到時間限制時，時間框將執行回呼中提供的任何剩餘操作：</p>
 <pre><code class="language-php">use App\\Models\\User;
 use Illuminate\\Support\\Timebox;
 
@@ -2366,7 +2366,7 @@ $user-&gt;first(); // [34.2ms]
 </code></pre>
 <p><a name="uri"></a></p>
 <h3>URI</h3>
-<p>Laravel 的 <code>Uri</code> 類別提供了一個流暢的、可鏈接的介面，用於構建和操作 URI：</p>
+<p>Laravel 的 <code>Uri</code> 類別提供了一個流暢的、可鏈接的介面，用於建立和操作 URI：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Uri;
 
 $uri = Uri::build(&#39;https://laravel.com&#39;);

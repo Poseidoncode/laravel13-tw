@@ -45,7 +45,7 @@ use Illuminate\\View\\View;
 class PodcastController extends Controller
 {
     /**
-     * 創建一個新的控制器實例。
+     * 建立一個新的控制器實例。
      */
     public function __construct(
         protected AppleMusic $apple,
@@ -62,8 +62,8 @@ class PodcastController extends Controller
     }
 }
 </code></pre>
-<p>在此範例中，<code>PodcastController</code> 需要從資料來源（例如 Apple Music）檢索播客。因此，我們將<strong>注入</strong一個能夠檢索播客的服務。由於服務被注入，我們能夠在測試應用程式時輕鬆地「模擬」或創建 <code>AppleMusic</code> 服務的虛擬實現。</p>
-<p>深入了解 Laravel 服務容器對於構建強大的大型應用程式以及為 Laravel 核心本身做出貢獻至關重要。</p>
+<p>在此範例中，<code>PodcastController</code> 需要從資料來源（例如 Apple Music）檢索播客。因此，我們將<strong>注入</strong一個能夠檢索播客的服務。由於服務被注入，我們能夠在測試應用程式時輕鬆地「模擬」或建立 <code>AppleMusic</code> 服務的虛擬實現。</p>
+<p>深入了解 Laravel 服務容器對於建立強大的大型應用程式以及為 Laravel 核心本身做出貢獻至關重要。</p>
 <p><a name="zero-configuration-resolution"></a></p>
 <h3>零配置解析</h3>
 <p>如果一個類別沒有依賴或只依賴於其他具體類別（而不是介面），則不需要指示容器如何解析該類別。例如，您可以將以下代碼放在 <code>routes/web.php</code> 檔案中：</p>
@@ -79,7 +79,7 @@ Route::get('/', function (Service $service) {
 });
 </code></pre>
 <p>在此範例中，訪問您應用程式的 <code>/</code> 路由將自動解析 <code>Service</code> 類別並將其注入到您路由的處理器中。這是改變遊戲規則的。這意味著您可以開發應用程式並利用依賴注入，而無需擔心臃腫的配置檔案。</p>
-<p>幸運的是，您在構建 Laravel 應用程式時編寫的許多類別都會自動透過容器接收其依賴，包括<a href="/docs/controllers">控制器</a>、<a href="/docs/events">事件監聽器</a>、<a href="/docs/middleware">中介層</a>等。此外，您可以在<a href="/docs/queues">佇列作業</a>的 <code>handle</code> 方法中鍵入提示依賴。一旦您體驗到自動化和零配置依賴注入的強大功能，感覺就不可能在沒有它的情況下開發。</p>
+<p>幸運的是，您在建立 Laravel 應用程式時編寫的許多類別都會自動透過容器接收其依賴，包括<a href="/docs/controllers">控制器</a>、<a href="/docs/events">事件監聽器</a>、<a href="/docs/middleware">中介層</a>等。此外，您可以在<a href="/docs/queues">佇列作業</a>的 <code>handle</code> 方法中鍵入提示依賴。一旦您體驗到自動化和零配置依賴注入的強大功能，感覺就不可能在沒有它的情況下開發。</p>
 <p><a name="when-to-use-the-container"></a></p>
 <h3>何時使用容器</h3>
 <p>由於零配置解析，您通常會在路由、控制器、事件監聽器和其他地方鍵入提示依賴，而無需手動與容器互動。例如，您可能會在路由定義上鍵入提示 <code>Illuminate\\Http\\Request</code> 物件，以便輕鬆存取當前請求。即使我們從來不必與容器互動來編寫此代碼，它也在幕後管理這些依賴的注入：</p>
@@ -89,7 +89,7 @@ Route::get('/', function (Request $request) {
     // ...
 });
 </code></pre>
-<p>在許多情況下，由於自動依賴注入和<a href="/docs/facades">外觀</a>，您可以構建 Laravel 應用程式而<strong>永遠</strong>無需手動綁定或從容器中解析任何內容。<strong>那麼，您什麼時候會手動與容器互動呢？</strong>讓我們檢查兩種情況。</p>
+<p>在許多情況下，由於自動依賴注入和<a href="/docs/facades">外觀</a>，您可以建立 Laravel 應用程式而<strong>永遠</strong>無需手動綁定或從容器中解析任何內容。<strong>那麼，您什麼時候會手動與容器互動呢？</strong>讓我們檢查兩種情況。</p>
 <p>首先，如果您編寫一個實現介面的類別，並且希望在路由或類別構造函數上鍵入提示該介面，則必須<a href="#binding-interfaces-to-implementations">告訴容器如何解析該介面</a>。其次，如果您正在<a href="/docs/packages">編寫一個 Laravel 套件</a>，並計劃與其他 Laravel 開發者分享，則可能需要將套件的服務綁定到容器中。</p>
 <p><a name="binding"></a></p>
 <h2>綁定</h2>
@@ -215,7 +215,7 @@ $this->app->bind(EventPusher::class, RedisEventPusher::class);
 <pre><code class="language-php">use App\\Contracts\\EventPusher;
 
 /**
- * 創建一個新的類別實例。
+ * 建立一個新的類別實例。
  */
 public function __construct(
     protected EventPusher $pusher,
@@ -344,7 +344,7 @@ Route::get('/user', function (#[CurrentUser] User $user) {
 </code></pre>
 <p><a name="defining-custom-attributes"></a></p>
 <h4>定義自訂屬性</h4>
-<p>您可以透過實現 <code>Illuminate\\Contracts\\Container\\ContextualAttribute</code> 合約來創建自己的上下文屬性。容器將呼叫您屬性的 <code>resolve</code> 方法，該方法應該解析應注入到使用該屬性的類別中的值。在下面的範例中，我們將重新實現 Laravel 的內建 <code>Config</code> 屬性：</p>
+<p>您可以透過實現 <code>Illuminate\\Contracts\\Container\\ContextualAttribute</code> 合約來建立自己的上下文屬性。容器將呼叫您屬性的 <code>resolve</code> 方法，該方法應該解析應注入到使用該屬性的類別中的值。在下面的範例中，我們將重新實現 Laravel 的內建 <code>Config</code> 屬性：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Attributes;
@@ -358,7 +358,7 @@ use ReflectionParameter;
 class Config implements ContextualAttribute
 {
     /**
-     * 創建一個新的屬性實例。
+     * 建立一個新的屬性實例。
      */
     public function __construct(public string $key, public mixed $default = null)
     {
@@ -415,7 +415,7 @@ class Firewall
     protected $filters;
 
     /**
-     * 創建一個新的類別實例。
+     * 建立一個新的類別實例。
      */
     public function __construct(
         protected Logger $logger,
@@ -454,7 +454,7 @@ class Firewall
 </code></pre>
 <p><a name="tagging"></a></p>
 <h3>標籤</h3>
-<p>有時您可能需要解析某個「類別」的所有綁定。例如，也許您正在構建一個報告分析器，該分析器接收一個包含許多不同 <code>Report</code> 介面實現的陣列。註冊 <code>Report</code> 實現後，您可以使用 <code>tag</code> 方法為它們分配一個標籤：</p>
+<p>有時您可能需要解析某個「類別」的所有綁定。例如，也許您正在建立一個報告分析器，該分析器接收一個包含許多不同 <code>Report</code> 介面實現的陣列。註冊 <code>Report</code> 實現後，您可以使用 <code>tag</code> 方法為它們分配一個標籤：</p>
 <pre><code class="language-php">$this->app->bind(CpuReport::class, function () {
     // ...
 });
@@ -508,7 +508,7 @@ $transistor = app(Transistor::class);
 <pre><code class="language-php">use Illuminate\\Container\\Container;
 
 /**
- * 創建一個新的類別實例。
+ * 建立一個新的類別實例。
  */
 public function __construct(
     protected Container $container,
@@ -527,7 +527,7 @@ use App\\Services\\AppleMusic;
 class PodcastController extends Controller
 {
     /**
-     * 創建一個新的控制器實例。
+     * 建立一個新的控制器實例。
      */
     public function __construct(
         protected AppleMusic $apple,

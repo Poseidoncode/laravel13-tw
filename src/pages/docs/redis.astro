@@ -91,7 +91,7 @@ const content = `<h1>Redis</h1>
 </code></pre>
 <p><a name="clusters"></a></p>
 <h3>叢集</h3>
-<p>如果您的應用程式正在使用 Redis 伺服器叢集，您應該在 Redis 配置的 <code>clusters</code> 鍵中定義這些叢集。此配置鍵預設不存在，因此您需要在應用程式的 <code>config/database.php</code> 配置檔案中創建它：</p>
+<p>如果您的應用程式正在使用 Redis 伺服器叢集，您應該在 Redis 配置的 <code>clusters</code> 鍵中定義這些叢集。此配置鍵預設不存在，因此您需要在應用程式的 <code>config/database.php</code> 配置檔案中建立它：</p>
 <pre><code class="language-php">'redis' => [
 
     'client' => env('REDIS_CLIENT', 'phpredis'),

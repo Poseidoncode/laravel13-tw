@@ -54,7 +54,7 @@ const content = `<h1>資產打包（Vite）</h1>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
 <p><a href="https://vitejs.dev">Vite</a> 是一個現代化的前端建置工具，提供極快的開發環境，並將您的程式碼打包用於生產環境。在使用 Laravel 建立應用程式時，您通常會使用 Vite 來將應用程式的 CSS 和 JavaScript 檔案打包成可供生產環境使用的資源。</p>
-<p>Laravel 通過提供官方外掛和 Blade 指令來載入開發和生產環境的資源，從而與 Vite 無縫整合。</p>
+<p>Laravel 透過提供官方外掛和 Blade 指令來載入開發和生產環境的資源，從而與 Vite 無縫整合。</p>
 <p><a name="installation"></a></p>
 <h2>安裝與設定</h2>
 <blockquote>
@@ -66,16 +66,16 @@ const content = `<h1>資產打包（Vite）</h1>
 <p>在執行 Vite 和 Laravel 外掛之前，您必須確保已安裝 Node.js（16+）和 NPM：</p>
 <pre><code class="language-shell">node -v
 npm -v</code></pre>
-<p>您可以使用來自<a href="https://nodejs.org/en/download/">官方 Node 網站</a>的簡單圖形安裝程式輕鬆安裝最新版本的 Node 和 NPM。或者，如果您正在使用 <a href="https://laravel.com/docs/sail">Laravel Sail</a>，則可以通過 Sail 呼叫 Node 和 NPM：</p>
+<p>您可以使用來自<a href="https://nodejs.org/en/download/">官方 Node 網站</a>的簡單圖形安裝程式輕鬆安裝最新版本的 Node 和 NPM。或者，如果您正在使用 <a href="https://laravel.com/docs/sail">Laravel Sail</a>，則可以透過 Sail 呼叫 Node 和 NPM：</p>
 <pre><code class="language-shell">./vendor/bin/sail node -v
 ./vendor/bin/sail npm -v</code></pre>
 <p><a name="installing-vite-and-laravel-plugin"></a></p>
 <h3>安裝 Vite 與 Laravel 外掛</h3>
-<p>在新的 Laravel 安裝中，您會在應用程式目錄結構的根目錄中找到一個 <code>package.json</code> 檔案。預設的 <code>package.json</code> 檔案已經包含了開始使用 Vite 和 Laravel 外掛所需的一切。您可以通過 NPM 安裝應用程式的前端依賴項：</p>
+<p>在新的 Laravel 安裝中，您會在應用程式目錄結構的根目錄中找到一個 <code>package.json</code> 檔案。預設的 <code>package.json</code> 檔案已經包含了開始使用 Vite 和 Laravel 外掛所需的一切。您可以透過 NPM 安裝應用程式的前端依賴項：</p>
 <pre><code class="language-shell">npm install</code></pre>
 <p><a name="configuring-vite"></a></p>
 <h3>配置 Vite</h3>
-<p>Vite 是通過專案根目錄中的 <code>vite.config.js</code> 檔案進行配置的。您可以根據需要自由自訂此檔案，並且還可以安裝應用程式所需的任何其他外掛，例如 <code>@vitejs/plugin-react</code>、<code>@sveltejs/vite-plugin-svelte</code> 或 <code>@vitejs/plugin-vue</code>。</p>
+<p>Vite 是透過專案根目錄中的 <code>vite.config.js</code> 檔案進行配置的。您可以根據需要自由自訂此檔案，並且還可以安裝應用程式所需的任何其他外掛，例如 <code>@vitejs/plugin-react</code>、<code>@sveltejs/vite-plugin-svelte</code> 或 <code>@vitejs/plugin-vue</code>。</p>
 <p>Laravel Vite 外掛要求您指定應用程式的入口點。這些可以是 JavaScript 或 CSS 檔案，並包括諸如 TypeScript、JSX、TSX 和 Sass 等預處理語言。</p>
 <pre><code class="language-js">import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
@@ -100,13 +100,13 @@ export default defineConfig({
         ]),
     ],
 });</code></pre>
-<p>相反，您應通過 JavaScript 匯入 CSS。通常，這將在應用程式的 <code>resources/js/app.js</code> 檔案中完成：</p>
+<p>相反，您應透過 JavaScript 匯入 CSS。通常，這將在應用程式的 <code>resources/js/app.js</code> 檔案中完成：</p>
 <pre><code class="language-js">import './bootstrap';
 import '../css/app.css'; // [tl! add]</code></pre>
 <p>Laravel 外掛還支援多個入口點和進階配置選項，例如 <a href="#ssr">SSR 入口點</a>。</p>
 <p><a name="working-with-a-secure-development-server"></a></p>
 <h4>使用安全開發伺服器</h4>
-<p>如果您的本地開發 Web 伺服器通過 HTTPS 提供應用程式服務，您在連接到 Vite 開發伺服器時可能會遇到問題。</p>
+<p>如果您的本地開發 Web 伺服器透過 HTTPS 提供應用程式服務，您在連接到 Vite 開發伺服器時可能會遇到問題。</p>
 <p>如果您正在使用 <a href="https://herd.laravel.com">Laravel Herd</a> 並且已保護該網站，或者您正在使用 <a href="/docs/valet">Laravel Valet</a> 並且已對應用程式執行<a href="/docs/valet#securing-sites">安全命令</a>，則 Laravel Vite 外掛將自動偵測並為您使用產生的 TLS 憑證。</p>
 <p>如果您使用與應用程式目錄名稱不匹配的主機保護了網站，則可以在應用程式的 <code>vite.config.js</code> 檔案中手動指定主機：</p>
 <pre><code class="language-js">import { defineConfig } from 'vite';
@@ -137,7 +137,7 @@ export default defineConfig({
         }, // [tl! add]
     }, // [tl! add]
 });</code></pre>
-<p>如果您無法為系統產生受信任的憑證，則可以安裝並配置 <a href="https://github.com/vitejs/vite-plugin-basic-ssl">@vitejs/plugin-basic-ssl 外掛</a>。使用不受信任的憑證時，您需要在執行 <code>npm run dev</code> 命令時，通過瀏覽器中控制台的「Local」連結來接受 Vite 開發伺服器的憑證警告。</p>
+<p>如果您無法為系統產生受信任的憑證，則可以安裝並配置 <a href="https://github.com/vitejs/vite-plugin-basic-ssl">@vitejs/plugin-basic-ssl 外掛</a>。使用不受信任的憑證時，您需要在執行 <code>npm run dev</code> 命令時，透過瀏覽器中控制台的「Local」連結來接受 Vite 開發伺服器的憑證警告。</p>
 <p><a name="configuring-hmr-in-sail-on-wsl2"></a></p>
 <h4>在 WSL2 上的 Sail 中執行開發伺服器</h4>
 <p>在 Windows Subsystem for Linux 2（WSL2）上的 <a href="/docs/sail">Laravel Sail</a> 中執行 Vite 開發伺服器時，應在您的 <code>vite.config.js</code> 檔案中新增以下配置，以確保瀏覽器可以與開發伺服器通訊：</p>
@@ -161,14 +161,14 @@ export default defineConfig({
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 &lt;/head&gt;</code></pre>
-<p>如果您通過 JavaScript 匯入 CSS，則只需要包含 JavaScript 入口點：</p>
+<p>如果您透過 JavaScript 匯入 CSS，則只需要包含 JavaScript 入口點：</p>
 <pre><code class="language-blade">&lt;!DOCTYPE html&gt;
 &lt;head&gt;
     {{-- ... --}}
 
     @vite('resources/js/app.js')
 &lt;/head&gt;</code></pre>
-<p><code>@vite</code> 指令將自動偵測 Vite 開發伺服器並注入 Vite 用戶端以啟用熱模組替換。在建置模式下，該指令將載入您編譯和版本化的資源，包括任何匯入的 CSS。</p>
+<p><code>@vite</code> 指令將自動偵測 Vite 開發伺服器並注入 Vite 客戶端以啟用熱模組替換。在建置模式下，該指令將載入您編譯和版本化的資源，包括任何匯入的 CSS。</p>
 <p>如果需要，您也可以在呼叫 <code>@vite</code> 指令時指定編譯資源的建置路徑：</p>
 <pre><code class="language-blade">&lt;!doctype html&gt;
 &lt;head&gt;
@@ -194,7 +194,7 @@ export default defineConfig({
 &lt;/head&gt;</code></pre>
 <p><a name="running-vite"></a></p>
 <h2>執行 Vite</h2>
-<p>有兩種方式可以執行 Vite。您可以通過 <code>dev</code> 命令執行開發伺服器，這在本地開發時很有用。開發伺服器將自動偵測檔案的變更並立即反映在任何打開的瀏覽器視窗中。</p>
+<p>有兩種方式可以執行 Vite。您可以透過 <code>dev</code> 命令執行開發伺服器，這在本地開發時很有用。開發伺服器將自動偵測檔案的變更並立即反映在任何打開的瀏覽器視窗中。</p>
 <p>或者，執行 <code>build</code> 命令將對應用程式的資源進行版本化和打包，使其準備好部署到生產環境：</p>
 <pre><code class="language-shell"># Run the Vite development server...
 npm run dev
@@ -210,7 +210,7 @@ npm run build</code></pre>
 <pre><code class="language-js">{
     '@' => '/resources/js'
 }</code></pre>
-<p>您可以通過在 <code>vite.config.js</code> 配置檔案中新增自己的別名來覆寫 <code>'@'</code> 別名：</p>
+<p>您可以透過在 <code>vite.config.js</code> 配置檔案中新增自己的別名來覆寫 <code>'@'</code> 別名：</p>
 <pre><code class="language-js">import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 
@@ -320,7 +320,7 @@ Laravel 的<a href="/docs/starter-kits">入門套件</a>已經包含了正確的
 <p><a name="url-processing"></a></p>
 <h3>URL 處理</h3>
 <p>在應用程式的 HTML、CSS 或 JS 中使用 Vite 並引用資源時，有幾點需要注意。首先，如果您使用絕對路徑引用資源，Vite 將不會在建置中包含該資源；因此，您應確保該資源存在於您的 public 目錄中。使用專用的 CSS 入口點時，您應避免使用絕對路徑，因為在開發期間，瀏覽器將嘗試從 Vite 開發伺服器載入這些路徑，而不是從您的 public 目錄。</p>
-<p>引用相對資源路徑時，您應記住路徑是相對於引用它們的檔案。任何通過相對路徑引用的資源都將由 Vite 重新編寫、版本化和打包。</p>
+<p>引用相對資源路徑時，您應記住路徑是相對於引用它們的檔案。任何透過相對路徑引用的資源都將由 Vite 重新編寫、版本化和打包。</p>
 <p>考慮以下專案結構：</p>
 <pre><code class="language-text">public/
   taylor.png
@@ -374,7 +374,7 @@ export default defineConfig({
         }),
     ],
 });</code></pre>
-<p>在此範例中，<code>Inter</code> 字型將通過 <code>sans</code> 別名提供。外掛將產生一個 <code>--font-sans</code> CSS 變數和一個 <code>.font-sans</code> 工具類別，用於應用產生的字型堆疊。</p>
+<p>在此範例中，<code>Inter</code> 字型將透過 <code>sans</code> 別名提供。外掛將產生一個 <code>--font-sans</code> CSS 變數和一個 <code>.font-sans</code> 工具類別，用於應用產生的字型堆疊。</p>
 <p><a name="font-providers"></a></p>
 <h3>字型提供者</h3>
 <p>Laravel Vite 外掛包含用於 Google Fonts、Bunny Fonts、Fontsource 和本地字型的提供者輔助函數：</p>
@@ -433,14 +433,14 @@ export default defineConfig({
 </div>
 <p>最佳化後備字型需要 <code>fontaine</code> 套件，該套件預設不安裝。如果您希望 Laravel 產生度量調整的後備字型，應將 <code>fontaine</code> 安裝為開發依賴項：</p>
 <pre><code class="language-shell">npm install --save-dev fontaine</code></pre>
-<p>如果 <code>fontaine</code> 未安裝或無法讀取字型檔案，Laravel 將跳過該字型的最佳化後備，並繼續使用通過 <code>fallbacks</code> 選項配置的任何字型。</p>
+<p>如果 <code>fontaine</code> 未安裝或無法讀取字型檔案，Laravel 將跳過該字型的最佳化後備，並繼續使用透過 <code>fallbacks</code> 選項配置的任何字型。</p>
 <p>本地字型是從上述 <code>src</code> 或 <code>variants</code> 選項解析的，而不是使用 <code>weights</code>、<code>styles</code> 和 <code>subsets</code>。</p>
 <p><a name="working-with-blade-and-routes"></a></p>
 <h2>使用 Blade 和路由</h2>
 <p><a name="blade-processing-static-assets"></a></p>
 <h3>使用 Vite 處理靜態資源</h3>
 <p>在 JavaScript 或 CSS 中引用資源時，Vite 會自動處理並對它們進行版本化。此外，在建立基於 Blade 的應用程式時，Vite 也可以處理和版本化您僅在 Blade 模板中引用的靜態資源。</p>
-<p>但是，要實現這一點，您需要通過在外掛的 <code>assets</code> 選項中指定資源來使 Vite 感知到您的資源。此選項適用於您想直接使用 <code>Vite::asset</code> 引用的靜態檔案。如果您希望 Laravel 產生字型 CSS 和預載入鏈接，請使用 <a href="#working-with-fonts"><code>fonts</code> 選項</a>。</p>
+<p>但是，要實現這一點，您需要透過在外掛的 <code>assets</code> 選項中指定資源來使 Vite 感知到您的資源。此選項適用於您想直接使用 <code>Vite::asset</code> 引用的靜態檔案。如果您希望 Laravel 產生字型 CSS 和預載入鏈接，請使用 <a href="#working-with-fonts"><code>fonts</code> 選項</a>。</p>
 <p>例如，如果您想處理和版本化儲存在 <code>resources/images</code> 中的所有影像和儲存在 <code>resources/fonts</code> 中的所有字型，應將以下內容新增到您的 Vite 配置中：</p>
 <pre><code class="language-js">laravel({
     input: 'resources/js/app.js',
@@ -454,7 +454,7 @@ export default defineConfig({
 </blockquote>
 <p><a name="blade-refreshing-on-save"></a></p>
 <h3>儲存時重新整理</h3>
-<p>當您的應用程式使用傳統的伺服器端渲染搭配 Blade 時，Vite 可以通過在您對應用程式中的檢視檔案進行變更時自動重新整理瀏覽器來改善您的開發流程。首先，您可以簡單地將 <code>refresh</code> 選項指定為 <code>true</code>。</p>
+<p>當您的應用程式使用傳統的伺服器端渲染搭配 Blade 時，Vite 可以透過在您對應用程式中的檢視檔案進行變更時自動重新整理瀏覽器來改善您的開發流程。首先，您可以簡單地將 <code>refresh</code> 選項指定為 <code>true</code>。</p>
 <pre><code class="language-js">import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 
@@ -505,7 +505,7 @@ export default defineConfig({
 });</code></pre>
 <p><a name="blade-aliases"></a></p>
 <h3>別名</h3>
-<p>在 JavaScript 應用程式中，<a href="#aliases">建立別名</a>以指向經常引用的目錄是很常見的。但是，您也可以通過在 <code>Illuminate\\Support\\Facades\\Vite</code> 類別上使用 <code>macro</code> 方法來建立用於 Blade 的別名。通常，「巨集」應在<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中定義：</p>
+<p>在 JavaScript 應用程式中，<a href="#aliases">建立別名</a>以指向經常引用的目錄是很常見的。但是，您也可以透過在 <code>Illuminate\\Support\\Facades\\Vite</code> 類別上使用 <code>macro</code> 方法來建立用於 Blade 的別名。通常，「巨集」應在<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中定義：</p>
 <pre><code class="language-php">/**
  * Bootstrap any application services.
  */
@@ -519,7 +519,7 @@ public function boot(): void
 <p><a name="asset-prefetching"></a></p>
 <h2>資源預先擷取</h2>
 <p>在使用 Vite 的程式碼分割功能建立 SPA 時，每次頁面導航都會獲取所需的資源。這種行為可能導致 UI 渲染延遲。如果這對您選擇的前端框架來說是一個問題，Laravel 提供了在初始頁面載入時急切地預先擷取應用程式 JavaScript 和 CSS 資源的能力。</p>
-<p>您可以通過在<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中呼叫 <code>Vite::prefetch</code> 方法來指示 Laravel 急切地預先擷取您的資源：</p>
+<p>您可以透過在<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中呼叫 <code>Vite::prefetch</code> 方法來指示 Laravel 急切地預先擷取您的資源：</p>
 <pre><code class="language-php">&lt;?php
 
 namespace App\\Providers;
@@ -572,16 +572,16 @@ public function boot(): void
 &lt;/script&gt;</code></pre>
 <p><a name="custom-base-urls"></a></p>
 <h2>自訂基礎 URL</h2>
-<p>如果您將 Vite 編譯的資源部署到與應用程式分離的域，例如通過 CDN，則必須在應用程式的 <code>.env</code> 檔案中指定 <code>ASSET_URL</code> 環境變數：</p>
+<p>如果您將 Vite 編譯的資源部署到與應用程式分離的域，例如透過 CDN，則必須在應用程式的 <code>.env</code> 檔案中指定 <code>ASSET_URL</code> 環境變數：</p>
 <pre><code class="language-env">ASSET_URL=https://cdn.example.com</code></pre>
 <p>配置資源 URL 後，對資源的所有重寫 URL 將以配置的值作為前綴：</p>
 <pre><code class="language-text">https://cdn.example.com/build/assets/app.9dce8d17.js</code></pre>
 <p>請記住，<a href="#url-processing">絕對 URL 不會被 Vite 重寫</a>，因此它們不會被添加前綴。</p>
 <p><a name="environment-variables"></a></p>
 <h2>環境變數</h2>
-<p>您可以通過在應用程式的 <code>.env</code> 檔案中為環境變數添加 <code>VITE_</code> 前綴來將它們注入到 JavaScript 中：</p>
+<p>您可以透過在應用程式的 <code>.env</code> 檔案中為環境變數添加 <code>VITE_</code> 前綴來將它們注入到 JavaScript 中：</p>
 <pre><code class="language-env">VITE_SENTRY_DSN_PUBLIC=http://example.com</code></pre>
-<p>您可以通過 <code>import.meta.env</code> 物件存取注入的環境變數：</p>
+<p>您可以透過 <code>import.meta.env</code> 物件存取注入的環境變數：</p>
 <pre><code class="language-js">import.meta.env.VITE_SENTRY_DSN_PUBLIC</code></pre>
 <p><a name="disabling-vite-in-tests"></a></p>
 <h2>在測試中停用 Vite</h2>
@@ -613,7 +613,7 @@ abstract class TestCase extends BaseTestCase
 </code></pre>
 <p><a name="ssr"></a></p>
 <h2>伺服器端渲染（SSR）</h2>
-<p>Laravel Vite 外掛使使用 Vite 設置伺服器端渲染變得輕而易舉。首先，在 <code>resources/js/ssr.js</code> 建立一個 SSR 入口點，並通過向 Laravel 外掛傳遞配置選項來指定入口點：</p>
+<p>Laravel Vite 外掛使使用 Vite 設置伺服器端渲染變得輕而易舉。首先，在 <code>resources/js/ssr.js</code> 建立一個 SSR 入口點，並透過向 Laravel 外掛傳遞配置選項來指定入口點：</p>
 <pre><code class="language-js">import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 
@@ -676,7 +676,7 @@ class AddContentSecurityPolicyHeaders
 </code></pre>
 <p><a name="subresource-integrity-sri"></a></p>
 <h3>子資源完整性（SRI）</h3>
-<p>如果您的 Vite 清單包含資源的 <code>integrity</code> 哈希值，Laravel 將自動在它產生的任何腳本和樣式標籤上添加 <code>integrity</code> 屬性，以實施<a href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity">子資源完整性</a>。預設情況下，Vite 不包含清單中的 <code>integrity</code> 哈希值，但您可以通過安裝 <a href="https://www.npmjs.com/package/vite-plugin-manifest-sri">vite-plugin-manifest-sri</a> NPM 外掛來啟用它：</p>
+<p>如果您的 Vite 清單包含資源的 <code>integrity</code> 哈希值，Laravel 將自動在它產生的任何腳本和樣式標籤上添加 <code>integrity</code> 屬性，以實施<a href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity">子資源完整性</a>。預設情況下，Vite 不包含清單中的 <code>integrity</code> 哈希值，但您可以透過安裝 <a href="https://www.npmjs.com/package/vite-plugin-manifest-sri">vite-plugin-manifest-sri</a> NPM 外掛來啟用它：</p>
 <pre><code class="language-shell">npm install --save-dev vite-plugin-manifest-sri</code></pre>
 <p>然後，您可以在 <code>vite.config.js</code> 檔案中啟用此外掛：</p>
 <pre><code class="language-js">import { defineConfig } from 'vite';
@@ -701,7 +701,7 @@ Vite::useIntegrityKey('custom-integrity-key');
 </code></pre>
 <p><a name="arbitrary-attributes"></a></p>
 <h3>任意屬性</h3>
-<p>如果您需要在腳本和樣式標籤上包含其他屬性，例如 <a href="https://turbo.hotwired.dev/handbook/drive#reloading-when-assets-change">data-turbo-track</a> 屬性，可以通過 <code>useScriptTagAttributes</code> 和 <code>useStyleTagAttributes</code> 方法來指定它們。通常，這些方法應從<a href="/docs/providers">服務提供者</a>中呼叫：</p>
+<p>如果您需要在腳本和樣式標籤上包含其他屬性，例如 <a href="https://turbo.hotwired.dev/handbook/drive#reloading-when-assets-change">data-turbo-track</a> 屬性，可以透過 <code>useScriptTagAttributes</code> 和 <code>useStyleTagAttributes</code> 方法來指定它們。通常，這些方法應從<a href="/docs/providers">服務提供者</a>中呼叫：</p>
 <pre><code class="language-php">use Illuminate\\Support\\Facades\\Vite;
 
 Vite::useScriptTagAttributes([

@@ -22,7 +22,7 @@ const content = `<h1>中介層</h1>
 <p>可以編寫額外的中介層來執行認證以外的各種任務。例如，記錄中介層可能會記錄進入您應用程式的所有請求。Laravel 包含各種中介層，包括用於認證和 CSRF 保護的中介層；但是，所有使用者定義的中介層通常位於您應用程式的 <code>app/Http/Middleware</code> 目錄中。</p>
 <p><a name="defining-middleware"></a></p>
 <h2>定義中介層</h2>
-<p>要創建一個新的中介層，請使用 <code>make:middleware</code> Artisan 命令：</p>
+<p>要建立一個新的中介層，請使用 <code>make:middleware</code> Artisan 命令：</p>
 <pre><code class="language-shell">php artisan make:middleware EnsureTokenIsValid
 </code></pre>
 <p>此命令將在您的 <code>app/Http/Middleware</code> 目錄中放置一個新的 <code>EnsureTokenIsValid</code> 類別。在此中介層中，我們將只在提供的 <code>token</code> 輸入與指定值匹配時允許存取路由。否則，我們將把使用者重定向回 <code>/home</code> URI：</p>
@@ -51,8 +51,8 @@ class EnsureTokenIsValid
     }
 }
 </code></pre>
-<p>如您所見，如果給定的 <code>token</code> 與我們的密鑰令牌不匹配，中介層將向客戶端傳回 HTTP 重定向；否則，請求將被進一步傳遞到應用程式。要將請求進一步傳遞到應用程式（允許中介層「通過」），您應該使用 <code>$request</code> 呼叫 <code>$next</code> 回呼。</p>
-<p>最好將中介層設想為 HTTP 請求在到達您應用程式之前必須通過的一系列「層」。每一層都可以檢查請求，甚至完全拒絕它。</p>
+<p>如您所見，如果給定的 <code>token</code> 與我們的密鑰令牌不匹配，中介層將向客戶端傳回 HTTP 重定向；否則，請求將被進一步傳遞到應用程式。要將請求進一步傳遞到應用程式（允許中介層「透過」），您應該使用 <code>$request</code> 呼叫 <code>$next</code> 回呼。</p>
+<p>最好將中介層設想為 HTTP 請求在到達您應用程式之前必須透過的一系列「層」。每一層都可以檢查請求，甚至完全拒絕它。</p>
 <blockquote>
 <p>[!NOTE]
 所有中介層都透過<a href="/docs/container">服務容器</a>解析，因此您可以在中介層的構造函數中鍵入提示您需要的任何依賴。</p>
@@ -378,7 +378,7 @@ $middleware->web(replace: [
 </code></pre>
 <p><a name="middleware-parameters"></a></p>
 <h2>中介層參數</h2>
-<p>中介層也可以接收額外的參數。例如，如果您的應用程式需要在執行給定動作之前驗證已認證的使用者具有給定的「角色」，您可以創建一個接收角色名稱作為額外參數的 <code>EnsureUserHasRole</code> 中介層。</p>
+<p>中介層也可以接收額外的參數。例如，如果您的應用程式需要在執行給定動作之前驗證已認證的使用者具有給定的「角色」，您可以建立一個接收角色名稱作為額外參數的 <code>EnsureUserHasRole</code> 中介層。</p>
 <p>額外的中介層參數將在 <code>$next</code> 參數之後傳遞給中介層：</p>
 <pre><code class="language-php">&lt;?php
 

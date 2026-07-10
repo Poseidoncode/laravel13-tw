@@ -154,7 +154,7 @@ sail npm run dev
 <p>您可能已經注意到，應用程式的 <code>compose.yaml</code> 檔案中包含一個 MySQL 容器的條目。此容器使用 <a href="https://docs.docker.com/storage/volumes/">Docker 卷</a>，這樣即使停止和重新啟動容器，儲存在資料庫中的資料也會被持久化。</p>
 <p>此外，MySQL 容器首次啟動時，它會為您建立兩個資料庫。第一個資料庫使用您的 <code>DB_DATABASE</code> 環境變數的值命名，用於您的本地開發。第二個是一個名為 <code>testing</code> 的專用測試資料庫，它將確保您的測試不會干擾您的開發資料。</p>
 <p>啟動容器後，您可以透過在應用程式的 <code>.env</code> 檔案中將 <code>DB_HOST</code> 環境變數設為 <code>mysql</code> 來連接到應用程式中的 MySQL 實例。</p>
-<p>要從您的本地機器連接到應用程式的 MySQL 資料庫，您可以使用圖形化資料庫管理應用程式，例如 <a href="https://tableplus.com">TablePlus</a>。預設情況下，MySQL 資料庫在 <code>localhost</code> 的連接埠 3306 上可存取，存取憑證對應於您的 <code>DB_USERNAME</code> 和 <code>DB_PASSWORD</code> 環境變數的值。或者，您可以以 <code>root</code> 用戶身分連接，它也使用您的 <code>DB_PASSWORD</code> 環境變數的值作為其密碼。</p>
+<p>要從您的本地機器連接到應用程式的 MySQL 資料庫，您可以使用圖形化資料庫管理應用程式，例如 <a href="https://tableplus.com">TablePlus</a>。預設情況下，MySQL 資料庫在 <code>localhost</code> 的連接埠 3306 上可存取，存取憑證對應於您的 <code>DB_USERNAME</code> 和 <code>DB_PASSWORD</code> 環境變數的值。或者，您可以以 <code>root</code> 使用者身分連接，它也使用您的 <code>DB_PASSWORD</code> 環境變數的值作為其密碼。</p>
 <p><a name="mongodb"></a></p>
 <h3>MongoDB</h3>
 <p>如果您在安裝 Sail 時選擇安裝 <a href="https://www.mongodb.com/">MongoDB</a> 服務，應用程式的 <code>compose.yaml</code> 檔案中將包含一個 <a href="https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-local-cloud/">MongoDB Atlas Local</a> 容器的條目，該容器提供具有 Atlas 功能（如<a href="https://www.mongodb.com/docs/atlas/atlas-search/">搜尋索引</a>）的 MongoDB 文件資料庫。此容器使用 <a href="https://docs.docker.com/storage/volumes/">Docker 卷</a>，這樣即使停止和重新啟動容器，儲存在資料庫中的資料也會被持久化。</p>

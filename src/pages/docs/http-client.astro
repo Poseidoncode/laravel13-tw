@@ -76,7 +76,7 @@ $response->serverError() : bool;         // 500 Internal Server Error
 </code></pre>
 <p><a name="uri-templates"></a></p>
 <h4>URI 範本</h4>
-<p>HTTP 客戶端還允許您使用 <a href="https://www.rfc-editor.org/rfc/rfc6570">URI 範本規範</a>來構建請求 URL。要定義可由 URI 範本展開的 URL 參數，您可以使用 <code>withUrlParameters</code> 方法：</p>
+<p>HTTP 客戶端還允許您使用 <a href="https://www.rfc-editor.org/rfc/rfc6570">URI 範本規範</a>來建立請求 URL。要定義可由 URI 範本展開的 URL 參數，您可以使用 <code>withUrlParameters</code> 方法：</p>
 <pre><code class="language-php">Http::withUrlParameters([
     'endpoint' => 'https://laravel.com',
     'page' => 'docs',
@@ -442,7 +442,7 @@ $responses = Http::batch(fn (Batch $batch) => [
     $batch->get('http://localhost/second'),
     $batch->get('http://localhost/third'),
 ])->before(function (Batch $batch) {
-    // 批次已創建但尚未初始化任何請求...
+    // 批次已建立但尚未初始化任何請求...
 })->progress(function (Batch $batch, int|string $key, Response $response) {
     // 單個請求已成功完成...
 })->then(function (Batch $batch, array $results) {
@@ -518,7 +518,7 @@ public function boot(): void
     });
 }
 </code></pre>
-<p>配置好巨集後，您可以從應用程式中的任何地方呼叫它來創建一個具有指定配置的待處理請求：</p>
+<p>配置好巨集後，您可以從應用程式中的任何地方呼叫它來建立一個具有指定配置的待處理請求：</p>
 <pre><code class="language-php">$response = Http::github()->get('/');
 </code></pre>
 <p><a name="testing"></a></p>
@@ -535,7 +535,7 @@ $response = Http::post(/* ... */);
 </code></pre>
 <p><a name="faking-specific-urls"></a></p>
 <h4>偽造特定 URL</h4>
-<p>或者，您可以向 <code>fake</code> 方法傳遞一個陣列。陣列的鍵應代表您希望偽造的 URL 模式及其關聯的回應。<code>*</code> 字元可用作萬用字元。您可以使用 <code>Http</code> 外觀的 <code>response</code> 方法來為這些端點構建存根/偽造回應：</p>
+<p>或者，您可以向 <code>fake</code> 方法傳遞一個陣列。陣列的鍵應代表您希望偽造的 URL 模式及其關聯的回應。<code>*</code> 字元可用作萬用字元。您可以使用 <code>Http</code> 外觀的 <code>response</code> 方法來為這些端點建立存根/偽造回應：</p>
 <pre><code class="language-php">Http::fake([
     // 為 GitHub 端點偽造 JSON 回應...
     'github.com/*' => Http::response(['foo' => 'bar'], 200, $headers),
@@ -576,7 +576,7 @@ $response = Http::post(/* ... */);
 </code></pre>
 <p><a name="faking-response-sequences"></a></p>
 <h4>偽造回應序列</h4>
-<p>有時您可能需要指定單個 URL 應按特定順序返回一系列偽造回應。您可以使用 <code>Http::sequence</code> 方法來構建回應來實現這一點：</p>
+<p>有時您可能需要指定單個 URL 應按特定順序返回一系列偽造回應。您可以使用 <code>Http::sequence</code> 方法來建立回應來實現這一點：</p>
 <pre><code class="language-php">Http::fake([
     // 為 GitHub 端點偽造一系列回應...
     'github.com/*' => Http::sequence()
@@ -723,7 +723,7 @@ Http::get('https://laravel.com');
 <p><a name="events"></a></p>
 <h2>事件</h2>
 <p>Laravel 在發送 HTTP 請求的過程中觸發三個事件。<code>RequestSending</code> 事件在請求被發送之前觸發，而 <code>ResponseReceived</code> 事件在收到給定請求的回應後觸發。如果沒有收到給定請求的回應，則觸發 <code>ConnectionFailed</code> 事件。</p>
-<p><code>RequestSending</code> 和 <code>ConnectionFailed</code> 事件都包含一個公共 <code>$request</code> 屬性，您可以用來檢查 <code>Illuminate\\Http\\Client\\Request</code> 實例。同樣，<code>ResponseReceived</code> 事件包含一個 <code>$request</code> 屬性和一個 <code>$response</code> 屬性，可用於檢查 <code>Illuminate\\Http\\Client\\Response</code> 實例。您可以在應用程式中為這些事件<a href="/docs/events">創建事件監聽器</a>：</p>
+<p><code>RequestSending</code> 和 <code>ConnectionFailed</code> 事件都包含一個公共 <code>$request</code> 屬性，您可以用來檢查 <code>Illuminate\\Http\\Client\\Request</code> 實例。同樣，<code>ResponseReceived</code> 事件包含一個 <code>$request</code> 屬性和一個 <code>$response</code> 屬性，可用於檢查 <code>Illuminate\\Http\\Client\\Response</code> 實例。您可以在應用程式中為這些事件<a href="/docs/events">建立事件監聽器</a>：</p>
 <pre><code class="language-php">use Illuminate\\Http\\Client\\Events\\RequestSending;
 
 class LogRequest

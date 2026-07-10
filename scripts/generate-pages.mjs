@@ -103,7 +103,7 @@ const documentationStructure = [
   { title: '事件', slug: 'events', category: 'advanced' },
   { title: '檔案系統', slug: 'filesystem', category: 'advanced' },
   { title: '輔助函式', slug: 'helpers', category: 'advanced' },
-  { title: 'HTTP 用戶端', slug: 'http-client', category: 'advanced' },
+  { title: 'HTTP 客戶端', slug: 'http-client', category: 'advanced' },
   { title: '本地化', slug: 'localization', category: 'advanced' },
   { title: '郵件', slug: 'mail', category: 'advanced' },
   { title: '通知', slug: 'notifications', category: 'advanced' },

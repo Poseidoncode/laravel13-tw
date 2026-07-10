@@ -43,10 +43,10 @@ const content = `<h1>Laravel AI SDK</h1>
 </ul>
 <p><a name="introduction"></a></p>
 <h2>簡介</h2>
-<p>Laravel AI SDK 提供了一個統一的、表達力強的介面，用於與各種 AI 提供商（如 OpenAI、Anthropic、Ollama 和 Gemini）互動。該 SDK 圍繞提示詞（prompts）、工具（tools）、代理（agents）和執行緒（threads）等核心概念構建，使您能夠輕鬆建立 AI 驅動的應用程式。</p>
+<p>Laravel AI SDK 提供了一個統一的、表達力強的介面，用於與各種 AI 提供商（如 OpenAI、Anthropic、Ollama 和 Gemini）互動。該 SDK 圍繞提示詞（prompts）、工具（tools）、代理（agents）和執行緒（threads）等核心概念建立，使您能夠輕鬆建立 AI 驅動的應用程式。</p>
 <blockquote>
 <p>[!NOTE]
-Laravel AI SDK 是通過 Laravel Boost 套件提供的，該套件包含 AI SDK、MCP 整合以及 MCP 應用開發工具。</p>
+Laravel AI SDK 是透過 Laravel Boost 套件提供的，該套件包含 AI SDK、MCP 整合以及 MCP 應用開發工具。</p>
 </blockquote>
 <p><a name="installation"></a></p>
 <h2>安裝</h2>
@@ -207,7 +207,7 @@ $result = $agent->run("What's the weather in London?");</code></pre>
 <p>代理可以使用 <code>run</code> 方法處理單個查詢，也可以維護一個持續的執行緒來處理多輪對話。</p>
 <p><a name="threads"></a></p>
 <h2>執行緒</h2>
-<p>執行緒維護 AI 代理和用戶之間的對話歷史，允許多輪互動。</p>
+<p>執行緒維護 AI 代理和使用者之間的對話歷史，允許多輪互動。</p>
 <p><a name="creating-threads"></a></p>
 <h3>建立執行緒</h3>
 <pre><code class="language-php">use Illuminate\\AI\\Thread;

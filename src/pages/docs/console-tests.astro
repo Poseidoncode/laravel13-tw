@@ -36,7 +36,7 @@ $this-&gt;artisan(&#39;inspire&#39;)-&gt;assertFailed();
 </code></pre>
 <p><a name="input-output-expectations"></a></p>
 <h2>輸入/輸出預期</h2>
-<p>Laravel 允許您使用 <code>expectsQuestion</code> 方法輕鬆「模擬」控制台命令的用戶輸入。此外，您可以使用 <code>assertExitCode</code> 和 <code>expectsOutput</code> 方法來指定您預期控制台命令輸出的退出代碼和文字。例如，考慮以下控制台命令：</p>
+<p>Laravel 允許您使用 <code>expectsQuestion</code> 方法輕鬆「模擬」控制台命令的使用者輸入。此外，您可以使用 <code>assertExitCode</code> 和 <code>expectsOutput</code> 方法來指定您預期控制台命令輸出的退出代碼和文字。例如，考慮以下控制台命令：</p>
 <pre><code class="language-php">Artisan::command(&#39;question&#39;, function () {
     $name = $this-&gt;ask(&#39;您的名字是什麼？&#39;);
 
@@ -72,7 +72,7 @@ public function test_console_command(): void
         -&gt;assertExitCode(0);
 }
 </code></pre>
-<p>如果您正在使用 <a href="/docs/prompts">Laravel Prompts</a> 提供的 <code>search</code> 或 <code>multisearch</code> 函數，您可以使用 <code>expectsSearch</code> 斷言來模擬用戶的輸入、搜尋結果和選擇：</p>
+<p>如果您正在使用 <a href="/docs/prompts">Laravel Prompts</a> 提供的 <code>search</code> 或 <code>multisearch</code> 函數，您可以使用 <code>expectsSearch</code> 斷言來模擬使用者的輸入、搜尋結果和選擇：</p>
 <pre><code class="language-php">test(&#39;console command&#39;, function () {
     $this-&gt;artisan(&#39;example&#39;)
         -&gt;expectsSearch(&#39;您的名字是什麼？&#39;, search: &#39;Tay&#39;, answers: [

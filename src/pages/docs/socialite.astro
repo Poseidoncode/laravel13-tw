@@ -35,7 +35,7 @@ const content = `<h1>Laravel Socialite</h1>
 <p>升級到 Socialite 的新主要版本時，重要的是您要仔細查閱 <a href="https://github.com/laravel/socialite/blob/master/UPGRADE.md">升級指南</a>。</p>
 <p><a name="configuration"></a></p>
 <h2>配置</h2>
-<p>在使用 Socialite 之前，您需要添加應用程式所使用的 OAuth 提供者的憑證。通常，可以透過在您將要認證的服務的控制台中創建「開發者應用程式」來檢索這些憑證。</p>
+<p>在使用 Socialite 之前，您需要添加應用程式所使用的 OAuth 提供者的憑證。通常，可以透過在您將要認證的服務的控制台中建立「開發者應用程式」來檢索這些憑證。</p>
 <p>這些憑證應放置在應用程式的 <code>config/services.php</code> 配置檔案中，並應使用 <code>facebook</code>、<code>x</code>、<code>linkedin-openid</code>、<code>google</code>、<code>github</code>、<code>gitlab</code>、<code>bitbucket</code>、<code>slack</code> 或 <code>slack-openid</code> 鍵，具體取決於您應用程式需要的提供者：</p>
 <pre><code class="language-php">'github' => [
     'client_id' => env('GITHUB_CLIENT_ID'),
@@ -51,7 +51,7 @@ const content = `<h1>Laravel Socialite</h1>
 <h2>認證</h2>
 <p><a name="routing"></a></p>
 <h3>路由</h3>
-<p>要使用 OAuth 提供者認證使用者，您需要兩個路由：一個用於將使用者重定向到 OAuth 提供者，另一個用於在認證後接收來自提供者的回調。以下範例路由演示了這兩個路由的實現：</p>
+<p>要使用 OAuth 提供者認證使用者，您需要兩個路由：一個用於將使用者重定向到 OAuth 提供者，另一個用於在認證後接收來自提供者的回呼。以下範例路由演示了這兩個路由的實現：</p>
 <pre><code class="language-php">use Laravel\\Socialite\\Socialite;
 
 Route::get('/auth/redirect', function () {
@@ -67,7 +67,7 @@ Route::get('/auth/callback', function () {
 <p><code>Socialite</code> 外觀提供的 <code>redirect</code> 方法負責將使用者重定向到 OAuth 提供者，而 <code>user</code> 方法將檢查傳入的請求，並在使用者批准認證請求後從提供者檢索使用者的資訊。</p>
 <p><a name="authentication-and-storage"></a></p>
 <h3>認證與儲存</h3>
-<p>一旦從 OAuth 提供者檢索到使用者，您就可以判斷該使用者是否存在於應用程式的資料庫中，並<a href="/docs/authentication#authenticate-a-user-instance">認證該使用者</a>。如果使用者不存在於應用程式的資料庫中，您通常會在資料庫中創建一個新記錄來代表該使用者：</p>
+<p>一旦從 OAuth 提供者檢索到使用者，您就可以判斷該使用者是否存在於應用程式的資料庫中，並<a href="/docs/authentication#authenticate-a-user-instance">認證該使用者</a>。如果使用者不存在於應用程式的資料庫中，您通常會在資料庫中建立一個新記錄來代表該使用者：</p>
 <pre><code class="language-php">use App\\Models\\User;
 use Illuminate\\Support\\Facades\\Auth;
 use Laravel\\Socialite\\Socialite;
@@ -140,7 +140,7 @@ return Socialite::driver('google')
 </blockquote>
 <p><a name="retrieving-user-details"></a></p>
 <h2>檢索使用者詳細資訊</h2>
-<p>使用者被重定向回應用程式的認證回調路由後，您可以使用 Socialite 的 <code>user</code> 方法檢索使用者的詳細資訊。<code>user</code> 方法返回的使用者物件提供了各種屬性和方法，您可以用它們來在自己的資料庫中儲存使用者的資訊。</p>
+<p>使用者被重定向回應用程式的認證回呼路由後，您可以使用 Socialite 的 <code>user</code> 方法檢索使用者的詳細資訊。<code>user</code> 方法返回的使用者物件提供了各種屬性和方法，您可以用它們來在自己的資料庫中儲存使用者的資訊。</p>
 <p>根據您進行認證的 OAuth 提供者支援 OAuth 1.0 還是 OAuth 2.0，此物件上可能有不同的屬性和方法：</p>
 <pre><code class="language-php">use Laravel\\Socialite\\Socialite;
 
@@ -196,8 +196,8 @@ test('user is redirected to github', function () {
 });
 </code></pre>
 <p><a name="faking-the-callback"></a></p>
-<h4>模擬回調</h4>
-<p>要測試應用程式的回調路由，您可以呼叫 <code>fake</code> 方法並提供一個 <code>User</code> 實例，該實例應在您的應用程式向提供者請求使用者詳細資訊時返回。<code>User</code> 實例可以使用 <code>fake</code> 方法創建：</p>
+<h4>模擬回呼</h4>
+<p>要測試應用程式的回呼路由，您可以呼叫 <code>fake</code> 方法並提供一個 <code>User</code> 實例，該實例應在您的應用程式向提供者請求使用者詳細資訊時返回。<code>User</code> 實例可以使用 <code>fake</code> 方法建立：</p>
 <pre><code class="language-php">use Laravel\\Socialite\\Socialite;
 use Laravel\\Socialite\\Two\\User;
 

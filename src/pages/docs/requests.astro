@@ -456,7 +456,7 @@ return redirect('/form')->withInput(
 <h3>Cookies</h3>
 <p><a name="retrieving-cookies-from-requests"></a></p>
 <h4>從請求中檢索 Cookies</h4>
-<p>Laravel 框架創建的所有 Cookie 都是加密的，並使用認證碼簽署，這意味著如果它們被客戶端更改，它們將被視為無效。要從請求中檢索 Cookie 值，請使用 <code>Illuminate\\Http\\Request</code> 實例上的 <code>cookie</code> 方法：</p>
+<p>Laravel 框架建立的所有 Cookie 都是加密的，並使用認證碼簽署，這意味著如果它們被客戶端更改，它們將被視為無效。要從請求中檢索 Cookie 值，請使用 <code>Illuminate\\Http\\Request</code> 實例上的 <code>cookie</code> 方法：</p>
 <pre><code class="language-php">$value = $request->cookie('name');
 </code></pre>
 <p><a name="input-trimming-and-normalization"></a></p>

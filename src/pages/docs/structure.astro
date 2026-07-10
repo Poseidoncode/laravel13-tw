@@ -68,7 +68,7 @@ const content = `<h1>目錄結構</h1>
 <p><a name="the-storage-directory"></a></p>
 <h3>Storage 目錄</h3>
 <p><code>storage</code> 目錄包含您的日誌、編譯的 Blade 模板、基於檔案的 Session、檔案快取以及框架生成的其他檔案。此目錄分為 <code>app</code>、<code>framework</code> 和 <code>logs</code> 目錄。<code>app</code> 目錄可用於儲存應用程式生成的任何檔案。<code>framework</code> 目錄用於儲存框架生成的檔案和快取。最後，<code>logs</code> 目錄包含您應用程式的日誌檔案。</p>
-<p><code>storage/app/public</code> 目錄可用於儲存用戶生成的檔案，如應可公開存取的個人資料頭像。您應該在 <code>public/storage</code> 創建一個指向此目錄的符號連結。您可以使用 <code>php artisan storage:link</code> Artisan 命令創建該連結。</p>
+<p><code>storage/app/public</code> 目錄可用於儲存使用者生成的檔案，如應可公開存取的個人資料頭像。您應該在 <code>public/storage</code> 建立一個指向此目錄的符號連結。您可以使用 <code>php artisan storage:link</code> Artisan 命令建立該連結。</p>
 <p><a name="the-tests-directory"></a></p>
 <h3>Tests 目錄</h3>
 <p><code>tests</code> 目錄包含您的自動化測試。開箱即用提供了範例 <a href="https://pestphp.com">Pest</a> 或 <a href="https://phpunit.de/">PHPUnit</a> 單元測試和功能測試。每個測試類別應以 <code>Test</code> 後綴結尾。您可以使用 <code>/vendor/bin/pest</code> 或 <code>/vendor/bin/phpunit</code> 命令運行測試。或者，如果您想要更詳細和美觀的測試結果表示，可以使用 <code>php artisan test</code> Artisan 命令運行測試。</p>
@@ -86,13 +86,13 @@ const content = `<h1>目錄結構</h1>
 </blockquote>
 <p><a name="the-broadcasting-directory"></a></p>
 <h3>Broadcasting 目錄</h3>
-<p><code>Broadcasting</code> 目錄包含您應用程式的所有廣播頻道類別。這些類別使用 <code>make:channel</code> 命令生成。此目錄預設不存在，但當您創建第一個頻道時將為您創建。要了解更多關於頻道的資訊，請查看<a href="/docs/broadcasting">事件廣播</a>文檔。</p>
+<p><code>Broadcasting</code> 目錄包含您應用程式的所有廣播頻道類別。這些類別使用 <code>make:channel</code> 命令生成。此目錄預設不存在，但當您建立第一個頻道時將為您建立。要了解更多關於頻道的資訊，請查看<a href="/docs/broadcasting">事件廣播</a>文檔。</p>
 <p><a name="the-console-directory"></a></p>
 <h3>Console 目錄</h3>
 <p><code>Console</code> 目錄包含您應用程式的所有自訂 Artisan 命令。這些命令可以使用 <code>make:command</code> 命令生成。</p>
 <p><a name="the-events-directory"></a></p>
 <h3>Events 目錄</h3>
-<p>此目錄預設不存在，但 <code>event:generate</code> 和 <code>make:event</code> Artisan 命令將為您創建。<code>Events</code> 目錄包含<a href="/docs/events">事件類別</a>。事件可用於提醒應用程式的其他部分已發生給定操作，提供了極大的靈活性和解耦。</p>
+<p>此目錄預設不存在，但 <code>event:generate</code> 和 <code>make:event</code> Artisan 命令將為您建立。<code>Events</code> 目錄包含<a href="/docs/events">事件類別</a>。事件可用於提醒應用程式的其他部分已發生給定操作，提供了極大的靈活性和解耦。</p>
 <p><a name="the-exceptions-directory"></a></p>
 <h3>Exceptions 目錄</h3>
 <p><code>Exceptions</code> 目錄包含您應用程式的所有自訂異常。這些異常可以使用 <code>make:exception</code> 命令生成。</p>
@@ -101,29 +101,29 @@ const content = `<h1>目錄結構</h1>
 <p><code>Http</code> 目錄包含您的控制器、中介層和表單請求。幾乎所有處理進入您應用程式請求的邏輯都將置於此目錄中。</p>
 <p><a name="the-jobs-directory"></a></p>
 <h3>Jobs 目錄</h3>
-<p>此目錄預設不存在，但如果您執行 <code>make:job</code> Artisan 命令，將為您創建。<code>Jobs</code> 目錄包含您應用程式的<a href="/docs/queues">可佇列化任務</a>。任務可以由您的應用程式佇列化，或在當前請求生命週期內同步運行。在當前請求期間同步運行的任務有時被稱為「命令」，因為它們是<a href="https://en.wikipedia.org/wiki/Command_pattern">命令模式</a>的實現。</p>
+<p>此目錄預設不存在，但如果您執行 <code>make:job</code> Artisan 命令，將為您建立。<code>Jobs</code> 目錄包含您應用程式的<a href="/docs/queues">可佇列化任務</a>。任務可以由您的應用程式佇列化，或在當前請求生命週期內同步運行。在當前請求期間同步運行的任務有時被稱為「命令」，因為它們是<a href="https://en.wikipedia.org/wiki/Command_pattern">命令模式</a>的實現。</p>
 <p><a name="the-listeners-directory"></a></p>
 <h3>Listeners 目錄</h3>
-<p>此目錄預設不存在，但如果您執行 <code>event:generate</code> 或 <code>make:listener</code> Artisan 命令，將為您創建。<code>Listeners</code> 目錄包含處理您<a href="/docs/events">事件</a>的類別。事件監聽器接收一個事件實例並執行邏輯以回應事件的觸發。例如，<code>UserRegistered</code> 事件可能由 <code>SendWelcomeEmail</code> 監聽器處理。</p>
+<p>此目錄預設不存在，但如果您執行 <code>event:generate</code> 或 <code>make:listener</code> Artisan 命令，將為您建立。<code>Listeners</code> 目錄包含處理您<a href="/docs/events">事件</a>的類別。事件監聽器接收一個事件實例並執行邏輯以回應事件的觸發。例如，<code>UserRegistered</code> 事件可能由 <code>SendWelcomeEmail</code> 監聽器處理。</p>
 <p><a name="the-mail-directory"></a></p>
 <h3>Mail 目錄</h3>
-<p>此目錄預設不存在，但如果您執行 <code>make:mail</code> Artisan 命令，將為您創建。<code>Mail</code> 目錄包含您應用程式發送的所有<a href="/docs/mail">代表電子郵件的類別</a>。郵件物件允許您將構建電子郵件的所有邏輯封裝在一個簡單的類別中，可以使用 <code>Mail::send</code> 方法發送。</p>
+<p>此目錄預設不存在，但如果您執行 <code>make:mail</code> Artisan 命令，將為您建立。<code>Mail</code> 目錄包含您應用程式發送的所有<a href="/docs/mail">代表電子郵件的類別</a>。郵件物件允許您將建立電子郵件的所有邏輯封裝在一個簡單的類別中，可以使用 <code>Mail::send</code> 方法發送。</p>
 <p><a name="the-models-directory"></a></p>
 <h3>Models 目錄</h3>
 <p><code>Models</code> 目錄包含您所有的 <a href="/docs/eloquent">Eloquent 模型類別</a>。Laravel 包含的 Eloquent ORM 提供了一個優雅、簡單的 ActiveRecord 實現，用於與資料庫互動。每個資料庫表都有一個對應的「模型」，用於與該表互動。模型允許您查詢表中的資料，以及向表中插入新記錄。</p>
 <p><a name="the-notifications-directory"></a></p>
 <h3>Notifications 目錄</h3>
-<p>此目錄預設不存在，但如果您執行 <code>make:notification</code> Artisan 命令，將為您創建。<code>Notifications</code> 目錄包含應用程式發送的所有「事務性」<a href="/docs/notifications">通知</a>，例如關於應用程式內行的事件的簡單通知。Laravel 的通知功能抽象了透過多種驅動程式（如電子郵件、Slack、SMS 或儲存在資料庫中）發送通知。</p>
+<p>此目錄預設不存在，但如果您執行 <code>make:notification</code> Artisan 命令，將為您建立。<code>Notifications</code> 目錄包含應用程式發送的所有「事務性」<a href="/docs/notifications">通知</a>，例如關於應用程式內行的事件的簡單通知。Laravel 的通知功能抽象了透過多種驅動程式（如電子郵件、Slack、SMS 或儲存在資料庫中）發送通知。</p>
 <p><a name="the-policies-directory"></a></p>
 <h3>Policies 目錄</h3>
-<p>此目錄預設不存在，但如果您執行 <code>make:policy</code> Artisan 命令，將為您創建。<code>Policies</code> 目錄包含您應用程式的<a href="/docs/authorization">授權策略類別</a>。策略用於判斷用戶是否可以對資源執行給定操作。</p>
+<p>此目錄預設不存在，但如果您執行 <code>make:policy</code> Artisan 命令，將為您建立。<code>Policies</code> 目錄包含您應用程式的<a href="/docs/authorization">授權策略類別</a>。策略用於判斷使用者是否可以對資源執行給定操作。</p>
 <p><a name="the-providers-directory"></a></p>
 <h3>Providers 目錄</h3>
 <p><code>Providers</code> 目錄包含您應用程式的所有<a href="/docs/providers">服務提供者</a>。服務提供者透過在服務容器中綁定服務、註冊事件或執行任何其他任務來為傳入請求準備應用程式，從而引導您的應用程式。</p>
 <p>在全新的 Laravel 應用程式中，此目錄已包含 <code>AppServiceProvider</code>。您可以根據需要自由將自己的提供者添加到此目錄中。</p>
 <p><a name="the-rules-directory"></a></p>
 <h3>Rules 目錄</h3>
-<p>此目錄預設不存在，但如果您執行 <code>make:rule</code> Artisan 命令，將為您創建。<code>Rules</code> 目錄包含您應用程式的自訂驗證規則物件。規則用於將複雜的驗證邏輯封裝在一個簡單的物件中。更多資訊，請查看<a href="/docs/validation">驗證文檔</a>。</p>
+<p>此目錄預設不存在，但如果您執行 <code>make:rule</code> Artisan 命令，將為您建立。<code>Rules</code> 目錄包含您應用程式的自訂驗證規則物件。規則用於將複雜的驗證邏輯封裝在一個簡單的物件中。更多資訊，請查看<a href="/docs/validation">驗證文檔</a>。</p>
 `;
 ---
 

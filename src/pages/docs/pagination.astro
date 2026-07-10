@@ -8,7 +8,7 @@ const content = `<h1>資料庫：分頁</h1>
 <li><a href="#paginating-query-builder-results">分頁查詢建構器結果</a></li>
 <li><a href="#paginating-eloquent-results">分頁 Eloquent 結果</a></li>
 <li><a href="#cursor-pagination">游標分頁</a></li>
-<li><a href="#manually-creating-a-paginator">手動創建分頁器</a></li>
+<li><a href="#manually-creating-a-paginator">手動建立分頁器</a></li>
 <li><a href="#customizing-pagination-urls">自訂分頁 URL</a></li>
 </ul>
 </li>
@@ -94,11 +94,11 @@ $users = User::where('votes', '>', 100)->paginate(
 </code></pre>
 <p><a name="cursor-pagination"></a></p>
 <h3>游標分頁</h3>
-<p>雖然 <code>paginate</code> 和 <code>simplePaginate</code> 使用 SQL 的「offset」子句建立查詢，但游標分頁透過構建比較查詢中包含的有序列值的「where」子句來運作，在所有 Laravel 分頁方法中提供最高效的資料庫效能。這種分頁方式特別適合大型資料集和「無限」滾動使用者介面。</p>
+<p>雖然 <code>paginate</code> 和 <code>simplePaginate</code> 使用 SQL 的「offset」子句建立查詢，但游標分頁透過建立比較查詢中包含的有序列值的「where」子句來運作，在所有 Laravel 分頁方法中提供最高效的資料庫效能。這種分頁方式特別適合大型資料集和「無限」滾動使用者介面。</p>
 <p>與基於偏移量的分頁（在分頁器生成的 URL 的查詢字串中包含頁碼）不同，基於游標的分頁在查詢字串中放置一個「游標」字串。游標是一個編碼字串，包含下一個分頁查詢應開始分頁的位置以及應分頁的方向：</p>
 <pre><code class="language-text">http://localhost/users?cursor=eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
 </code></pre>
-<p>您可以透過查詢建構器提供的 <code>cursorPaginate</code> 方法創建一個基於游標的分頁器實例。此方法返回 <code>Illuminate\\Pagination\\CursorPaginator</code> 的一個實例：</p>
+<p>您可以透過查詢建構器提供的 <code>cursorPaginate</code> 方法建立一個基於游標的分頁器實例。此方法返回 <code>Illuminate\\Pagination\\CursorPaginator</code> 的一個實例：</p>
 <pre><code class="language-php">$users = DB::table('users')->orderBy('id')->cursorPaginate(15);
 </code></pre>
 <p>一旦您檢索到游標分頁器實例，您可以像使用 <code>paginate</code> 和 <code>simplePaginate</code> 方法一樣<a href="#displaying-pagination-results">顯示分頁結果</a>。有關游標分頁器提供的實例方法的更多資訊，請查閱<a href="#cursor-paginator-instance-methods">游標分頁器實例方法文件</a>。</p>
@@ -128,13 +128,13 @@ select * from users where id > 15 order by id asc limit 15;
 <li>不支援帶有參數的查詢表達式。</li>
 </ul>
 <p><a name="manually-creating-a-paginator"></a></p>
-<h3>手動創建分頁器</h3>
-<p>有時您可能希望手動創建一個分頁器實例，並傳遞給它一個您已經在記憶體中的項目陣列。您可以透過創建 <code>Illuminate\\Pagination\\Paginator</code>、<code>Illuminate\\Pagination\\LengthAwarePaginator</code> 或 <code>Illuminate\\Pagination\\CursorPaginator</code> 實例來實現這一點，具體取決於您的需求。</p>
+<h3>手動建立分頁器</h3>
+<p>有時您可能希望手動建立一個分頁器實例，並傳遞給它一個您已經在記憶體中的項目陣列。您可以透過建立 <code>Illuminate\\Pagination\\Paginator</code>、<code>Illuminate\\Pagination\\LengthAwarePaginator</code> 或 <code>Illuminate\\Pagination\\CursorPaginator</code> 實例來實現這一點，具體取決於您的需求。</p>
 <p><code>Paginator</code> 和 <code>CursorPaginator</code> 類別不需要知道結果集中的項目總數；但是，正因為如此，這些類別沒有用於檢索最後一頁索引的方法。<code>LengthAwarePaginator</code> 接受幾乎與 <code>Paginator</code> 相同的參數；但是，它需要結果集中項目總數的計數。</p>
 <p>換句話說，<code>Paginator</code> 對應查詢建構器上的 <code>simplePaginate</code> 方法，<code>CursorPaginator</code> 對應 <code>cursorPaginate</code> 方法，<code>LengthAwarePaginator</code> 對應 <code>paginate</code> 方法。</p>
 <blockquote>
 <p>[!WARNING]
-手動創建分頁器實例時，您應該手動「切片」傳遞給分頁器的結果陣列。如果您不確定如何做到這一點，請查看 <a href="https://secure.php.net/manual/en/function.array-slice.php">array_slice</a> PHP 函數。</p>
+手動建立分頁器實例時，您應該手動「切片」傳遞給分頁器的結果陣列。如果您不確定如何做到這一點，請查看 <a href="https://secure.php.net/manual/en/function.array-slice.php">array_slice</a> PHP 函數。</p>
 </blockquote>
 <p><a name="customizing-pagination-urls"></a></p>
 <h3>自訂分頁 URL</h3>
@@ -197,7 +197,7 @@ Route::get('/users', function () {
     return User::paginate();
 });
 </code></pre>
-<p>來自分頁器的 JSON 將包含元資訊，例如 <code>total</code>、<code>current_page</code>、<code>last_page</code> 等。結果記錄可透過 JSON 陣列中的 <code>data</code> 鍵取得。以下是從路由返回分頁器實例所創建的 JSON 範例：</p>
+<p>來自分頁器的 JSON 將包含元資訊，例如 <code>total</code>、<code>current_page</code>、<code>last_page</code> 等。結果記錄可透過 JSON 陣列中的 <code>data</code> 鍵取得。以下是從路由返回分頁器實例所建立的 JSON 範例：</p>
 <pre><code class="language-json">{
    "total": 50,
    "per_page": 15,
@@ -296,7 +296,7 @@ public function boot(): void
 </tr>
 <tr>
 <td><code>$paginator->getUrlRange($start, $end)</code></td>
-<td>創建一個分頁 URL 範圍。</td>
+<td>建立一個分頁 URL 範圍。</td>
 </tr>
 <tr>
 <td><code>$paginator->hasPages()</code></td>
