@@ -180,7 +180,7 @@ function isSectionActive(section: typeof sections[number]): boolean {
 }
 ---
 
-<div class="px-4">
+<div class="px-4 sidebar-container" data-prefix={prefix}>
   <!-- Navigation -->
   <nav class="space-y-1">
     {
@@ -198,6 +198,7 @@ function isSectionActive(section: typeof sections[number]): boolean {
               }`}
               aria-expanded={sectionActive ? 'true' : 'false'}
               data-section={prefixedId}
+              type="button"
             >
               <span>{section.title}</span>
               <svg
@@ -220,7 +221,7 @@ function isSectionActive(section: typeof sections[number]): boolean {
                       href={`/docs/${item.slug}`}
                       class={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150 ${
                         isActive
-                          ? 'bg-accent text-white font-medium'
+                          ? 'bg-accent text-white font-medium sidebar-active-item'
                           : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
                       }`}
                     >
@@ -237,67 +238,105 @@ function isSectionActive(section: typeof sections[number]): boolean {
   </nav>
 </div>
 
-<script>
-  // Determine instance type from first toggle's data-section attribute
-  // ("mobile-" prefix = mobile drawer instance)
-  const firstToggle = document.querySelector('.sidebar-section-toggle');
-  const prefix = firstToggle ? (firstToggle.dataset.section || '') : '';
-  const isMobile = prefix.startsWith('mobile-');
-  const STORAGE_KEY = 'sidebar-sections' + (isMobile ? '-mobile' : '');
+<script is:inline>
+  (function() {
+    const containers = document.querySelectorAll('.sidebar-container');
+    const container = containers[containers.length - 1];
+    if (!container) return;
 
-  function loadSavedState() {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  }
+    const prefix = container.getAttribute('data-prefix') || '';
+    const STORAGE_KEY = 'sidebar-sections' + (prefix ? '-' + prefix.replace(/-$/, '') : '');
+    const SCROLL_KEY = 'sidebar-scroll-position' + (prefix ? '-' + prefix.replace(/-$/, '') : '');
 
-  function saveState(state) {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {}
-  }
+    const scrollContainer = container.closest('aside') || container.closest('.overflow-y-auto');
 
-  const savedState = loadSavedState();
-
-  document.querySelectorAll('.sidebar-section-toggle').forEach((button) => {
-    const qualifiedId = button.dataset.section;
-    const content = document.getElementById(`section-${qualifiedId}`);
-    const icon = button.querySelector('svg');
-
-    if (qualifiedId && qualifiedId in savedState) {
-      const shouldExpand = savedState[qualifiedId];
-      const currentExpanded = button.getAttribute('aria-expanded') === 'true';
-
-      if (shouldExpand !== currentExpanded) {
-        if (content) content.classList.toggle('hidden');
-        button.setAttribute('aria-expanded', String(shouldExpand));
-        if (icon) icon.classList.toggle('rotate-180');
-        button.classList.toggle('text-accent', shouldExpand);
-        button.classList.toggle('bg-accent-light/50', shouldExpand);
-        button.classList.toggle('text-text-tertiary', !shouldExpand);
+    function loadSavedState() {
+      try {
+        const saved = sessionStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
       }
     }
 
-    button.addEventListener('click', () => {
-      const content = document.getElementById(`section-${qualifiedId}`);
+    function saveState(state) {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch {}
+    }
+
+    const savedState = loadSavedState();
+    const toggles = container.querySelectorAll('.sidebar-section-toggle');
+
+    toggles.forEach((button) => {
+      const qualifiedId = button.dataset.section;
+      const content = container.querySelector(`#section-${qualifiedId}`);
       const icon = button.querySelector('svg');
-      const expanded = button.getAttribute('aria-expanded') === 'true';
-      const next = !expanded;
 
-      if (content) content.classList.toggle('hidden');
-      button.setAttribute('aria-expanded', String(next));
-      if (icon) icon.classList.toggle('rotate-180');
+      if (qualifiedId && qualifiedId in savedState) {
+        const shouldExpand = savedState[qualifiedId];
+        const currentExpanded = button.getAttribute('aria-expanded') === 'true';
 
-      button.classList.toggle('text-accent', next);
-      button.classList.toggle('bg-accent-light/50', next);
-      button.classList.toggle('text-text-tertiary', !next);
+        if (shouldExpand !== currentExpanded) {
+          if (content) content.classList.toggle('hidden');
+          button.setAttribute('aria-expanded', String(shouldExpand));
+          if (icon) icon.classList.toggle('rotate-180');
+          button.classList.toggle('text-accent', shouldExpand);
+          button.classList.toggle('bg-accent-light/50', shouldExpand);
+          button.classList.toggle('text-text-tertiary', !shouldExpand);
+        }
+      }
 
-      const state = loadSavedState();
-      state[qualifiedId] = next;
-      saveState(state);
+      button.addEventListener('click', () => {
+        const content = container.querySelector(`#section-${qualifiedId}`);
+        const icon = button.querySelector('svg');
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        const next = !expanded;
+
+        if (content) content.classList.toggle('hidden');
+        button.setAttribute('aria-expanded', String(next));
+        if (icon) icon.classList.toggle('rotate-180');
+
+        button.classList.toggle('text-accent', next);
+        button.classList.toggle('bg-accent-light/50', next);
+        button.classList.toggle('text-text-tertiary', !next);
+
+        const state = loadSavedState();
+        state[qualifiedId] = next;
+        saveState(state);
+      });
     });
-  });
+
+    // 恢復滾動位置與監聽滾動事件
+    if (scrollContainer) {
+      try {
+        const savedScrollTop = sessionStorage.getItem(SCROLL_KEY);
+        if (savedScrollTop !== null) {
+          scrollContainer.scrollTop = parseInt(savedScrollTop, 10);
+        } else {
+          // 如果沒有保存的滾動位置，則自動滾動到 active 的項目
+          const activeLink = container.querySelector('.sidebar-active-item');
+          if (activeLink) {
+            // 使用 setTimeout 確保 DOM 展開完成後能準確定位
+            setTimeout(() => {
+              activeLink.scrollIntoView({ block: 'nearest' });
+            }, 50);
+          }
+        }
+      } catch (e) {}
+
+      // 監聽滾動，將滾動高度記錄到 sessionStorage
+      let scrollTimeout;
+      scrollContainer.addEventListener('scroll', () => {
+        if (scrollTimeout) {
+          clearTimeout(scrollTimeout);
+        }
+        scrollTimeout = setTimeout(() => {
+          try {
+            sessionStorage.setItem(SCROLL_KEY, String(scrollContainer.scrollTop));
+          } catch (e) {}
+        }, 100);
+      });
+    }
+  })();
 </script>

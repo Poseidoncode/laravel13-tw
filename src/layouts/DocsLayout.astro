@@ -17,7 +17,7 @@ const { title, description, currentPath = '' } = Astro.props;
     <aside
       id="sidebar"
       class="w-64 flex-shrink-0 bg-bg-secondary border-r border-border overflow-y-auto hidden lg:block"
-      style="position: sticky; top: 4rem; height: calc(100vh - 4rem);"
+      style="position: sticky; top: 4rem; height: calc(100vh - 4rem); scrollbar-gutter: stable;"
     >
       <div class="py-4">
         <Sidebar currentPath={currentPath} />
@@ -34,6 +34,7 @@ const { title, description, currentPath = '' } = Astro.props;
     <aside
       id="sidebar-drawer"
       class="fixed top-0 left-0 z-50 w-72 h-full bg-bg-secondary border-r border-border transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto"
+      style="scrollbar-gutter: stable;"
     >
       <div class="sticky top-0 z-10 bg-bg-secondary/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
         <span class="text-sm font-semibold text-text-primary">文檔目錄</span>
