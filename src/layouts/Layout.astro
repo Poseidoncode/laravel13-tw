@@ -34,6 +34,7 @@ const { title, description = 'Laravel 13.x 繁體中文文檔' } = Astro.props;
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
 </head>
 <body>
   <!-- ─── Skip to Content ─── -->
@@ -80,7 +81,7 @@ const { title, description = 'Laravel 13.x 繁體中文文檔' } = Astro.props;
 
         <!-- GitHub -->
         <a
-          href="https://github.com/laravel13-tw/laravel13-tw"
+          href="https://github.com/Poseidoncode/laravel13-tw"
           class="flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent transition-colors duration-200 no-underline hover:no-underline"
           target="_blank"
           rel="noopener"
@@ -127,7 +128,7 @@ const { title, description = 'Laravel 13.x 繁體中文文檔' } = Astro.props;
             原始文件
           </a>
           <span aria-hidden="true">·</span>
-          <a href="https://github.com/laravel13-tw/laravel13-tw" class="text-text-tertiary hover:text-accent no-underline hover:underline" target="_blank" rel="noopener">
+          <a href="https://github.com/Poseidoncode/laravel13-tw" class="text-text-tertiary hover:text-accent no-underline hover:underline" target="_blank" rel="noopener">
             GitHub
           </a>
         </div>
@@ -190,6 +191,80 @@ const { title, description = 'Laravel 13.x 繁體中文文檔' } = Astro.props;
       const trigger = document.getElementById('search-trigger');
       trigger?.click();
     });
+
+    // ─── Copy-to-clipboard for all pre code blocks ───
+    function initCopyButtons() {
+      // Skip if already enhanced (CodeBlock component handles its own)
+      const pres = document.querySelectorAll('article pre, main pre');
+
+      pres.forEach((pre) => {
+        // Skip if this pre is inside a .code-block (CodeBlock handles it)
+        if (pre.closest('.code-block')) return;
+        // Skip if already has a copy button
+        if (pre.querySelector('.global-copy-btn')) return;
+
+        const code = pre.querySelector('code');
+        if (!code) return;
+
+        const text = code.textContent || '';
+
+        // Create button
+        const btn = document.createElement('button');
+        btn.className = 'global-copy-btn';
+        btn.setAttribute('aria-label', '複製程式碼');
+        btn.type = 'button';
+
+        btn.innerHTML = `
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+          </svg>
+          <span class="copy-label">複製</span>
+        `;
+
+        pre.style.position = 'relative';
+        pre.appendChild(btn);
+
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            showCopied(btn);
+          } catch {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showCopied(btn);
+          }
+        });
+      });
+    }
+
+    function showCopied(btn) {
+      const label = btn.querySelector('.copy-label');
+      const icon = btn.querySelector('svg');
+      if (!label) return;
+
+      const origText = label.textContent;
+      if (icon) icon.style.display = 'none';
+      label.textContent = '✓ 已複製';
+
+      setTimeout(() => {
+        if (icon) icon.style.display = '';
+        label.textContent = origText;
+      }, 2000);
+    }
+
+    // Run on initial load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCopyButtons);
+    } else {
+      initCopyButtons();
+    }
   </script>
 </body>
 </html>
