@@ -1,0 +1,1560 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>廣播</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#quickstart">快速入門</a></li>
+<li><a href="#server-side-installation">伺服器端安裝</a><ul>
+<li><a href="#reverb">Reverb</a></li>
+<li><a href="#pusher-channels">Pusher Channels</a></li>
+<li><a href="#ably">Ably</a></li>
+</ul>
+</li>
+<li><a href="#client-side-installation">客戶端安裝</a><ul>
+<li><a href="#client-reverb">Reverb</a></li>
+<li><a href="#client-pusher-channels">Pusher Channels</a></li>
+<li><a href="#client-ably">Ably</a></li>
+</ul>
+</li>
+<li><a href="#concept-overview">概念概述</a><ul>
+<li><a href="#using-example-application">使用範例應用程式</a></li>
+</ul>
+</li>
+<li><a href="#defining-broadcast-events">定義廣播事件</a><ul>
+<li><a href="#broadcast-name">廣播名稱</a></li>
+<li><a href="#broadcast-data">廣播資料</a></li>
+<li><a href="#broadcast-queue">廣播佇列</a></li>
+<li><a href="#broadcast-conditions">廣播條件</a></li>
+<li><a href="#broadcasting-and-database-transactions">廣播和資料庫交易</a></li>
+</ul>
+</li>
+<li><a href="#authorizing-channels">授權頻道</a><ul>
+<li><a href="#defining-authorization-callbacks">定義授權回呼</a></li>
+<li><a href="#defining-channel-classes">定義頻道類別</a></li>
+</ul>
+</li>
+<li><a href="#broadcasting-events">廣播事件</a><ul>
+<li><a href="#only-to-others">僅向其他人廣播</a></li>
+<li><a href="#customizing-the-connection">自訂連接</a></li>
+<li><a href="#anonymous-events">匿名事件</a></li>
+<li><a href="#rescuing-broadcasts">救援廣播</a></li>
+</ul>
+</li>
+<li><a href="#receiving-broadcasts">接收廣播</a><ul>
+<li><a href="#listening-for-events">監聽事件</a></li>
+<li><a href="#leaving-a-channel">離開頻道</a></li>
+<li><a href="#namespaces">命名空間</a></li>
+<li><a href="#using-react-or-vue">使用 React、Vue 或 Svelte</a></li>
+</ul>
+</li>
+<li><a href="#presence-channels">在線頻道</a><ul>
+<li><a href="#authorizing-presence-channels">授權在線頻道</a></li>
+<li><a href="#joining-presence-channels">加入在線頻道</a></li>
+<li><a href="#broadcasting-to-presence-channels">向在線頻道廣播</a></li>
+</ul>
+</li>
+<li><a href="#model-broadcasting">模型廣播</a><ul>
+<li><a href="#model-broadcasting-conventions">模型廣播慣例</a></li>
+<li><a href="#listening-for-model-broadcasts">監聽模型廣播</a></li>
+</ul>
+</li>
+<li><a href="#client-events">客戶端事件</a></li>
+<li><a href="#notifications">通知</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>在許多現代 Web 應用程式中，WebSocket 被用於實現即時、即時更新的使用者介面。當伺服器上的某些資料被更新時，通常會透過 WebSocket 連接發送一條訊息，由客戶端處理。WebSockets 提供了一種更有效率的替代方案，而不是不斷輪詢應用程式的伺服器以獲取應反映在 UI 中的資料更改。</p>
+<p>例如，想像您的應用程式能夠將使用者的資料匯出為 CSV 檔案並透過電子郵件將其發送給他們。但是，創建此 CSV 檔案需要幾分鐘時間，因此您選擇在<a href="/docs/queues">佇列作業</a>內創建並發送 CSV。當 CSV 已創建並透過電子郵件發送給使用者後，我們可以使用事件廣播來派發一個 <code>App\\Events\\UserDataExported</code> 事件，該事件由應用程式的 JavaScript 接收。一旦收到該事件，我們就可以向使用者顯示一條訊息，通知他們他們的 CSV 已透過電子郵件發送，而無需他們重新整理頁面。</p>
+<p>為了協助您構建這些類型的功能，Laravel 使得透過 WebSocket 連接「廣播」伺服器端 Laravel <a href="/docs/events">事件</a>變得非常簡單。廣播您的 Laravel 事件允許您在伺服器端 Laravel 應用程式和客戶端 JavaScript 應用程式之間共享相同的事件名稱和資料。</p>
+<p>廣播背後的核心概念很簡單：客戶端在前端連接到命名的頻道，而您的 Laravel 應用程式在後端向這些頻道廣播事件。這些事件可以包含您希望向前端提供的任何額外資料。</p>
+<p><a name="supported-drivers"></a></p>
+<h4>支援的驅動程式</h4>
+<p>預設情況下，Laravel 包含三個伺服器端廣播驅動程式供您選擇：<a href="https://reverb.laravel.com">Laravel Reverb</a>、<a href="https://pusher.com/channels">Pusher Channels</a> 和 <a href="https://ably.com">Ably</a>。</p>
+<blockquote>
+<p>[!NOTE]
+在深入了解事件廣播之前，請確保您已閱讀 Laravel 關於<a href="/docs/events">事件和監聽器</a>的文檔。</p>
+</blockquote>
+<p><a name="quickstart"></a></p>
+<h2>快速入門</h2>
+<p>預設情況下，新 Laravel 應用程式中未啟用廣播。您可以使用 <code>install:broadcasting</code> Artisan 命令來啟用廣播：</p>
+<pre><code class="language-shell">php artisan install:broadcasting
+</code></pre>
+<p><code>install:broadcasting</code> 命令將提示您選擇要使用哪個事件廣播服務。此外，它將創建 <code>config/broadcasting.php</code> 配置檔案和 <code>routes/channels.php</code> 檔案，您可以在其中註冊應用程式的廣播授權路由和回呼。</p>
+<p>Laravel 開箱即用支援多種廣播驅動程式：<a href="/docs/reverb">Laravel Reverb</a>、<a href="https://pusher.com/channels">Pusher Channels</a>、<a href="https://ably.com">Ably</a>，以及用於本地開發和調試的 <code>log</code> 驅動程式。此外，還包含一個 <code>null</code> 驅動程式，允許您在測試期間禁用廣播。在 <code>config/broadcasting.php</code> 配置檔案中為每個這些驅動程式包含了一個配置範例。</p>
+<p>應用程式的所有事件廣播配置都存儲在 <code>config/broadcasting.php</code> 配置檔案中。如果此檔案在您的應用程式中不存在，請不要擔心；當您運行 <code>install:broadcasting</code> Artisan 命令時，它將被創建。</p>
+<p><a name="quickstart-next-steps"></a></p>
+<h4>後續步驟</h4>
+<p>啟用事件廣播後，您就可以<a href="#defining-broadcast-events">了解更多關於定義廣播事件</a>和<a href="#listening-for-events">監聽事件</a>的資訊。如果您正在使用 Laravel 的 React、Vue 或 Svelte <a href="/docs/starter-kits">入門套件</a>，您可以使用 Echo 的 <a href="#using-react-or-vue">useEcho 鉤子</a>來監聽事件。</p>
+<blockquote>
+<p>[!NOTE]
+在廣播任何事件之前，您應該首先配置並運行<a href="/docs/queues">佇列工作者</a>。所有事件廣播都是透過佇列作業完成的，因此事件廣播不會嚴重影響應用程式的回應時間。</p>
+</blockquote>
+<p><a name="server-side-installation"></a></p>
+<h2>伺服器端安裝</h2>
+<p>要開始使用 Laravel 的事件廣播，我們需要在 Laravel 應用程式中進行一些配置，並安裝一些套件。</p>
+<p>事件廣播是由伺服器端廣播驅動程式完成的，該驅動程式廣播您的 Laravel 事件，以便 Laravel Echo（一個 JavaScript 函式庫）可以在瀏覽器客戶端中接收它們。別擔心——我們將逐步介紹安裝過程的每個部分。</p>
+<p><a name="reverb"></a></p>
+<h3>Reverb</h3>
+<p>要快速啟用 Laravel 廣播功能的支援，同時使用 Reverb 作為您的事件廣播器，請使用 <code>--reverb</code> 選項呼叫 <code>install:broadcasting</code> Artisan 命令。此 Artisan 命令將安裝 Reverb 所需的 Composer 和 NPM 套件，並使用適當的變數更新應用程式的 <code>.env</code> 檔案：</p>
+<pre><code class="language-shell">php artisan install:broadcasting --reverb
+
+[1459 more lines in file. Use offset=101 to continue.]
+</code></pre>
+<p><a name="reverb-manual-installation"></a></p>
+<h4>手動安裝</h4>
+<p>運行 <code>install:broadcasting</code> 命令時，系統會提示您安裝 <a href="/docs/reverb">Laravel Reverb</a>。當然，您也可以使用 Composer 套件管理器手動安裝 Reverb：</p>
+<pre><code class="language-shell">composer require laravel/reverb
+</code></pre>
+<p>安裝套件後，您可以運行 Reverb 的安裝命令來發佈配置、添加 Reverb 所需的環境變數，並在應用程式中啟用事件廣播：</p>
+<pre><code class="language-shell">php artisan reverb:install
+</code></pre>
+<p>您可以在 <a href="/docs/reverb">Reverb 文檔</a>中找到詳細的 Reverb 安裝和使用說明。</p>
+<p><a name="pusher-channels"></a></p>
+<h3>Pusher Channels</h3>
+<p>要快速啟用 Laravel 廣播功能的支援，同時使用 Pusher 作為您的事件廣播器，請使用 <code>--pusher</code> 選項呼叫 <code>install:broadcasting</code> Artisan 命令。此 Artisan 命令將提示您輸入 Pusher 憑據、安裝 Pusher PHP 和 JavaScript SDK，並使用適當的變數更新應用程式的 <code>.env</code> 檔案：</p>
+<pre><code class="language-shell">php artisan install:broadcasting --pusher
+</code></pre>
+<p><a name="pusher-manual-installation"></a></p>
+<h4>手動安裝</h4>
+<p>要手動安裝 Pusher 支援，您應該使用 Composer 套件管理器安裝 Pusher Channels PHP SDK：</p>
+<pre><code class="language-shell">composer require pusher/pusher-php-server
+</code></pre>
+<p>接下來，您應該在 <code>config/broadcasting.php</code> 配置檔案中配置 Pusher Channels 憑據。此檔案中已經包含了一個範例 Pusher Channels 配置，允許您快速指定您的金鑰、密鑰和應用程式 ID。通常，您應該在應用程式的 <code>.env</code> 檔案中配置 Pusher Channels 憑據：</p>
+<pre><code class="language-ini">PUSHER_APP_ID="your-pusher-app-id"
+PUSHER_APP_KEY="your-pusher-key"
+PUSHER_APP_SECRET="your-pusher-secret"
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME="https"
+PUSHER_APP_CLUSTER="mt1"
+</code></pre>
+<p><code>config/broadcasting.php</code> 檔案的 <code>pusher</code> 配置還允許您指定 Channels 支援的額外 <code>options</code>，例如叢集。</p>
+<p>然後，將 <code>BROADCAST_CONNECTION</code> 環境變數設定為 <code>pusher</code>：</p>
+<pre><code class="language-ini">BROADCAST_CONNECTION=pusher
+</code></pre>
+<p>最後，您可以安裝並配置 <a href="#client-side-installation">Laravel Echo</a>，它將在客戶端接收廣播事件。</p>
+<p><a name="ably"></a></p>
+<h3>Ably</h3>
+<blockquote>
+<p>[!NOTE]
+以下文檔討論了如何在「Pusher 相容」模式下使用 Ably。但是，Ably 團隊推薦並維護了一個廣播器和 Echo 客戶端，能夠利用 Ably 提供的獨特功能。有關使用 Ably 維護的驅動程式的更多資訊，請<a href="https://github.com/ably/laravel-broadcaster">查閱 Ably 的 Laravel 廣播器文檔</a>。</p>
+</blockquote>
+<p>要快速啟用 Laravel 廣播功能的支援，同時使用 <a href="https://ably.com">Ably</a> 作為您的事件廣播器，請使用 <code>--ably</code> 選項呼叫 <code>install:broadcasting</code> Artisan 命令。此 Artisan 命令將提示您輸入 Ably 憑據、安裝 Ably PHP 和 JavaScript SDK，並使用適當的變數更新應用程式的 <code>.env</code> 檔案：</p>
+<pre><code class="language-shell">php artisan install:broadcasting --ably
+</code></pre>
+<p><strong>在繼續之前，您應該在 Ably 應用程式設定中啟用 Pusher 協議支援。您可以在 Ably 應用程式設定儀表板的「Protocol Adapter Settings」部分中啟用此功能。</strong></p>
+<p><a name="ably-manual-installation"></a></p>
+<h4>手動安裝</h4>
+<p>要手動安裝 Ably 支援，您應該使用 Composer 套件管理器安裝 Ably PHP SDK：</p>
+<pre><code class="language-shell">composer require ably/ably-php
+</code></pre>
+<p>接下來，您應該在 <code>config/broadcasting.php</code> 配置檔案中配置 Ably 憑據。此檔案中已經包含了一個範例 Ably 配置，允許您快速指定您的金鑰。通常，應透過 <code>ABLY_KEY</code><a href="/docs/configuration#environment-configuration">環境變數</a>設定此值：</p>
+<pre><code class="language-ini">ABLY_KEY=your-ably-key
+</code></pre>
+<p>然後，將 <code>BROADCAST_CONNECTION</code> 環境變數設定為 <code>ably</code>：</p>
+<pre><code class="language-ini">BROADCAST_CONNECTION=ably
+</code></pre>
+<p>最後，您可以安裝並配置 <a href="#client-side-installation">Laravel Echo</a>，它將在客戶端接收廣播事件。</p>
+<p><a name="client-side-installation"></a></p>
+<h2>客戶端安裝</h2>
+<p><a name="client-reverb"></a></p>
+<h3>Reverb</h3>
+<p><a href="https://github.com/laravel/echo">Laravel Echo</a> 是一個 JavaScript 函式庫，它使訂閱頻道和監聽由伺服器端廣播驅動程式廣播的事件變得毫不費力。</p>
+<p>透過 <code>install:broadcasting</code> Artisan 命令安裝 Laravel Reverb 時，Reverb 和 Echo 的腳手架和配置將自動注入到您的應用程式中。但是，如果您希望手動配置 Laravel Echo，可以按照以下說明進行。</p>
+<p><a name="reverb-client-manual-installation"></a></p>
+<h4>手動安裝</h4>
+<p>要為應用程式的前端手動配置 Laravel Echo，首先安裝 <code>pusher-js</code> 套件，因為 Reverb 使用 Pusher 協議進行 WebSocket 訂閱、頻道和訊息：</p>
+<pre><code class="language-shell">npm install --save-dev laravel-echo pusher-js
+</code></pre>
+<p>安裝 Echo 後，您就可以在應用程式的 JavaScript 中創建一個新的 Echo 實例。一個很好的位置是 Laravel 框架附帶的 <code>resources/js/app.js</code> 檔案的底部：</p>
+<pre><code class="language-js">import Echo from 'laravel-echo';
+
+import Pusher from 'pusher-js';
+window.Pusher = Pusher;
+
+window.Echo = new Echo({
+    broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-react";
+
+configureEcho({
+    broadcaster: "reverb",
+    // key: import.meta.env.VITE_REVERB_APP_KEY,
+    // wsHost: import.meta.env.VITE_REVERB_HOST,
+    // wsPort: import.meta.env.VITE_REVERB_PORT,
+    // wssPort: import.meta.env.VITE_REVERB_PORT,
+    // forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    // enabledTransports: ['ws', 'wss'],
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-vue";
+
+configureEcho({
+    broadcaster: "reverb",
+    // key: import.meta.env.VITE_REVERB_APP_KEY,
+    // wsHost: import.meta.env.VITE_REVERB_HOST,
+    // wsPort: import.meta.env.VITE_REVERB_PORT,
+    // wssPort: import.meta.env.VITE_REVERB_PORT,
+    // forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    // enabledTransports: ['ws', 'wss'],
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-svelte";
+
+configureEcho({
+    broadcaster: "reverb",
+    // key: import.meta.env.VITE_REVERB_APP_KEY,
+    // wsHost: import.meta.env.VITE_REVERB_HOST,
+    // wsPort: import.meta.env.VITE_REVERB_PORT,
+    // wssPort: import.meta.env.VITE_REVERB_PORT,
+    // forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    // enabledTransports: ['ws', 'wss'],
+});
+</code></pre>
+<p>接下來，您應該編譯應用程式的資產：</p>
+<pre><code class="language-shell">npm run build
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+Laravel Echo <code>reverb</code> 廣播器需要 laravel-echo v1.16.0+。</p>
+</blockquote>
+<p><a name="client-pusher-channels"></a></p>
+<h3>Pusher Channels</h3>
+<p><a href="https://github.com/laravel/echo">Laravel Echo</a> 是一個 JavaScript 函式庫，它使訂閱頻道和監聽由伺服器端廣播驅動程式廣播的事件變得毫不費力。</p>
+<p>透過 <code>install:broadcasting --pusher</code> Artisan 命令安裝廣播支援時，Pusher 和 Echo 的腳手架和配置將自動注入到您的應用程式中。但是，如果您希望手動配置 Laravel Echo，可以按照以下說明進行。</p>
+<p><a name="pusher-client-manual-installation"></a></p>
+<h4>手動安裝</h4>
+<p>要為應用程式的前端手動配置 Laravel Echo，首先安裝 <code>laravel-echo</code> 和 <code>pusher-js</code> 套件，這些套件使用 Pusher 協議進行 WebSocket 訂閱、頻道和訊息：</p>
+<pre><code class="language-shell">npm install --save-dev laravel-echo pusher-js
+</code></pre>
+<p>安裝 Echo 後，您就可以在應用程式的 <code>resources/js/app.js</code> 檔案中創建一個新的 Echo 實例：</p>
+<pre><code class="language-js">import Echo from 'laravel-echo';
+
+import Pusher from 'pusher-js';
+window.Pusher = Pusher;
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    forceTLS: true
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-react";
+
+configureEcho({
+    broadcaster: "pusher",
+    // key: import.meta.env.VITE_PUSHER_APP_KEY,
+    // cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    // forceTLS: true,
+    // wsHost: import.meta.env.VITE_PUSHER_HOST,
+    // wsPort: import.meta.env.VITE_PUSHER_PORT,
+    // wssPort: import.meta.env.VITE_PUSHER_PORT,
+    // enabledTransports: ["ws", "wss"],
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-vue";
+
+configureEcho({
+    broadcaster: "pusher",
+    // key: import.meta.env.VITE_PUSHER_APP_KEY,
+    // cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    // forceTLS: true,
+    // wsHost: import.meta.env.VITE_PUSHER_HOST,
+    // wsPort: import.meta.env.VITE_PUSHER_PORT,
+    // wssPort: import.meta.env.VITE_PUSHER_PORT,
+    // enabledTransports: ["ws", "wss"],
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-svelte";
+
+configureEcho({
+    broadcaster: "pusher",
+    // key: import.meta.env.VITE_PUSHER_APP_KEY,
+    // cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    // forceTLS: true,
+    // wsHost: import.meta.env.VITE_PUSHER_HOST,
+    // wsPort: import.meta.env.VITE_PUSHER_PORT,
+    // wssPort: import.meta.env.VITE_PUSHER_PORT,
+    // enabledTransports: ["ws", "wss"],
+});
+</code></pre>
+<p>接下來，您應該在應用程式的 <code>.env</code> 檔案中定義 Pusher 環境變數的適當值。如果這些變數尚不存在於您的 <code>.env</code> 檔案中，則應添加它們：</p>
+<pre><code class="language-ini">PUSHER_APP_ID="your-pusher-app-id"
+PUSHER_APP_KEY="your-pusher-key"
+PUSHER_APP_SECRET="your-pusher-secret"
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME="https"
+PUSHER_APP_CLUSTER="mt1"
+
+VITE_APP_NAME="\${APP_NAME}"
+VITE_PUSHER_APP_KEY="\${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="\${PUSHER_HOST}"
+VITE_PUSHER_PORT="\${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="\${PUSHER_SCHEME}"
+VITE_PUSHER_APP_CLUSTER="\${PUSHER_APP_CLUSTER}"
+</code></pre>
+<p>根據應用程式的需求調整 Echo 配置後，您可以編譯應用程式的資產：</p>
+<pre><code class="language-shell">npm run build
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要了解更多關於編譯應用程式 JavaScript 資產的資訊，請查閱 <a href="/docs/vite">Vite</a> 文檔。</p>
+</blockquote>
+<p><a name="using-an-existing-client-instance"></a></p>
+<h4>使用現有客戶端實例</h4>
+<p>如果您已經有一個預配置的 Pusher Channels 客戶端實例，並希望 Echo 使用它，可以透過 <code>client</code> 配置選項將其傳遞給 Echo：</p>
+<pre><code class="language-js">import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+const options = {
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY
+}
+
+window.Echo = new Echo({
+    ...options,
+    client: new Pusher(options.key, options)
+});
+</code></pre>
+<p><a name="client-ably"></a></p>
+<h3>Ably</h3>
+<blockquote>
+<p>[!NOTE]
+以下文檔討論了如何在「Pusher 相容」模式下使用 Ably。但是，Ably 團隊推薦並維護了一個廣播器和 Echo 客戶端，能夠利用 Ably 提供的獨特功能。有關使用 Ably 維護的驅動程式的更多資訊，請<a href="https://github.com/ably/laravel-broadcaster">查閱 Ably 的 Laravel 廣播器文檔</a>。</p>
+</blockquote>
+<p><a href="https://github.com/laravel/echo">Laravel Echo</a> 是一個 JavaScript 函式庫，它使訂閱頻道和監聽由伺服器端廣播驅動程式廣播的事件變得毫不費力。</p>
+<p>透過 <code>install:broadcasting --ably</code> Artisan 命令安裝廣播支援時，Ably 和 Echo 的腳手架和配置將自動注入到您的應用程式中。但是，如果您希望手動配置 Laravel Echo，可以按照以下說明進行。</p>
+<p><a name="ably-client-manual-installation"></a></p>
+<h4>手動安裝</h4>
+<p>要為應用程式的前端手動配置 Laravel Echo，首先安裝 <code>laravel-echo</code> 和 <code>pusher-js</code> 套件，這些套件使用 Pusher 協議進行 WebSocket 訂閱、頻道和訊息：</p>
+<pre><code class="language-shell">npm install --save-dev laravel-echo pusher-js
+</code></pre>
+<p><strong>在繼續之前，您應該在 Ably 應用程式設定中啟用 Pusher 協議支援。您可以在 Ably 應用程式設定儀表板的「Protocol Adapter Settings」部分中啟用此功能。</strong></p>
+<p>安裝 Echo 後，您就可以在應用程式的 <code>resources/js/app.js</code> 檔案中創建一個新的 Echo 實例：</p>
+<pre><code class="language-js">import Echo from 'laravel-echo';
+
+import Pusher from 'pusher-js';
+window.Pusher = Pusher;
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+    wsHost: 'realtime-pusher.ably.io',
+    wsPort: 443,
+    disableStats: true,
+    encrypted: true,
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-react";
+
+configureEcho({
+    broadcaster: "ably",
+    // key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+    // wsHost: "realtime-pusher.ably.io",
+    // wsPort: 443,
+    // disableStats: true,
+    // encrypted: true,
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-vue";
+
+configureEcho({
+    broadcaster: "ably",
+    // key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+    // wsHost: "realtime-pusher.ably.io",
+    // wsPort: 443,
+    // disableStats: true,
+    // encrypted: true,
+});
+</code></pre>
+<pre><code class="language-js">import { configureEcho } from "@laravel/echo-svelte";
+
+configureEcho({
+    broadcaster: "ably",
+    // key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+    // wsHost: "realtime-pusher.ably.io",
+    // wsPort: 443,
+    // disableStats: true,
+    // encrypted: true,
+});
+</code></pre>
+<p>您可能已經注意到我們的 Ably Echo 配置引用了一個 <code>VITE_ABLY_PUBLIC_KEY</code> 環境變數。此變數的值應為您的 Ably 公鑰。您的公鑰是您的 Ably 金鑰中 <code>:</code> 字元之前的部分。</p>
+<p>根據需求調整 Echo 配置後，您可以編譯應用程式的資產：</p>
+<pre><code class="language-shell">npm run dev
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要了解更多關於編譯應用程式 JavaScript 資產的資訊，請查閱 <a href="/docs/vite">Vite</a> 文檔。</p>
+</blockquote>
+<p><a name="concept-overview"></a></p>
+<h2>概念概述</h2>
+<p>Laravel 的事件廣播允許您使用基於驅動程式的方法將伺服器端 Laravel 事件廣播到客戶端 JavaScript 應用程式。目前，Laravel 附帶 <a href="https://reverb.laravel.com">Laravel Reverb</a>、<a href="https://pusher.com/channels">Pusher Channels</a> 和 <a href="https://ably.com">Ably</a> 驅動程式。事件可以使用 <a href="#client-side-installation">Laravel Echo</a> JavaScript 套件輕鬆地在客戶端使用。</p>
+<p>事件透過「頻道」廣播，可以指定為公開或私有。任何訪問您應用程式的訪問者都可以在無需任何認證或授權的情況下訂閱公開頻道；但是，為了訂閱私有頻道，使用者必須被認證並授權在該頻道上監聽。</p>
+<p><a name="using-example-application"></a></p>
+<h3>使用範例應用程式</h3>
+<p>在深入了解事件廣播的每個組件之前，讓我們使用一個電子商務商店作為範例進行高層次概述。</p>
+<p>在我們的應用程式中，讓我們假設有一個頁面允許使用者查看其訂單的運輸狀態。我們還假設當運輸狀態更新被應用程式處理時會觸發一個 <code>OrderShipmentStatusUpdated</code> 事件：</p>
+<pre><code class="language-php">use App\\Events\\OrderShipmentStatusUpdated;
+
+OrderShipmentStatusUpdated::dispatch($order);
+</code></pre>
+<p><a name="the-shouldbroadcast-interface"></a></p>
+<h4><code>ShouldBroadcast</code> 介面</h4>
+<p>當使用者正在查看他們的一個訂單時，我們不希望他們必須重新整理頁面來查看狀態更新。相反，我們希望在創建更新時將其廣播到應用程式。因此，我們需要使用 <code>ShouldBroadcast</code> 介面來標記 <code>OrderShipmentStatusUpdated</code> 事件。這將指示 Laravel 在觸發事件時廣播該事件：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Events;
+
+use App\\Models\\Order;
+use Illuminate\\Broadcasting\\Channel;
+use Illuminate\\Broadcasting\\InteractsWithSockets;
+use Illuminate\\Broadcasting\\PresenceChannel;
+use Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast;
+use Illuminate\\Queue\\SerializesModels;
+
+class OrderShipmentStatusUpdated implements ShouldBroadcast
+{
+    /**
+     * 訂單實例。
+     *
+     * @var \\App\\Models\\Order
+     */
+    public $order;
+}
+</code></pre>
+<p><code>ShouldBroadcast</code> 介面要求我們的事件定義一個 <code>broadcastOn</code> 方法。此方法負責返回事件應廣播的頻道。生成的事件類別上已經定義了此方法的空存根，因此我們只需要填寫其細節。我們只希望訂單的創建者能夠查看狀態更新，因此我們將在與訂單綁定的私有頻道上廣播該事件：</p>
+<pre><code class="language-php">use Illuminate\\Broadcasting\\Channel;
+use Illuminate\\Broadcasting\\PrivateChannel;
+
+/**
+ * 獲取事件應廣播的頻道。
+ */
+public function broadcastOn(): Channel
+{
+    return new PrivateChannel('orders.'.$this->order->id);
+}
+</code></pre>
+<p>如果您希望事件在多個頻道上廣播，可以返回一個 <code>array</code>：</p>
+<pre><code class="language-php">use Illuminate\\Broadcasting\\PrivateChannel;
+
+/**
+ * 獲取事件應廣播的頻道。
+ *
+ * @return array<int, \\Illuminate\\Broadcasting\\Channel>
+ */
+public function broadcastOn(): array
+{
+    return [
+        new PrivateChannel('orders.'.$this->order->id),
+        // ...
+    ];
+}
+</code></pre>
+<p><a name="example-application-authorizing-channels"></a></p>
+<h4>授權頻道</h4>
+<p>請記住，使用者必須被授權才能在私有頻道上監聽。我們可以在應用程式的 <code>routes/channels.php</code> 檔案中定義頻道授權規則。在此範例中，我們需要驗證任何嘗試在私有 <code>orders.1</code> 頻道上監聽的使用者實際上是訂單的創建者：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+use App\\Models\\User;
+
+Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
+    return $user->id === Order::findOrNew($orderId)->user_id;
+});
+</code></pre>
+<p><code>channel</code> 方法接受兩個參數：頻道名稱和一個返回 <code>true</code> 或 <code>false</code> 的回呼，指示使用者是否被授權在該頻道上監聽。</p>
+<p>所有授權回呼都接收當前已認證的使用者作為其第一個參數，以及任何額外的萬用字元參數作為其後續參數。在此範例中，我們使用 <code>{orderId}</code> 佔位符來表示頻道名稱的「ID」部分是一個萬用字元。</p>
+<p><a name="listening-for-event-broadcasts"></a></p>
+<h4>監聽事件廣播</h4>
+<p>接下來，剩下的就是在 JavaScript 應用程式中監聽該事件。我們可以使用 <a href="#client-side-installation">Laravel Echo</a> 來執行此操作。Laravel Echo 內建的 React、Vue 和 Svelte 鉤子使開始變得非常簡單，並且預設情況下，所有事件的公共屬性都將包含在廣播事件中：</p>
+<pre><code class="language-js">import { useEcho } from "@laravel/echo-react";
+
+useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEcho } from "@laravel/echo-vue";
+
+useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEcho } from "@laravel/echo-svelte";
+
+useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+</script>
+</code></pre>
+<p><a name="defining-broadcast-events"></a></p>
+<h2>定義廣播事件</h2>
+<p>要通知 Laravel 給定事件應被廣播，您必須在事件類別上實現 <code>Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast</code> 介面。此介面已被框架生成的所有事件類別導入，因此您可以輕鬆地將其添加到任何事件中。</p>
+<p><code>ShouldBroadcast</code> 介面要求您實現一個方法：<code>broadcastOn</code>。<code>broadcastOn</code> 方法應返回事件應廣播的頻道或頻道陣列。頻道應為 <code>Channel</code>、<code>PrivateChannel</code> 或 <code>PresenceChannel</code> 的實例。<code>Channel</code> 的實例代表任何使用者都可以訂閱的公開頻道，而 <code>PrivateChannels</code> 和 <code>PresenceChannels</code> 代表需要<a href="#authorizing-channels">頻道授權</a>的私有頻道：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Events;
+
+use App\\Models\\User;
+use Illuminate\\Broadcasting\\Channel;
+use Illuminate\\Broadcasting\\InteractsWithSockets;
+use Illuminate\\Broadcasting\\PresenceChannel;
+use Illuminate\\Broadcasting\\PrivateChannel;
+use Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast;
+use Illuminate\\Queue\\SerializesModels;
+
+class ServerCreated implements ShouldBroadcast
+{
+    use SerializesModels;
+
+    /**
+     * 創建一個新的事件實例。
+     */
+    public function __construct(
+        public User $user,
+    ) {}
+
+    /**
+     * 獲取事件應廣播的頻道。
+     *
+     * @return array<int, \\Illuminate\\Broadcasting\\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('user.'.$this->user->id),
+        ];
+    }
+}
+</code></pre>
+<p>實現 <code>ShouldBroadcast</code> 介面後，您只需像平常一樣<a href="/docs/events">觸發事件</a>。一旦事件被觸發，一個<a href="/docs/queues">佇列作業</a>將自動使用您指定的廣播驅動程式廣播該事件。</p>
+<p><a name="broadcast-name"></a></p>
+<h3>廣播名稱</h3>
+<p>預設情況下，Laravel 將使用事件的類別名稱來廣播事件。但是，您可以透過在事件上定義一個 <code>broadcastAs</code> 方法來自訂廣播名稱：</p>
+<pre><code class="language-php">/**
+ * 事件的廣播名稱。
+ */
+public function broadcastAs(): string
+{
+    return 'server.created';
+}
+</code></pre>
+<p>如果您使用 <code>broadcastAs</code> 方法自訂了廣播名稱，您應該確保使用前導 <code>.</code> 字元來註冊您的監聽器。這將指示 Echo 不要向事件添加應用程式的命名空間前綴：</p>
+<pre><code class="language-javascript">.listen('.server.created', function (e) {
+    // ...
+});
+</code></pre>
+<p><a name="broadcast-data"></a></p>
+<h3>廣播資料</h3>
+<p>當事件被廣播時，其所有 <code>public</code> 屬性將自動被序列化並作為事件的負載廣播，允許您從 JavaScript 應用程式存取其任何公共資料。因此，例如，如果您的事件有一個包含 Eloquent 模型的公共 <code>$user</code> 屬性，則事件的廣播負載將為：</p>
+<pre><code class="language-json">{
+    "user": {
+        "id": 1,
+        "name": "Patrick Stewart"
+        ...
+    }
+}
+</code></pre>
+<p>但是，如果您希望對廣播負載有更精細的控制，可以向事件添加一個 <code>broadcastWith</code> 方法。此方法應返回您希望作為事件負載廣播的資料陣列：</p>
+<pre><code class="language-php">/**
+ * 獲取要廣播的資料。
+ *
+ * @return array<string, mixed>
+ */
+public function broadcastWith(): array
+{
+    return ['id' => $this->user->id];
+}
+</code></pre>
+<p><a name="broadcast-queue"></a></p>
+<h3>廣播佇列</h3>
+<p>預設情況下，每個廣播事件都被放置在 <code>queue.php</code> 配置檔案中指定的預設佇列連接的預設佇列上。您可以使用事件類別上的 <code>Connection</code> 和 <code>Queue</code> 屬性來自訂廣播器使用的佇列連接和名稱：</p>
+<pre><code class="language-php">use Illuminate\\Queue\\Attributes\\Connection;
+use Illuminate\\Queue\\Attributes\\Queue;
+
+#[Connection('redis')]
+#[Queue('default')]
+class ServerCreated implements ShouldBroadcast
+{
+    // ...
+}
+</code></pre>
+<p>或者，您可以透過在事件上定義 <code>broadcastQueue</code> 方法來自訂佇列名稱：</p>
+<pre><code class="language-php">/**
+ * 放置廣播作業的佇列名稱。
+ */
+public function broadcastQueue(): string
+{
+    return 'default';
+}
+</code></pre>
+<p>如果您希望使用 <code>sync</code> 佇列而不是預設佇列驅動程式來廣播事件，可以實現 <code>ShouldBroadcastNow</code> 介面而不是 <code>ShouldBroadcast</code>：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Events;
+
+use Illuminate\\Contracts\\Broadcasting\\ShouldBroadcastNow;
+
+class OrderShipmentStatusUpdated implements ShouldBroadcastNow
+{
+    // ...
+}
+</code></pre>
+<p><a name="broadcast-conditions"></a></p>
+<h3>廣播條件</h3>
+<p>有時您希望僅在給定條件為 true 時廣播事件。您可以透過在事件類別上添加 <code>broadcastWhen</code> 方法來定義這些條件：</p>
+<pre><code class="language-php">/**
+ * 判斷此事件是否應廣播。
+ */
+public function broadcastWhen(): bool
+{
+    return $this->order->value > 100;
+}
+</code></pre>
+<p><a name="broadcasting-and-database-transactions"></a></p>
+<h4>廣播和資料庫交易</h4>
+<p>當廣播事件在資料庫交易內行被派發時，它們可能會在資料庫交易提交之前被佇列處理。當這種情況發生時，在資料庫交易期間對模型或資料庫記錄進行的任何更新可能尚未反映在資料庫中。此外，在交易內行創建的任何模型或資料庫記錄可能不存在於資料庫中。如果您的事件依賴這些模型，則在處理廣播事件的作業時可能會發生意外錯誤。</p>
+<p>如果您的佇列連接的 <code>after_commit</code> 配置選項設定為 <code>false</code>，您仍然可以透過在事件類別上實現 <code>ShouldDispatchAfterCommit</code> 介面來指示特定的廣播事件應在所有打開的資料庫交易提交後被派發：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Events;
+
+use Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast;
+use Illuminate\\Contracts\\Events\\ShouldDispatchAfterCommit;
+use Illuminate\\Queue\\SerializesModels;
+
+class ServerCreated implements ShouldBroadcast, ShouldDispatchAfterCommit
+{
+    use SerializesModels;
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要了解更多關於解決這些問題的資訊，請查閱有關<a href="/docs/queues#jobs-and-database-transactions">佇列作業和資料庫交易</a>的文檔。</p>
+</blockquote>
+<p><a name="authorizing-channels"></a></p>
+<h2>授權頻道</h2>
+<p>私有頻道要求您授權當前已認證的使用者實際上可以在該頻道上監聽。這是透過向您的 Laravel 應用程式發送一個帶有頻道名稱的 HTTP 請求來實現的，並允許您的應用程式判斷使用者是否可以在該頻道上監聽。使用 <a href="#client-side-installation">Laravel Echo</a> 時，授權訂閱私有頻道的 HTTP 請求將自動發出。</p>
+<p>安裝廣播後，Laravel 會嘗試自動註冊 <code>/broadcasting/auth</code> 路由來處理授權請求。如果 Laravel 無法自動註冊這些路由，您可以在應用程式的 <code>/bootstrap/app.php</code> 檔案中手動註冊它們：</p>
+<pre><code class="language-php">->withRouting(
+    web: __DIR__.'/../routes/web.php',
+    channels: __DIR__.'/../routes/channels.php',
+    health: '/up',
+)
+</code></pre>
+<p><a name="defining-authorization-callbacks"></a></p>
+<h3>定義授權回呼</h3>
+<p>接下來，我們需要定義實際判斷當前已認證的使用者是否可以監聽給定頻道的邏輯。這在 <code>install:broadcasting</code> Artisan 命令創建的 <code>routes/channels.php</code> 檔案中完成。在此檔案中，您可以使用 <code>Broadcast::channel</code> 方法來註冊頻道授權回呼：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
+    return $user->id === Order::findOrNew($orderId)->user_id;
+});
+</code></pre>
+<p><code>channel</code> 方法接受兩個參數：頻道名稱和一個返回 <code>true</code> 或 <code>false</code> 的回呼，指示使用者是否被授權在該頻道上監聽。</p>
+<p>所有授權回呼都接收當前已認證的使用者作為其第一個參數，以及任何額外的萬用字元參數作為其後續參數。在此範例中，我們使用 <code>{orderId}</code> 佔位符來表示頻道名稱的「ID」部分是一個萬用字元。</p>
+<p>您可以使用 <code>channel:list</code> Artisan 命令查看應用程式廣播授權回呼的列表：</p>
+<pre><code class="language-shell">php artisan channel:list
+</code></pre>
+<p><a name="authorization-callback-model-binding"></a></p>
+<h4>授權回呼模型綁定</h4>
+<p>就像 HTTP 路由一樣，頻道路由也可以利用隱式和顯式的<a href="/docs/routing#route-model-binding">路由模型綁定</a>。例如，與其接收字串或數字訂單 ID，您可以請求一個實際的 <code>Order</code> 模型實例：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+use App\\Models\\User;
+
+Broadcast::channel('orders.{order}', function (User $user, Order $order) {
+    return $user->id === $order->user_id;
+});
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+與 HTTP 路由模型綁定不同，頻道模型綁定不支援自動<a href="/docs/routing#implicit-model-binding-scoping">隱式模型綁定作用域</a>。但是，這很少是個問題，因為大多數頻道可以基於單個模型的唯一主鍵來設定作用域。</p>
+</blockquote>
+<p><a name="authorization-callback-authentication"></a></p>
+<h4>授權回呼認證</h4>
+<p>私有和在線廣播頻道透過應用程式的預設認證守衛來認證當前使用者。如果使用者未被認證，則頻道授權將被自動拒絕，並且永遠不會執行授權回呼。但是，如果需要，您可以分配多個自訂守衛來認證傳入的請求：</p>
+<pre><code class="language-php">Broadcast::channel('channel', function () {
+    // ...
+}, ['guards' => ['web', 'admin']]);
+</code></pre>
+<p><a name="defining-channel-classes"></a></p>
+<h3>定義頻道類別</h3>
+<p>如果您的應用程式正在消費許多不同的頻道，您的 <code>routes/channels.php</code> 檔案可能會變得很大。因此，與其使用閉包來授權頻道，您可以使用頻道類別。要生成頻道類別，請使用 <code>make:channel</code> Artisan 命令。此命令將在 <code>App/Broadcasting</code> 目錄中放置一個新的頻道類別。</p>
+<pre><code class="language-shell">php artisan make:channel OrderChannel
+</code></pre>
+<p>接下來，在 <code>routes/channels.php</code> 檔案中註冊您的頻道：</p>
+<pre><code class="language-php">use App\\Broadcasting\\OrderChannel;
+
+Broadcast::channel('orders.{order}', OrderChannel::class);
+</code></pre>
+<p>最後，您可以將頻道的授權邏輯放在頻道類別的 <code>join</code> 方法中。此 <code>join</code> 方法將包含您通常會放在頻道授權閉包中的相同邏輯。您還可以利用頻道模型綁定：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Broadcasting;
+
+use App\\Models\\Order;
+use App\\Models\\User;
+
+class OrderChannel
+{
+    /**
+     * 創建一個新的頻道實例。
+     */
+    public function __construct() {}
+
+    /**
+     * 驗證使用者對頻道的存取權限。
+     */
+    public function join(User $user, Order $order): array|bool
+    {
+        return $user->id === $order->user_id;
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+就像 Laravel 中的許多其他類別一樣，頻道類別將自動由<a href="/docs/container">服務容器</a>解析。因此，您可以在其構造函數中鍵入提示頻道所需的任何依賴。</p>
+</blockquote>
+<p><a name="broadcasting-events"></a></p>
+<h2>廣播事件</h2>
+<p>定義事件並使用 <code>ShouldBroadcast</code> 介面標記後，您只需使用事件的派發方法觸發事件。事件派發器將注意到該事件被標記為 <code>ShouldBroadcast</code> 介面，並將該事件放入佇列以進行廣播：</p>
+<pre><code class="language-php">use App\\Events\\OrderShipmentStatusUpdated;
+
+OrderShipmentStatusUpdated::dispatch($order);
+</code></pre>
+<p><a name="only-to-others"></a></p>
+<h3>僅向其他人廣播</h3>
+<p>在構建使用事件廣播的應用程式時，您可能偶爾需要向給定頻道的所有訂閱者廣播事件，但不包括當前使用者。您可以使用 <code>broadcast</code> 輔助函數和 <code>toOthers</code> 方法來執行此操作：</p>
+<pre><code class="language-php">use App\\Events\\OrderShipmentStatusUpdated;
+
+broadcast(new OrderShipmentStatusUpdated($update))->toOthers();
+</code></pre>
+<p>為了更好地理解何時可能需要使用 <code>toOthers</code> 方法，讓我們想像一個任務列表應用程式，使用者可以透過輸入任務名稱來創建新任務。要創建任務，您的應用程式可能會向 <code>/task</code> URL 發出一個請求，該請求廣播任務的創建並返回新任務的 JSON 表示。當您的 JavaScript 應用程式收到來自端點的回應時，它可能會直接將新任務插入其任務列表，像這樣：</p>
+<pre><code class="language-js">axios.post('/task', task)
+    .then((response) => {
+        this.tasks.push(response.data);
+    });
+</code></pre>
+<p>但是，請記住我們也廣播了任務的創建。如果您的 JavaScript 應用程式也正在監聽此事件以將任務添加到任務列表中，則您的列表中將有重複的任務：一個來自端點，一個來自廣播。您可以透過使用 <code>toOthers</code> 方法來解決此問題，該方法指示廣播器不要向當前使用者廣播事件。</p>
+<blockquote>
+<p>[!WARNING]
+您的事件必須使用 <code>Illuminate\\Broadcasting\\InteractsWithSockets</code> trait 才能呼叫 <code>toOthers</code> 方法。</p>
+</blockquote>
+<p><a name="only-to-others-configuration"></a></p>
+<h4>配置</h4>
+<p>當您初始化 Laravel Echo 實例時，會為連接分配一個 Socket ID。如果您正在使用全域 <a href="https://github.com/axios/axios">Axios</a> 實例從 JavaScript 應用程式發出 HTTP 請求，則 Socket ID 將自動作為 <code>X-Socket-ID</code> 頁頭附加到每個传出請求。然後，當您呼叫 <code>toOthers</code> 方法時，Laravel 將從頁頭中提取 Socket ID，並指示廣播器不要向具有該 Socket ID 的任何連接廣播。</p>
+<p>如果您未使用全域 Axios 實例，則需要手動配置 JavaScript 應用程式以在所有传出請求中傳送 <code>X-Socket-ID</code> 頁頭。您可以使用 <code>Echo.socketId</code> 方法來檢索 Socket ID：</p>
+<pre><code class="language-js">var socketId = Echo.socketId();
+</code></pre>
+<p><a name="customizing-the-connection"></a></p>
+<h3>自訂連接</h3>
+<p>如果您的應用程式與多個廣播連接互動，並且您希望使用預設連接以外的廣播器來廣播事件，可以使用 <code>via</code> 方法指定將事件推送到哪個連接：</p>
+<pre><code class="language-php">use App\\Events\\OrderShipmentStatusUpdated;
+
+broadcast(new OrderShipmentStatusUpdated($update))->via('pusher');
+</code></pre>
+<p>或者，您可以透過在事件的構造函數中呼叫 <code>broadcastVia</code> 方法來指定事件的廣播連接。但是，在執行此操作之前，您應該確保事件類別使用 <code>InteractsWithBroadcasting</code> trait：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Events;
+
+use Illuminate\\Broadcasting\\Channel;
+use Illuminate\\Broadcasting\\InteractsWithBroadcasting;
+use Illuminate\\Broadcasting\\InteractsWithSockets;
+use Illuminate\\Broadcasting\\PresenceChannel;
+use Illuminate\\Broadcasting\\PrivateChannel;
+use Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast;
+use Illuminate\\Queue\\SerializesModels;
+
+class OrderShipmentStatusUpdated implements ShouldBroadcast
+{
+    use InteractsWithBroadcasting;
+
+    /**
+     * 創建一個新的事件實例。
+     */
+    public function __construct()
+    {
+        $this->broadcastVia('pusher');
+    }
+}
+</code></pre>
+<p><a name="anonymous-events"></a></p>
+<h3>匿名事件</h3>
+<p>有時，您可能希望向應用程式的前端廣播一個簡單的事件，而不創建專用的事件類別。為此，<code>Broadcast</code> 外觀允許您廣播「匿名事件」：</p>
+<pre><code class="language-php">Broadcast::on('orders.'.$order->id)->send();
+</code></pre>
+<p>上面的範例將廣播以下事件：</p>
+<pre><code class="language-json">{
+    "event": "AnonymousEvent",
+    "data": "[]",
+    "channel": "orders.1"
+}
+</code></pre>
+<p>使用 <code>as</code> 和 <code>with</code> 方法，您可以自訂事件的名稱和資料：</p>
+<pre><code class="language-php">Broadcast::on('orders.'.$order->id)
+    ->as('OrderPlaced')
+    ->with($order)
+    ->send();
+</code></pre>
+<p>上面的範例將廣播一個像這樣的事件：</p>
+<pre><code class="language-json">{
+    "event": "OrderPlaced",
+    "data": "{ id: 1, total: 100 }",
+    "channel": "orders.1"
+}
+</code></pre>
+<p>如果您希望在私有或在線頻道上廣播匿名事件，可以使用 <code>private</code> 和 <code>presence</code> 方法：</p>
+<pre><code class="language-php">Broadcast::private('orders.'.$order->id)->send();
+Broadcast::presence('channels.'.$channel->id)->send();
+</code></pre>
+<p>使用 <code>send</code> 方法廣播匿名事件會將事件派發到應用程式的<a href="/docs/queues">佇列</a>以進行處理。但是，如果您希望立即廣播事件，可以使用 <code>sendNow</code> 方法：</p>
+<pre><code class="language-php">Broadcast::on('orders.'.$order->id)->sendNow();
+</code></pre>
+<p>要向除當前已認證使用者之外的所有頻道訂閱者廣播事件，您可以呼叫 <code>toOthers</code> 方法：</p>
+<pre><code class="language-php">Broadcast::on('orders.'.$order->id)
+    ->toOthers()
+    ->send();
+</code></pre>
+<p><a name="rescuing-broadcasts"></a></p>
+<h3>救援廣播</h3>
+<p>當應用程式的佇列伺服器不可用或 Laravel 在廣播事件時遇到錯誤時，會拋出一個異常，通常會導致終端使用者看到應用程式錯誤。由於事件廣播通常補充了應用程式的核心功能，您可以透過在事件上實現 <code>ShouldRescue</code> 介面來防止這些異常中斷使用者體驗。</p>
+<p>實現 <code>ShouldRescue</code> 介面的事件在廣播嘗試期間自動使用 Laravel 的<a href="/docs/helpers#method-rescue">rescue 輔助函數</a>。此輔助函數會捕獲任何異常，將其報告給應用程式的異常處理器以進行日誌記錄，並允許應用程式繼續正常執行，而不會中斷使用者的工作流程：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Events;
+
+use Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast;
+use Illuminate\\Contracts\\Broadcasting\\ShouldRescue;
+
+class ServerCreated implements ShouldBroadcast, ShouldRescue
+{
+    // ...
+}
+</code></pre>
+<p><a name="receiving-broadcasts"></a></p>
+<h2>接收廣播</h2>
+<p><a name="listening-for-events"></a></p>
+<h3>監聽事件</h3>
+<p><a href="#client-side-installation">安裝並實例化 Laravel Echo</a> 後，您就可以開始監聽從 Laravel 應用程式廣播的事件。首先，使用 <code>channel</code> 方法檢索頻道的實例，然後呼叫 <code>listen</code> 方法來監聽指定的事件：</p>
+<pre><code class="language-js">Echo.channel(\`orders.\${this.order.id}\`)
+    .listen('OrderShipmentStatusUpdated', (e) => {
+        console.log(e.order.name);
+    });
+</code></pre>
+<p>如果您希望在私有頻道上監聽事件，請改用 <code>private</code> 方法。您可以繼續鏈式呼叫 <code>listen</code> 方法以在同一個頻道上監聽多個事件：</p>
+<pre><code class="language-js">Echo.private(\`orders.\${this.order.id}\`)
+    .listen(/* ... */)
+    .listen(/* ... */)
+    .listen(/* ... */);
+</code></pre>
+<p><a name="stop-listening-for-events"></a></p>
+<h4>停止監聽事件</h4>
+<p>如果您希望在不<a href="#leaving-a-channel">離開頻道</a>的情況下停止監聽給定事件，可以使用 <code>stopListening</code> 方法：</p>
+<pre><code class="language-js">Echo.private(\`orders.\${this.order.id}\`)
+    .stopListening('OrderShipmentStatusUpdated');
+</code></pre>
+<p><a name="leaving-a-channel"></a></p>
+<h3>離開頻道</h3>
+<p>要離開頻道，您可以在 Echo 實例上呼叫 <code>leaveChannel</code> 方法：</p>
+<pre><code class="language-js">Echo.leaveChannel(\`orders.\${this.order.id}\`);
+</code></pre>
+<p>如果您希望離開頻道及其關聯的私有和在線頻道，可以呼叫 <code>leave</code> 方法：</p>
+<pre><code class="language-js">Echo.leave(\`orders.\${this.order.id}\`);
+</code></pre>
+<p><a name="namespaces"></a></p>
+<h3>命名空間</h3>
+<p>您可能已經在上面的範例中注意到，我們沒有為事件類別指定完整的 <code>App\\Events</code> 命名空間。這是因為 Echo 將自動假設事件位於 <code>App\\Events</code> 命名空間中。但是，您可以透過在實例化 Echo 時傳遞 <code>namespace</code> 配置選項來配置根命名空間：</p>
+<pre><code class="language-js">window.Echo = new Echo({
+    broadcaster: 'pusher',
+    // ...
+    namespace: 'App.Other.Namespace'
+});
+</code></pre>
+<p>或者，您可以使用 Echo 訂閱事件時使用 <code>.</code> 為事件類別添加前綴。這將允許您始終指定完全限定的類別名稱：</p>
+<pre><code class="language-js">Echo.channel('orders')
+    .listen('.Namespace\\Event\\Class', (e) => {
+        // ...
+    });
+</code></pre>
+<p><a name="using-react-or-vue"></a></p>
+<h3>使用 React、Vue 或 Svelte</h3>
+<p>Laravel Echo 包含 React、Vue 和 Svelte 鉤子，使監聽事件變得毫不費力。首先，呼叫 <code>useEcho</code> 鉤子，該鉤子用於監聽私有事件。當消費元件被卸載時，<code>useEcho</code> 鉤子將自動離開頻道：</p>
+<pre><code class="language-js">import { useEcho } from "@laravel/echo-react";
+
+useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEcho } from "@laravel/echo-vue";
+
+useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEcho } from "@laravel/echo-svelte";
+
+useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+</script>
+</code></pre>
+<p>您可以透過向 <code>useEcho</code> 提供一個事件陣列來監聽多個事件：</p>
+<pre><code class="language-js">useEcho(
+    \`orders.\${orderId}\`,
+    ["OrderShipmentStatusUpdated", "OrderShipped"],
+    (e) => {
+        console.log(e.order);
+    },
+);
+</code></pre>
+<p>您還可以指定廣播事件負載資料的形狀，以獲得更好的類型安全性和編輯便利性：</p>
+<pre><code class="language-ts">type OrderData = {
+    order: {
+        id: number;
+        user: {
+            id: number;
+            name: string;
+        };
+        created_at: string;
+    };
+};
+
+useEcho<OrderData>(\`orders.\${orderId}\`, "OrderShipmentStatusUpdated", (e) => {
+    console.log(e.order.id);
+    console.log(e.order.user.id);
+});
+</code></pre>
+<p><code>useEcho</code> 鉤子將在消費元件被卸載時自動離開頻道；但是，您可以利用返回的函數在必要時以程式化方式手動停止/開始監聽頻道：</p>
+<pre><code class="language-js">import { useEcho } from "@laravel/echo-react";
+
+const { leaveChannel, leave, stopListening, listen } = useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+
+// 停止監聽而不離開頻道...
+stopListening();
+
+// 再次開始監聽...
+listen();
+
+// 離開頻道...
+leaveChannel();
+
+// 離開頻道及其關聯的私有和在線頻道...
+leave();
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEcho } from "@laravel/echo-vue";
+
+const { leaveChannel, leave, stopListening, listen } = useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+
+// 停止監聽而不離開頻道...
+stopListening();
+
+// 再次開始監聽...
+listen();
+
+// 離開頻道...
+leaveChannel();
+
+// 離開頻道及其關聯的私有和在線頻道...
+leave();
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEcho } from "@laravel/echo-svelte";
+
+const { leaveChannel, leave, stopListening, listen } = useEcho(
+    \`orders.\${orderId}\`,
+    "OrderShipmentStatusUpdated",
+    (e) => {
+        console.log(e.order);
+    },
+);
+
+// 停止監聽而不離開頻道...
+stopListening();
+
+// 再次開始監聽...
+listen();
+
+// 離開頻道...
+leaveChannel();
+
+// 離開頻道及其關聯的私有和在線頻道...
+leave();
+</script>
+</code></pre>
+<p><a name="react-vue-connecting-to-public-channels"></a></p>
+<h4>連接到公開頻道</h4>
+<p>要連接到公開頻道，您可以使用 <code>useEchoPublic</code> 鉤子：</p>
+<pre><code class="language-js">import { useEchoPublic } from "@laravel/echo-react";
+
+useEchoPublic("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEchoPublic } from "@laravel/echo-vue";
+
+useEchoPublic("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEchoPublic } from "@laravel/echo-svelte";
+
+useEchoPublic("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
+</script>
+</code></pre>
+<p><a name="react-vue-connecting-to-presence-channels"></a></p>
+<h4>連接到在線頻道</h4>
+<p>要連接到在線頻道，您可以使用 <code>useEchoPresence</code> 鉤子：</p>
+<pre><code class="language-js">import { useEchoPresence } from "@laravel/echo-react";
+
+useEchoPresence("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEchoPresence } from "@laravel/echo-vue";
+
+useEchoPresence("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEchoPresence } from "@laravel/echo-svelte";
+
+useEchoPresence("posts", "PostPublished", (e) => {
+    console.log(e.post);
+});
+</script>
+</code></pre>
+<p><a name="react-vue-connection-status"></a></p>
+<h4>連接狀態</h4>
+<p>您可以使用 <code>useConnectionStatus</code> 鉤子來檢索當前 WebSocket 連接狀態，它提供響應式狀態，當連接狀態改變時自動更新：</p>
+<pre><code class="language-js">import { useConnectionStatus } from "@laravel/echo-react";
+
+function ConnectionIndicator() {
+    const status = useConnectionStatus();
+
+    return <div>Connection: {status}</div>;
+}
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useConnectionStatus } from "@laravel/echo-vue";
+
+const status = useConnectionStatus();
+</script>
+
+<template>
+    <div>Connection: {{ status }}</div>
+</template>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useConnectionStatus } from "@laravel/echo-svelte";
+
+const status = useConnectionStatus();
+</script>
+
+<div>Connection: {status()}</div>
+</code></pre>
+<p>可能的狀態值有：</p>
+<div class="content-list" markdown="1"><ul>
+<li><code>connected</code> - 已成功連接到 WebSocket 伺服器。</li>
+<li><code>connecting</code> - 初始連接嘗試進行中。</li>
+<li><code>reconnecting</code> - 斷開連接後正在嘗試重新連接。</li>
+<li><code>disconnected</code> - 未連接且未嘗試重新連接。</li>
+<li><code>failed</code> - 連接失敗且不會重試。</li>
+</ul>
+</div><p><a name="react-vue-socket-id"></a></p>
+<h4>Socket ID</h4>
+<p>您可以使用 <code>useSocketId</code> 鉤子來檢索當前 WebSocket Socket ID，它提供一個響應式值，當連接使用新的 Socket ID 重新連接時自動更新：</p>
+<pre><code class="language-js">import { useSocketId } from "@laravel/echo-react";
+
+function SocketIndicator() {
+    const socketId = useSocketId();
+
+    return <div>Socket ID: {socketId}</div>;
+}
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useSocketId } from "@laravel/echo-vue";
+
+const socketId = useSocketId();
+</script>
+
+<template>
+    <div>Socket ID: {{ socketId }}</div>
+</template>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useSocketId } from "@laravel/echo-svelte";
+
+const socketId = useSocketId();
+</script>
+
+<div>Socket ID: {socketId()}</div>
+</code></pre>
+<p><a name="presence-channels"></a></p>
+<h2>在線頻道</h2>
+<p>在線頻道建立在私有頻道的安全性之上，同時公開了訂閱者意識的額外功能。這使得構建強大的協作應用程式功能變得非常容易，例如在另一個使用者正在查看相同頁面時通知使用者，或列出聊天室的使用者。</p>
+<p><a name="authorizing-presence-channels"></a></p>
+<h3>授權在線頻道</h3>
+<p>所有在線頻道也是私有頻道；因此，使用者必須<a href="#authorizing-channels">被授權存取它們</a>。但是，在為在線頻道定義授權回呼時，如果使用者被授權加入頻道，您不會返回 <code>true</code>。相反，您應該返回有關使用者的資料陣列。</p>
+<p>授權回呼返回的資料將在 JavaScript 應用程式中提供給在線頻道事件監聽器。如果使用者未被授權加入在線頻道，您應該返回 <code>false</code> 或 <code>null</code>：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Broadcast::channel('chat.{roomId}', function (User $user, int $roomId) {
+    if ($user->canJoinRoom($roomId)) {
+        return ['id' => $user->id, 'name' => $user->name];
+    }
+});
+</code></pre>
+<p><a name="joining-presence-channels"></a></p>
+<h3>加入在線頻道</h3>
+<p>要加入在線頻道，您可以使用 Echo 的 <code>join</code> 方法。<code>join</code> 方法將返回一個 <code>PresenceChannel</code> 實現，該實現除了公開 <code>listen</code> 方法外，還允許您訂閱 <code>here</code>、<code>joining</code> 和 <code>leaving</code> 事件。</p>
+<pre><code class="language-js">Echo.join(\`chat.\${roomId}\`)
+    .here((users) => {
+        // ...
+    })
+    .joining((user) => {
+        console.log(user.name);
+    })
+    .leaving((user) => {
+        console.log(user.name);
+    })
+    .error((error) => {
+        console.error(error);
+    });
+</code></pre>
+<p><code>here</code> 回呼將在成功加入頻道後立即執行，它將接收一個包含當前訂閱該頻道的所有其他使用者的使用者資訊的陣列。當新使用者加入頻道時，<code>joining</code> 方法將被執行，而當使用者離開頻道時，<code>leaving</code> 方法將被執行。當授權端點返回非 200 的 HTTP 狀態碼或解析返回的 JSON 時出現問題時，<code>error</code> 方法將被執行。</p>
+<p><a name="broadcasting-to-presence-channels"></a></p>
+<h3>向在線頻道廣播</h3>
+<p>在線頻道可以像公開或私有頻道一樣接收事件。以聊天室為例，我們可能希望向房間的在線頻道廣播 <code>NewMessage</code> 事件。為此，我們將從事件的 <code>broadcastOn</code> 方法返回 <code>PresenceChannel</code> 的一個實例：</p>
+<pre><code class="language-php">/**
+ * 獲取事件應廣播的頻道。
+ *
+ * @return array<int, \\Illuminate\\Broadcasting\\Channel>
+ */
+public function broadcastOn(): array
+{
+    return [
+        new PresenceChannel('chat.'.$this->message->room_id),
+    ];
+}
+</code></pre>
+<p>與其他事件一樣，您可以使用 <code>broadcast</code> 輔助函數和 <code>toOthers</code> 方法來排除當前使用者接收廣播：</p>
+<pre><code class="language-php">broadcast(new NewMessage($message));
+
+broadcast(new NewMessage($message))->toOthers();
+</code></pre>
+<p>與其他類型的事件一樣，您可以使用 Echo 的 <code>listen</code> 方法來監聽發送到在線頻道的事件：</p>
+<pre><code class="language-js">Echo.join(\`chat.\${roomId}\`)
+    .here(/* ... */)
+    .joining(/* ... */)
+    .leaving(/* ... */)
+    .listen('NewMessage', (e) => {
+        // ...
+    });
+</code></pre>
+<p><a name="model-broadcasting"></a></p>
+<h2>模型廣播</h2>
+<blockquote>
+<p>[!WARNING]
+在閱讀以下關於模型廣播的文檔之前，我們建議您熟悉 Laravel 模型廣播服務的一般概念以及如何手動創建和監聽廣播事件。</p>
+</blockquote>
+<p>當應用程式的 <a href="/docs/eloquent">Eloquent 模型</a>被創建、更新或刪除時，廣播事件是很常見的。當然，這可以透過手動<a href="/docs/eloquent#events">為 Eloquent 模型狀態更改定義自訂事件</a>並使用 <code>ShouldBroadcast</code> 介面標記這些事件來輕鬆實現。</p>
+<p>但是，如果您不在應用程式中的任何其他目的使用這些事件，僅僅為了廣播它們而創建事件類別可能很繁瑣。為此，Laravel 允許您指示 Eloquent 模型應自動廣播其狀態更改。</p>
+<p>首先，您的 Eloquent 模型應使用 <code>Illuminate\\Database\\Eloquent\\BroadcastsEvents</code> trait。此外，模型應定義一個 <code>broadcastOn</code> 方法，該方法應返回模型事件應廣播的頻道陣列：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Broadcasting\\Channel;
+use Illuminate\\Broadcasting\\PrivateChannel;
+use Illuminate\\Database\\Eloquent\\BroadcastsEvents;
+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\Relations\\BelongsTo;
+
+class Post extends Model
+{
+    use BroadcastsEvents, HasFactory;
+
+    /**
+     * 獲取文章所屬的使用者。
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * 獲取模型事件應廣播的頻道。
+     *
+     * @return array<int, \\Illuminate\\Broadcasting\\Channel|\\Illuminate\\Database\\Eloquent\\Model>
+     */
+    public function broadcastOn(string $event): array
+    {
+        return [$this, $this->user];
+    }
+}
+</code></pre>
+<p>一旦您的模型包含此 trait 並定義了其廣播頻道，它將在模型實例被創建、更新、刪除、軟刪除或恢復時開始自動廣播事件。</p>
+<p>此外，您可能已經注意到 <code>broadcastOn</code> 方法接收一個字串 <code>$event</code> 參數。此參數包含在模型上發生的事件類型，其值將為 <code>created</code>、<code>updated</code>、<code>deleted</code>、<code>trashed</code> 或 <code>restored</code>。透過檢查此變數的值，您可以判斷模型應針對特定事件廣播到哪些頻道（如果有）：</p>
+<pre><code class="language-php">/**
+ * 獲取模型事件應廣播的頻道。
+ *
+ * @return array<string, array<int, \\Illuminate\\Broadcasting\\Channel|\\Illuminate\\Database\\Eloquent\\Model>>
+ */
+public function broadcastOn(string $event): array
+{
+    return match ($event) {
+        'deleted' => [],
+        default => [$this, $this->user],
+    };
+}
+</code></pre>
+<p><a name="customizing-model-broadcasting-event-creation"></a></p>
+<h4>自訂模型廣播事件創建</h4>
+<p>偶爾，您可能希望自訂 Laravel 如何創建底層模型廣播事件。您可以透過在 Eloquent 模型上定義一個 <code>newBroadcastableEvent</code> 方法來實現這一點。此方法應返回一個 <code>Illuminate\\Database\\Eloquent\\BroadcastableModelEventOccurred</code> 實例：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\BroadcastableModelEventOccurred;
+
+/**
+ * 為模型創建一個新的可廣播模型事件。
+ */
+protected function newBroadcastableEvent(string $event): BroadcastableModelEventOccurred
+{
+    return (new BroadcastableModelEventOccurred(
+        $this, $event
+    ))->dontBroadcastToCurrentUser();
+}
+</code></pre>
+<p><a name="model-broadcasting-conventions"></a></p>
+<h3>模型廣播慣例</h3>
+<p><a name="model-broadcasting-channel-conventions"></a></p>
+<h4>頻道慣例</h4>
+<p>正如您可能已經注意到的，模型範例中的 <code>broadcastOn</code> 方法沒有返回 <code>Channel</code> 實例。相反，直接返回了 Eloquent 模型。如果模型的 <code>broadcastOn</code> 方法返回一個 Eloquent 模型實例（或包含在方法返回的陣列中），Laravel 將自動使用模型的類別名稱和主鍵標識符作為頻道名稱來為該模型實例化一個私有頻道實例。</p>
+<p>因此，一個 ID 為 <code>1</code> 的 <code>App\\Models\\User</code> 模型將被轉換為一個名稱為 <code>App.Models.User.1</code> 的 <code>Illuminate\\Broadcasting\\PrivateChannel</code> 實例。當然，除了從模型的 <code>broadcastOn</code> 方法返回 Eloquent 模型實例外，您還可以返回完整的 <code>Channel</code> 實例以完全控制模型的頻道名稱：</p>
+<pre><code class="language-php">use Illuminate\\Broadcasting\\PrivateChannel;
+
+/**
+ * 獲取模型事件應廣播的頻道。
+ *
+ * @return array<int, \\Illuminate\\Broadcasting\\Channel>
+ */
+public function broadcastOn(string $event): array
+{
+    return [
+        new PrivateChannel('user.'.$this->id)
+    ];
+}
+</code></pre>
+<p>如果您打算從模型的 <code>broadcastOn</code> 方法明確返回一個頻道實例，您可以將一個 Eloquent 模型實例傳遞給頻道的構造函數。這樣做時，Laravel 將使用上述模型頻道慣例將 Eloquent 模型轉換為頻道名稱字串：</p>
+<pre><code class="language-php">return [new Channel($this->user)];
+</code></pre>
+<p>如果您需要判斷模型的頻道名稱，可以在任何模型實例上呼叫 <code>broadcastChannel</code> 方法。例如，此方法為 ID 為 <code>1</code> 的 <code>App\\Models\\User</code> 模型返回字串 <code>App.Models.User.1</code>：</p>
+<pre><code class="language-php">$user->broadcastChannel();
+</code></pre>
+<p><a name="model-broadcasting-event-conventions"></a></p>
+<h4>事件慣例</h4>
+<p>由於模型廣播事件與應用程式 <code>App\\Events</code> 目錄中的「實際」事件無關，因此它們根據慣例被分配一個名稱和一個負載。Laravel 的慣例是使用模型的類別名稱（不包括命名空間）和觸發廣播的模型事件名稱來廣播事件。</p>
+<p>因此，例如，對 <code>App\\Models\\Post</code> 模型的更新將向您的客戶端應用程式廣播一個名為 <code>PostUpdated</code> 的事件，其負載如下：</p>
+<pre><code class="language-json">{
+    "model": {
+        "id": 1,
+        "title": "My first post"
+        ...
+    },
+    ...
+    "socket": "someSocketId"
+}
+</code></pre>
+<p>刪除 <code>App\\Models\\User</code> 模型將廣播一個名為 <code>UserDeleted</code> 的事件。</p>
+<p>如果您願意，您可以透過在模型上添加 <code>broadcastAs</code> 和 <code>broadcastWith</code> 方法來定義自訂廣播名稱和負載。這些方法接收正在發生的模型事件/操作的名稱，允許您為每個模型操作自訂事件的名稱和負載。如果 <code>broadcastAs</code> 方法返回 <code>null</code>，則 Laravel 在廣播事件時將使用上述模型廣播事件名稱慣例：</p>
+<pre><code class="language-php">/**
+ * 模型事件的廣播名稱。
+ */
+public function broadcastAs(string $event): string|null
+{
+    return match ($event) {
+        'created' => 'post.created',
+        default => null,
+    };
+}
+
+/**
+ * 獲取要廣播的模型資料。
+ *
+ * @return array<string, mixed>
+ */
+public function broadcastWith(string $event): array
+{
+    return match ($event) {
+        'created' => ['title' => $this->title],
+        default => ['model' => $this],
+    };
+}
+</code></pre>
+<p><a name="listening-for-model-broadcasts"></a></p>
+<h3>監聽模型廣播</h3>
+<p>將 <code>BroadcastsEvents</code> trait 添加到您的模型並定義模型的 <code>broadcastOn</code> 方法後，您就可以開始在客戶端應用程式中監聽廣播的模型事件。開始之前，您可能希望查閱有關<a href="#listening-for-events">監聽事件</a>的完整文檔。</p>
+<p>首先，使用 <code>private</code> 方法檢索頻道的實例，然後呼叫 <code>listen</code> 方法來監聽特定事件。通常，傳遞給 <code>private</code> 方法的頻道名稱應對應 Laravel 的<a href="#model-broadcasting-conventions">模型廣播慣例</a>。</p>
+<p>獲得頻道實例後，您可以使用 <code>listen</code> 方法來監聽特定事件。由於模型廣播事件與應用程式 <code>App\\Events</code> 目錄中的「實際」事件無關，因此<a href="#model-broadcasting-event-conventions">事件名稱</a>必須以 <code>.</code> 為前綴，以表示它不屬於特定命名空間。每個模型廣播事件都有一個 <code>model</code> 屬性，其中包含模型的所有可廣播屬性：</p>
+<pre><code class="language-js">Echo.private(\`App.Models.User.\${this.user.id}\`)
+    .listen('.UserUpdated', (e) => {
+        console.log(e.model);
+    });
+</code></pre>
+<p><a name="model-broadcasts-with-react-or-vue"></a></p>
+<h4>使用 React、Vue 或 Svelte</h4>
+<p>如果您正在使用 React、Vue 或 Svelte，您可以使用 Laravel Echo 內建的 <code>useEchoModel</code> 鉤子輕鬆監聽模型廣播：</p>
+<pre><code class="language-js">import { useEchoModel } from "@laravel/echo-react";
+
+useEchoModel("App.Models.User", userId, ["UserUpdated"], (e) => {
+    console.log(e.model);
+});
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEchoModel } from "@laravel/echo-vue";
+
+useEchoModel("App.Models.User", userId, ["UserUpdated"], (e) => {
+    console.log(e.model);
+});
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEchoModel } from "@laravel/echo-svelte";
+
+useEchoModel("App.Models.User", userId, ["UserUpdated"], (e) => {
+    console.log(e.model);
+});
+</script>
+</code></pre>
+<p>您還可以指定模型事件負載資料的形狀，以獲得更好的類型安全性和編輯便利性：</p>
+<pre><code class="language-ts">type User = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+useEchoModel<User, "App.Models.User">("App.Models.User", userId, ["UserUpdated"], (e) => {
+    console.log(e.model.id);
+    console.log(e.model.name);
+});
+</code></pre>
+<p><a name="client-events"></a></p>
+<h2>客戶端事件</h2>
+<blockquote>
+<p>[!NOTE]
+使用 <a href="https://pusher.com/channels">Pusher Channels</a> 時，您必須在 <a href="https://dashboard.pusher.com/">應用程式儀表板</a>的「App Settings」部分中啟用「Client Events」選項才能發送客戶端事件。</p>
+</blockquote>
+<p>有時您可能希望向其他已連接的客戶端廣播事件，而完全不需要命中您的 Laravel 應用程式。這對於某些功能（如「正在輸入」通知）特別有用，您希望在給定的螢幕上通知應用程式的使用者另一個使用者正在輸入訊息。</p>
+<p>要廣播客戶端事件，您可以使用 Echo 的 <code>whisper</code> 方法：</p>
+<pre><code class="language-js">Echo.private(\`chat.\${roomId}\`)
+    .whisper('typing', {
+        name: this.user.name
+    });
+</code></pre>
+<pre><code class="language-js">import { useEcho } from "@laravel/echo-react";
+
+const { channel } = useEcho(\`chat.\${roomId}\`, ['update'], (e) => {
+    console.log('Chat event received:', e);
+});
+
+channel().whisper('typing', { name: user.name });
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEcho } from "@laravel/echo-vue";
+
+const { channel } = useEcho(\`chat.\${roomId}\`, ['update'], (e) => {
+    console.log('Chat event received:', e);
+});
+
+channel().whisper('typing', { name: user.name });
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEcho } from "@laravel/echo-svelte";
+
+const { channel } = useEcho(\`chat.\${roomId}\`, ['update'], (e) => {
+    console.log('Chat event received:', e);
+});
+
+channel().whisper('typing', { name: user.name });
+</script>
+</code></pre>
+<p>要監聽客戶端事件，您可以使用 <code>listenForWhisper</code> 方法：</p>
+<pre><code class="language-js">Echo.private(\`chat.\${roomId}\`)
+    .listenForWhisper('typing', (e) => {
+        console.log(e.name);
+    });
+</code></pre>
+<pre><code class="language-js">import { useEcho } from "@laravel/echo-react";
+
+const { channel } = useEcho(\`chat.\${roomId}\`, ['update'], (e) => {
+    console.log('Chat event received:', e);
+});
+
+channel().listenForWhisper('typing', (e) => {
+    console.log(e.name);
+});
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEcho } from "@laravel/echo-vue";
+
+const { channel } = useEcho(\`chat.\${roomId}\`, ['update'], (e) => {
+    console.log('Chat event received:', e);
+});
+
+channel().listenForWhisper('typing', (e) => {
+    console.log(e.name);
+});
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEcho } from "@laravel/echo-svelte";
+
+const { channel } = useEcho(\`chat.\${roomId}\`, ['update'], (e) => {
+    console.log('Chat event received:', e);
+});
+
+channel().listenForWhisper('typing', (e) => {
+    console.log(e.name);
+});
+</script>
+</code></pre>
+<p><a name="notifications"></a></p>
+<h2>通知</h2>
+<p>透過將事件廣播與<a href="/docs/notifications">通知</a>配對，您的 JavaScript 應用程式可以在發生新通知時接收它們，而無需重新整理頁面。開始之前，請確保閱讀有關使用<a href="/docs/notifications#broadcast-notifications">廣播通知通道</a>的文檔。</p>
+<p>配置通知使用廣播通道後，您可以使用 Echo 的 <code>notification</code> 方法來監聽廣播事件。請記住，頻道名稱應與接收通知的實體的類別名稱匹配：</p>
+<pre><code class="language-js">Echo.private(\`App.Models.User.\${userId}\`)
+    .notification((notification) => {
+        console.log(notification.type);
+    });
+</code></pre>
+<pre><code class="language-js">import { useEchoModel } from "@laravel/echo-react";
+
+const { channel } = useEchoModel('App.Models.User', userId);
+
+channel().notification((notification) => {
+    console.log(notification.type);
+});
+</code></pre>
+<pre><code class="language-vue"><script setup lang="ts">
+import { useEchoModel } from "@laravel/echo-vue";
+
+const { channel } = useEchoModel('App.Models.User', userId);
+
+channel().notification((notification) => {
+    console.log(notification.type);
+});
+</script>
+</code></pre>
+<pre><code class="language-svelte"><script>
+import { useEchoModel } from "@laravel/echo-svelte";
+
+const { channel } = useEchoModel('App.Models.User', userId);
+
+channel().notification((notification) => {
+    console.log(notification.type);
+});
+</script>
+</code></pre>
+<p>在此範例中，透過 <code>broadcast</code> 通道發送到 <code>App\\Models\\User</code> 實例的所有通知都將被回呼接收。<code>App.Models.User.{id}</code> 頻道的頻道授權回呼包含在應用程式的 <code>routes/channels.php</code> 檔案中。</p>
+<p><a name="stop-listening-for-notifications"></a></p>
+<h4>停止監聽通知</h4>
+<p>如果您希望在不<a href="#leaving-a-channel">離開頻道</a>的情況下停止監聽通知，可以使用 <code>stopListeningForNotification</code> 方法：</p>
+<pre><code class="language-js">const callback = (notification) => {
+    console.log(notification.type);
+}
+
+// 開始監聽...
+Echo.private(\`App.Models.User.\${userId}\`)
+    .notification(callback);
+
+// 停止監聽（回呼必須相同）...
+Echo.private(\`App.Models.User.\${userId}\`)
+    .stopListeningForNotification(callback);
+</code></pre>
+`;
+---
+
+<DocsLayout title="廣播" currentPath="broadcasting">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>廣播</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">廣播</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/broadcasting" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

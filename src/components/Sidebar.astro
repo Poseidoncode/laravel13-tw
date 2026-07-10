@@ -1,0 +1,303 @@
+---
+interface Props {
+  currentPath?: string;
+  prefix?: string;
+}
+
+const { currentPath = '', prefix = '' } = Astro.props;
+
+const sections = [
+  {
+    title: '開始使用',
+    items: [
+      { title: '安裝', slug: 'installation' },
+      { title: '配置', slug: 'configuration' },
+      { title: '目錄結構', slug: 'structure' },
+      { title: '前端', slug: 'frontend' },
+      { title: '入門套件', slug: 'starter-kits' },
+      { title: '部署', slug: 'deployment' },
+    ],
+  },
+  {
+    title: '核心概念',
+    items: [
+      { title: '請求生命週期', slug: 'lifecycle' },
+      { title: '服務容器', slug: 'container' },
+      { title: '服務提供者', slug: 'providers' },
+      { title: 'Facades', slug: 'facades' },
+    ],
+  },
+  {
+    title: '路由與請求',
+    items: [
+      { title: '路由', slug: 'routing' },
+      { title: '中介層', slug: 'middleware' },
+      { title: 'CSRF 保護', slug: 'csrf' },
+      { title: '控制器', slug: 'controllers' },
+      { title: 'HTTP 請求', slug: 'requests' },
+      { title: 'HTTP 回應', slug: 'responses' },
+    ],
+  },
+  {
+    title: '前端與視圖',
+    items: [
+      { title: '視圖', slug: 'views' },
+      { title: 'Blade 模板', slug: 'blade' },
+      { title: '資源打包 (Vite)', slug: 'vite' },
+      { title: 'URL 生成', slug: 'urls' },
+    ],
+  },
+  {
+    title: '應用功能',
+    items: [
+      { title: 'Session', slug: 'session' },
+      { title: '驗證', slug: 'validation' },
+      { title: '錯誤處理', slug: 'errors' },
+      { title: '日誌', slug: 'logging' },
+      { title: 'Artisan 命令列', slug: 'artisan' },
+    ],
+  },
+  {
+    title: '資料庫',
+    items: [
+      { title: '資料庫入門', slug: 'database' },
+      { title: '查詢建構器', slug: 'queries' },
+      { title: '遷移', slug: 'migrations' },
+      { title: '填充', slug: 'seeding' },
+      { title: 'Redis', slug: 'redis' },
+    ],
+  },
+  {
+    title: 'Eloquent ORM',
+    items: [
+      { title: 'Eloq 入門', slug: 'eloquent' },
+      { title: '關係', slug: 'eloquent-relationships' },
+      { title: '集合', slug: 'eloquent-collections' },
+      { title: '修改器', slug: 'eloquent-mutators' },
+      { title: 'API 資源', slug: 'eloquent-resources' },
+      { title: '序列化', slug: 'eloquent-serialization' },
+      { title: '工廠', slug: 'eloquent-factories' },
+    ],
+  },
+  {
+    title: '套件開發',
+    items: [
+      { title: '套件開發', slug: 'packages' },
+      { title: '擴展包', slug: 'billing' },
+      { title: 'Cashier (Paddle)', slug: 'cashier-paddle' },
+      { title: 'Envoy', slug: 'envoy' },
+      { title: 'Fortify', slug: 'fortify' },
+      { title: 'Folio', slug: 'folio' },
+      { title: 'Homestead', slug: 'homestead' },
+      { title: 'Horizon', slug: 'horizon' },
+      { title: 'Mix', slug: 'mix' },
+      { title: 'Octane', slug: 'octane' },
+      { title: 'Passport', slug: 'passport' },
+      { title: 'Pennant', slug: 'pennant' },
+      { title: 'Pint', slug: 'pint' },
+      { title: 'Precognition', slug: 'precognition' },
+      { title: 'Pulse', slug: 'pulse' },
+      { title: 'Sail', slug: 'sail' },
+      { title: 'Sanctum', slug: 'sanctum' },
+      { title: 'Scout', slug: 'scout' },
+      { title: 'Socialite', slug: 'socialite' },
+      { title: 'Telescope', slug: 'telescope' },
+      { title: 'Valet', slug: 'valet' },
+    ],
+  },
+  {
+    title: '認證與安全',
+    items: [
+      { title: '認證', slug: 'authentication' },
+      { title: '授權', slug: 'authorization' },
+      { title: '郵件驗證', slug: 'verification' },
+      { title: '密碼重設', slug: 'passwords' },
+      { title: '加密', slug: 'encryption' },
+      { title: '雜湊', slug: 'hashing' },
+      { title: '速率限制', slug: 'rate-limiting' },
+    ],
+  },
+  {
+    title: '進階功能',
+    items: [
+      { title: '廣播', slug: 'broadcasting' },
+      { title: '快取', slug: 'cache' },
+      { title: '集合', slug: 'collections' },
+      { title: '並行', slug: 'concurrency' },
+      { title: '事件', slug: 'events' },
+      { title: '檔案系統', slug: 'filesystem' },
+      { title: '輔助函式', slug: 'helpers' },
+      { title: 'HTTP 用戶端', slug: 'http-client' },
+      { title: '本地化', slug: 'localization' },
+      { title: '郵件', slug: 'mail' },
+      { title: '通知', slug: 'notifications' },
+      { title: '分頁', slug: 'pagination' },
+      { title: '佇列', slug: 'queues' },
+      { title: '排程', slug: 'scheduling' },
+      { title: '搜尋', slug: 'search' },
+    ],
+  },
+  {
+    title: '測試',
+    items: [
+      { title: '測試入門', slug: 'testing' },
+      { title: 'HTTP 測試', slug: 'http-tests' },
+      { title: '控制台測試', slug: 'console-tests' },
+      { title: '資料庫測試', slug: 'database-testing' },
+      { title: 'Mocking', slug: 'mocking' },
+    ],
+  },
+  {
+    title: 'AI 與 Agentic',
+    items: [
+      { title: 'Laravel 與 AI', slug: 'ai' },
+      { title: 'AI SDK', slug: 'ai-sdk' },
+      { title: 'MCP', slug: 'mcp' },
+      { title: 'Boost', slug: 'boost' },
+      { title: 'Prompts', slug: 'prompts' },
+    ],
+  },
+  {
+    title: '其他',
+    items: [
+      { title: '發布說明', slug: 'releases' },
+      { title: '升級指南', slug: 'upgrade' },
+      { title: '貢獻指南', slug: 'contributions' },
+      { title: '文件說明', slug: 'documentation' },
+      { title: '合約', slug: 'contracts' },
+      { title: '上下文', slug: 'context' },
+      { title: 'Laravel Cloud', slug: 'deployment' },
+      { title: 'MongoDB', slug: 'mongodb' },
+      { title: 'Processes', slug: 'processes' },
+      { title: '字串輔助', slug: 'strings' },
+    ],
+  },
+];
+
+// Determine which sections contain the active page
+function isSectionActive(section: typeof sections[number]): boolean {
+  return section.items.some(item => currentPath === item.slug);
+}
+---
+
+<div class="px-4">
+  <!-- Navigation -->
+  <nav class="space-y-1">
+    {
+      sections.map((section) => {
+        const sectionActive = isSectionActive(section);
+        const sectionId = section.title.replace(/\s+/g, '-').toLowerCase();
+        const prefixedId = prefix + sectionId;
+        return (
+          <div class="sidebar-section">
+            <button
+              class={`sidebar-section-toggle flex items-center justify-between w-full px-3 py-2 rounded-md text-xs font-semibold uppercase tracking-widest transition-colors duration-150 ${
+                sectionActive
+                  ? 'text-accent bg-accent-light/50'
+                  : 'text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary/50'
+              }`}
+              aria-expanded={sectionActive ? 'true' : 'false'}
+              data-section={prefixedId}
+            >
+              <span>{section.title}</span>
+              <svg
+                class="w-3.5 h-3.5 transition-transform duration-200"
+                class:list={{ 'rotate-180': sectionActive }}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+            <div
+              class={`sidebar-section-content mt-1 space-y-0.5 ${sectionActive ? '' : 'hidden'}`}
+              id={`section-${prefixedId}`}
+            >
+              {
+                section.items.map((item) => {
+                  const isActive = currentPath === item.slug;
+                  return (
+                    <a
+                      href={`/docs/${item.slug}`}
+                      class={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150 ${
+                        isActive
+                          ? 'bg-accent text-white font-medium'
+                          : 'text-text-secondary hover:text-text-primary hover:bg-bg-tertiary'
+                      }`}
+                    >
+                      {item.title}
+                    </a>
+                  );
+                })
+              }
+            </div>
+          </div>
+        );
+      })
+    }
+  </nav>
+</div>
+
+<script>
+  // Determine instance type from first toggle's data-section attribute
+  // ("mobile-" prefix = mobile drawer instance)
+  const firstToggle = document.querySelector('.sidebar-section-toggle');
+  const prefix = firstToggle ? (firstToggle.dataset.section || '') : '';
+  const isMobile = prefix.startsWith('mobile-');
+  const STORAGE_KEY = 'sidebar-sections' + (isMobile ? '-mobile' : '');
+
+  function loadSavedState() {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveState(state) {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {}
+  }
+
+  const savedState = loadSavedState();
+
+  document.querySelectorAll('.sidebar-section-toggle').forEach((button) => {
+    const qualifiedId = button.dataset.section;
+    const content = document.getElementById(`section-${qualifiedId}`);
+    const icon = button.querySelector('svg');
+
+    if (qualifiedId && qualifiedId in savedState) {
+      const shouldExpand = savedState[qualifiedId];
+      const currentExpanded = button.getAttribute('aria-expanded') === 'true';
+
+      if (shouldExpand !== currentExpanded) {
+        if (content) content.classList.toggle('hidden');
+        button.setAttribute('aria-expanded', String(shouldExpand));
+        if (icon) icon.classList.toggle('rotate-180');
+        button.classList.toggle('text-accent', shouldExpand);
+        button.classList.toggle('bg-accent-light/50', shouldExpand);
+        button.classList.toggle('text-text-tertiary', !shouldExpand);
+      }
+    }
+
+    button.addEventListener('click', () => {
+      const content = document.getElementById(`section-${qualifiedId}`);
+      const icon = button.querySelector('svg');
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      const next = !expanded;
+
+      if (content) content.classList.toggle('hidden');
+      button.setAttribute('aria-expanded', String(next));
+      if (icon) icon.classList.toggle('rotate-180');
+
+      button.classList.toggle('text-accent', next);
+      button.classList.toggle('bg-accent-light/50', next);
+      button.classList.toggle('text-text-tertiary', !next);
+
+      const state = loadSavedState();
+      state[qualifiedId] = next;
+      saveState(state);
+    });
+  });
+</script>

@@ -1,0 +1,296 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<!-- Reusable SVG icon components (inline, no external deps) -->
+<!-- Hero decorative element -->
+<Layout title="Laravel 13.x 繁體中文文檔 — 首頁">
+  <!-- ─── Hero Section ─── -->
+  <section class="relative overflow-hidden">
+    <!-- Subtle gradient background -->
+    <div class="absolute inset-0 bg-gradient-to-b from-accent-light/30 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28 lg:pb-24">
+      <div class="max-w-3xl mx-auto text-center">
+        <!-- Eyebrow label -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-accent-light text-accent border border-accent/20 mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden="true" />
+          社群維護 · 持續更新
+        </div>
+
+        <!-- Main heading -->
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary">
+          <span class="font-serif font-semibold">Laravel</span>
+          <span class="text-accent"> 13.x</span>
+          <br />
+          <span class="text-2xl sm:text-3xl lg:text-4xl font-bold font-sans text-text-secondary block mt-2">
+            繁體中文文檔
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="mt-6 text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+          完整的 Laravel 框架文檔繁體中文翻譯，由社群維護，提供高品質、精確的技術內容，
+          幫助繁體中文開發者更有效率地學習與使用 Laravel。
+        </p>
+
+        <!-- CTA buttons -->
+        <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <a
+            href="/docs/installation"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accent-dark transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            開始閱讀
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+          <a
+            href="https://github.com/laravel13-tw/laravel13-tw"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium border border-border text-text-primary hover:border-accent hover:text-accent transition-all duration-200"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+            </svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Quick Stats ─── -->
+  <section class="border-y border-border bg-bg-secondary/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold font-serif text-accent">101</div>
+          <div class="text-xs sm:text-sm text-text-tertiary mt-1">文檔頁面</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold font-serif text-accent">13</div>
+          <div class="text-xs sm:text-sm text-text-tertiary mt-1">分類章節</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold font-serif text-accent">5+</div>
+          <div class="text-xs sm:text-sm text-text-tertiary mt-1">完整翻譯</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold font-serif text-accent">100%</div>
+          <div class="text-xs sm:text-sm text-text-tertiary mt-1">靜態建構</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Features ─── -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12 sm:mb-16">
+        <h2 class="text-2xl sm:text-3xl font-bold text-text-primary font-serif">專案特色</h2>
+        <p class="mt-3 text-text-secondary max-w-xl mx-auto">
+          現代化技術建構，專為繁體中文開發者最佳化
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Feature 1 -->
+        <div class="group p-6 rounded-xl border border-border bg-bg-secondary/30 hover:bg-bg-secondary hover:border-accent/30 transition-all duration-300">
+          <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-text-primary mb-1">完整的 Laravel 文檔</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">
+            涵蓋 Laravel 13.x 所有核心功能、套件與進階主題
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="group p-6 rounded-xl border border-border bg-bg-secondary/30 hover:bg-bg-secondary hover:border-accent/30 transition-all duration-300">
+          <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.78.147 2.653.255" />
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-text-primary mb-1">繁體中文翻譯</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">
+            由社群維護的高品質翻譯，符合繁體中文用語習慣
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="group p-6 rounded-xl border border-border bg-bg-secondary/30 hover:bg-bg-secondary hover:border-accent/30 transition-all duration-300">
+          <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-text-primary mb-1">現代化技術</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">
+            Astro 7 + Tailwind CSS v4 建構，極速載入、響應式設計
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="group p-6 rounded-xl border border-border bg-bg-secondary/30 hover:bg-bg-secondary hover:border-accent/30 transition-all duration-300">
+          <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+            </svg>
+          </div>
+          <h3 class="text-base font-semibold text-text-primary mb-1">開源社群</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">
+            開放原始碼，歡迎任何人貢獻翻譯與改進
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Documentation Categories ─── -->
+  <section class="py-16 sm:py-20 bg-bg-secondary/30 border-y border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12 sm:mb-16">
+        <h2 class="text-2xl sm:text-3xl font-bold text-text-primary font-serif">文檔分類</h2>
+        <p class="mt-3 text-text-secondary max-w-xl mx-auto">
+          探索 Laravel 13.x 各面向的完整技術文檔
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <!-- Category cards with subtle hover effect -->
+        <a href="/docs/installation" class="group block p-5 sm:p-6 rounded-xl border border-border bg-surface hover:border-accent/40 hover:shadow-sm transition-all duration-200 no-underline">
+          <div class="flex items-start gap-4">
+            <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-accent/20 transition-colors">
+              <svg class="w-4.5 h-4.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">開始使用</h3>
+              <p class="mt-1 text-sm text-text-tertiary leading-relaxed">安裝、配置、目錄結構、部署</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="/docs/routing" class="group block p-5 sm:p-6 rounded-xl border border-border bg-surface hover:border-accent/40 hover:shadow-sm transition-all duration-200 no-underline">
+          <div class="flex items-start gap-4">
+            <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-accent/20 transition-colors">
+              <svg class="w-4.5 h-4.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">路由與請求</h3>
+              <p class="mt-1 text-sm text-text-tertiary leading-relaxed">路由、中介層、控制器、請求與回應</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="/docs/eloquent" class="group block p-5 sm:p-6 rounded-xl border border-border bg-surface hover:border-accent/40 hover:shadow-sm transition-all duration-200 no-underline">
+          <div class="flex items-start gap-4">
+            <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-accent/20 transition-colors">
+              <svg class="w-4.5 h-4.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">Eloquent ORM</h3>
+              <p class="mt-1 text-sm text-text-tertiary leading-relaxed">資料庫操作、模型關聯、查詢建構</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="/docs/blade" class="group block p-5 sm:p-6 rounded-xl border border-border bg-surface hover:border-accent/40 hover:shadow-sm transition-all duration-200 no-underline">
+          <div class="flex items-start gap-4">
+            <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-accent/20 transition-colors">
+              <svg class="w-4.5 h-4.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">前端與視圖</h3>
+              <p class="mt-1 text-sm text-text-tertiary leading-relaxed">Blade 模板、視圖、Vite 資源打包</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="/docs/testing" class="group block p-5 sm:p-6 rounded-xl border border-border bg-surface hover:border-accent/40 hover:shadow-sm transition-all duration-200 no-underline">
+          <div class="flex items-start gap-4">
+            <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-accent/20 transition-colors">
+              <svg class="w-4.5 h-4.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">測試</h3>
+              <p class="mt-1 text-sm text-text-tertiary leading-relaxed">單元測試、HTTP 測試、資料庫測試</p>
+            </div>
+          </div>
+        </a>
+
+        <a href="/docs/ai" class="group block p-5 sm:p-6 rounded-xl border border-border bg-surface hover:border-accent/40 hover:shadow-sm transition-all duration-200 no-underline">
+          <div class="flex items-start gap-4">
+            <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-accent/20 transition-colors">
+              <svg class="w-4.5 h-4.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">AI 與 Agentic 開發</h3>
+              <p class="mt-1 text-sm text-text-tertiary leading-relaxed">Laravel AI、MCP 協議、Boost</p>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <!-- View all docs CTA -->
+      <div class="mt-10 text-center">
+        <a
+          href="/docs/installation"
+          class="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-dark transition-colors"
+        >
+          瀏覽所有文檔分類
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA Section ─── -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-2xl mx-auto text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-text-primary font-serif">參與貢獻</h2>
+        <p class="mt-3 text-text-secondary">
+          本專案完全開源，歡迎任何形式的貢獻——翻譯、校對、回報問題或改進建議
+        </p>
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <a
+            href="https://github.com/laravel13-tw/laravel13-tw"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium bg-accent text-white hover:bg-accent-dark transition-all duration-200"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+            </svg>
+            GitHub Repository
+          </a>
+          <a
+            href="/docs/contributions"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium border border-border text-text-primary hover:border-accent hover:text-accent transition-all duration-200"
+          >
+            貢獻指南
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

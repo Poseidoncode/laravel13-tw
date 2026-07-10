@@ -1,0 +1,136 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>CSRF 保護</h1>
+<ul>
+<li><a href="#csrf-introduction">簡介</a></li>
+<li><a href="#preventing-csrf-requests">防止 CSRF 請求</a><ul>
+<li><a href="#origin-verification">來源驗證</a></li>
+<li><a href="#csrf-excluding-uris">排除 URI</a></li>
+</ul>
+</li>
+<li><a href="#csrf-x-csrf-token">X-CSRF-Token</a></li>
+<li><a href="#csrf-x-xsrf-token">X-XSRF-Token</a></li>
+</ul>
+<p><a name="csrf-introduction"></a></p>
+<h2>簡介</h2>
+<p>跨站請求偽造（CSRF）是一類惡意攻擊，攻擊者利用此漏洞以已驗證用戶的名義執行未授權的命令。幸運的是，Laravel 讓您能輕鬆保護應用程式免受<a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">跨站請求偽造</a>（CSRF）攻擊。</p>
+<p><a name="csrf-explanation"></a></p>
+<h4>漏洞說明</h4>
+<p>如果您不熟悉跨站請求偽造，讓我們討論一個範例來說明如何利用此漏洞。假設您的應用程式有一個 <code>/user/email</code> 路由，該路由接受一個 <code>POST</code> 請求來變更已驗證用戶的電子郵件地址。此路由通常會期望一個 <code>email</code> 輸入欄位包含用戶想要開始使用的電子郵件地址。</p>
+<p>如果沒有 CSRF 保護，惡意網站可以建立一個 HTML 表單，指向您應用程式的 <code>/user/email</code> 路由，並提交惡意用戶自己的電子郵件地址：</p>
+<pre><code class="language-blade">&lt;form action="https://your-application.com/user/email" method="POST"&gt;
+    &lt;input type="email" value="malicious-email@example.com"&gt;
+&lt;/form&gt;
+
+&lt;script&gt;
+    document.forms[0].submit();
+&lt;/script&gt;
+</code></pre>
+<p>如果惡意網站在頁面載入時自動提交表單，惡意用戶只需要誘騙您應用程式的一個毫無戒心的用戶拜訪他們的網站，該用戶的電子郵件地址就會在您的應用程式中被變更。</p>
+<p>為了防止此漏洞，我們需要檢查每個傳入的 <code>POST</code>、<code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 請求中的機密 session 值，而惡意應用程式無法存取此值。</p>
+<p><a name="preventing-csrf-requests"></a></p>
+<h2>防止 CSRF 請求</h2>
+<p><code>Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery</code> <a href="/docs/middleware">中介層</a>預設包含在 <code>web</code> 中介層群組中，它使用雙層方法來保護您的應用程式免受跨站請求偽造攻擊。</p>
+<p>首先，中介層會檢查瀏覽器的 <code>Sec-Fetch-Site</code> 標頭。現代瀏覽器會自動在每個請求上設定此標頭，指示該請求是來自相同來源、相同網站還是跨站來源。如果標頭指示請求來自相同來源，則請求會立即被允許，無需任何令牌驗證。</p>
+<p>如果來源驗證未通過 — 例如，因為請求來自較舊的瀏覽器，該瀏覽器不會傳送 <code>Sec-Fetch-Site</code> 標頭，或因為連線不安全 — 中介層會回退到傳統的 CSRF 令牌驗證。</p>
+<p>Laravel 會自動為應用程式管理的每個活躍<a href="/docs/session">用戶 session</a> 生成一個 CSRF「令牌」。此令牌用於驗證已驗證的用戶是否為實際向應用程式發出請求的人。由於此令牌儲存在用戶的 session 中，並且每次 session 重新生成時都會變更，惡意應用程式無法存取它。</p>
+<p>可以透過請求的 session 或 <code>csrf_token</code> 輔助函數來存取當前 session 的 CSRF 令牌：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get('/token', function (Request $request) {
+    $token = $request->session()->token();
+
+    $token = csrf_token();
+
+    // ...
+});
+</code></pre>
+<p>每當在應用程式中定義「POST」、「PUT」、「PATCH」或「DELETE」HTML 表單時，都應該在表單中包含一個隱藏的 CSRF <code>_token</code> 欄位，以便 CSRF 保護中介層可以驗證請求。為了方便起見，您可以使用 <code>@csrf</code> Blade 指令來生成隱藏的令牌輸入欄位：</p>
+<pre><code class="language-blade">&lt;form method="POST" action="/profile"&gt;
+    @csrf
+
+    &lt;!-- Equivalent to... --&gt;
+    &lt;input type="hidden" name="_token" value="{{ csrf_token() }}" /&gt;
+&lt;/form&gt;
+</code></pre>
+<p><a name="csrf-tokens-and-spas"></a></p>
+<h4>CSRF 令牌與 SPA</h4>
+<p>如果您正在建立一個使用 Laravel 作為 API 後端的 SPA，應參閱 <a href="/docs/sanctum">Laravel Sanctum 文件</a>以了解如何進行 API 認證和防止 CSRF 漏洞。</p>
+<p><a name="origin-verification"></a></p>
+<h3>來源驗證</h3>
+<p>如上所述，Laravel 的請求偽造中介層首先檢查 <code>Sec-Fetch-Site</code> 標頭以確定請求是否來自相同來源。預設情況下，如果此檢查未通過，中介層會回退到 CSRF 令牌驗證。</p>
+<p>但是，如果您希望僅依賴來源驗證並完全停用 CSRF 令牌回退，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>preventRequestForgery</code> 方法來實現：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->preventRequestForgery(originOnly: true);
+})
+</code></pre>
+<p>使用僅限來源模式時，未通過來源驗證的請求將收到 <code>403</code> HTTP 響應，而不是通常與 CSRF 令牌不匹配相關的 <code>419</code> 響應。</p>
+<blockquote>
+<p>[!WARNING]
+<code>Sec-Fetch-Site</code> 標頭僅由瀏覽器透過安全（HTTPS）連線傳送。如果您的應用程式未透過 HTTPS 提供服務，來源驗證將不可用，中介層將回退到 CSRF 令牌驗證。</p>
+</blockquote>
+<p>如果您的應用程式需要接受來自子網域的請求（例如，<code>dashboard.example.com</code> 接受來自 <code>example.com</code> 的請求），除了相同來源請求外，您還可以允許相同網站的請求：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->preventRequestForgery(allowSameSite: true);
+})
+</code></pre>
+<p><a name="csrf-excluding-uris"></a></p>
+<h3>從 CSRF 保護中排除 URI</h3>
+<p>有時您可能希望將一組 URI 排除在 CSRF 保護之外。例如，如果您正在使用 <a href="https://stripe.com">Stripe</a> 處理付款並使用其 webhook 系統，則需要將您的 Stripe webhook 處理路由排除在 CSRF 保護之外，因為 Stripe 不知道要傳送什麼 CSRF 令牌到您的路由。</p>
+<p>通常，您應該將這類路由放置在 Laravel 在 <code>routes/web.php</code> 檔案中應用於所有路由的 <code>web</code> 中介層群組之外。但是，您也可以透過在應用程式的 <code>bootstrap/app.php</code> 檔案中向 <code>preventRequestForgery</code> 方法提供其 URI 來排除特定路由：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->preventRequestForgery(except: [
+        'stripe/*',
+        'http://example.com/foo/bar',
+        'http://example.com/foo/*',
+    ]);
+})
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+為了方便起見，當<a href="/docs/testing">執行測試</a>時，CSRF 中介層會自動為所有路由停用。</p>
+</blockquote>
+<p><a name="csrf-x-csrf-token"></a></p>
+<h2>X-CSRF-TOKEN</h2>
+<p>除了檢查 CSRF 令牌作為 POST 參數外，<code>PreventRequestForgery</code> 中介層還會檢查 <code>X-CSRF-TOKEN</code> 請求標頭。例如，您可以將令牌儲存在 HTML <code>meta</code> 標籤中：</p>
+<pre><code class="language-blade">&lt;meta name="csrf-token" content="{{ csrf_token() }}"&gt;
+</code></pre>
+<p>然後，您可以指示像 jQuery 這樣的函式庫自動將令牌新增到所有請求標頭中。這為使用傳統 JavaScript 技術的 AJAX 應用程式提供了簡單、方便的 CSRF 保護：</p>
+<pre><code class="language-js">$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});
+</code></pre>
+<p><a name="csrf-x-xsrf-token"></a></p>
+<h2>X-XSRF-TOKEN</h2>
+<p>Laravel 將當前 CSRF 令牌儲存在一個加密的 <code>XSRF-TOKEN</code> cookie 中，該 cookie 包含在框架生成的每個響應中。您可以使用 cookie 值來設定 <code>X-XSRF-TOKEN</code> 請求標頭。</p>
+<p>此 cookie 主要作為開發者的便利功能傳送，因為某些 JavaScript 框架和函式庫（如 Angular 和 Axios）會自動將其值放在相同來源請求的 <code>X-XSRF-TOKEN</code> 標頭中。</p>
+`;
+---
+
+<DocsLayout title="CSRF 保護" currentPath="csrf">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>CSRF 保護</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">CSRF 保護</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/csrf" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,574 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Fortify</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#what-is-fortify">什麼是 Fortify？</a></li>
+<li><a href="#when-should-i-use-fortify">什麼時候應該使用 Fortify？</a></li>
+</ul>
+</li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#fortify-features">Fortify 功能</a></li>
+<li><a href="#disabling-views">禁用視圖</a></li>
+</ul>
+</li>
+<li><a href="#authentication">認證</a><ul>
+<li><a href="#customizing-user-authentication">自訂使用者認證</a></li>
+<li><a href="#customizing-the-authentication-pipeline">自訂認證管線</a></li>
+<li><a href="#customizing-authentication-redirects">自訂重定向</a></li>
+</ul>
+</li>
+<li><a href="#two-factor-authentication">雙因素認證</a><ul>
+<li><a href="#enabling-two-factor-authentication">啟用雙因素認證</a></li>
+<li><a href="#authenticating-with-two-factor-authentication">使用雙因素認證進行認證</a></li>
+<li><a href="#disabling-two-factor-authentication">禁用雙因素認證</a></li>
+</ul>
+</li>
+<li><a href="#passkeys">通行密鑰</a><ul>
+<li><a href="#enabling-passkeys">啟用通行密鑰</a></li>
+<li><a href="#passkeys-javascript-client">JavaScript 客戶端</a></li>
+<li><a href="#authenticating-with-passkeys">使用通行密鑰進行認證</a></li>
+<li><a href="#confirming-password-with-passkeys">使用通行密鑰確認密碼</a></li>
+<li><a href="#registering-passkeys">註冊通行密鑰</a></li>
+<li><a href="#deleting-passkeys">刪除通行密鑰</a></li>
+</ul>
+</li>
+<li><a href="#registration">註冊</a><ul>
+<li><a href="#customizing-registration">自訂註冊</a></li>
+</ul>
+</li>
+<li><a href="#password-reset">密碼重設</a><ul>
+<li><a href="#requesting-a-password-reset-link">請求密碼重設連結</a></li>
+<li><a href="#resetting-the-password">重設密碼</a></li>
+<li><a href="#customizing-password-resets">自訂密碼重設</a></li>
+</ul>
+</li>
+<li><a href="#email-verification">電子郵件驗證</a><ul>
+<li><a href="#protecting-routes">保護路由</a></li>
+</ul>
+</li>
+<li><a href="#password-confirmation">密碼確認</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/fortify">Laravel Fortify</a> 是一個前端無關的 Laravel 認證後端實現。Fortify 註冊了實現所有 Laravel 認證功能所需的路由和控制器，包括登入、註冊、密碼重設、電子郵件驗證等。安裝 Fortify 後，您可以運行 <code>route:list</code> Artisan 命令來查看 Fortify 註冊的路由。</p>
+<p>由於 Fortify 不提供自己的使用者介面，它旨在與您自己的使用者介面配對，該介面向其註冊的路由發出請求。我們將在本文檔的剩餘部分中討論如何向這些路由發出請求。</p>
+<blockquote>
+<p>[!NOTE]
+請記住，Fortify 是一個旨在為您提供實現 Laravel 認證功能的起步套件的套件。<strong>您不必使用它。</strong>您可以隨時透過遵循 <a href="/docs/authentication">認證</a>、<a href="/docs/passwords">密碼重設</a>和<a href="/docs/verification">電子郵件驗證</a>文檔中可用的文檔來手動與 Laravel 的認證服務互動。</p>
+</blockquote>
+<p><a name="what-is-fortify"></a></p>
+<h3>什麼是 Fortify？</h3>
+<p>如前所述，Laravel Fortify 是一個前端無關的 Laravel 認證後端實現。Fortify 註冊了實現所有 Laravel 認證功能所需的路由和控制器，包括登入、註冊、密碼重設、電子郵件驗證等。</p>
+<p><strong>您不必使用 Fortify 就可以使用 Laravel 的認證功能。</strong>您可以隨時透過遵循 <a href="/docs/authentication">認證</a>、<a href="/docs/passwords">密碼重設</a>和<a href="/docs/verification">電子郵件驗證</a>文檔中可用的文檔來手動與 Laravel 的認證服務互動。</p>
+<p>如果您是 Laravel 新手，您可能希望探索<a href="/docs/starter-kits">我們的應用程式入門套件</a>。Laravel 的應用程式入門套件在內部使用 Fortify 來為您的應用程式提供認證腳手架，包括使用 <a href="https://tailwindcss.com">Tailwind CSS</a> 構建的使用者介面。這允許您研究並熟悉 Laravel 的認證功能。</p>
+<p>Laravel Fortify 本質上是將我們應用程式入門套件的路由和控制器作為一個不包含使用者介面的套件提供。這使您仍然可以快速搭建應用程式認證層的後端實現，而不必綁定到任何特定的前端觀點。</p>
+<p><a name="when-should-i-use-fortify"></a></p>
+<h3>什麼時候應該使用 Fortify？</h3>
+<p>您可能想知道什麼時候適合使用 Laravel Fortify。首先，如果您正在使用 Laravel 的<a href="/docs/starter-kits">應用程式入門套件</a>之一，您不需要安裝 Laravel Fortify，因為所有 Laravel 的應用程式入門套件都使用 Fortify 並已經提供完整的認證實現。</p>
+<p>如果您沒有使用應用程式入門套件，且您的應用程式需要認證功能，您有兩個選擇：手動實現應用程式的認證功能或使用 Laravel Fortify 來提供這些功能的後端實現。</p>
+<p>如果您選擇安裝 Fortify，您的使用者介面將向 Fortify 的認證路由發出請求（本文檔中詳細介紹了這些路由）來認證和註冊使用者。</p>
+<p>如果您選擇手動與 Laravel 的認證服務互動而不是使用 Fortify，可以透過遵循 <a href="/docs/authentication">認證</a>、<a href="/docs/passwords">密碼重設</a>和<a href="/docs/verification">電子郵件驗證</a>文檔中可用的文檔來執行此操作。</p>
+<p><a name="laravel-fortify-and-laravel-sanctum"></a></p>
+<h4>Laravel Fortify 和 Laravel Sanctum</h4>
+<p>一些開發者對 <a href="/docs/sanctum">Laravel Sanctum</a> 和 Laravel Fortify 之間的區別感到困惑。由於這兩個套件解決了兩個不同但相關的問題，Laravel Fortify 和 Laravel Sanctum 並不是互斥或競爭的套件。</p>
+<p>Laravel Sanctum 只關注管理 API 令牌和使用會話 Cookie 或令牌來認證現有使用者。Sanctum 不提供任何處理使用者註冊、密碼重設等的路由。</p>
+<p>如果您正在嘗試手動構建一個提供 API 或作為單頁應用程式後端的應用程式的認證層，您完全有可能同時使用 Laravel Fortify（用於使用者註冊、密碼重設等）和 Laravel Sanctum（API 令牌管理、會話認證）。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器安裝 Fortify：</p>
+<pre><code class="language-shell">composer require laravel/fortify
+</code></pre>
+<p>接下來，使用 <code>fortify:install</code> Artisan 命令發佈 Fortify 的資源：</p>
+<pre><code class="language-shell">php artisan fortify:install
+</code></pre>
+<p>此命令將發佈 Fortify 的操作到您的 <code>app/Actions</code> 目錄（如果該目錄不存在，則會創建它）。此外，<code>FortifyServiceProvider</code>、配置檔案和所有必要的資料庫遷移都將被發佈。</p>
+<p>接下來，您應該遷移資料庫：</p>
+<pre><code class="language-shell">php artisan migrate
+</code></pre>
+<p><a name="fortify-features"></a></p>
+<h3>Fortify 功能</h3>
+<p><code>fortify</code> 配置檔案包含一個 <code>features</code> 配置陣列。此陣列定義了 Fortify 預設將公開哪些後端路由/功能。我們建議您只啟用以下功能，這些是大多數 Laravel 應用程式提供的基本認證功能：</p>
+<pre><code class="language-php">'features' => [
+    Features::registration(),
+    Features::resetPasswords(),
+    Features::emailVerification(),
+],
+</code></pre>
+<p><a name="disabling-views"></a></p>
+<h3>禁用視圖</h3>
+<p>預設情況下，Fortify 定義了旨在返回視圖的路由，例如登入畫面或註冊畫面。但是，如果您正在構建一個 JavaScript 驅動的單頁應用程式，您可能不需要這些路由。為此，您可以透過將應用程式 <code>config/fortify.php</code> 配置檔案中的 <code>views</code> 配置值設定為 <code>false</code> 來完全禁用這些路由：</p>
+<pre><code class="language-php">'views' => false,
+</code></pre>
+<p><a name="disabling-views-and-password-reset"></a></p>
+<h4>禁用視圖和密碼重設</h4>
+<p>如果您選擇禁用 Fortify 的視圖，並且您將為應用程式實現密碼重設功能，則仍然應定義一個名為 <code>password.reset</code> 的路由，該路由負責顯示應用程式的「重設密碼」視圖。這是必要的，因為 Laravel 的 <code>Illuminate\\Auth\\Notifications\\ResetPassword</code> 通知將透過 <code>password.reset</code> 命名路由生成密碼重設 URL。</p>
+<p><a name="authentication"></a></p>
+<h2>認證</h2>
+<p>首先，我們需要指示 Fortify 如何返回我們的「登入」視圖。請記住，Fortify 是一個無頭認證函式庫。如果您希望有一個已經為您完成的 Laravel 認證功能的前端實現，您應該使用<a href="/docs/starter-kits">應用程式入門套件</a>。</p>
+<p>所有認證視圖的渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法。Fortify 將負責定義返回此視圖的 <code>/login</code> 路由：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::loginView(function () {
+        return view('auth.login');
+    });
+
+    // ...
+}
+</code></pre>
+<p>您的登入範本應包含一個向 <code>/login</code> 發出 POST 請求的表單。<code>/login</code> 端點期望一個字串 <code>email</code>/<code>username</code> 和一個 <code>password</code>。電子郵件/使用者名稱欄位的名稱應與 <code>config/fortify.php</code> 配置檔案中的 <code>username</code> 值匹配。此外，可以提供一個布林 <code>remember</code> 欄位來指示使用者希望使用 Laravel 提供的「記住我」功能。</p>
+<p>如果登入嘗試成功，Fortify 將重定向到透過應用程式 <code>fortify</code> 配置檔案中的 <code>home</code> 配置選項配置的 URI。如果登入請求是 XHR 請求，將返回 200 HTTP 回應。</p>
+<p>如果請求不成功，使用者將被重定向回登入畫面，驗證錯誤將透過共享的 <code>$errors</code><a href="/docs/validation#quick-displaying-the-validation-errors">Blade 範本變數</a>對您可用。或者，在 XHR 請求的情況下，驗證錯誤將與 422 HTTP 回應一起返回。</p>
+<p><a name="customizing-user-authentication"></a></p>
+<h3>自訂使用者認證</h3>
+<p>Fortify 將根據提供的憑據和為應用程式配置的認證守衛自動檢索和認證使用者。但是，您有時可能希望完全自訂如何認證登入憑據和檢索使用者。幸運的是，Fortify 允許您使用 <code>Fortify::authenticateUsing</code> 方法輕鬆實現這一點。</p>
+<p>此方法接受一個接收傳入 HTTP 請求的閉包。該閉包負責驗證附加到請求的登入憑據並返回關聯的使用者實例。如果憑據無效或找不到使用者，則應由閉包返回 <code>null</code> 或 <code>false</code>。通常，此方法應從 <code>FortifyServiceProvider</code> 的 <code>boot</code> 方法中被呼叫：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Hash;
+use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::authenticateUsing(function (Request $request) {
+        $user = User::where('email', $request->email)->first();
+
+        if ($user &&
+            Hash::check($request->password, $user->password)) {
+            return $user;
+        }
+    });
+
+    // ...
+}
+</code></pre>
+<p><a name="authentication-guard"></a></p>
+<h4>認證守衛</h4>
+<p>您可以在應用程式的 <code>fortify</code> 配置檔案中自訂 Fortify 使用的認證守衛。但是，您應確保配置的守衛是 <code>Illuminate\\Contracts\\Auth\\StatefulGuard</code> 的實現。如果您正在嘗試使用 Laravel Fortify 來認證 SPA，則應使用 Laravel 的預設 <code>web</code> 守衛與 <a href="https://laravel.com/docs/sanctum">Laravel Sanctum</a> 結合使用。</p>
+<p><a name="customizing-the-authentication-pipeline"></a></p>
+<h3>自訂認證管線</h3>
+<p>Laravel Fortify 透過可呼叫類別的管線來認證登入請求。如果您願意，您可以定義一個自訂的類別管線，登入請求應通過該管線。每個類別都應有一個 <code>__invoke</code> 方法，該方法接收傳入的 <code>Illuminate\\Http\\Request</code> 實例，並且像<a href="/docs/middleware">中介層</a>一樣，還有一個 <code>$next</code> 變數，呼叫它以將請求傳遞到管線中的下一個類別。</p>
+<p>要定義您的自訂管線，您可以使用 <code>Fortify::authenticateThrough</code> 方法。此方法接受一個閉包，該閉包應返回應將登入請求管道傳輸到的類別陣列。通常，此方法應從 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中被呼叫。</p>
+<p>以下範例包含您可以作為起點用於自己修改的預設管線定義：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Actions\\AttemptToAuthenticate;
+use Laravel\\Fortify\\Actions\\CanonicalizeUsername;
+use Laravel\\Fortify\\Actions\\EnsureLoginIsNotThrottled;
+use Laravel\\Fortify\\Actions\\PrepareAuthenticatedSession;
+use Laravel\\Fortify\\Actions\\RedirectIfTwoFactorAuthenticatable;
+use Laravel\\Fortify\\Features;
+use Laravel\\Fortify\\Fortify;
+use Illuminate\\Http\\Request;
+
+Fortify::authenticateThrough(function (Request $request) {
+    return array_filter([
+            config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
+            config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
+            Features::enabled(Features::twoFactorAuthentication()) ? RedirectIfTwoFactorAuthenticatable::class : null,
+            AttemptToAuthenticate::class,
+            PrepareAuthenticatedSession::class,
+    ]);
+});
+</code></pre>
+<h4>認證節流</h4>
+<p>預設情況下，Fortify 將使用 <code>EnsureLoginIsNotThrottled</code> 中介層來節流認證嘗試。此中介層會對使用者名稱和 IP 位址組合唯一的嘗試進行節流。</p>
+<p>某些應用程式可能需要不同的方法來節流認證嘗試，例如僅按 IP 位址進行節流。因此，Fortify 允許您透過 <code>fortify.limiters.login</code> 配置選項指定自己的<a href="/docs/routing#rate-limiting">速率限制器</a>。當然，此配置選項位於應用程式的 <code>config/fortify.php</code> 配置檔案中。</p>
+<blockquote>
+<p>[!NOTE]
+結合使用節流、<a href="/docs/fortify#two-factor-authentication">雙因素認證</a>和外部 Web 應用程式防火牆（WAF）將為您的合法應用程式使用者提供最強大的防禦。</p>
+</blockquote>
+<p><a name="customizing-authentication-redirects"></a></p>
+<h3>自訂重定向</h3>
+<p>如果登入嘗試成功，Fortify 將重定向到透過應用程式 <code>fortify</code> 配置檔案中的 <code>home</code> 配置選項配置的 URI。如果登入請求是 XHR 請求，將返回 200 HTTP 回應。使用者從應用程式登出後，將被重定向到 <code>/</code> URI。</p>
+<p>如果您需要對此行為進行進階自訂，可以將 <code>LoginResponse</code> 和 <code>LogoutResponse</code> 合約的實現綁定到 Laravel <a href="/docs/container">服務容器</a>中。通常，這應該在應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>register</code> 方法中完成：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Contracts\\LogoutResponse;
+
+/**
+ * 註冊任何應用程式服務。
+ */
+public function register(): void
+{
+    $this->app->instance(LogoutResponse::class, new class implements LogoutResponse {
+        public function toResponse($request)
+        {
+            return redirect('/');
+        }
+    });
+}
+</code></pre>
+<p><a name="two-factor-authentication"></a></p>
+<h2>雙因素認證</h2>
+<p>啟用 Fortify 的雙因素認證功能後，使用者需要在認證過程中輸入一個六位數的數字令牌。此令牌使用基於時間的一次性密碼（TOTP）生成，可以從任何相容 TOTP 的行動認證應用程式（如 Google Authenticator）中檢索。</p>
+<p>開始之前，您首先應確保應用程式的 <code>App\\Models\\User</code> 模型使用 <code>Laravel\\Fortify\\TwoFactorAuthenticatable</code> trait：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+use Laravel\\Fortify\\TwoFactorAuthenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable, TwoFactorAuthenticatable;
+}
+</code></pre>
+<p>接下來，您應該在應用程式中構建一個畫面，使用者可以在其中管理其雙因素認證設定。此畫面應允許使用者啟用和禁用雙因素認證，以及重新生成其雙因素認證恢復碼。</p>
+<blockquote>
+<p>預設情況下，<code>fortify</code> 配置檔案的 <code>features</code> 陣列指示 Fortify 的雙因素認證設定在修改之前需要密碼確認。因此，您的應用程式應在繼續之前實現 Fortify 的<a href="#password-confirmation">密碼確認</a>功能。</p>
+</blockquote>
+<p><a name="enabling-two-factor-authentication"></a></p>
+<h3>啟用雙因素認證</h3>
+<p>要開始啟用雙因素認證，您的應用程式應向 Fortify 定義的 <code>/user/two-factor-authentication</code> 端點發出 POST 請求。如果請求成功，使用者將被重定向回先前的 URL，並且 <code>status</code> 會話變數將被設定為 <code>two-factor-authentication-enabled</code>。您可以在範本中偵測此 <code>status</code> 會話變數來顯示適當的成功訊息。如果請求是 XHR 請求，將返回 <code>200</code> HTTP 回應。</p>
+<p>選擇啟用雙因素認證後，使用者仍然必須透過提供有效的雙因素認證碼來「確認」其雙因素認證配置。因此，您的「成功」訊息應指示使用者仍然需要雙因素認證確認：</p>
+<pre><code class="language-html">@if (session('status') == 'two-factor-authentication-enabled')
+    <div class="mb-4 font-medium text-sm">
+        Please finish configuring two-factor authentication below.
+    </div>
+@endif
+</code></pre>
+<p>接下來，您應該為使用者顯示雙因素認證二維碼，以便他們掃描到認證器應用程式中。如果您正在使用 Blade 渲染應用程式的前端，可以使用使用者實例上可用的 <code>twoFactorQrCodeSvg</code> 方法來檢索二維碼 SVG：</p>
+<pre><code class="language-php">$request->user()->twoFactorQrCodeSvg();
+</code></pre>
+<p>如果您正在構建 JavaScript 驅動的前端，可以向 <code>/user/two-factor-qr-code</code> 端點發出 XHR GET 請求來檢索使用者的雙因素認證二維碼。此端點將返回一個包含 <code>svg</code> 鍵的 JSON 物件。</p>
+<p><a name="confirming-two-factor-authentication"></a></p>
+<h4>確認雙因素認證</h4>
+<p>除了顯示使用者的雙因素認證二維碼外，您還應提供一個文字輸入，使用者可以在其中提供有效的認證碼來「確認」其雙因素認證配置。應透過向 Fortify 定義的 <code>/user/confirmed-two-factor-authentication</code> 端點發出 POST 請求將此代碼提供給 Laravel 應用程式。</p>
+<p>如果請求成功，使用者將被重定向回先前的 URL，並且 <code>status</code> 會話變數將被設定為 <code>two-factor-authentication-confirmed</code>：</p>
+<pre><code class="language-html">@if (session('status') == 'two-factor-authentication-confirmed')
+    <div class="mb-4 font-medium text-sm">
+        Two-factor authentication confirmed and enabled successfully.
+    </div>
+@endif
+</code></pre>
+<p>如果向雙因素認證確認端點的請求是透過 XHR 請求發出的，將返回 <code>200</code> HTTP 回應。</p>
+<p><a name="displaying-the-recovery-codes"></a></p>
+<h4>顯示恢復碼</h4>
+<p>您還應顯示使用者的雙因素恢復碼。這些恢復碼允許使用者在丟失對其行動裝置的存取權限時進行認證。如果您正在使用 Blade 渲染應用程式的前端，可以透過已認證的使用者實例存取恢復碼：</p>
+<pre><code class="language-php">(array) $request->user()->recoveryCodes()
+</code></pre>
+<p>如果您正在構建 JavaScript 驅動的前端，可以向 <code>/user/two-factor-recovery-codes</code> 端點發出 XHR GET 請求。此端點將返回一個包含使用者恢復碼的 JSON 陣列。</p>
+<p>要重新生成使用者的恢復碼，您的應用程式應向 <code>/user/two-factor-recovery-codes</code> 端點發出 POST 請求。</p>
+<p><a name="authenticating-with-two-factor-authentication"></a></p>
+<h3>使用雙因素認證進行認證</h3>
+<p>在認證過程中，Fortify 將自動將使用者重定向到應用程式的雙因素認證挑戰畫面。但是，如果您的應用程式發出 XHR 登入請求，則成功認證嘗試後返回的 JSON 回應將包含一個具有 <code>two_factor</code> 布林屬性的 JSON 物件。您應檢查此值以了解是否應重定向到應用程式的雙因素認證挑戰畫面。</p>
+<p>要開始實現雙因素認證功能，我們需要指示 Fortify 如何返回我們的雙因素認證挑戰視圖。Fortify 的所有認證視圖渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::twoFactorChallengeView(function () {
+        return view('auth.two-factor-challenge');
+    });
+
+    // ...
+}
+</code></pre>
+<p>Fortify 將負責定義返回此視圖的 <code>/two-factor-challenge</code> 路由。您的 <code>two-factor-challenge</code> 範本應包含一個向 <code>/two-factor-challenge</code> 端點發出 POST 請求的表單。<code>/two-factor-challenge</code> 動作期望一個包含有效 TOTP 令牌的 <code>code</code> 欄位或一個包含使用者恢復碼之一的 <code>recovery_code</code> 欄位。</p>
+<p>如果登入嘗試成功，Fortify 將將使用者重定向到透過應用程式 <code>fortify</code> 配置檔案中的 <code>home</code> 配置選項配置的 URI。如果登入請求是 XHR 請求，將返回 204 HTTP 回應。</p>
+<p>如果請求不成功，使用者將被重定向回雙因素挑戰畫面，驗證錯誤將透過共享的 <code>$errors</code><a href="/docs/validation#quick-displaying-the-validation-errors">Blade 範本變數</a>對您可用。或者，在 XHR 請求的情況下，驗證錯誤將與 422 HTTP 回應一起返回。</p>
+<p><a name="disabling-two-factor-authentication"></a></p>
+<h3>禁用雙因素認證</h3>
+<p>要禁用雙因素認證，您的應用程式應向 <code>/user/two-factor-authentication</code> 端點發出 DELETE 請求。請記住，Fortify 的雙因素認證端點在被呼叫之前需要<a href="#password-confirmation">密碼確認</a>。</p>
+<p><a name="passkeys"></a></p>
+<h2>通行密鑰</h2>
+<p>Fortify 支援使用 WebAuthn 進行通行密鑰認證。通行密鑰允許使用者無需密碼即可使用平台認證器（如 Face ID、Touch ID、Windows Hello 或硬體安全金鑰）進行認證。</p>
+<p><a name="enabling-passkeys"></a></p>
+<h3>啟用通行密鑰</h3>
+<p>首先，確保在應用程式的 <code>fortify</code> 配置檔案中啟用了 <code>passkeys</code> 功能：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Features;
+
+'features' => [
+    // ...
+    Features::passkeys([
+        'confirmPassword' => true,
+    ]),
+],
+</code></pre>
+<p><code>confirmPassword</code> 選項決定 Fortify 在註冊或刪除通行密鑰之前是否需要<a href="#password-confirmation">密碼確認</a>。</p>
+<p>接下來，確保您的應用程式的 <code>App\\Models\\User</code> 模型實現 <code>Laravel\\Fortify\\Contracts\\PasskeyUser</code> 並使用 <code>Laravel\\Fortify\\PasskeyAuthenticatable</code> trait：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+use Laravel\\Fortify\\Contracts\\PasskeyUser;
+use Laravel\\Fortify\\PasskeyAuthenticatable;
+
+class User extends Authenticatable implements PasskeyUser
+{
+    use Notifiable, PasskeyAuthenticatable;
+}
+</code></pre>
+<p>Fortify 的通行密鑰配置選項可以使用應用程式 <code>config/fortify.php</code> 檔案中的 <code>passkeys</code> 配置陣列來自訂：</p>
+<pre><code class="language-php">'passkeys' => [
+    'relying_party_id' => parse_url(config('app.url'), PHP_URL_HOST),
+    'allowed_origins' => [config('app.url')],
+    'user_handle_secret' => config('app.key'),
+    'timeout' => 60000,
+],
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+Fortify 封裝了 <code>laravel/passkeys</code> Composer 套件並為您配置它。如果您正在使用 Fortify 的通行密鑰功能，應使用應用程式的 <code>config/fortify.php</code> 檔案來配置通行密鑰。您不需要發佈 <code>laravel/passkeys</code> 配置檔案，那裡定義的任何值都將被 Fortify 覆蓋。</p>
+</blockquote>
+<p><code>relying_party_id</code> 應與您應用程式的網域匹配。<code>allowed_origins</code> 陣列列出了可以完成通行密鑰註冊和認證的瀏覽器來源。<code>user_handle_secret</code> 用於派生不透明的使用者標識符，確保在同一通行密鑰註冊中識別相同的使用者。<code>timeout</code> 選項控制通行密鑰註冊和認證操作可以保持活動狀態的時間長度。</p>
+<p>Fortify 為其通行密鑰登入、確認和註冊路由應用了專用的通行密鑰速率限制器。如果需要，您可以使用 <code>fortify.limiters.passkeys</code> 配置選項和相應的 <code>RateLimiter::for(...)</code> 定義來自訂它。</p>
+<p><a name="passkeys-javascript-client"></a></p>
+<h3>JavaScript 客戶端</h3>
+<p>如果您正在構建自訂前端（包括帶有瀏覽器端腳本的 Blade 應用程式），可以使用官方 <a href="https://www.npmjs.com/package/@laravel/passkeys"><code>@laravel/passkeys</code></a> 套件。此套件處理瀏覽器 WebAuthn 儀式，並向 Fortify 的通行密鑰端點發送請求。</p>
+<p>透過 npm 安裝套件：</p>
+<pre><code class="language-shell">npm install @laravel/passkeys
+</code></pre>
+<p>然後，您可以從前端啟動通行密鑰註冊和驗證：</p>
+<pre><code class="language-js">import { Passkeys } from "@laravel/passkeys";
+
+await Passkeys.register({ name: "MacBook Pro" });
+await Passkeys.verify();
+</code></pre>
+<p>如果您的應用程式使用自訂通行密鑰端點 URI，您可以按呼叫基礎覆蓋路由：</p>
+<pre><code class="language-js">await Passkeys.verify({
+    routes: {
+        options: "/passkeys/confirm/options",
+        submit: "/passkeys/confirm",
+    },
+});
+
+await Passkeys.register({
+    name: "MacBook Pro",
+    routes: {
+        options: "/user/passkeys/options",
+        submit: "/user/passkeys",
+    },
+});
+</code></pre>
+<p>該套件還透過 <code>@laravel/passkeys/react</code>、<code>@laravel/passkeys/vue</code> 和 <code>@laravel/passkeys/svelte</code> 提供 React、Vue 和 Svelte 輔助函數。</p>
+<p><a name="authenticating-with-passkeys"></a></p>
+<h3>使用通行密鑰進行認證</h3>
+<p>要使用通行密鑰認證使用者，您的應用程式應首先向 <code>/passkeys/login/options</code> 端點發出 GET 請求。此端點返回前端應傳遞給 <code>navigator.credentials.get(...)</code> 的 WebAuthn 挑戰選項。</p>
+<p>瀏覽器返回憑證後，您的應用程式應向 <code>/passkeys/login</code> 發出一個帶有憑證負載的 POST 請求。您還可以包含一個布林 <code>remember</code> 欄位。</p>
+<p>如果請求成功，Fortify 將登入使用者到配置的守衛並返回：</p>
+<div class="content-list" markdown="1"><ul>
+<li>標準請求的重定向回應到您的預期目的地。</li>
+<li>XHR 請求的 <code>200</code> HTTP 回應，其中包含帶有 <code>redirect</code> 鍵的 JSON 負載。</li>
+</ul>
+</div><p><a name="confirming-password-with-passkeys"></a></p>
+<h3>使用通行密鑰確認密碼</h3>
+<p>對於已認證的會話，Fortify 提供了滿足 Laravel 對當前會話的密碼確認要求的通行密鑰確認端點。</p>
+<p>要使用通行密鑰進行確認，您的應用程式應首先向 <code>/passkeys/confirm/options</code> 發出 GET 請求。此端點返回前端應傳遞給 <code>navigator.credentials.get(...)</code> 的 WebAuthn 挑戰選項。</p>
+<p>瀏覽器返回憑證後，您的應用程式應向 <code>/passkeys/confirm</code> 發出一個帶有憑證負載的 POST 請求。</p>
+<p>如果請求成功，Fortify 會將當前會話標記為已確認密碼並返回：</p>
+<div class="content-list" markdown="1"><ul>
+<li>標準請求的重定向回應到您的預期目的地。</li>
+<li>XHR 請求的 <code>200</code> HTTP 回應，其中包含帶有 <code>redirect</code> 鍵的 JSON 負載。</li>
+</ul>
+</div><p><a name="registering-passkeys"></a></p>
+<h3>註冊通行密鑰</h3>
+<p>要為已認證的使用者註冊通行密鑰，您的應用程式應首先向 <code>/user/passkeys/options</code> 發出 GET 請求。此端點返回前端應傳遞給 <code>navigator.credentials.create(...)</code> 的 WebAuthn 創建選項。</p>
+<p>瀏覽器返回憑證後，您的應用程式應向 <code>/user/passkeys</code> 發出一個帶有 <code>name</code> 欄位和 <code>credential</code> 欄位的 POST 請求，其中包含由 <code>navigator.credentials.create(...)</code> 返回的序列化 <a href="https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential"><code>PublicKeyCredential</code></a> 物件。</p>
+<p>如果請求成功，Fortify 將返回：</p>
+<div class="content-list" markdown="1"><ul>
+<li>標準請求的重定向回應，會話中帶有 <code>passkey-registered</code> 狀態。</li>
+<li>XHR 請求的 <code>200</code> HTTP 回應，其中包含帶有 <code>status</code> 鍵的 JSON 負載，以及新註冊的通行密鑰的 <code>id</code> 和 <code>name</code>。</li>
+</ul>
+</div><p><a name="deleting-passkeys"></a></p>
+<h3>刪除通行密鑰</h3>
+<p>要刪除通行密鑰，您的應用程式應向 <code>/user/passkeys/{passkey}</code> 發出 DELETE 請求。</p>
+<p>如果請求成功，Fortify 將返回：</p>
+<div class="content-list" markdown="1"><ul>
+<li>標準請求的重定向回應，會話中帶有 <code>passkey-deleted</code> 狀態。</li>
+<li>XHR 請求的 <code>200</code> HTTP 回應，其中包含帶有 <code>status</code> 鍵的 JSON 負載。</li>
+</ul>
+</div><p><a name="registration"></a></p>
+<h2>註冊</h2>
+<p>要開始實現應用程式的註冊功能，我們需要指示 Fortify 如何返回我們的「註冊」視圖。請記住，Fortify 是一個無頭認證函式庫。如果您希望有一個已經為您完成的 Laravel 認證功能的前端實現，您應該使用<a href="/docs/starter-kits">應用程式入門套件</a>。</p>
+<p>Fortify 的所有視圖渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::registerView(function () {
+        return view('auth.register');
+    });
+
+    // ...
+}
+</code></pre>
+<p>Fortify 將負責定義返回此視圖的 <code>/register</code> 路由。您的 <code>register</code> 範本應包含一個向 Fortify 定義的 <code>/register</code> 端點發出 POST 請求的表單。</p>
+<p><code>/register</code> 端點期望一個字串 <code>name</code>、字串電子郵件地址/使用者名稱、<code>password</code> 和 <code>password_confirmation</code> 欄位。電子郵件/使用者名稱欄位的名稱應與您應用程式 <code>fortify</code> 配置檔案中定義的 <code>username</code> 配置值匹配。</p>
+<p>如果註冊嘗試成功，Fortify 將將使用者重定向到透過應用程式 <code>fortify</code> 配置檔案中的 <code>home</code> 配置選項配置的 URI。如果請求是 XHR 請求，將返回 201 HTTP 回應。</p>
+<p>如果請求不成功，使用者將被重定向回註冊畫面，驗證錯誤將透過共享的 <code>$errors</code><a href="/docs/validation#quick-displaying-the-validation-errors">Blade 範本變數</a>對您可用。或者，在 XHR 請求的情況下，驗證錯誤將與 422 HTTP 回應一起返回。</p>
+<p><a name="customizing-registration"></a></p>
+<h3>自訂註冊</h3>
+<p>可以透過修改安裝 Laravel Fortify 時生成的 <code>App\\Actions\\Fortify\\CreateNewUser</code> 動作來自訂使用者驗證和創建過程。</p>
+<p><a name="password-reset"></a></p>
+<h2>密碼重設</h2>
+<p><a name="requesting-a-password-reset-link"></a></p>
+<h3>請求密碼重設連結</h3>
+<p>要開始實現應用程式的密碼重設功能，我們需要指示 Fortify 如何返回我們的「忘記密碼」視圖。請記住，Fortify 是一個無頭認證函式庫。如果您希望有一個已經為您完成的 Laravel 認證功能的前端實現，您應該使用<a href="/docs/starter-kits">應用程式入門套件</a>。</p>
+<p>Fortify 的所有視圖渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::requestPasswordResetLinkView(function () {
+        return view('auth.forgot-password');
+    });
+
+    // ...
+}
+</code></pre>
+<p>Fortify 將負責定義返回此視圖的 <code>/forgot-password</code> 端點。您的 <code>forgot-password</code> 範本應包含一個向 <code>/forgot-password</code> 端點發出 POST 請求的表單。</p>
+<p><code>/forgot-password</code> 端點期望一個字串 <code>email</code> 欄位。此欄位/資料庫欄位的名稱應與您應用程式 <code>fortify</code> 配置檔案中的 <code>email</code> 配置值匹配。</p>
+<p><a name="handling-the-password-reset-link-request-response"></a></p>
+<h4>處理密碼重設連結請求回應</h4>
+<p>如果密碼重設連結請求成功，Fortify 將將使用者重定向回 <code>/forgot-password</code> 端點，並向使用者發送一封電子郵件，其中包含他們可用於重設密碼的安全連結。如果請求是 XHR 請求，將返回 200 HTTP 回應。</p>
+<p>在成功請求後重定向回 <code>/forgot-password</code> 端點後，<code>status</code> 會話變數可用於顯示密碼重設連結請求嘗試的狀態。</p>
+<p><code>$status</code> 會話變數的值將與您應用程式 <code>passwords</code><a href="/docs/localization">語言檔案</a>中定義的翻譯字串之一匹配。如果您希望自訂此值且尚未發佈 Laravel 的語言檔案，可以透過 <code>lang:publish</code> Artisan 命令來執行此操作：</p>
+<pre><code class="language-html">@if (session('status'))
+    <div class="mb-4 font-medium text-sm text-green-600">
+        {{ session('status') }}
+    </div>
+@endif
+</code></pre>
+<p>如果請求不成功，使用者將被重定向回請求密碼重設連結畫面，驗證錯誤將透過共享的 <code>$errors</code><a href="/docs/validation#quick-displaying-the-validation-errors">Blade 範本變數</a>對您可用。或者，在 XHR 請求的情況下，驗證錯誤將與 422 HTTP 回應一起返回。</p>
+<p><a name="resetting-the-password"></a></p>
+<h3>重設密碼</h3>
+<p>要完成實現應用程式的密碼重設功能，我們需要指示 Fortify 如何返回我們的「重設密碼」視圖。</p>
+<p>Fortify 的所有視圖渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+use Illuminate\\Http\\Request;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::resetPasswordView(function (Request $request) {
+        return view('auth.reset-password', ['request' => $request]);
+    });
+
+    // ...
+}
+</code></pre>
+<p>Fortify 將負責定義顯示此視圖的路由。您的 <code>reset-password</code> 範本應包含一個向 <code>/reset-password</code> 發出 POST 請求的表單。</p>
+<p><code>/reset-password</code> 端點期望一個字串 <code>email</code> 欄位、一個 <code>password</code> 欄位、一個 <code>password_confirmation</code> 欄位和一個名為 <code>token</code> 的隱藏欄位，其中包含 <code>request()->route('token')</code> 的值。「email」欄位/資料庫欄位的名稱應與您應用程式 <code>fortify</code> 配置檔案中定義的 <code>email</code> 配置值匹配。</p>
+<p><a name="handling-the-password-reset-response"></a></p>
+<h4>處理密碼重設回應</h4>
+<p>如果密碼重設請求成功，Fortify 將重定向回 <code>/login</code> 路由，以便使用者可以使用新密碼登入。此外，將設定一個 <code>status</code> 會話變數，以便您可以在登入畫面上顯示重設的成功狀態：</p>
+<pre><code class="language-blade">@if (session('status'))
+    <div class="mb-4 font-medium text-sm text-green-600">
+        {{ session('status') }}
+    </div>
+@endif
+</code></pre>
+<p>如果請求是 XHR 請求，將返回 200 HTTP 回應。</p>
+<p>如果請求不成功，使用者將被重定向回重設密碼畫面，驗證錯誤將透過共享的 <code>$errors</code><a href="/docs/validation#quick-displaying-the-validation-errors">Blade 範本變數</a>對您可用。或者，在 XHR 請求的情況下，驗證錯誤將與 422 HTTP 回應一起返回。</p>
+<p><a name="customizing-password-resets"></a></p>
+<h3>自訂密碼重設</h3>
+<p>可以透過修改安裝 Laravel Fortify 時生成的 <code>App\\Actions\\ResetUserPassword</code> 動作來自訂密碼重設過程。</p>
+<p><a name="email-verification"></a></p>
+<h2>電子郵件驗證</h2>
+<p>註冊後，您可能希望使用者在繼續存取應用程式之前驗證其電子郵件地址。首先，確保在 <code>fortify</code> 配置檔案的 <code>features</code> 陣列中啟用了 <code>emailVerification</code> 功能。接下來，您應確保您的 <code>App\\Models\\User</code> 類別實現了 <code>Illuminate\\Contracts\\Auth\\MustVerifyEmail</code> 介面。</p>
+<p>完成這兩個設定步驟後，新註冊的使用者將收到一封電子郵件，提示他們驗證其電子郵件地址所有權。但是，我們需要通知 Fortify 如何顯示電子郵件驗證畫面，該畫面通知使用者需要點擊電子郵件中的驗證連結。</p>
+<p>Fortify 的所有視圖渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::verifyEmailView(function () {
+        return view('auth.verify-email');
+    });
+
+    // ...
+}
+</code></pre>
+<p>Fortify 將負責定義當使用者被 Laravel 內建的 <code>verified</code> 中介層重定向到 <code>/email/verify</code> 端點時顯示此視圖的路由。</p>
+<p>您的 <code>verify-email</code> 範本應包含一條資訊訊息，指示使用者點擊發送到其電子郵件地址的電子郵件驗證連結。</p>
+<p><a name="resending-email-verification-links"></a></p>
+<h4>重新發送電子郵件驗證連結</h4>
+<p>如果您願意，可以在應用程式的 <code>verify-email</code> 範本中添加一個按鈕，觸發向 <code>/email/verification-notification</code> 端點發出 POST 請求。當此端點收到請求時，將向使用者發送一個新的驗證電子郵件連結，如果先前的連結被意外刪除或丟失，使用者可以獲得一個新的驗證連結。</p>
+<p>如果重新發送驗證連結電子郵件的請求成功，Fortify 將將使用者重定向回 <code>/email/verify</code> 端點，並帶有一個 <code>status</code> 會話變數，允許您向使用者顯示一條資訊訊息，告知他們操作成功。如果請求是 XHR 請求，將返回 202 HTTP 回應：</p>
+<pre><code class="language-blade">@if (session('status') == 'verification-link-sent')
+    <div class="mb-4 font-medium text-sm text-green-600">
+        A new email verification link has been emailed to you!
+    </div>
+@endif
+</code></pre>
+<p><a name="protecting-routes"></a></p>
+<h3>保護路由</h3>
+<p>要指定路由或路由群組要求使用者已驗證其電子郵件地址，應將 Laravel 內建的 <code>verified</code> 中介層附加到路由。<code>verified</code> 中介層別名由 Laravel 自動註冊，作為 <code>Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified</code> 中介層的別名：</p>
+<pre><code class="language-php">Route::get('/dashboard', function () {
+    // ...
+})->middleware(['verified']);
+</code></pre>
+<p><a name="password-confirmation"></a></p>
+<h2>密碼確認</h2>
+<p>在構建應用程式時，您可能偶爾會有需要使用者在執行操作之前確認其密碼的操作。通常，這些路由由 Laravel 內建的 <code>password.confirm</code> 中介層保護。</p>
+<p>要開始實現密碼確認功能，我們需要指示 Fortify 如何返回應用程式的「密碼確認」視圖。請記住，Fortify 是一個無頭認證函式庫。如果您希望有一個已經為您完成的 Laravel 認證功能的前端實現，您應該使用<a href="/docs/starter-kits">應用程式入門套件</a>。</p>
+<p>Fortify 的所有視圖渲染邏輯都可以使用 <code>Laravel\\Fortify\\Fortify</code> 類別提供的相應方法來自訂。通常，您應該從應用程式的 <code>App\\Providers\\FortifyServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Fortify\\Fortify;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Fortify::confirmPasswordView(function () {
+        return view('auth.confirm-password');
+    });
+
+    // ...
+}
+</code></pre>
+<p>Fortify 將負責定義返回此視圖的 <code>/user/confirm-password</code> 端點。您的 <code>confirm-password</code> 範本應包含一個向 <code>/user/confirm-password</code> 端點發出 POST 請求的表單。<code>/user/confirm-password</code> 端點期望一個包含使用者當前密碼的 <code>password</code> 欄位。</p>
+<p>如果密碼與使用者的當前密碼匹配，Fortify 將將使用者重定向到他們嘗試存取的路由。如果請求是 XHR 請求，將返回 201 HTTP 回應。</p>
+<p>如果請求不成功，使用者將被重定向回確認密碼畫面，驗證錯誤將透過共享的 <code>$errors</code> Blade 範本變數對您可用。或者，在 XHR 請求的情況下，驗證錯誤將與 422 HTTP 回應一起返回。</p>
+`;
+---
+
+<DocsLayout title="Fortify" currentPath="fortify">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Fortify</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Fortify</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/fortify" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

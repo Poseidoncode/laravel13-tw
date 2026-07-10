@@ -1,0 +1,457 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Valet</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#upgrading-valet">升級 Valet</a></li>
+</ul>
+</li>
+<li><a href="#serving-sites">提供網站服務</a><ul>
+<li><a href="#the-park-command"><code>park</code> 指令</a></li>
+<li><a href="#the-link-command"><code>link</code> 指令</a></li>
+<li><a href="#securing-sites">使用 TLS 保護網站</a></li>
+<li><a href="#serving-a-default-site">提供預設網站服務</a></li>
+<li><a href="#per-site-php-versions">每個網站的 PHP 版本</a></li>
+</ul>
+</li>
+<li><a href="#sharing-sites">分享網站</a><ul>
+<li><a href="#sharing-sites-on-your-local-network">在本地網路上分享網站</a></li>
+</ul>
+</li>
+<li><a href="#site-specific-environment-variables">網站專屬環境變數</a></li>
+<li><a href="#proxying-services">代理服務</a></li>
+<li><a href="#custom-valet-drivers">自訂 Valet 驅動程式</a><ul>
+<li><a href="#local-drivers">本地驅動程式</a></li>
+</ul>
+</li>
+<li><a href="#other-valet-commands">其他 Valet 指令</a></li>
+<li><a href="#valet-directories-and-files">Valet 目錄與檔案</a><ul>
+<li><a href="#disk-access">磁碟存取</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<blockquote>
+<p>[!NOTE]
+正在尋找更簡單的方式在 macOS 或 Windows 上開發 Laravel 應用程式嗎？請查看 <a href="https://herd.laravel.com">Laravel Herd</a>。Herd 包含了開始 Laravel 開發所需的一切，包括 Valet、PHP 和 Composer。</p>
+</blockquote>
+<p><a href="https://github.com/laravel/valet">Laravel Valet</a> 是一個適合 macOS 極簡主義者的開發環境。Laravel Valet 會將您的 Mac 設定為在機器啟動時始终在背景運行 <a href="https://www.nginx.com/">Nginx</a>。然後，使用 <a href="https://en.wikipedia.org/wiki/Dnsmasq">DnsMasq</a>，Valet 會將所有對 <code>*.test</code> 網域的請求代理到安裝在您本機上的網站。</p>
+<p>換句話說，Valet 是一個極速的 Laravel 開發環境，大約只使用 7 MB 的記憶體。Valet 並不是 <a href="/docs/sail">Sail</a> 或 <a href="/docs/homestead">Homestead</a> 的完全替代品，但如果您想要靈活的基礎功能、偏好極致速度，或者在記憶體有限的機器上工作，它是一個很棒的替代選擇。</p>
+<p>開箱即用時，Valet 支援包括但不限於：</p>
+<style>
+    #valet-support > ul {
+        column-count: 3; -moz-column-count: 3; -webkit-column-count: 3;
+        line-height: 1.9;
+    }
+</style><div id="valet-support" markdown="1"><ul>
+<li><a href="https://laravel.com">Laravel</a></li>
+<li><a href="https://roots.io/bedrock/">Bedrock</a></li>
+<li><a href="https://cakephp.org">CakePHP 3</a></li>
+<li><a href="https://www.concretecms.com/">ConcreteCMS</a></li>
+<li><a href="https://contao.org/en/">Contao</a></li>
+<li><a href="https://craftcms.com">Craft</a></li>
+<li><a href="https://www.drupal.org/">Drupal</a></li>
+<li><a href="https://www.expressionengine.com/">ExpressionEngine</a></li>
+<li><a href="https://jigsaw.tighten.co">Jigsaw</a></li>
+<li><a href="https://www.joomla.org/">Joomla</a></li>
+<li><a href="https://github.com/themsaid/katana">Katana</a></li>
+<li><a href="https://getkirby.com/">Kirby</a></li>
+<li><a href="https://magento.com/">Magento</a></li>
+<li><a href="https://octobercms.com/">OctoberCMS</a></li>
+<li><a href="https://sculpin.io/">Sculpin</a></li>
+<li><a href="https://www.slimframework.com">Slim</a></li>
+<li><a href="https://statamic.com">Statamic</a></li>
+<li>靜態 HTML</li>
+<li><a href="https://symfony.com">Symfony</a></li>
+<li><a href="https://wordpress.org">WordPress</a></li>
+<li><a href="https://framework.zend.com">Zend</a></li>
+</ul>
+</div><p>然而，您可以使用自己的<a href="#custom-valet-drivers">自訂驅動程式</a>來擴展 Valet。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<blockquote>
+<p>[!WARNING]
+Valet 需要 macOS 和 <a href="https://brew.sh/">Homebrew</a>。在安裝之前，您應該確保沒有其他程式（如 Apache 或 Nginx）綁定到您本機的連接埠 80。</p>
+</blockquote>
+<p>要開始，您首先需要使用 <code>update</code> 指令確保 Homebrew 是最新的：</p>
+<pre><code class="language-shell">brew update
+</code></pre>
+<p>接下來，您應該使用 Homebrew 來安裝 PHP：</p>
+<pre><code class="language-shell">brew install php
+</code></pre>
+<p>安裝 PHP 之後，您就可以安裝 <a href="https://getcomposer.org">Composer 套件管理器</a>了。此外，您應該確保 <code>$HOME/.composer/vendor/bin</code> 目錄在您系統的「PATH」中。Composer 安裝完成後，您可以將 Laravel Valet 作為全域 Composer 套件安裝：</p>
+<pre><code class="language-shell">composer global require laravel/valet
+</code></pre>
+<p>最後，您可以執行 Valet 的 <code>install</code> 指令。這將設定並安裝 Valet 和 DnsMasq。此外，Valet 依賴的守護行程將被設定為在系統啟動時啟動：</p>
+<pre><code class="language-shell">valet install
+</code></pre>
+<p>Valet 安裝完成後，嘗試在終端機中使用例如 <code>ping foobar.test</code> 的指令來 ping 任何 <code>*.test</code> 網域。如果 Valet 安裝正確，您應該會看到此網域在 <code>127.0.0.1</code> 上回應。</p>
+<p>Valet 會在每次機器啟動時自動啟動其所需的服務。</p>
+<p><a name="php-versions"></a></p>
+<h4>PHP 版本</h4>
+<blockquote>
+<p>[!NOTE]
+與其修改全域 PHP 版本，您可以指示 Valet 透過 <code>isolate</code> <a href="#per-site-php-versions">指令</a>使用每個網站的 PHP 版本。</p>
+</blockquote>
+<p>Valet 允許您使用 <code>valet use php@version</code> 指令切換 PHP 版本。如果指定的 PHP 版本尚未安裝，Valet 將透過 Homebrew 安裝它：</p>
+<pre><code class="language-shell">valet use php@8.2
+</code></pre>
+<p>您也可以使用以下指令切換回 PHP 7：</p>
+<pre><code class="language-shell">valet use php
+</code></pre>
+<p>您可以在專案根目錄中建立 <code>.valetrc</code> 檔案。<code>.valetrc</code> 檔案應包含該網站應使用的 PHP 版本：</p>
+<pre><code class="language-shell">php=php@8.2
+</code></pre>
+<p>建立此檔案後，您只需執行 <code>valet use</code> 指令，該指令將透過讀取檔案來確定網站的首選 PHP 版本。</p>
+<blockquote>
+<p>[!WARNING]
+即使您安裝了多個 PHP 版本，Valet 一次只提供一個 PHP 版本的服務。</p>
+</blockquote>
+<p><a name="database"></a></p>
+<h4>資料庫</h4>
+<p>如果您的應用程式需要資料庫，請查看 <a href="https://dbngin.com">DBngin</a>，它提供了一個免費的、一体化的資料庫管理工具，包含 MySQL、PostgreSQL 和 Redis。DBngin 安裝後，您可以使用 <code>root</code> 用戶名和空密碼在 <code>127.0.0.1</code> 連接您的資料庫。</p>
+<p><a name="resetting-your-installation"></a></p>
+<h4>重設您的安裝</h4>
+<p>如果您的 Valet 安裝無法正常運作，執行 <code>composer global require laravel/valet</code> 指令後跟 <code>valet install</code> 將重設您的安裝並可解決各種問題。在極少數情況下，可能需要透過執行 <code>valet uninstall --force</code> 後跟 <code>valet install</code> 來「硬重設」Valet。</p>
+<p><a name="upgrading-valet"></a></p>
+<h3>升級 Valet</h3>
+<p>您可以透過在終端機中執行 <code>composer global require laravel/valet</code> 指令來更新您的 Valet 安裝。升級後，建議執行 <code>valet install</code> 指令，以便 Valet 在必要時對您的設定檔進行額外升級。</p>
+<p><a name="upgrading-to-valet-4"></a></p>
+<h4>升級到 Valet 4</h4>
+<p>如果您正在從 Valet 3 升級到 Valet 4，請按照以下步驟正確升級您的 Valet 安裝：</p>
+<div class="content-list" markdown="1"><ul>
+<li>如果您已新增 <code>.valetphprc</code> 檔案來自訂網站的 PHP 版本，請將每個 <code>.valetphprc</code> 檔案重新命名為 <code>.valetrc</code>。然後，在 <code>.valetrc</code> 檔案的現有內容前加上 <code>php=</code>。</li>
+<li>更新任何自訂驅動程式以匹配新驅動程式系統的命名空間、擴充功能、型別提示和傳回型別提示。您可以參閱 Valet 的 <a href="https://github.com/laravel/valet/blob/d7787c025e60abc24a5195dc7d4c5c6f2d984339/cli/stubs/SampleValetDriver.php">SampleValetDriver</a> 作為範例。</li>
+<li>如果您使用 PHP 7.1 - 7.4 來提供網站服務，請確保您仍然使用 Homebrew 安裝 8.0 或更高版本的 PHP，因為 Valet 將使用此版本（即使它不是您的主要連結版本）來運行其部分腳本。</li>
+</ul>
+</div><p><a name="serving-sites"></a></p>
+<h2>提供網站服務</h2>
+<p>Valet 安裝完成後，您就可以開始為您的 Laravel 應用程式提供服務了。Valet 提供了兩個指令來幫助您提供應用程式服務：<code>park</code> 和 <code>link</code>。</p>
+<p><a name="the-park-command"></a></p>
+<h3><code>park</code> 指令</h3>
+<p><code>park</code> 指令會在您的機器上註冊一個包含您應用程式的目錄。一旦目錄被 Valet「停放」後，該目錄中的所有目錄都可以在您的瀏覽器中透過 <code>http://&lt;目錄名稱&gt;.test</code> 來存取：</p>
+<pre><code class="language-shell">cd ~/Sites
+
+valet park
+</code></pre>
+<p>就這樣。現在，您在「停放」目錄中建立的任何應用程式都將自動使用 <code>http://&lt;目錄名稱&gt;.test</code> 的慣例來提供服務。因此，如果您的停放目錄中有一個名為「laravel」的目錄，該目錄中的應用程式將可以透過 <code>http://laravel.test</code> 來存取。此外，Valet 還會自動允許您使用通配符子網域（<code>http://foo.laravel.test</code>）來存取網站。</p>
+<p><a name="the-link-command"></a></p>
+<h3><code>link</code> 指令</h3>
+<p><code>link</code> 指令也可以用來為您的 Laravel 應用程式提供服務。如果您想要提供單個目錄中的網站而不是整個目錄的服務，此指令非常有用：</p>
+<pre><code class="language-shell">cd ~/Sites/laravel
+
+valet link
+</code></pre>
+<p>一旦應用程式使用 <code>link</code> 指令連結到 Valet，您就可以使用其目錄名稱來存取該應用程式。因此，上面範例中連結的網站可以透過 <code>http://laravel.test</code> 來存取。此外，Valet 還會自動允許您使用通配符子網域（<code>http://foo.laravel.test</code>）來存取網站。</p>
+<p>如果您想要在不同的主機名下提供應用程式服務，您可以將主機名傳遞給 <code>link</code> 指令。例如，您可以執行以下指令使應用程式在 <code>http://application.test</code> 上可用：</p>
+<pre><code class="language-shell">cd ~/Sites/laravel
+
+valet link application
+</code></pre>
+<p>當然，您也可以使用 <code>link</code> 指令在子網域上提供應用程式服務：</p>
+<pre><code class="language-shell">valet link api.application
+</code></pre>
+<p>您可以執行 <code>links</code> 指令來顯示所有已連結目錄的列表：</p>
+<pre><code class="language-shell">valet links
+</code></pre>
+<p><code>unlink</code> 指令可用於銷毀網站的符號連結：</p>
+<pre><code class="language-shell">cd ~/Sites/laravel
+
+valet unlink
+</code></pre>
+<p><a name="securing-sites"></a></p>
+<h3>使用 TLS 保護網站</h3>
+<p>預設情況下，Valet 透過 HTTP 提供網站服務。然而，如果您想要使用 HTTP/2 透過加密的 TLS 提供網站服務，您可以使用 <code>secure</code> 指令。例如，如果您的網站在 <code>laravel.test</code> 網域上由 Valet 提供服務，您應該執行以下指令來保護它：</p>
+<pre><code class="language-shell">valet secure laravel
+</code></pre>
+<p>要「取消保護」網站並恢復使用純 HTTP 提供流量服務，請使用 <code>unsecure</code> 指令。與 <code>secure</code> 指令一樣，此指令接受您想要取消保護的主機名：</p>
+<pre><code class="language-shell">valet unsecure laravel
+</code></pre>
+<p><a name="serving-a-default-site"></a></p>
+<h3>提供預設網站服務</h3>
+<p>有時，您可能希望設定 Valet 在訪問未知的 <code>test</code> 網域時提供「預設」網站而不是 <code>404</code>。為此，您可以在 <code>~/.config/valet/config.json</code> 設定檔中新增一個 <code>default</code> 選項，包含應作為預設網站的網站路徑：</p>
+<pre><code>&quot;default&quot;: &quot;/Users/Sally/Sites/example-site&quot;,
+</code></pre>
+<p><a name="per-site-php-versions"></a></p>
+<h3>每個網站的 PHP 版本</h3>
+<p>預設情況下，Valet 使用您的全域 PHP 安裝來提供網站服務。然而，如果您需要在多個網站之間支援多個 PHP 版本，您可以使用 <code>isolate</code> 指令來指定特定網站應使用的 PHP 版本。<code>isolate</code> 指令會設定 Valet 為位於您當前工作目錄中的網站使用指定的 PHP 版本：</p>
+<pre><code class="language-shell">cd ~/Sites/example-site
+
+valet isolate php@8.0
+</code></pre>
+<p>如果您的網站名稱與包含它的目錄名稱不匹配，您可以使用 <code>--site</code> 選項指定網站名稱：</p>
+<pre><code class="language-shell">valet isolate php@8.0 --site=&quot;site-name&quot;
+</code></pre>
+<p>為了方便，您可以使用 <code>valet php</code>、<code>composer</code> 和 <code>which-php</code> 指令根據網站設定的 PHP 版本來代理呼叫適當的 PHP CLI 或工具：</p>
+<pre><code class="language-shell">valet php
+valet composer
+valet which-php
+</code></pre>
+<p>您可以執行 <code>isolated</code> 指令來顯示所有已隔離網站及其 PHP 版本的列表：</p>
+<pre><code class="language-shell">valet isolated
+</code></pre>
+<p>要將網站恢復到 Valet 全域安裝的 PHP 版本，您可以在網站的根目錄中呼叫 <code>unisolate</code> 指令：</p>
+<pre><code class="language-shell">valet unisolate
+</code></pre>
+<p><a name="sharing-sites"></a></p>
+<h2>分享網站</h2>
+<p>Valet 包含一個可以將您的本地網站與全世界分享的指令，提供了一種簡單的方式在行動裝置上測試您的網站或與團隊成員和客戶分享。</p>
+<p>開箱即用時，Valet 支援透過 ngrok 或 Expose 分享您的網站。在分享網站之前，您應該使用 <code>share-tool</code> 指令更新您的 Valet 設定，指定 <code>ngrok</code>、<code>expose</code> 或 <code>cloudflared</code>：</p>
+<pre><code class="language-shell">valet share-tool ngrok
+</code></pre>
+<p>如果您選擇了一個工具但尚未透過 Homebrew（用於 ngrok 和 cloudflared）或 Composer（用於 Expose）安裝它，Valet 將自動提示您安裝它。當然，這兩個工具都需要您先認證您的 ngrok 或 Expose 帳戶，然後才能開始分享網站。</p>
+<p>要分享一個網站，請在終端機中導航到該網站的目錄並執行 Valet 的 <code>share</code> 指令。一個公開可存取的 URL 將被放入您的剪貼簿中，可以直接貼到瀏覽器中或與您的團隊分享：</p>
+<pre><code class="language-shell">cd ~/Sites/laravel
+
+valet share
+</code></pre>
+<p>要停止分享您的網站，您可以按 <code>Control + C</code>。</p>
+<blockquote>
+<p>[!WARNING]
+如果您使用自訂 DNS 伺服器（如 <code>1.1.1.1</code>），ngrok 分享可能無法正常運作。如果您的機器出現這種情況，請打開 Mac 的系統設定，前往網路設定，打開進階設定，然後前往 DNS 頁籤並新增 <code>127.0.0.1</code> 作為您的第一個 DNS 伺服器。</p>
+</blockquote>
+<p><a name="sharing-sites-via-ngrok"></a></p>
+<h4>透過 Ngrok 分享網站</h4>
+<p>使用 ngrok 分享您的網站需要您<a href="https://dashboard.ngrok.com/signup">建立一個 ngrok 帳戶</a>並<a href="https://dashboard.ngrok.com/get-started/your-authtoken">設定認證令牌</a>。一旦您有了認證令牌，您可以使用該令牌更新您的 Valet 設定：</p>
+<pre><code class="language-shell">valet set-ngrok-token YOUR_TOKEN_HERE
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您可以將額外的 ngrok 參數傳遞給 share 指令，例如 <code>valet share --region=eu</code>。更多資訊，請參閱 <a href="https://ngrok.com/docs">ngrok 文件</a>。</p>
+</blockquote>
+<p><a name="sharing-sites-via-expose"></a></p>
+<h4>透過 Expose 分享網站</h4>
+<p>使用 Expose 分享您的網站需要您<a href="https://expose.dev/register">建立一個 Expose 帳戶</a>並<a href="https://expose.dev/docs/getting-started/getting-your-token">使用您的認證令牌與 Expose 認證</a>。</p>
+<p>您可以參閱 <a href="https://expose.dev/docs">Expose 文件</a>了解其支援的額外命令列參數。</p>
+<p><a name="sharing-sites-on-your-local-network"></a></p>
+<h3>在本地網路上分享網站</h3>
+<p>Valet 預設會將傳入流量限制在內部 <code>127.0.0.1</code> 介面，以確保您的開發機器不會暴露於來自網際網路的安全風險。</p>
+<p>如果您希望允許本地網路上的其他裝置透過您機器的 IP 位址（例如：<code>192.168.1.10/application.test</code>）存取您機器上的 Valet 網站，您需要手動編輯相應的 Nginx 設定檔來移除 <code>listen</code> 指令上的限制。您應該移除連接埠 80 和 443 的 <code>listen</code> 指令上的 <code>127.0.0.1:</code> 前綴。</p>
+<p>如果您尚未對該專案執行 <code>valet secure</code>，您可以透過編輯 <code>/usr/local/etc/nginx/valet/valet.conf</code> 檔案來為所有非 HTTPS 網站開放網路存取。然而，如果您透過 HTTPS 提供專案網站服務（您已對該網站執行了 <code>valet secure</code>），則您應該編輯 <code>~/.config/valet/Nginx/app-name.test</code> 檔案。</p>
+<p>更新 Nginx 設定後，執行 <code>valet restart</code> 指令以套用設定變更。</p>
+<p><a name="site-specific-environment-variables"></a></p>
+<h2>網站專屬環境變數</h2>
+<p>一些使用其他框架的應用程式可能依賴伺服器環境變數，但不提供在專案中配置這些變數的方式。Valet 允許您透過在專案根目錄中新增 <code>.valet-env.php</code> 檔案來配置網站專屬的環境變數。此檔案應回傳一個網站 / 環境變數配對的陣列，這些配對將被新增到陣列中指定的每個網站的全域 <code>$_SERVER</code> 陣列中：</p>
+<pre><code class="language-php">&lt;?php
+
+return [
+    // 為 laravel.test 網站設定 $_SERVER[&#39;key&#39;] 為 &quot;value&quot;...
+    &#39;laravel&#39; =&gt; [
+        &#39;key&#39; =&gt; &#39;value&#39;,
+    ],
+
+    // 為所有網站設定 $_SERVER[&#39;key&#39;] 為 &quot;value&quot;...
+    &#39;*&#39; =&gt; [
+        &#39;key&#39; =&gt; &#39;value&#39;,
+    ],
+];
+</code></pre>
+<p><a name="proxying-services"></a></p>
+<h2>代理服務</h2>
+<p>有時您可能希望將 Valet 網域代理到您本機上的另一個服務。例如，您可能偶爾需要在運行 Valet 的同時也在 Docker 中運行另一個網站；然而，Valet 和 Docker 無法同時綁定到連接埠 80。</p>
+<p>為了解決這個問題，您可以使用 <code>proxy</code> 指令來生成一個代理。例如，您可以將所有從 <code>http://elasticsearch.test</code> 的流量代理到 <code>http://127.0.0.1:9200</code>：</p>
+<pre><code class="language-shell"># 透過 HTTP 代理...
+valet proxy elasticsearch http://127.0.0.1:9200
+
+# 透過 TLS + HTTP/2 代理...
+valet proxy elasticsearch http://127.0.0.1:9200 --secure
+</code></pre>
+<p>您可以使用 <code>unproxy</code> 指令移除代理：</p>
+<pre><code class="language-shell">valet unproxy elasticsearch
+</code></pre>
+<p>您可以使用 <code>proxies</code> 指令列出所有被代理的網站設定：</p>
+<pre><code class="language-shell">valet proxies
+</code></pre>
+<p><a name="custom-valet-drivers"></a></p>
+<h2>自訂 Valet 驅動程式</h2>
+<p>您可以編寫自己的 Valet「驅動程式」來為在 Valet 原生不支援的框架或 CMS 上運行的 PHP 應用程式提供服務。當您安裝 Valet 時，會建立一個 <code>~/.config/valet/Drivers</code> 目錄，其中包含一個 <code>SampleValetDriver.php</code> 檔案。此檔案包含一個範例驅動程式實現，用於示範如何編寫自訂驅動程式。編寫驅動程式只需要您實現三個方法：<code>serves</code>、<code>isStaticFile</code> 和 <code>frontControllerPath</code>。</p>
+<p>所有三個方法都接收 <code>$sitePath</code>、<code>$siteName</code> 和 <code>$uri</code> 值作為參數。<code>$sitePath</code> 是您機器上正在提供服務的網站的完全限定路徑，例如 <code>/Users/Lisa/Sites/my-project</code>。<code>$siteName</code> 是網域的「主機」/「網站名稱」部分（<code>my-project</code>）。<code>$uri</code> 是傳入請求的 URI（<code>/foo/bar</code>）。</p>
+<p>完成自訂 Valet 驅動程式後，請使用 <code>FrameworkValetDriver.php</code> 命名慣例將其放入 <code>~/.config/valet/Drivers</code> 目錄中。例如，如果您正在為 WordPress 編寫自訂 Valet 驅動程式，您的檔案名稱應為 <code>WordPressValetDriver.php</code>。</p>
+<p>讓我們來看看您的自訂 Valet 驅動程式應實現的每個方法的範例。</p>
+<p><a name="the-serves-method"></a></p>
+<h4><code>serves</code> 方法</h4>
+<p>如果您的驅動程式應該處理傳入請求，<code>serves</code> 方法應回傳 <code>true</code>。否則，該方法應回傳 <code>false</code>。因此，在此方法中，您應該嘗試確定給定的 <code>$sitePath</code> 是否包含您正在嘗試提供服務的專案類型。</p>
+<p>例如，讓我們假設我們正在編寫一個 <code>WordPressValetDriver</code>。我們的 <code>serves</code> 方法可能看起來像這樣：</p>
+<pre><code class="language-php">/**
+ * 確定驅動程式是否為請求提供服務。
+ */
+public function serves(string $sitePath, string $siteName, string $uri): bool
+{
+    return is_dir($sitePath.&#39;/wp-admin&#39;);
+}
+</code></pre>
+<p><a name="the-isstaticfile-method"></a></p>
+<h4><code>isStaticFile</code> 方法</h4>
+<p><code>isStaticFile</code> 應確定傳入請求是否為「靜態」檔案的請求，例如圖片或樣式表。如果該檔案是靜態的，該方法應回傳磁碟上靜態檔案的完全限定路徑。如果傳入請求不是針對靜態檔案的，該方法應回傳 <code>false</code>：</p>
+<pre><code class="language-php">/**
+ * 確定傳入請求是否為靜態檔案。
+ *
+ * @return string|false
+ */
+public function isStaticFile(string $sitePath, string $siteName, string $uri)
+{
+    if (file_exists($staticFilePath = $sitePath.&#39;/public/&#39;.$uri)) {
+        return $staticFilePath;
+    }
+
+    return false;
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+只有當 <code>serves</code> 方法對傳入請求回傳 <code>true</code> 且請求 URI 不是 <code>/</code> 時，才會呼叫 <code>isStaticFile</code> 方法。</p>
+</blockquote>
+<p><a name="the-frontcontrollerpath-method"></a></p>
+<h4><code>frontControllerPath</code> 方法</h4>
+<p><code>frontControllerPath</code> 方法應回傳您應用程式「前端控制器」的完全限定路徑，通常是「index.php」檔案或等效檔案：</p>
+<pre><code class="language-php">/**
+ * 取得應用程式前端控制器的完全解析路徑。
+ */
+public function frontControllerPath(string $sitePath, string $siteName, string $uri): string
+{
+    return $sitePath.&#39;/public/index.php&#39;;
+}
+</code></pre>
+<p><a name="local-drivers"></a></p>
+<h3>本地驅動程式</h3>
+<p>如果您想要為單個應用程式定義自訂 Valet 驅動程式，請在應用程式的根目錄中建立一個 <code>LocalValetDriver.php</code> 檔案。您的自訂驅動程式可以擴展基礎 <code>ValetDriver</code> 類別或擴展現有的應用程式特定驅動程式，例如 <code>LaravelValetDriver</code>：</p>
+<pre><code class="language-php">use Valet\\Drivers\\LaravelValetDriver;
+
+class LocalValetDriver extends LaravelValetDriver
+{
+    /**
+     * 確定驅動程式是否為請求提供服務。
+     */
+    public function serves(string $sitePath, string $siteName, string $uri): bool
+    {
+        return true;
+    }
+
+    /**
+     * 取得應用程式前端控制器的完全解析路徑。
+     */
+    public function frontControllerPath(string $sitePath, string $siteName, string $uri): string
+    {
+        return $sitePath.&#39;/public_html/index.php&#39;;
+    }
+}
+</code></pre>
+<p><a name="other-valet-commands"></a></p>
+<h2>其他 Valet 指令</h2>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>指令</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>valet list</code></td>
+<td>顯示所有 Valet 指令的列表。</td>
+</tr>
+<tr>
+<td><code>valet diagnose</code></td>
+<td>輸出診斷資訊以協助 Valet 除錯。</td>
+</tr>
+<tr>
+<td><code>valet directory-listing</code></td>
+<td>決定目錄列表行為。預設為「off」，即為目錄呈現 404 頁面。</td>
+</tr>
+<tr>
+<td><code>valet forget</code></td>
+<td>從「停放」目錄中執行此指令以將其從停放目錄列表中移除。</td>
+</tr>
+<tr>
+<td><code>valet log</code></td>
+<td>查看由 Valet 服務寫入的日誌列表。</td>
+</tr>
+<tr>
+<td><code>valet paths</code></td>
+<td>查看所有「停放」路徑。</td>
+</tr>
+<tr>
+<td><code>valet restart</code></td>
+<td>重新啟動 Valet 守護行程。</td>
+</tr>
+<tr>
+<td><code>valet start</code></td>
+<td>啟動 Valet 守護行程。</td>
+</tr>
+<tr>
+<td><code>valet stop</code></td>
+<td>停止 Valet 守護行程。</td>
+</tr>
+<tr>
+<td><code>valet trust</code></td>
+<td>為 Brew 和 Valet 新增 sudoers 檔案，以允許 Valet 指令在不提示輸入密碼的情況下運行。</td>
+</tr>
+<tr>
+<td><code>valet uninstall</code></td>
+<td>解除安裝 Valet：顯示手動解除安裝的說明。傳遞 <code>--force</code> 選項以強制刪除 Valet 的所有資源。</td>
+</tr>
+</tbody></table>
+</div><p><a name="valet-directories-and-files"></a></p>
+<h2>Valet 目錄與檔案</h2>
+<p>在排除 Valet 環境問題時，您可能會發現以下目錄和檔案資訊很有幫助：</p>
+<h4><code>~/.config/valet</code></h4>
+<p>包含 Valet 的所有設定。您可能希望備份此目錄。</p>
+<h4><code>~/.config/valet/dnsmasq.d/</code></h4>
+<p>此目錄包含 DNSMasq 的設定。</p>
+<h4><code>~/.config/valet/Drivers/</code></h4>
+<p>此目錄包含 Valet 的驅動程式。驅動程式決定如何提供特定框架 / CMS 的服務。</p>
+<h4><code>~/.config/valet/Nginx/</code></h4>
+<p>此目錄包含所有 Valet 的 Nginx 網站設定。執行 <code>install</code> 和 <code>secure</code> 指令時會重建這些檔案。</p>
+<h4><code>~/.config/valet/Sites/</code></h4>
+<p>此目錄包含您<a href="#the-link-command">已連結專案</a>的所有符號連結。</p>
+<h4><code>~/.config/valet/config.json</code></h4>
+<p>此檔案是 Valet 的主設定檔。</p>
+<h4><code>~/.config/valet/valet.sock</code></h4>
+<p>此檔案是 Valet 的 Nginx 安裝所使用的 PHP-FPM socket。僅在 PHP 正常運行時才會存在。</p>
+<h4><code>~/.config/valet/Log/fpm-php.www.log</code></h4>
+<p>此檔案是 PHP 錯誤的使用者日誌。</p>
+<h4><code>~/.config/valet/Log/nginx-error.log</code></h4>
+<p>此檔案是 Nginx 錯誤的使用者日誌。</p>
+<h4><code>/usr/local/var/log/php-fpm.log</code></h4>
+<p>此檔案是 PHP-FPM 錯誤的系統日誌。</p>
+<h4><code>/usr/local/var/log/nginx</code></h4>
+<p>此目錄包含 Nginx 的存取和錯誤日誌。</p>
+<h4><code>/usr/local/etc/php/X.X/conf.d</code></h4>
+<p>此目錄包含各種 PHP 設定的 <code>*.ini</code> 檔案。</p>
+<h4><code>/usr/local/etc/php/X.X/php-fpm.d/valet-fpm.conf</code></h4>
+<p>此檔案是 PHP-FPM 連接池設定檔。</p>
+<h4><code>~/.composer/vendor/laravel/valet/cli/stubs/secure.valet.conf</code></h4>
+<p>此檔案是用於為您的網站建立 SSL 憑證的預設 Nginx 設定。</p>
+<p><a name="disk-access"></a></p>
+<h3>磁碟存取</h3>
+<p>自 macOS 10.14 起，<a href="https://manuals.info.apple.com/MANUALS/1000/MA1902/en_US/apple-platform-security-guide.pdf">對某些檔案和目錄的存取預設受到限制</a>。這些限制包括桌面、文件和下載目錄。此外，網路磁碟區和可卸式磁碟區的存取也受到限制。因此，Valet 建議您的網站資料夾位於這些受保護位置之外。</p>
+<p>然而，如果您希望從這些位置之一提供網站服務，您需要給予 Nginx「完整磁碟存取」權限。否則，您可能會遇到伺服器錯誤或 Nginx 的其他不可預測行為，尤其是在提供靜態資源時。通常，macOS 會自動提示您授予 Nginx 對這些位置的完整存取權限。或者，您可以透過 <code>系統設定</code> > <code>安全性與隱私</code> > <code>隱私權</code> 並選擇 <code>完整磁碟存取</code> 來手動操作。接下來，在主視窗窗格中啟用任何 <code>nginx</code> 條目。</p>
+`;
+---
+
+<DocsLayout title="Valet" currentPath="valet">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Valet</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Valet</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/valet" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

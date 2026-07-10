@@ -1,0 +1,518 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>程序</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#invoking-processes">調用程序</a><ul>
+<li><a href="#process-options">程序選項</a></li>
+<li><a href="#process-output">程序輸出</a></li>
+<li><a href="#process-pipelines">管線</a></li>
+</ul>
+</li>
+<li><a href="#asynchronous-processes">非同步程序</a><ul>
+<li><a href="#process-ids-and-signals">程序 ID 和訊號</a></li>
+<li><a href="#asynchronous-process-output">非同步程序輸出</a></li>
+<li><a href="#asynchronous-process-timeouts">非同步程序逾時</a></li>
+</ul>
+</li>
+<li><a href="#concurrent-processes">並發程序</a><ul>
+<li><a href="#naming-pool-processes">命名池程序</a></li>
+<li><a href="#pool-process-ids-and-signals">池程序 ID 和訊號</a></li>
+</ul>
+</li>
+<li><a href="#testing">測試</a><ul>
+<li><a href="#faking-processes">偽造程序</a></li>
+<li><a href="#faking-specific-processes">偽造特定程序</a></li>
+<li><a href="#faking-process-sequences">偽造程序序列</a></li>
+<li><a href="#faking-asynchronous-process-lifecycles">偽造非同步程序生命週期</a></li>
+<li><a href="#available-assertions">可用斷言</a></li>
+<li><a href="#preventing-stray-processes">防止雜散程序</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 圍繞 <a href="https://symfony.com/doc/current/components/process.html">Symfony Process 元件</a>提供了一個富有表達力的最小化 API，允許您從 Laravel 應用程式中方便地調用外部程序。Laravel 的程序功能專注於最常見的用例和優良的開發者體驗。</p>
+<p><a name="invoking-processes"></a></p>
+<h2>調用程序</h2>
+<p>要調用程序，您可以使用 <code>Process</code> 外觀提供的 <code>run</code> 和 <code>start</code> 方法。<code>run</code> 方法將調用程序並等待程序完成執行，而 <code>start</code> 方法用於非同步程序執行。我們將在本文檔中研究這兩種方法。首先，讓我們看看如何調用一個基本的同步程序並檢查其結果：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+$result = Process::run('ls -la');
+
+return $result->output();
+</code></pre>
+<p>當然，<code>run</code> 方法返回的 <code>Illuminate\\Contracts\\Process\\ProcessResult</code> 實例提供了多種可用於檢查程序結果的有用方法：</p>
+<pre><code class="language-php">$result = Process::run('ls -la');
+
+$result->command();
+$result->successful();
+$result->failed();
+$result->output();
+$result->errorOutput();
+$result->exitCode();
+</code></pre>
+<p><a name="throwing-exceptions"></a></p>
+<h4>拋出異常</h4>
+<p>如果您有一個程序結果，並且希望在退出碼大於零（因此表示失敗）時拋出 <code>Illuminate\\Process\\Exceptions\\ProcessFailedException</code> 的實例，可以使用 <code>throw</code> 和 <code>throwIf</code> 方法。如果程序未失敗，將返回 <code>ProcessResult</code> 實例：</p>
+<pre><code class="language-php">$result = Process::run('ls -la')->throw();
+
+$result = Process::run('ls -la')->throwIf($condition);
+</code></pre>
+<p><a name="process-options"></a></p>
+<h3>程序選項</h3>
+<p>當然，您可能需要在調用程序之前自訂其行為。幸運的是，Laravel 允許您調整多種程序功能，例如工作目錄、逾時和環境變數。</p>
+<p><a name="working-directory-path"></a></p>
+<h4>工作目錄路徑</h4>
+<p>您可以使用 <code>path</code> 方法來指定程序的工作目錄。如果未呼叫此方法，程序將繼承當前執行的 PHP 腳本的工作目錄：</p>
+<pre><code class="language-php">$result = Process::path(__DIR__)->run('ls -la');
+</code></pre>
+<p><a name="input"></a></p>
+<h4>輸入</h4>
+<p>您可以使用 <code>input</code> 方法透過程式的「標準輸入」提供輸入：</p>
+<pre><code class="language-php">$result = Process::input('Hello World')->run('cat');
+</code></pre>
+<p><a name="timeouts"></a></p>
+<h4>逾時</h4>
+<p>預設情況下，程序在執行超過 60 秒後將拋出 <code>Illuminate\\Process\\Exceptions\\ProcessTimedOutException</code> 的實例。但是，您可以使用 <code>timeout</code> 方法來自訂此行為：</p>
+<pre><code class="language-php">$result = Process::timeout(120)->run('bash import.sh');
+</code></pre>
+<p><code>timeout</code> 和 <code>idleTimeout</code> 方法還接受 <code>CarbonInterval</code> 實例：</p>
+<pre><code class="language-php">use function Illuminate\\Support\\minutes;
+
+$result = Process::timeout(minutes(2))->run('bash import.sh');
+</code></pre>
+<p>或者，如果您希望完全禁用程序逾時，可以呼叫 <code>forever</code> 方法：</p>
+<pre><code class="language-php">$result = Process::forever()->run('bash import.sh');
+</code></pre>
+<p><code>idleTimeout</code> 方法可用於指定程序可以在不返回任何輸出的情況下運行的最大秒數：</p>
+<pre><code class="language-php">$result = Process::timeout(60)->idleTimeout(30)->run('bash import.sh');
+</code></pre>
+<p><a name="environment-variables"></a></p>
+<h4>環境變數</h4>
+<p>可以使用 <code>env</code> 方法向程序提供環境變數。調用的程序還將繼承您的系統定義的所有環境變數：</p>
+<pre><code class="language-php">$result = Process::forever()
+    ->env(['IMPORT_PATH' => __DIR__])
+    ->run('bash import.sh');
+</code></pre>
+<p>如果您希望從調用的程序中移除繼承的環境變數，可以將該環境變數的值提供為 <code>false</code>：</p>
+<pre><code class="language-php">$result = Process::forever()
+    ->env(['LOAD_PATH' => false])
+    ->run('bash import.sh');
+</code></pre>
+<p><a name="tty-mode"></a></p>
+<h4>TTY 模式</h4>
+<p><code>tty</code> 方法可用於為您的程序啟用 TTY 模式。TTY 模式將程式的輸入和輸出連接到您程式的輸入和輸出，允許您的程式以程序形式打開像 Vim 或 Nano 這樣的編輯器：</p>
+<pre><code class="language-php">Process::forever()->tty()->run('vim');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+Windows 上不支援 TTY 模式。</p>
+</blockquote>
+<p><a name="process-output"></a></p>
+<h3>程序輸出</h3>
+<p>如前所述，可以使用程式結果上的 <code>output</code>（stdout）和 <code>errorOutput</code>（stderr）方法來存取程序輸出：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+$result = Process::run('ls -la');
+
+echo $result->output();
+echo $result->errorOutput();
+</code></pre>
+<p>但是，也可以透過將閉包作為第二個參數傳遞給 <code>run</code> 方法來即時收集輸出。閉包將接收兩個參數：輸出的「類型」（<code>stdout</code> 或 <code>stderr</code>）和輸出字串本身：</p>
+<pre><code class="language-php">$result = Process::run('ls -la', function (string $type, string $output) {
+    echo $output;
+});
+</code></pre>
+<p>Laravel 還提供了 <code>seeInOutput</code> 和 <code>seeInErrorOutput</code> 方法，它們提供了一種便利的方式來判斷給定字串是否包含在程序的輸出中：</p>
+<pre><code class="language-php">if (Process::run('ls -la')->seeInOutput('laravel')) {
+    // ...
+}
+</code></pre>
+<p><a name="disabling-process-output"></a></p>
+<h4>禁用程序輸出</h4>
+<p>如果您的程式正在寫入大量您不感興趣的輸出，可以透過完全禁用輸出來節省記憶體。為此，請在構建程序時呼叫 <code>quietly</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+$result = Process::quietly()->run('bash import.sh');
+</code></pre>
+<p><a name="process-pipelines"></a></p>
+<h3>管線</h3>
+<p>有時您可能希望將一個程式的輸出作為另一個程式的輸入。這通常被稱為將程式的輸出「管道傳輸」到另一個程式。<code>Process</code> 外觀提供的 <code>pipe</code> 方法使這變得很容易。<code>pipe</code> 方法將同步執行管線中的程式，並返回管線中最後一個程式的程式結果：</p>
+<pre><code class="language-php">use Illuminate\\Process\\Pipe;
+use Illuminate\\Support\\Facades\\Process;
+
+$result = Process::pipe(function (Pipe $pipe) {
+    $pipe->command('cat example.txt');
+    $pipe->command('grep -i "laravel"');
+});
+
+if ($result->successful()) {
+    // ...
+}
+</code></pre>
+<p>如果您不需要自訂組成管線的單個程式，可以簡單地向 <code>pipe</code> 方法傳遞一個命令字串陣列：</p>
+<pre><code class="language-php">$result = Process::pipe([
+    'cat example.txt',
+    'grep -i "laravel"',
+]);
+</code></pre>
+<p>可以透過將閉包作為第二個參數傳遞給 <code>pipe</code> 方法來即時收集程序輸出。閉包將接收兩個參數：輸出的「類型」（<code>stdout</code> 或 <code>stderr</code>）和輸出字串本身：</p>
+<pre><code class="language-php">$result = Process::pipe(function (Pipe $pipe) {
+    $pipe->command('cat example.txt');
+    $pipe->command('grep -i "laravel"');
+}, function (string $type, string $output) {
+    echo $output;
+});
+</code></pre>
+<p>Laravel 還允許您透過 <code>as</code> 方法為管線中的每個程式分配字串鍵。此鍵也將傳遞給提供給 <code>pipe</code> 方法的輸出閉包，允許您判斷輸出屬於哪個程式：</p>
+<pre><code class="language-php">$result = Process::pipe(function (Pipe $pipe) {
+    $pipe->as('first')->command('cat example.txt');
+    $pipe->as('second')->command('grep -i "laravel"');
+}, function (string $type, string $output, string $key) {
+    // ...
+});
+</code></pre>
+<p><a name="asynchronous-processes"></a></p>
+<h2>非同步程序</h2>
+<p>雖然 <code>run</code> 方法同步調用程序，但 <code>start</code> 方法可用於非同步調用程序。這允許您的應用程式在程式在背景中運行時繼續執行其他任務。調用程序後，您可以利用 <code>running</code> 方法來判斷程式是否仍在運行：</p>
+<pre><code class="language-php">$process = Process::timeout(120)->start('bash import.sh');
+
+while ($process->running()) {
+    // ...
+}
+
+$result = $process->wait();
+</code></pre>
+<p>正如您可能注意到的，您可以呼叫 <code>wait</code> 方法來等待程式完成執行，並檢索 <code>ProcessResult</code> 實例：</p>
+<pre><code class="language-php">$process = Process::timeout(120)->start('bash import.sh');
+
+// ...
+
+$result = $process->wait();
+</code></pre>
+<p><a name="process-ids-and-signals"></a></p>
+<h3>程序 ID 和訊號</h3>
+<p><code>id</code> 方法可用於檢索運行中程式由作業系統分配的程序 ID：</p>
+<pre><code class="language-php">$process = Process::start('bash import.sh');
+
+return $process->id();
+</code></pre>
+<p>您可以使用 <code>signal</code> 方法向運行中的程式發送「訊號」。預定義訊號常數的列表可以在 <a href="https://www.php.net/manual/en/pcntl.constants.php">PHP 文檔</a>中找到：</p>
+<pre><code class="language-php">$process->signal(SIGUSR2);
+</code></pre>
+<p><a name="asynchronous-process-output"></a></p>
+<h3>非同步程序輸出</h3>
+<p>當非同步程序運行時，您可以使用 <code>output</code> 和 <code>errorOutput</code> 方法存取其當前的完整輸出；但是，您可以利用 <code>latestOutput</code> 和 <code>latestErrorOutput</code> 來存取自上次檢索輸出以來程式產生的輸出：</p>
+<pre><code class="language-php">$process = Process::timeout(120)->start('bash import.sh');
+
+while ($process->running()) {
+    echo $process->latestOutput();
+    echo $process->latestErrorOutput();
+
+    sleep(1);
+}
+</code></pre>
+<p>像 <code>run</code> 方法一樣，也可以透過將閉包作為第二個參數傳遞給 <code>start</code> 方法來從非同步程序即時收集輸出。閉包將接收兩個參數：輸出的「類型」（<code>stdout</code> 或 <code>stderr</code>）和輸出字串本身：</p>
+<pre><code class="language-php">$process = Process::start('bash import.sh', function (string $type, string $output) {
+    echo $output;
+});
+
+$result = $process->wait();
+</code></pre>
+<p>與其等待程式完成，您可以使用 <code>waitUntil</code> 方法根據程式的輸出來停止等待。當傳遞給 <code>waitUntil</code> 方法的閉包返回 <code>true</code> 時，Laravel 將停止等待程式完成：</p>
+<pre><code class="language-php">$process = Process::start('bash import.sh');
+
+$process->waitUntil(function (string $type, string $output) {
+    return $output === 'Ready...';
+});
+</code></pre>
+<p><a name="asynchronous-process-timeouts"></a></p>
+<h3>非同步程序逾時</h3>
+<p>當非同步程序運行時，您可以使用 <code>ensureNotTimedOut</code> 方法來驗證程式是否未逾時。如果程式已逾時，此方法將拋出<a href="#timeouts">逾時異常</a>：</p>
+<pre><code class="language-php">$process = Process::timeout(120)->start('bash import.sh');
+
+while ($process->running()) {
+    $process->ensureNotTimedOut();
+
+    // ...
+
+    sleep(1);
+}
+</code></pre>
+<p><a name="concurrent-processes"></a></p>
+<h2>並發程序</h2>
+<p>Laravel 還使管理並發、非同步程序池變得非常簡單，允許您輕鬆地同時執行許多任務。首先，呼叫 <code>pool</code> 方法，該方法接受一個接收 <code>Illuminate\\Process\\Pool</code> 實例的閉包。</p>
+<p>在此閉包內，您可以定義屬於池的程式。一旦透過 <code>start</code> 方法啟動了程式池，您就可以透過 <code>running</code> 方法存取正在運行的程式<a href="/docs/collections">集合</a>：</p>
+<pre><code class="language-php">use Illuminate\\Process\\Pool;
+use Illuminate\\Support\\Facades\\Process;
+
+$pool = Process::pool(function (Pool $pool) {
+    $pool->path(__DIR__)->command('bash import-1.sh');
+    $pool->path(__DIR__)->command('bash import-2.sh');
+    $pool->path(__DIR__)->command('bash import-3.sh');
+})->start(function (string $type, string $output, int $key) {
+    // ...
+});
+
+while ($pool->running()->isNotEmpty()) {
+    // ...
+}
+
+$results = $pool->wait();
+</code></pre>
+<p>正如您所見，您可以等待所有池程式完成執行，並透過 <code>wait</code> 方法解析它們的結果。<code>wait</code> 方法返回一個可存取的陣列物件，允許您透過鍵來存取池中每個程式的 <code>ProcessResult</code> 實例：</p>
+<pre><code class="language-php">$results = $pool->wait();
+
+echo $results[0]->output();
+</code></pre>
+<p>或者，為了方便，可以使用 <code>concurrently</code> 方法來啟動一個非同步程式池，並立即等待其結果。與 PHP 的陣列解構功能結合時，這可以提供特別富有表達力的語法：</p>
+<pre><code class="language-php">[$first, $second, $third] = Process::concurrently(function (Pool $pool) {
+    $pool->path(__DIR__)->command('ls -la');
+    $pool->path(app_path())->command('ls -la');
+    $pool->path(storage_path())->command('ls -la');
+});
+
+echo $first->output();
+</code></pre>
+<p><a name="naming-pool-processes"></a></p>
+<h3>命名池程序</h3>
+<p>透過數字鍵存取程式池結果不是很富有表達力；因此，Laravel 允許您透過 <code>as</code> 方法為池中的每個程式分配字串鍵。此鍵也將傳遞給提供給 <code>start</code> 方法的閉包，允許您判斷輸出屬於哪個程式：</p>
+<pre><code class="language-php">$pool = Process::pool(function (Pool $pool) {
+    $pool->as('first')->command('bash import-1.sh');
+    $pool->as('second')->command('bash import-2.sh');
+    $pool->as('third')->command('bash import-3.sh');
+})->start(function (string $type, string $output, string $key) {
+    // ...
+});
+
+$results = $pool->wait();
+
+return $results['first']->output();
+</code></pre>
+<p><a name="pool-process-ids-and-signals"></a></p>
+<h3>池程序 ID 和訊號</h3>
+<p>由於程式池的 <code>running</code> 方法提供了池中所有調用程式的集合，您可以輕鬆地存取底層的池程序 ID：</p>
+<pre><code class="language-php">$processIds = $pool->running()->each->id();
+</code></pre>
+<p>而且，為了方便，您可以在程式池上呼叫 <code>signal</code> 方法來向池中的每個程式發送訊號：</p>
+<pre><code class="language-php">$pool->signal(SIGUSR2);
+</code></pre>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>許多 Laravel 服務提供功能來幫助您輕鬆且富有表達力地編寫測試，Laravel 的程序服務也不例外。<code>Process</code> 外觀的 <code>fake</code> 方法允許您指示 Laravel 在調用程序時返回存根/虛擬結果。</p>
+<p><a name="faking-processes"></a></p>
+<h3>偽造程序</h3>
+<p>要探索 Laravel 偽造程序的能力，讓我們想像一個調用程序的路由：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::get('/import', function () {
+    Process::run('bash import.sh');
+
+    return 'Import complete!';
+});
+</code></pre>
+<p>測試此路由時，我們可以透過使用不帶參數的 <code>Process</code> 外觀上的 <code>fake</code> 方法來指示 Laravel 為每個調用的程序返回一個虛擬的成功程序結果。此外，我們甚至可以<a href="#available-assertions">斷言</a>給定的程序已「運行」：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Contracts\\Process\\ProcessResult;
+use Illuminate\\Process\\PendingProcess;
+use Illuminate\\Support\\Facades\\Process;
+
+test('process is invoked', function () {
+    Process::fake();
+
+    $response = $this->get('/import');
+
+    // 簡單的程序斷言...
+    Process::assertRan('bash import.sh');
+
+    // 或者，檢查程序配置...
+    Process::assertRan(function (PendingProcess $process, ProcessResult $result) {
+        return $process->command === 'bash import.sh' &&
+               $process->timeout === 60;
+    });
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Contracts\\Process\\ProcessResult;
+use Illuminate\\Process\\PendingProcess;
+use Illuminate\\Support\\Facades\\Process;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_process_is_invoked(): void
+    {
+        Process::fake();
+
+        $response = $this->get('/import');
+
+        // 簡單的程序斷言...
+        Process::assertRan('bash import.sh');
+
+        // 或者，檢查程序配置...
+        Process::assertRan(function (PendingProcess $process, ProcessResult $result) {
+            return $process->command === 'bash import.sh' &&
+                   $process->timeout === 60;
+        });
+    }
+}
+</code></pre>
+<p>如前所述，呼叫 <code>Process</code> 外觀上的 <code>fake</code> 方法將指示 Laravel 始終返回一個沒有輸出的成功程序結果。但是，您可以使用 <code>Process</code> 外觀的 <code>result</code> 方法輕鬆指定偽造程式的輸出和退出碼：</p>
+<pre><code class="language-php">Process::fake([
+    '*' => Process::result(
+        output: 'Test output',
+        errorOutput: 'Test error output',
+        exitCode: 1,
+    ),
+]);
+</code></pre>
+<p><a name="faking-specific-processes"></a></p>
+<h3>偽造特定程序</h4>
+<p>正如您可能在之前的範例中注意到的，<code>Process</code> 外觀允許您透過向 <code>fake</code> 方法傳遞一個陣列來為每個程式指定不同的偽造結果。</p>
+<p>陣列的鍵應代表您希望偽造的命令模式及其關聯的結果。<code>*</code> 字元可用作萬用字元。任何未偽造的程式命令都將被實際調用。您可以使用 <code>Process</code> 外觀的 <code>result</code> 方法來為這些命令構建存根/偽造結果：</p>
+<pre><code class="language-php">Process::fake([
+    'cat *' => Process::result(
+        output: 'Test "cat" output',
+    ),
+    'ls *' => Process::result(
+        output: 'Test "ls" output',
+    ),
+]);
+</code></pre>
+<p>如果您不需要自訂偽造程式的退出碼或錯誤輸出，您會發現將偽造程式結果指定為簡單字串更為方便：</p>
+<pre><code class="language-php">Process::fake([
+    'cat *' => 'Test "cat" output',
+    'ls *' => 'Test "ls" output',
+]);
+</code></pre>
+<p><a name="faking-process-sequences"></a></p>
+<h3>偽造程序序列</h3>
+<p>如果您正在測試的代碼使用相同的命令調用多個程序，您可能希望為每個程序調用分配一個不同的虛擬程序結果。您可以透過 <code>Process</code> 外觀的 <code>sequence</code> 方法來實現這一點：</p>
+<pre><code class="language-php">Process::fake([
+    'ls *' => Process::sequence()
+        ->push(Process::result('First invocation'))
+        ->push(Process::result('Second invocation')),
+]);
+</code></pre>
+<p><a name="faking-asynchronous-process-lifecycles"></a></p>
+<h3>偽造非同步程序生命週期</h3>
+<p>到目前為止，我們主要討論了使用 <code>run</code> 方法同步調用的程序的偽造。但是，如果您正在嘗試測試與透過 <code>start</code> 調用的非同步程序互動的代碼，則可能需要更複雜的方法來描述您的虛擬程式。</p>
+<p>例如，讓我們想像以下與非同步程序互動的路由：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::get('/import', function () {
+    $process = Process::start('bash import.sh');
+
+    while ($process->running()) {
+        Log::info($process->latestOutput());
+        Log::info($process->latestErrorOutput());
+    }
+
+    return 'Done';
+});
+</code></pre>
+<p>為了正確地偽造此程序，我們需要能夠描述 <code>running</code> 方法應返回 <code>true</code> 的次數。此外，我們可能希望指定應按順序返回的多行輸出。為此，我們可以使用 <code>Process</code> 外觀的 <code>describe</code> 方法：</p>
+<pre><code class="language-php">Process::fake([
+    'bash import.sh' => Process::describe()
+        ->output('First line of standard output')
+        ->errorOutput('First line of error output')
+        ->output('Second line of standard output')
+        ->exitCode(0)
+        ->iterations(3),
+]);
+</code></pre>
+<p>讓我們深入研究上面的範例。使用 <code>output</code> 和 <code>errorOutput</code> 方法，我們可以指定將按順序返回的多行輸出。<code>exitCode</code> 方法可用於指定虛擬程式的最終退出碼。最後，<code>iterations</code> 方法可用於指定 <code>running</code> 方法應返回 <code>true</code> 的次數。</p>
+<p><a name="available-assertions"></a></p>
+<h3>可用斷言</h3>
+<p>如<a href="#faking-processes">前面所討論的</a>，Laravel 為您的功能測試提供了多種程序斷言。我們將在下面討論這些斷言中的每一個。</p>
+<p><a name="assert-process-ran"></a></p>
+<h4>assertRan</h4>
+<p>斷言給定的程序已被調用：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+Process::assertRan('ls -la');
+</code></pre>
+<p><code>assertRan</code> 方法還接受一個閉包，該閉包將接收程序實例和程序結果，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code>，斷言將「通過」：</p>
+<pre><code class="language-php">Process::assertRan(fn ($process, $result) =>
+    $process->command === 'ls -la' &&
+    $process->path === __DIR__ &&
+    $process->timeout === 60
+);
+</code></pre>
+<p>傳遞給 <code>assertRan</code> 閉包的 <code>$process</code> 是 <code>Illuminate\\Process\\PendingProcess</code> 的實例，而 <code>$result</code> 是 <code>Illuminate\\Contracts\\Process\\ProcessResult</code> 的實例。</p>
+<p><a name="assert-process-didnt-run"></a></p>
+<h4>assertDidntRun</h4>
+<p>斷言給定的程序未被調用：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+Process::assertDidntRun('ls -la');
+</code></pre>
+<p>像 <code>assertRan</code> 方法一樣，<code>assertDidntRun</code> 方法也接受一個閉包，該閉包將接收程序實例和程序結果，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code>，斷言將「失敗」：</p>
+<pre><code class="language-php">Process::assertDidntRun(fn (PendingProcess $process, ProcessResult $result) =>
+    $process->command === 'ls -la'
+);
+</code></pre>
+<p><a name="assert-process-ran-times"></a></p>
+<h4>assertRanTimes</h4>
+<p>斷言給定的程序已被調用給定的次數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+Process::assertRanTimes('ls -la', times: 3);
+</code></pre>
+<p><code>assertRanTimes</code> 方法還接受一個閉包，該閉包將接收 <code>PendingProcess</code> 和 <code>ProcessResult</code> 的實例，允許您檢查程序配置的選項。如果此閉包返回 <code>true</code> 且程式已被調用指定的次數，斷言將「通過」：</p>
+<pre><code class="language-php">Process::assertRanTimes(function (PendingProcess $process, ProcessResult $result) {
+    return $process->command === 'ls -la';
+}, times: 3);
+</code></pre>
+<p><a name="preventing-stray-processes"></a></p>
+<h3>防止雜散程序</h3>
+<p>如果您希望確保所有調用的程序在單個測試或完整測試套件中都被偽造，可以呼叫 <code>preventStrayProcesses</code> 方法。呼叫此方法後，任何沒有相應虛擬結果的程序都將拋出異常，而不是啟動實際的程序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Process;
+
+Process::preventStrayProcesses();
+
+Process::fake([
+    'ls *' => 'Test output...',
+]);
+
+// 返回虛擬回應...
+Process::run('ls -la');
+
+// 拋出異常...
+Process::run('bash import.sh');
+</code></pre>
+`;
+---
+
+<DocsLayout title="程序" currentPath="processes">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>程序</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">程序</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/processes" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

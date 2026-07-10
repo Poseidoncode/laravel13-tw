@@ -1,0 +1,381 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>套件開發</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#a-note-on-facades">關於外觀的說明</a></li>
+</ul>
+</li>
+<li><a href="#package-discovery">套件自動發現</a></li>
+<li><a href="#service-providers">服務提供者</a></li>
+<li><a href="#resources">資源</a><ul>
+<li><a href="#configuration">配置</a></li>
+<li><a href="#routes">路由</a></li>
+<li><a href="#migrations">遷移</a></li>
+<li><a href="#language-files">語言檔案</a></li>
+<li><a href="#views">視圖</a></li>
+<li><a href="#view-components">視圖元件</a></li>
+<li><a href="#about-artisan-command">「About」Artisan 命令</a></li>
+</ul>
+</li>
+<li><a href="#commands">命令</a><ul>
+<li><a href="#optimize-commands">優化命令</a></li>
+<li><a href="#reload-commands">重新載入命令</a></li>
+</ul>
+</li>
+<li><a href="#public-assets">公開資源</a></li>
+<li><a href="#publishing-file-groups">發佈檔案群組</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>套件是向 Laravel 添加功能的主要方式。套件可以是任何東西，從像 <a href="https://github.com/briannesbitt/Carbon">Carbon</a> 這樣處理日期的好方法，到像 Spatie 的 <a href="https://github.com/spatie/laravel-medialibrary">Laravel Media Library</a> 這樣允許您將檔案與 Eloquent 模型關聯的套件。</p>
+<p>有不同類型的套件。有些套件是獨立的，意味著它們可以與任何 PHP 框架一起使用。Carbon 和 Pest 是獨立套件的範例。這些套件都可以透過在 <code>composer.json</code> 檔案中要求它們來與 Laravel 一起使用。</p>
+<p>另一方面，其他套件專門設計用於與 Laravel 一起使用。這些套件可能有專門旨在增強 Laravel 應用程式的路由、控制器、視圖和配置。本指南主要涵蓋那些特定於 Laravel 的套件的開發。</p>
+<p><a name="a-note-on-facades"></a></p>
+<h3>關於外觀的說明</h3>
+<p>編寫 Laravel 應用程式時，通常無論您使用合約還是外觀都沒有關係，因為兩者都提供了基本相同的可測試性水平。但是，編寫套件時，您的套件通常無法存取所有 Laravel 的測試輔助工具。如果您希望能夠像套件安裝在典型 Laravel 應用程式中一樣編寫套件測試，您可以使用 <a href="https://github.com/orchestral/testbench">Orchestral Testbench</a> 套件。</p>
+<p><a name="package-discovery"></a></p>
+<h2>套件自動發現</h2>
+<p>Laravel 應用程式的 <code>bootstrap/providers.php</code> 檔案包含應由 Laravel 載入的服務提供者列表。但是，與其要求使用者手動將您的服務提供者添加到列表中，您可以在套件的 <code>composer.json</code> 檔案的 <code>extra</code> 部分定義提供者，以便 Laravel 自動載入它。除了服務提供者之外，您還可以列出您希望註冊的任何<a href="/docs/facades">外觀</a>：</p>
+<pre><code class="language-json">"extra": {
+    "laravel": {
+        "providers": [
+            "Barryvdh\\\\Debugbar\\\\ServiceProvider"
+        ],
+        "aliases": {
+            "Debugbar": "Barryvdh\\\\Debugbar\\\\Facade"
+        }
+    }
+},
+</code></pre>
+<p>一旦您的套件配置了自動發現，Laravel 將在安裝時自動註冊其服務提供者和外觀，為套件使用者創建便利的安裝體驗。</p>
+<p><a name="opting-out-of-package-discovery"></a></p>
+<h4>選擇退出套件自動發現</h4>
+<p>如果您是套件的使用者並希望禁用某個套件的套件自動發現，您可以在應用程式的 <code>composer.json</code> 檔案的 <code>extra</code> 部分列出套件名稱：</p>
+<pre><code class="language-json">"extra": {
+    "laravel": {
+        "dont-discover": [
+            "barryvdh/laravel-debugbar"
+        ]
+    }
+},
+</code></pre>
+<p>您可以使用 <code>*</code> 字元在應用程式的 <code>dont-discover</code> 指令中禁用所有套件的套件自動發現：</p>
+<pre><code class="language-json">"extra": {
+    "laravel": {
+        "dont-discover": [
+            "*"
+        ]
+    }
+},
+</code></pre>
+<p><a name="service-providers"></a></p>
+<h2>服務提供者</h2>
+<p><a href="/docs/providers">服務提供者</a>是您的套件與 Laravel 之間的連接點。服務提供者負責將事物綁定到 Laravel 的<a href="/docs/container">服務容器</a>中，並告知 Laravel 在哪裡載入套件資源，如視圖、配置和語言檔案。</p>
+<p>服務提供者擴展 <code>Illuminate\\Support\\ServiceProvider</code> 類別，並包含兩個方法：<code>register</code> 和 <code>boot</code>。基礎 <code>ServiceProvider</code> 類別位於 <code>illuminate/support</code> Composer 套件中，您應該將其添加到自己套件的依賴項中。要了解更多關於服務提供者的結構和目的，請查閱<a href="/docs/providers">其文件</a>。</p>
+<p><a name="resources"></a></p>
+<h2>資源</h2>
+<p><a name="configuration"></a></p>
+<h3>配置</h3>
+<p>通常，您需要將套件的配置檔案發佈到應用程式的 <code>config</code> 目錄中。這將允許套件使用者輕鬆覆蓋您的預設配置選項。要允許發佈您的配置檔案，請從服務提供者的 <code>boot</code> 方法中呼叫 <code>publishes</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->publishes([
+        __DIR__.'/../config/courier.php' => config_path('courier.php'),
+    ]);
+}
+</code></pre>
+<p>現在，當套件使用者執行 Laravel 的 <code>vendor:publish</code> 命令時，您的檔案將被複製到指定的發佈位置。一旦您的配置被發佈，其值可以像任何其他配置檔案一樣被存取：</p>
+<pre><code class="language-php">$value = config('courier.option');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+您不應在配置檔案中定義閉包。當使用者執行 <code>config:cache</code> Artisan 命令時，它們無法正確序列化。</p>
+</blockquote>
+<p><a name="default-package-configuration"></a></p>
+<h4>預設套件配置</h4>
+<p>您還可以將自己的套件配置檔案與應用程式已發佈的副本合併。這將允許使用者僅定義他們實際想要在配置檔案的已發佈副本中覆蓋的選項。要合併配置檔案值，請在服務提供者的 <code>register</code> 方法中使用 <code>mergeConfigFrom</code> 方法。</p>
+<p><code>mergeConfigFrom</code> 方法接受套件配置檔案的路徑作為其第一個參數，應用程式配置檔案副本的名稱作為其第二個參數：</p>
+<pre><code class="language-php">/**
+ * 註冊任何套件服務。
+ */
+public function register(): void
+{
+    $this->mergeConfigFrom(
+        __DIR__.'/../config/courier.php', 'courier'
+    );
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+此方法僅合併配置陣列的第一層。如果使用者部分定義了多維配置陣列，則不會合併缺少的選項。</p>
+</blockquote>
+<p><a name="routes"></a></p>
+<h3>路由</h3>
+<p>如果您的套件包含路由，您可以使用 <code>loadRoutesFrom</code> 方法載入它們。此方法將自動判斷應用程式的路由是否已快取，並且如果路由已被快取，則不會載入您的路由檔案：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+}
+</code></pre>
+<p><a name="migrations"></a></p>
+<h3>遷移</h3>
+<p>如果您的套件包含<a href="/docs/migrations">資料庫遷移</a>，您可以使用 <code>publishesMigrations</code> 方法告知 Laravel 給定目錄或檔案包含遷移。當 Laravel 發佈遷移時，它將自動更新其檔案名中的時間戳以反映當前日期和時間：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->publishesMigrations([
+        __DIR__.'/../database/migrations' => database_path('migrations'),
+    ]);
+}
+</code></pre>
+<p><a name="language-files"></a></p>
+<h3>語言檔案</h3>
+<p>如果您的套件包含<a href="/docs/localization">語言檔案</a>，您可以使用 <code>loadTranslationsFrom</code> 方法告知 Laravel 如何載入它們。例如，如果您的套件名為 <code>courier</code>，您應該將以下內容添加到服務提供者的 <code>boot</code> 方法中：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->loadTranslationsFrom(__DIR__.'/../lang', 'courier');
+}
+</code></pre>
+<p>套件翻譯行使用 <code>package::file.line</code> 語法慣例來引用。因此，您可以像這樣從 <code>messages</code> 檔案中載入 <code>courier</code> 套件的 <code>welcome</code> 行：</p>
+<pre><code class="language-php">echo trans('courier::messages.welcome');
+</code></pre>
+<p>您可以使用 <code>loadJsonTranslationsFrom</code> 方法為套件註冊 JSON 翻譯檔案。此方法接受包含套件 JSON 翻譯檔案的目錄路徑：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->loadJsonTranslationsFrom(__DIR__.'/../lang');
+}
+</code></pre>
+<p><a name="publishing-language-files"></a></p>
+<h4>發佈語言檔案</h4>
+<p>如果您希望將套件的語言檔案發佈到應用程式的 <code>lang/vendor</code> 目錄，可以使用服務提供者的 <code>publishes</code> 方法。<code>publishes</code> 方法接受一個套件路徑陣列及其期望的發佈位置。例如，要發佈 <code>courier</code> 套件的語言檔案，您可以執行以下操作：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->loadTranslationsFrom(__DIR__.'/../lang', 'courier');
+
+    $this->publishes([
+        __DIR__.'/../lang' => $this->app->langPath('vendor/courier'),
+    ]);
+}
+</code></pre>
+<p>現在，當套件使用者執行 Laravel 的 <code>vendor:publish</code> Artisan 命令時，套件的語言檔案將被發佈到指定的發佈位置。</p>
+<p><a name="views"></a></p>
+<h3>視圖</h3>
+<p>要向 Laravel 註冊套件的<a href="/docs/views">視圖</a>，您需要告知 Laravel 視圖位於何處。您可以使用服務提供者的 <code>loadViewsFrom</code> 方法來實現。此方法接受兩個參數：視圖範本的路徑和套件的名稱。例如，如果套件的名稱是 <code>courier</code>，您應該將以下內容添加到服務提供者的 <code>boot</code> 方法中：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->loadViewsFrom(__DIR__.'/../resources/views', 'courier');
+}
+</code></pre>
+<p>套件視圖使用 <code>package::view</code> 語法慣例來引用。因此，一旦您的視圖路徑在服務提供者中註冊，您就可以像這樣從 <code>courier</code> 套件中載入 <code>dashboard</code> 視圖：</p>
+<pre><code class="language-php">Route::get('/dashboard', function () {
+    return view('courier::dashboard');
+});
+</code></pre>
+<p><a name="overriding-package-views"></a></p>
+<h4>覆蓋套件視圖</h4>
+<p>當您使用 <code>loadViewsFrom</code> 方法時，Laravel 實際上為您的視圖註冊了兩個位置：應用程式的 <code>resources/views/vendor</code> 目錄和您指定的目錄。因此，以 <code>courier</code> 套件為例，Laravel 將首先檢查是否已將視圖的自訂版本放入開發者的 <code>resources/views/vendor/courier</code> 目錄中。然後，如果視圖未被自訂，Laravel 將搜尋您在呼叫 <code>loadViewsFrom</code> 時指定的套件視圖目錄。這使得套件使用者可以輕鬆地自訂/覆蓋套件的視圖。</p>
+<p><a name="publishing-views"></a></p>
+<h4>發佈視圖</h4>
+<p>如果您希望使視圖可供發佈到應用程式的 <code>resources/views/vendor</code> 目錄，可以使用服務提供者的 <code>publishes</code> 方法。<code>publishes</code> 方法接受一個套件視圖路徑陣列及其期望的發佈位置：</p>
+<pre><code class="language-php">/**
+ * 啟動套件服務。
+ */
+public function boot(): void
+{
+    $this->loadViewsFrom(__DIR__.'/../resources/views', 'courier');
+
+    $this->publishes([
+        __DIR__.'/../resources/views' => resource_path('views/vendor/courier'),
+    ]);
+}
+</code></pre>
+<p>現在，當套件使用者執行 Laravel 的 <code>vendor:publish</code> Artisan 命令時，套件的視圖將被複製到指定的發佈位置。</p>
+<p><a name="view-components"></a></p>
+<h3>視圖元件</h3>
+<p>如果您正在構建一個使用 Blade 元件或將元件放置在非傳統目錄中的套件，則需要手動註冊元件類別及其 HTML 標籤別名，以便 Laravel 知道在哪裡找到該元件。您通常應該在套件服務提供者的 <code>boot</code> 方法中註冊元件：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Blade;
+use VendorPackage\\View\\Components\\AlertComponent;
+
+/**
+ * 啟動套件的服務。
+ */
+public function boot(): void
+{
+    Blade::component('package-alert', AlertComponent::class);
+}
+</code></pre>
+<p>一旦註冊了元件，就可以使用其標籤別名來渲染它：</p>
+<pre><code class="language-blade">&lt;x-package-alert/&gt;
+</code></pre>
+<p><a name="autoloading-package-components"></a></p>
+<h4>自動載入套件元件</h4>
+<p>或者，您可以使用 <code>componentNamespace</code> 方法按慣例自動載入元件類別。例如，<code>Nightshade</code> 套件可能有一個 <code>Calendar</code> 和一個 <code>ColorPicker</code> 元件，它們位於 <code>Nightshade\\Views\\Components</code> 命名空間中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Blade;
+
+/**
+ * 啟動套件的服務。
+ */
+public function boot(): void
+{
+    Blade::componentNamespace('Nightshade\\\\Views\\\\Components', 'nightshade');
+}
+</code></pre>
+<p>這將允許使用 <code>package-name::</code> 語法透過供應商命名空間使用套件元件：</p>
+<pre><code class="language-blade">&lt;x-nightshade::calendar /&gt;
+&lt;x-nightshade::color-picker /&gt;
+</code></pre>
+<p>Blade 將透過將元件名稱帕斯卡化來自動偵測連結到此元件的類別。也支援使用「點」表示法的子目錄。</p>
+<p><a name="anonymous-components"></a></p>
+<h4>匿名元件</h4>
+<p>如果您的套件包含匿名元件，它們必須放置在套件的「views」目錄的 <code>components</code> 目錄中（如 <a href="#views">loadViewsFrom 方法</a>所指定）。然後，您可以透過在元件名稱前加上套件的視圖命名空間來渲染它們：</p>
+<pre><code class="language-blade">&lt;x-courier::alert /&gt;
+</code></pre>
+<p><a name="about-artisan-command"></a></p>
+<h3>「About」Artisan 命令</h3>
+<p>Laravel 的內建 <code>about</code> Artisan 命令提供應用程式環境和配置的概要。套件可以透過 <code>AboutCommand</code> 類別將額外資訊推送到此命令的輸出中。通常，可以從套件服務提供者的 <code>boot</code> 方法添加此資訊：</p>
+<pre><code class="language-php">use Illuminate\\Foundation\\Console\\AboutCommand;
+
+/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    AboutCommand::add('My Package', fn () => ['Version' => '1.0.0']);
+}
+</code></pre>
+<p><a name="commands"></a></p>
+<h2>命令</h2>
+<p>要向 Laravel 註冊套件的 Artisan 命令，您可以使用 <code>commands</code> 方法。此方法接受一個命令類別名稱陣列。一旦註冊了命令，您就可以使用 <a href="/docs/artisan">Artisan CLI</a> 執行它們：</p>
+<pre><code class="language-php">use Courier\\Console\\Commands\\InstallCommand;
+use Courier\\Console\\Commands\\NetworkCommand;
+
+/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    if ($this->app->runningInConsole()) {
+        $this->commands([
+            InstallCommand::class,
+            NetworkCommand::class,
+        ]);
+    }
+}
+</code></pre>
+<p><a name="optimize-commands"></a></p>
+<h3>優化命令</h3>
+<p>Laravel 的<a href="/docs/deployment#optimization">優化命令</a>會快取應用程式的配置、事件、路由和視圖。使用 <code>optimizes</code> 方法，您可以註冊套件自己的 Artisan 命令，這些命令應在執行 <code>optimize</code> 和 <code>optimize:clear</code> 命令時被呼叫：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    if ($this->app->runningInConsole()) {
+        $this->optimizes(
+            optimize: 'package:optimize',
+            clear: 'package:clear-optimizations',
+        );
+    }
+}
+</code></pre>
+<p><a name="reload-commands"></a></p>
+<h3>重新載入命令</h3>
+<p>Laravel 的<a href="/docs/deployment#reloading-services">重新載入命令</a>會終止任何正在運行的服務，以便它們可以由系統進程監視器自動重啟。使用 <code>reloads</code> 方法，您可以註冊套件自己的 Artisan 命令，這些命令應在執行 <code>reload</code> 命令時被呼叫：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    if ($this->app->runningInConsole()) {
+        $this->reloads('package:reload');
+    }
+}
+</code></pre>
+<p><a name="public-assets"></a></p>
+<h2>公開資源</h2>
+<p>您的套件可能有 JavaScript、CSS 和圖片等資源。要將這些資源發佈到應用程式的 <code>public</code> 目錄，請使用服務提供者的 <code>publishes</code> 方法。在此範例中，我們還將添加一個 <code>public</code> 資源群組標籤，可用於輕鬆發佈相關資源群組：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->publishes([
+        __DIR__.'/../public' => public_path('vendor/courier'),
+    ], 'public');
+}
+</code></pre>
+<p>現在，當套件使用者執行 <code>vendor:publish</code> 命令時，您的資源將被複製到指定的發佈位置。由於使用者通常需要在每次更新套件時覆蓋資源，因此可以使用 <code>--force</code> 標誌：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=public --force
+</code></pre>
+<p><a name="publishing-file-groups"></a></p>
+<h2>發佈檔案群組</h2>
+<p>您可能希望分別發佈套件資產和資源群組。例如，您可能希望允許使用者發佈套件的配置檔案，而不強制發佈套件的資產。您可以透過在從套件服務提供者呼叫 <code>publishes</code> 方法時對它們進行「標籤」來實現。例如，讓我們使用標籤在套件服務提供者的 <code>boot</code> 方法中為 <code>courier</code> 套件定義兩個發佈群組（<code>courier-config</code> 和 <code>courier-migrations</code>）：</p>
+<pre><code class="language-php">/**
+ * 啟動任何套件服務。
+ */
+public function boot(): void
+{
+    $this->publishes([
+        __DIR__.'/../config/package.php' => config_path('package.php')
+    ], 'courier-config');
+
+    $this->publishesMigrations([
+        __DIR__.'/../database/migrations/' => database_path('migrations')
+    ], 'courier-migrations');
+}
+</code></pre>
+<p>現在您的使用者可以在執行 <code>vendor:publish</code> 命令時透過引用其標籤來分別發佈這些群組：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=courier-config
+</code></pre>
+<p>您的使用者也可以使用 <code>--provider</code> 標誌發佈套件服務提供者定義的所有可發佈檔案：</p>
+<pre><code class="language-shell">php artisan vendor:publish --provider="Your\\Package\\ServiceProvider"
+</code></pre>
+`;
+---
+
+<DocsLayout title="套件開發" currentPath="packages">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>套件開發</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">套件開發</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/packages" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

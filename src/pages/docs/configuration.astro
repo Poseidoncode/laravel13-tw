@@ -1,0 +1,318 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>配置</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#environment-configuration">環境配置</a><ul>
+<li><a href="#environment-variable-types">環境變數類型</a></li>
+<li><a href="#retrieving-environment-configuration">檢索環境配置</a></li>
+<li><a href="#determining-the-current-environment">判斷當前環境</a></li>
+<li><a href="#encrypting-environment-files">加密環境檔案</a></li>
+</ul>
+</li>
+<li><a href="#accessing-configuration-values">存取配置值</a></li>
+<li><a href="#configuration-caching">配置快取</a></li>
+<li><a href="#configuration-publishing">配置發布</a></li>
+<li><a href="#debug-mode">除錯模式</a></li>
+<li><a href="#maintenance-mode">維護模式</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 框架的所有配置檔案都儲存在 <code>config</code> 目錄中。每個選項都有文檔說明，因此請隨意瀏覽檔案並熟悉可用的選項。</p>
+<p>這些配置檔案允許您配置諸如資料庫連接資訊、郵件伺服器資訊以及各種其他核心配置值（如應用程式 URL 和加密金鑰）等內容。</p>
+<p><a name="the-about-command"></a></p>
+<h4><code>about</code> 命令</h4>
+<p>Laravel 可以透過 <code>about</code> Artisan 命令顯示應用程式配置、驅動程式和環境的概述。</p>
+<pre><code class="language-shell">php artisan about
+</code></pre>
+<p>如果您只對應用程式概述輸出的特定部分感興趣，可以使用 <code>--only</code> 選項過濾到該部分：</p>
+<pre><code class="language-shell">php artisan about --only=environment
+</code></pre>
+<p>或者，要詳細探索特定配置檔案的值，您可以使用 <code>config:show</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan config:show database
+</code></pre>
+<p><a name="environment-configuration"></a></p>
+<h2>環境配置</h2>
+<p>根據應用程式運行的環境使用不同的配置值通常很有幫助。例如，您可能希望在本機使用與生產伺服器不同的快取驅動程式。</p>
+<p>為了使這變得簡單，Laravel 使用了 <a href="https://github.com/vlucas/phpdotenv">DotEnv</a> PHP 函式庫。在全新的 Laravel 安裝中，應用程式的根目錄將包含一個 <code>.env.example</code> 檔案，該檔案定義了許多常見的環境變數。在 Laravel 安裝過程中，此檔案將自動複製到 <code>.env</code>。</p>
+<p>Laravel 的預設 <code>.env</code> 檔案包含一些常見的配置值，這些值可能因應用程式是在本機運行還是在生產 Web 伺服器上運行而有所不同。然後，<code>config</code> 目錄中的配置檔案使用 Laravel 的 <code>env</code> 函數讀取這些值。</p>
+<p>如果您與團隊一起開發，您可能希望繼續包含並更新應用程式的 <code>.env.example</code> 檔案。透過在範例配置檔案中放置佔位符值，團隊中的其他開發者可以清楚地看到執行您的應用程式需要哪些環境變數。</p>
+<blockquote>
+<p>[!NOTE]
+<code>.env</code> 檔案中的任何變數都可以被外部環境變數（如伺服器級別或系統級別的環境變數）覆蓋。</p>
+</blockquote>
+<p><a name="environment-file-security"></a></p>
+<h4>環境檔案安全性</h4>
+<p>您的 <code>.env</code> 檔案不應提交到應用程式的原始碼控制中，因為使用您應用程式的每個開發者/伺服器可能需要不同的環境配置。此外，如果入侵者獲得對您的原始碼控制儲存庫的存取權限，這將是一個安全風險，因為任何敏感憑證都會被暴露。</p>
+<p>然而，您可以使用 Laravel 內建的<a href="#encrypting-environment-files">環境加密</a>來加密您的環境檔案。加密的環境檔案可以安全地放入原始碼控制中。</p>
+<p><a name="additional-environment-files"></a></p>
+<h4>其他環境檔案</h4>
+<p>在載入應用程式的環境變數之前，Laravel 會判斷是否已外部提供 <code>APP_ENV</code> 環境變數或是否已指定 <code>--env</code> CLI 參數。如果是，Laravel 將嘗試載入 <code>.env.[APP_ENV]</code> 檔案（如果存在）。如果不存在，將載入預設的 <code>.env</code> 檔案。</p>
+<p><a name="environment-variable-types"></a></p>
+<h3>環境變數類型</h3>
+<p><code>.env</code> 檔案中的所有變數通常都被解析為字串，因此已創建一些保留值以允許您從 <code>env()</code> 函數返回更廣泛的類型：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th><code>.env</code> 值</th>
+<th><code>env()</code> 值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>true</td>
+<td>(bool) true</td>
+</tr>
+<tr>
+<td>(true)</td>
+<td>(bool) true</td>
+</tr>
+<tr>
+<td>false</td>
+<td>(bool) false</td>
+</tr>
+<tr>
+<td>(false)</td>
+<td>(bool) false</td>
+</tr>
+<tr>
+<td>empty</td>
+<td>(string) &#39;&#39;</td>
+</tr>
+<tr>
+<td>(empty)</td>
+<td>(string) &#39;&#39;</td>
+</tr>
+<tr>
+<td>null</td>
+<td>(null) null</td>
+</tr>
+<tr>
+<td>(null)</td>
+<td>(null) null</td>
+</tr>
+</tbody></table>
+</div><p>如果您需要定義一個值包含空格的環境變數，可以透過將值括在雙引號中來實現：</p>
+<pre><code class="language-ini">APP_NAME=&quot;My Application&quot;
+</code></pre>
+<p><a name="retrieving-environment-configuration"></a></p>
+<h3>檢索環境配置</h3>
+<p>當您的應用程式收到請求時，<code>.env</code> 檔案中列出的所有變數都將被載入到 <code>$_ENV</code> PHP 超級全域變數中。但是，您可以在配置檔案中使用 <code>env</code> 函數從這些變數中檢索值。事實上，如果您查看 Laravel 配置檔案，您會注意到許多選項已經使用了此函數：</p>
+<pre><code class="language-php">&#39;debug&#39; =&gt; (bool) env(&#39;APP_DEBUG&#39;, false),
+</code></pre>
+<p>傳遞給 <code>env</code> 函數的第二個值是「預設值」。如果給定的金鑰不存在環境變數，將返回此值。</p>
+<p><a name="determining-the-current-environment"></a></p>
+<h3>判斷當前環境</h3>
+<p>當前應用程式環境透過 <code>.env</code> 檔案中的 <code>APP_ENV</code> 變數確定。您可以透過 <code>App</code> <a href="/docs/facades">Facade</a> 的 <code>environment</code> 方法存取此值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\App;
+
+$environment = App::environment();
+</code></pre>
+<p>您也可以向 <code>environment</code> 方法傳遞參數來判斷環境是否與給定值匹配。如果環境與任何給定值匹配，該方法將返回 <code>true</code>：</p>
+<pre><code class="language-php">if (App::environment(&#39;local&#39;)) {
+    // 環境是 local
+}
+
+if (App::environment([&#39;local&#39;, &#39;staging&#39;])) {
+    // 環境是 local 或 staging...
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+可以透過定義伺服器級別的 <code>APP_ENV</code> 環境變數來覆蓋當前應用程式環境偵測。</p>
+</blockquote>
+<p><a name="encrypting-environment-files"></a></p>
+<h3>加密環境檔案</h3>
+<p>未加密的環境檔案不應儲存在原始碼控制中。但是，Laravel 允許您加密環境檔案，以便它們可以安全地與應用程式的其餘部分一起添加到原始碼控制中。</p>
+<p><a name="encryption"></a></p>
+<h4>加密</h4>
+<p>要加密環境檔案，您可以使用 <code>env:encrypt</code> 命令：</p>
+<pre><code class="language-shell">php artisan env:encrypt
+</code></pre>
+<p>執行 <code>env:encrypt</code> 命令將加密您的 <code>.env</code> 檔案並將加密內容放入 <code>.env.encrypted</code> 檔案中。解密金鑰在命令的輸出中顯示，應儲存在安全的密碼管理器中。如果您想提供自己的加密金鑰，可以在調用命令時使用 <code>--key</code> 選項：</p>
+<pre><code class="language-shell">php artisan env:encrypt --key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+提供的金鑰長度應與所使用的加密密碼所需的金鑰長度匹配。預設情況下，Laravel 將使用 <code>AES-256-CBC</code> 密碼，該密碼需要 32 個字元的金鑰。您可以透過在調用命令時傳遞 <code>--cipher</code> 選項來自由使用 Laravel <a href="/docs/encryption">加密器</a>支援的任何密碼。</p>
+</blockquote>
+<p>如果您的應用程式有多個環境檔案，如 <code>.env</code> 和 <code>.env.staging</code>，您可以透過 <code>--env</code> 選項提供環境名稱來指定應加密的環境檔案：</p>
+<pre><code class="language-shell">php artisan env:encrypt --env=staging
+</code></pre>
+<p><a name="readable-variable-names"></a></p>
+<h4>可讀變數名稱</h4>
+<p>加密環境檔案時，您可以使用 <code>--readable</code> 選項在加密值的同時保留可見的變數名稱：</p>
+<pre><code class="language-shell">php artisan env:encrypt --readable
+</code></pre>
+<p>這將產生一個具有以下格式的加密檔案：</p>
+<pre><code class="language-ini">APP_NAME=eyJpdiI6...
+APP_ENV=eyJpdiI6...
+APP_KEY=eyJpdiI6...
+APP_DEBUG=eyJpdiI6...
+APP_URL=eyJpdiI6...
+</code></pre>
+<p>使用可讀格式允許您查看存在哪些環境變數，而不暴露敏感資料。它還使審查拉取請求變得更加容易，因為您可以查看添加、刪除或重新命名了哪些變數，而無需解密檔案。</p>
+<p>解密環境檔案時，Laravel 會自動偵測使用了哪種格式，因此 <code>env:decrypt</code> 命令不需要額外的選項。</p>
+<blockquote>
+<p>[!NOTE]
+使用 <code>--readable</code> 選項時，原始環境檔案中的註解和空行不會包含在加密輸出中。</p>
+</blockquote>
+<p><a name="decryption"></a></p>
+<h4>解密</h4>
+<p>要解密環境檔案，您可以使用 <code>env:decrypt</code> 命令。此命令需要一個解密金鑰，Laravel 將從 <code>LARAVEL_ENV_ENCRYPTION_KEY</code> 環境變數中檢索：</p>
+<pre><code class="language-shell">php artisan env:decrypt
+</code></pre>
+<p>或者，可以透過 <code>--key</code> 選項直接將金鑰提供給命令：</p>
+<pre><code class="language-shell">php artisan env:decrypt --key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF
+</code></pre>
+<p>當調用 <code>env:decrypt</code> 命令時，Laravel 將解密 <code>.env.encrypted</code> 檔案的內容，並將解密後的內容放入 <code>.env</code> 檔案中。</p>
+<p>可以向 <code>env:decrypt</code> 命令提供 <code>--cipher</code> 選項以使用自訂加密密碼：</p>
+<pre><code class="language-shell">php artisan env:decrypt --key=qUWuNRdfuImXcKxZ --cipher=AES-128-CBC
+</code></pre>
+<p>如果您的應用程式有多個環境檔案，如 <code>.env</code> 和 <code>.env.staging</code>，您可以透過 <code>--env</code> 選項提供環境名稱來指定應解密的環境檔案：</p>
+<pre><code class="language-shell">php artisan env:decrypt --env=staging
+</code></pre>
+<p>要覆蓋現有的環境檔案，您可以向 <code>env:decrypt</code> 命令提供 <code>--force</code> 選項：</p>
+<pre><code class="language-shell">php artisan env:decrypt --force
+</code></pre>
+<p><a name="accessing-configuration-values"></a></p>
+<h2>存取配置值</h2>
+<p>您可以使用 <code>Config</code> Facade 或全域 <code>config</code> 函數從應用程式中的任何位置輕鬆存取配置值。可以使用「點」語法存取配置值，該語法包括您要存取的檔案名稱和選項。也可以指定預設值，如果配置選項不存在，將返回該預設值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Config;
+
+$value = Config::get(&#39;app.timezone&#39;);
+
+$value = config(&#39;app.timezone&#39;);
+
+// 如果配置值不存在，則檢索預設值...
+$value = config(&#39;app.timezone&#39;, &#39;Asia/Seoul&#39;);
+</code></pre>
+<p>要在運行時設定配置值，您可以調用 <code>Config</code> Facade 的 <code>set</code> 方法或向 <code>config</code> 函數傳遞一個數組：</p>
+<pre><code class="language-php">Config::set(&#39;app.timezone&#39;, &#39;America/Chicago&#39;);
+
+config([&#39;app.timezone&#39; =&gt; &#39;America/Chicago&#39;]);
+</code></pre>
+<p>為了輔助靜態分析，<code>Config</code> Facade 還提供了類型化的配置檢索方法。如果檢索到的配置值與預期類型不匹配，將拋出異常：</p>
+<pre><code class="language-php">Config::string(&#39;config-key&#39;);
+Config::integer(&#39;config-key&#39;);
+Config::float(&#39;config-key&#39;);
+Config::boolean(&#39;config-key&#39;);
+Config::array(&#39;config-key&#39;);
+Config::collection(&#39;config-key&#39;);
+</code></pre>
+<p><a name="configuration-caching"></a></p>
+<h2>配置快取</h2>
+<p>為了給您的應用程式加速，您應該使用 <code>config:cache</code> Artisan 命令將所有配置檔案快取到單個檔案中。這將把應用程式的所有配置選項合併到一個檔案中，框架可以快速載入。</p>
+<p>您通常應該將 <code>php artisan config:cache</code> 命令作為生產部署過程的一部分來執行。在本機開發期間不應運行該命令，因為在應用程式開發過程中可能需要頻繁更改配置選項。</p>
+<p>配置被快取後，框架在請求或 Artisan 命令期間不會載入應用程式的 <code>.env</code> 檔案；因此，<code>env</code> 函數只會返回外部的系統級環境變數。</p>
+<p>出於這個原因，您應該確保只從應用程式的配置（<code>config</code>）檔案中調用 <code>env</code> 函數。您可以透過檢查 Laravel 的預設配置檔案來看到許多範例。可以使用<a href="#accessing-configuration-values">上面描述</a>的 <code>config</code> 函數從應用程式中的任何位置存取配置值。</p>
+<p><code>config:clear</code> 命令可用於清除快取的配置：</p>
+<pre><code class="language-shell">php artisan config:clear
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果您在部署過程中執行 <code>config:cache</code> 命令，您應該確保只從配置檔案中調用 <code>env</code> 函數。一旦配置被快取，<code>.env</code> 檔案將不會被載入；因此，<code>env</code> 函數只會返回外部的系統級環境變數。</p>
+</blockquote>
+<p><a name="configuration-publishing"></a></p>
+<h2>配置發布</h2>
+<p>Laravel 的大多數配置檔案已經發佈在應用程式的 <code>config</code> 目錄中；然而，某些配置檔案（如 <code>cors.php</code> 和 <code>view.php</code>）預設不會發佈，因為大多數應用程式永遠不需要修改它們。</p>
+<p>但是，您可以使用 <code>config:publish</code> Artisan 命令來發佈任何預設未發佈的配置檔案：</p>
+<pre><code class="language-shell">php artisan config:publish
+
+php artisan config:publish --all
+</code></pre>
+<p><a name="debug-mode"></a></p>
+<h2>除錯模式</h2>
+<p><code>config/app.php</code> 配置檔案中的 <code>debug</code> 選項決定實際向用戶顯示多少錯誤資訊。預設情況下，此選項設定為尊重 <code>.env</code> 檔案中儲存的 <code>APP_DEBUG</code> 環境變數的值。</p>
+<blockquote>
+<p>[!WARNING]
+對於本機開發，您應該將 <code>APP_DEBUG</code> 環境變數設定為 <code>true</code>。<strong>在生產環境中，此值應始終為 <code>false</code>。如果在生產中將變數設定為 <code>true</code>，您將面臨向應用程式的最終用戶暴露敏感配置值的風險。</strong></p>
+</blockquote>
+<p><a name="maintenance-mode"></a></p>
+<h2>維護模式</h2>
+<p>當您的應用程式處於維護模式時，所有進入應用程式的請求都將顯示自訂視圖。這使得在應用程式更新或執行維護時輕鬆「禁用」應用程式。維護模式檢查包含在應用程式的預設中介層堆疊中。如果應用程式處於維護模式，將拋出狀態代碼為 503 的 <code>Symfony\\Component\\HttpKernel\\Exception\\HttpException</code> 實例。</p>
+<p>要啟用維護模式，請執行 <code>down</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan down
+</code></pre>
+<p>如果您希望所有維護模式響應都發送 <code>Refresh</code> HTTP 標頭，可以在調用 <code>down</code> 命令時提供 <code>refresh</code> 選項。<code>Refresh</code> 標頭將指示瀏覽器在指定的秒數後自動刷新頁面：</p>
+<pre><code class="language-shell">php artisan down --refresh=15
+</code></pre>
+<p>您也可以向 <code>down</code> 命令提供 <code>retry</code> 選項，該選項將被設置為 <code>Retry-After</code> HTTP 標頭的值，儘管瀏覽器通常會忽略此標頭：</p>
+<pre><code class="language-shell">php artisan down --retry=60
+</code></pre>
+<p><a name="bypassing-maintenance-mode"></a></p>
+<h4>繞過維護模式</h4>
+<p>要允許使用秘密令牌繞過維護模式，您可以使用 <code>secret</code> 選項指定維護模式繞過令牌：</p>
+<pre><code class="language-shell">php artisan down --secret=&quot;1630542a-246b-4b66-afa1-dd72a4c43515&quot;
+</code></pre>
+<p>將應用程式置於維護模式後，您可以導航到與此令牌匹配的應用程式 URL，Laravel 將向您的瀏覽器發送一個維護模式繞過 Cookie：</p>
+<pre><code class="language-shell">https://example.com/1630542a-246b-4b66-afa1-dd72a4c43515
+</code></pre>
+<p>如果您希望 Laravel 為您生成秘密令牌，可以使用 <code>with-secret</code> 選項。一旦應用程式進入維護模式，秘密將顯示給您：</p>
+<pre><code class="language-shell">php artisan down --with-secret
+</code></pre>
+<p>存取此隱藏路由時，您將被重定向到應用程式的 <code>/</code> 路由。一旦 Cookie 被發送到您的瀏覽器，您將能夠正常瀏覽應用程式，就像它不在維護模式一樣。</p>
+<blockquote>
+<p>[!NOTE]
+您的維護模式秘密通常應由字母數字字元組成，並可選擇包含破折號。您應避免使用在 URL 中具有特殊含義的字元，如 <code>?</code> 或 <code>&amp;</code>。</p>
+</blockquote>
+<p><a name="maintenance-mode-on-multiple-servers"></a></p>
+<h4>多伺服器上的維護模式</h4>
+<p>預設情況下，Laravel 使用基於檔案的系統來判斷您的應用程式是否處於維護模式。這意味著要啟用維護模式，必須在託管您應用程式的每台伺服器上執行 <code>php artisan down</code> 命令。</p>
+<p>或者，Laravel 提供了一種基於快取的方法來處理維護模式。此方法只需要在一台伺服器上運行 <code>php artisan down</code> 命令。要使用此方法，請修改應用程式 <code>.env</code> 檔案中的維護模式變數。您應該選擇所有伺服器都可存取的快取 <code>store</code>。這確保維護模式狀態在每台伺服器上保持一致：</p>
+<pre><code class="language-ini">APP_MAINTENANCE_DRIVER=cache
+APP_MAINTENANCE_STORE=database
+</code></pre>
+<p><a name="pre-rendering-the-maintenance-mode-view"></a></p>
+<h4>預渲染維護模式視圖</h4>
+<p>如果您在部署期間使用 <code>php artisan down</code> 命令，如果用戶在您的 Composer 依賴項或其他基礎架構組件更新時存取應用程式，他們仍可能偶爾遇到錯誤。這是因為 Laravel 框架的很大一部分必須引導以判斷您的應用程式是否處於維護模式，並使用模板引擎渲染維護模式視圖。</p>
+<p>出於這個原因，Laravel 允許您預渲染一個維護模式視圖，該視圖將在請求週期的最開始返回。此視圖在您的應用程式的任何依賴項載入之前渲染。您可以使用 <code>down</code> 命令的 <code>render</code> 選項預渲染您選擇的模板：</p>
+<pre><code class="language-shell">php artisan down --render=&quot;errors::503&quot;
+</code></pre>
+<p><a name="redirecting-maintenance-mode-requests"></a></p>
+<h4>重定向維護模式請求</h4>
+<p>處於維護模式時，Laravel 將為用戶嘗試存取的所有應用程式 URL 顯示維護模式視圖。如果您願意，可以指示 Laravel 將所有請求重定向到特定 URL。這可以使用 <code>redirect</code> 選項來實現。例如，您可能希望將所有請求重定向到 <code>/</code> URI：</p>
+<pre><code class="language-shell">php artisan down --redirect=/
+</code></pre>
+<p><a name="disabling-maintenance-mode"></a></p>
+<h4>禁用維護模式</h4>
+<p>要禁用維護模式，請使用 <code>up</code> 命令：</p>
+<pre><code class="language-shell">php artisan up
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您可以透過在 <code>resources/views/errors/503.blade.php</code> 中定義自己的模板來自訂預設維護模式模板。</p>
+</blockquote>
+<p><a name="maintenance-mode-queues"></a></p>
+<h4>維護模式和佇列</h4>
+<p>當您的應用程式處於維護模式時，不會處理任何<a href="/docs/queues">佇列任務</a>。一旦應用程式退出維護模式，任務將恢復正常處理。</p>
+<p><a name="alternatives-to-maintenance-mode"></a></p>
+<h4>維護模式的替代方案</h4>
+<p>由於維護模式需要您的應用程式有數秒的停機時間，請考慮在像 <a href="https://cloud.laravel.com">Laravel Cloud</a> 這樣的全託管平台上運行您的應用程式，以實現使用 Laravel 的零停機時間部署。</p>
+`;
+---
+
+<DocsLayout title="配置" currentPath="configuration">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>配置</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">配置</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/configuration" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

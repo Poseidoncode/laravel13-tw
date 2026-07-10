@@ -1,0 +1,161 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>文件導覽</h1>
+<h2>序言</h2>
+<ul>
+<li><a href="/docs/releases">版本發佈說明</a></li>
+<li><a href="/docs/upgrade">升級指南</a></li>
+<li><a href="/docs/contributions">貢獻指南</a></li>
+</ul>
+<h2>入門</h2>
+<ul>
+<li><a href="/docs/installation">安裝</a></li>
+<li><a href="/docs/configuration">配置</a></li>
+<li><a href="/docs/ai">AI 驅動開發</a></li>
+<li><a href="/docs/structure">目錄結構</a></li>
+<li><a href="/docs/frontend">前端</a></li>
+<li><a href="/docs/starter-kits">入門套件</a></li>
+<li><a href="/docs/deployment">部署</a></li>
+</ul>
+<h2>架構概念</h2>
+<ul>
+<li><a href="/docs/lifecycle">請求生命週期</a></li>
+<li><a href="/docs/container">服務容器</a></li>
+<li><a href="/docs/providers">服務提供者</a></li>
+<li><a href="/docs/facades">Facades</a></li>
+</ul>
+<h2>基礎</h2>
+<ul>
+<li><a href="/docs/routing">路由</a></li>
+<li><a href="/docs/middleware">中介層</a></li>
+<li><a href="/docs/csrf">CSRF 保護</a></li>
+<li><a href="/docs/controllers">控制器</a></li>
+<li><a href="/docs/requests">請求</a></li>
+<li><a href="/docs/responses">回應</a></li>
+<li><a href="/docs/views">檢視</a></li>
+<li><a href="/docs/blade">Blade 模板</a></li>
+<li><a href="/docs/vite">資產打包（Vite）</a></li>
+<li><a href="/docs/urls">URL 產生</a></li>
+<li><a href="/docs/session">Session</a></li>
+<li><a href="/docs/validation">驗證</a></li>
+<li><a href="/docs/errors">錯誤處理</a></li>
+<li><a href="/docs/logging">日誌記錄</a></li>
+</ul>
+<h2>深入探索</h2>
+<ul>
+<li><a href="/docs/artisan">Artisan 主控台</a></li>
+<li><a href="/docs/broadcasting">廣播</a></li>
+<li><a href="/docs/cache">快取</a></li>
+<li><a href="/docs/collections">集合</a></li>
+<li><a href="/docs/concurrency">並發</a></li>
+<li><a href="/docs/context">上下文</a></li>
+<li><a href="/docs/contracts">契約</a></li>
+<li><a href="/docs/events">事件</a></li>
+<li><a href="/docs/filesystem">檔案儲存</a></li>
+<li><a href="/docs/helpers">輔助函數</a></li>
+<li><a href="/docs/http-client">HTTP 用戶端</a></li>
+<li><a href="/docs/localization">本地化</a></li>
+<li><a href="/docs/mail">郵件</a></li>
+<li><a href="/docs/notifications">通知</a></li>
+<li><a href="/docs/packages">套件開發</a></li>
+<li><a href="/docs/processes">程序</a></li>
+<li><a href="/docs/queues">佇列</a></li>
+<li><a href="/docs/rate-limiting">速率限制</a></li>
+<li><a href="/docs/search">搜尋</a></li>
+<li><a href="/docs/strings">字串處理</a></li>
+<li><a href="/docs/scheduling">任務排程</a></li>
+</ul>
+<h2>安全</h2>
+<ul>
+<li><a href="/docs/authentication">認證</a></li>
+<li><a href="/docs/authorization">授權</a></li>
+<li><a href="/docs/verification">電子郵件驗證</a></li>
+<li><a href="/docs/encryption">加密</a></li>
+<li><a href="/docs/hashing">雜湊</a></li>
+<li><a href="/docs/passwords">密碼重置</a></li>
+</ul>
+<h2>資料庫</h2>
+<ul>
+<li><a href="/docs/database">入門</a></li>
+<li><a href="/docs/queries">查詢建構器</a></li>
+<li><a href="/docs/pagination">分頁</a></li>
+<li><a href="/docs/migrations">遷移</a></li>
+<li><a href="/docs/seeding">資料填充</a></li>
+<li><a href="/docs/redis">Redis</a></li>
+<li><a href="/docs/mongodb">MongoDB</a></li>
+</ul>
+<h2>Eloquent ORM</h2>
+<ul>
+<li><a href="/docs/eloquent">入門</a></li>
+<li><a href="/docs/eloquent-relationships">關聯</a></li>
+<li><a href="/docs/eloquent-collections">集合</a></li>
+<li><a href="/docs/eloquent-mutators">存取器／修改器</a></li>
+<li><a href="/docs/eloquent-resources">API 資源</a></li>
+<li><a href="/docs/eloquent-serialization">序列化</a></li>
+<li><a href="/docs/eloquent-factories">工廠</a></li>
+</ul>
+<h2>AI</h2>
+<ul>
+<li><a href="/docs/ai-sdk">AI SDK</a></li>
+<li><a href="/docs/mcp">MCP</a></li>
+<li><a href="/docs/boost">Boost</a></li>
+</ul>
+<h2>測試</h2>
+<ul>
+<li><a href="/docs/testing">入門</a></li>
+<li><a href="/docs/http-tests">HTTP 測試</a></li>
+<li><a href="/docs/console-tests">主控台測試</a></li>
+<li><a href="/docs/dusk">瀏覽器測試</a></li>
+<li><a href="/docs/database-testing">資料庫</a></li>
+<li><a href="/docs/mocking">模擬</a></li>
+</ul>
+<h2>套件</h2>
+<ul>
+<li><a href="/docs/billing">Cashier（Stripe）</a></li>
+<li><a href="/docs/cashier-paddle">Cashier（Paddle）</a></li>
+<li><a href="/docs/dusk">Dusk</a></li>
+<li><a href="/docs/envoy">Envoy</a></li>
+<li><a href="/docs/fortify">Fortify</a></li>
+<li><a href="/docs/folio">Folio</a></li>
+<li><a href="/docs/homestead">Homestead</a></li>
+<li><a href="/docs/horizon">Horizon</a></li>
+<li><a href="/docs/mix">Mix</a></li>
+<li><a href="/docs/octane">Octane</a></li>
+<li><a href="/docs/passport">Passport</a></li>
+<li><a href="/docs/pennant">Pennant</a></li>
+<li><a href="/docs/pint">Pint</a></li>
+<li><a href="/docs/precognition">Precognition</a></li>
+<li><a href="/docs/prompts">Prompts</a></li>
+<li><a href="/docs/pulse">Pulse</a></li>
+<li><a href="/docs/reverb">Reverb</a></li>
+<li><a href="/docs/sail">Sail</a></li>
+<li><a href="/docs/sanctum">Sanctum</a></li>
+<li><a href="/docs/scout">Scout</a></li>
+<li><a href="/docs/socialite">Socialite</a></li>
+<li><a href="/docs/telescope">Telescope</a></li>
+<li><a href="/docs/valet">Valet</a></li>
+</ul>
+<p><a href="https://api.laravel.com/docs/13.x">API 文件</a></p>
+`;
+---
+
+<DocsLayout title="文件導覽" currentPath="documentation">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>文件導覽</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">文件導覽</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/documentation" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

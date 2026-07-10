@@ -1,0 +1,217 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Eloquent：序列化</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#serializing-models-and-collections">序列化模型與集合</a><ul>
+<li><a href="#serializing-to-arrays">序列化為陣列</a></li>
+<li><a href="#serializing-to-json">序列化為 JSON</a></li>
+</ul>
+</li>
+<li><a href="#hiding-attributes-from-json">從 JSON 中隱藏屬性</a></li>
+<li><a href="#appending-values-to-json">向 JSON 追加值</a></li>
+<li><a href="#date-serialization">日期序列化</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>使用 Laravel 構建 API 時，您經常需要將模型和關係轉換為陣列或 JSON。Eloquent 包含用於進行這些轉換的便利方法，以及控制哪些屬性包含在模型的序列化表示中。</p>
+<blockquote>
+<p>[!NOTE]
+有關處理 Eloquent 模型和集合 JSON 序列化的更強大方式，請查閱<a href="/docs/eloquent-resources">Eloquent API 資源</a>的文件。</p>
+</blockquote>
+<p><a name="serializing-models-and-collections"></a></p>
+<h2>序列化模型與集合</h2>
+<p><a name="serializing-to-arrays"></a></p>
+<h3>序列化為陣列</h3>
+<p>要將模型及其已載入的<a href="/docs/eloquent-relationships">關係</a>轉換為陣列，您應該使用 <code>toArray</code> 方法。此方法是遞迴的，因此所有屬性和所有關係（包括關係的關係）都將被轉換為陣列：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::with('roles')->first();
+
+return $user->toArray();
+</code></pre>
+<p><code>attributesToArray</code> 方法可用於將模型的屬性轉換為陣列，但不包括其關係：</p>
+<pre><code class="language-php">$user = User::first();
+
+return $user->attributesToArray();
+</code></pre>
+<p>您也可以透過在集合實例上呼叫 <code>toArray</code> 方法將整個<a href="/docs/eloquent-collections">模型集合</a>轉換為陣列：</p>
+<pre><code class="language-php">$users = User::all();
+
+return $users->toArray();
+</code></pre>
+<p><a name="serializing-to-json"></a></p>
+<h3>序列化為 JSON</h3>
+<p>要將模型轉換為 JSON，您應該使用 <code>toJson</code> 方法。像 <code>toArray</code> 一樣，<code>toJson</code> 方法是遞迴的，因此所有屬性和關係都將被轉換為 JSON。您還可以指定<a href="https://secure.php.net/manual/en/function.json-encode.php"> PHP 支援的</a>任何 JSON 編碼選項：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::find(1);
+
+return $user->toJson();
+
+return $user->toJson(JSON_PRETTY_PRINT);
+</code></pre>
+<p>或者，您可以將模型或集合轉換為字串，這將自動呼叫模型或集合上的 <code>toJson</code> 方法：</p>
+<pre><code class="language-php">return (string) User::find(1);
+</code></pre>
+<p>由於模型和集合在轉換為字串時會被轉換為 JSON，您可以直接從應用程式的路由或控制器返回 Eloquent 物件。當從路由或控制器返回時，Laravel 將自動將您的 Eloquent 模型和集合序列化為 JSON：</p>
+<pre><code class="language-php">Route::get('/users', function () {
+    return User::all();
+});
+</code></pre>
+<p><a name="relationships"></a></p>
+<h4>關係</h4>
+<p>當 Eloquent 模型轉換為 JSON 時，其已載入的關係將自動作為屬性包含在 JSON 物件上。此外，雖然 Eloquent 關係方法是使用「駝峰式」方法名稱定義的，但關係的 JSON 屬性將是「蛇形命名」。</p>
+<p><a name="hiding-attributes-from-json"></a></p>
+<h2>從 JSON 中隱藏屬性</h2>
+<p>有時您可能希望限制包含在模型的陣列或 JSON 表示中的屬性，例如密碼。為此，您可以在模型上使用 <code>Hidden</code> 屬性。在 <code>Hidden</code> 屬性中列出的屬性將不會包含在模型的序列化表示中：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Hidden;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Hidden(['password'])]
+class User extends Model
+{
+    // ...
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要隱藏關係，請將關係的方法名稱添加到 Eloquent 模型的 <code>Hidden</code> 屬性中。</p>
+</blockquote>
+<p>或者，您可以使用 <code>Visible</code> 屬性來定義應包含在模型的陣列和 JSON 表示中的屬性的「允許清單」。不在 <code>Visible</code> 屬性中的所有屬性在模型轉換為陣列或 JSON 時都將被隱藏：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Visible;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Visible(['first_name', 'last_name'])]
+class User extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="temporarily-modifying-attribute-visibility"></a></p>
+<h4>暫時修改屬性可見性</h4>
+<p>如果您希望在給定模型實例上使某些通常隱藏的屬性可見，可以使用 <code>makeVisible</code> 或 <code>mergeVisible</code> 方法。<code>makeVisible</code> 方法返回模型實例：</p>
+<pre><code class="language-php">return $user->makeVisible('attribute')->toArray();
+
+return $user->mergeVisible(['name', 'email'])->toArray();
+</code></pre>
+<p>同樣地，如果您希望隱藏某些通常可見的屬性，可以使用 <code>makeHidden</code> 或 <code>mergeHidden</code> 方法：</p>
+<pre><code class="language-php">return $user->makeHidden('attribute')->toArray();
+
+return $user->mergeHidden(['name', 'email'])->toArray();
+</code></pre>
+<p>如果您希望暫時覆蓋所有可見或隱藏的屬性，可以分別使用 <code>setVisible</code> 和 <code>setHidden</code> 方法：</p>
+<pre><code class="language-php">return $user->setVisible(['id', 'name'])->toArray();
+
+return $user->setHidden(['email', 'password', 'remember_token'])->toArray();
+</code></pre>
+<p><a name="appending-values-to-json"></a></p>
+<h2>向 JSON 追加值</h2>
+<p>偶爾，在將模型轉換為陣列或 JSON 時，您可能希望添加在資料庫中沒有相應列的屬性。為此，首先為該值定義一個<a href="/docs/eloquent-mutators">存取器</a>：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Casts\\Attribute;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 判斷使用者是否為管理員。
+     */
+    protected function isAdmin(): Attribute
+    {
+        return new Attribute(
+            get: fn () => 'yes',
+        );
+    }
+}
+</code></pre>
+<p>如果您希望存取器始終追加到模型的陣列和 JSON 表示中，可以在模型上使用 <code>Appends</code> 屬性。請注意，即使存取器的 PHP 方法是使用「駝峰式」定義的，屬性名稱通常也是使用其「蛇形命名」的序列化表示來引用的：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Appends;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Appends(['is_admin'])]
+class User extends Model
+{
+    // ...
+}
+</code></pre>
+<p>一旦將屬性添加到 <code>appends</code> 列表中，它將同時包含在模型的陣列和 JSON 表示中。<code>appends</code> 陣列中的屬性也將尊重模型上配置的 <code>visible</code> 和 <code>hidden</code> 設定。</p>
+<p><a name="appending-at-run-time"></a></p>
+<h4>在運行時追加</h4>
+<p>在運行時，您可以使用 <code>append</code> 或 <code>mergeAppends</code> 方法指示模型實例追加額外的屬性。或者，您可以使用 <code>setAppends</code> 方法覆蓋給定模型實例的整個追加屬性陣列：</p>
+<pre><code class="language-php">return $user->append('is_admin')->toArray();
+
+return $user->mergeAppends(['is_admin', 'status'])->toArray();
+
+return $user->setAppends(['is_admin'])->toArray();
+</code></pre>
+<p>同樣地，如果您希望從模型中移除所有追加的屬性，可以使用 <code>withoutAppends</code> 方法：</p>
+<pre><code class="language-php">return $user->withoutAppends()->toArray();
+</code></pre>
+<p><a name="date-serialization"></a></p>
+<h2>日期序列化</h2>
+<p><a name="customizing-the-default-date-format"></a></p>
+<h4>自訂預設日期格式</h4>
+<p>您可以透過覆蓋 <code>serializeDate</code> 方法來自訂預設的序列化格式。此方法不會影響日期為儲存到資料庫中的格式：</p>
+<pre><code class="language-php">/**
+ * 準備日期以進行陣列 / JSON 序列化。
+ */
+protected function serializeDate(DateTimeInterface $date): string
+{
+    return $date->format('Y-m-d');
+}
+</code></pre>
+<p><a name="customizing-the-date-format-per-attribute"></a></p>
+<h4>為每個屬性自訂日期格式</h4>
+<p>您可以透過在模型的<a href="/docs/eloquent-mutators#attribute-casting">類型轉換宣告</a>中指定日期格式來自訂個別 Eloquent 日期屬性的序列化格式：</p>
+<pre><code class="language-php">protected function casts(): array
+{
+    return [
+        'birthday' => 'date:Y-m-d',
+        'joined_at' => 'datetime:Y-m-d H:00',
+    ];
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="Eloquent 序列化" currentPath="eloquent-serialization">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Eloquent 序列化</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Eloquent 序列化</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/eloquent-serialization" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

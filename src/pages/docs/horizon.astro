@@ -1,0 +1,592 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Horizon</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#configuration">設定</a></li>
+<li><a href="#dashboard-authorization">儀表板授權</a></li>
+<li><a href="#max-job-attempts">最大任務嘗試次數</a></li>
+<li><a href="#job-timeout">任務逾時</a></li>
+<li><a href="#job-backoff">任務退避</a></li>
+<li><a href="#silenced-jobs">靜音任務</a></li>
+</ul>
+</li>
+<li><a href="#balancing-strategies">平衡策略</a><ul>
+<li><a href="#auto-balancing">自動平衡</a></li>
+<li><a href="#simple-balancing">簡單平衡</a></li>
+<li><a href="#no-balancing">無平衡</a></li>
+</ul>
+</li>
+<li><a href="#upgrading-horizon">升級 Horizon</a></li>
+<li><a href="#running-horizon">運行 Horizon</a><ul>
+<li><a href="#deploying-horizon">部署 Horizon</a></li>
+</ul>
+</li>
+<li><a href="#tags">標籤</a></li>
+<li><a href="#notifications">通知</a></li>
+<li><a href="#metrics">指標</a></li>
+<li><a href="#deleting-failed-jobs">刪除失敗任務</a></li>
+<li><a href="#clearing-jobs-from-queues">清除佇列中的任務</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<blockquote>
+<p>[!NOTE]
+在深入研究 Laravel Horizon 之前，您應該先熟悉 Laravel 的基礎<a href="/docs/queues">佇列服務</a>。Horizon 在 Laravel 的佇列基礎上增加了額外功能，如果您還不熟悉 Laravel 提供的基本佇列功能，這些功能可能會讓您感到困惑。</p>
+</blockquote>
+<p><a href="https://github.com/laravel/horizon">Laravel Horizon</a> 為您的 Laravel 驅動的 <a href="/docs/queues">Redis 佇列</a>提供了一個美麗的儀表板和程式碼驅動的設定。Horizon 讓您可以輕鬆監控佇列系統的關鍵指標，例如任務吞吐量、運行時間和任務失敗。</p>
+<p>使用 Horizon 時，所有佇列 Worker 設定都儲存在一個簡單的設定檔中。透過在版本控制的檔案中定義應用程式的 Worker 設定，您可以在部署應用程式時輕鬆地擴展或修改應用程式的佇列 Worker。</p>
+<img src="https://laravel.com/img/docs/horizon-example.png"><p><a name="installation"></a></p>
+<h2>安裝</h2>
+<blockquote>
+<p>[!WARNING]
+Laravel Horizon 要求您使用 <a href="https://redis.io">Redis</a> 來驅動您的佇列。因此，您應該確保應用程式的 <code>config/queue.php</code> 設定檔中的佇列連接設為 <code>redis</code>。Horizon 目前不相容於 Redis Cluster。</p>
+</blockquote>
+<p>您可以使用 Composer 套件管理器將 Horizon 安裝到您的專案中：</p>
+<pre><code class="language-shell">composer require laravel/horizon
+</code></pre>
+<p>安裝 Horizon 後，使用 <code>horizon:install</code> Artisan 指令來發佈其資源：</p>
+<pre><code class="language-shell">php artisan horizon:install
+</code></pre>
+<p><a name="configuration"></a></p>
+<h3>設定</h3>
+<p>發佈 Horizon 的資源後，其主要設定檔將位於 <code>config/horizon.php</code>。此設定檔允許您配置應用程式的佇列 Worker 選項。每個設定選項都包含其用途的說明，因此請務必仔細探索此檔案。</p>
+<blockquote>
+<p>[!WARNING]
+Horizon 在內部使用一個名為 <code>horizon</code> 的 Redis 連接。此 Redis 連接名稱是保留的，不應在 <code>database.php</code> 設定檔中將其分配給另一個 Redis 連接，也不應作為 <code>horizon.php</code> 設定檔中 <code>use</code> 選項的值。</p>
+</blockquote>
+<p><a name="environments"></a></p>
+<h4>環境</h4>
+<p>安裝後，您應該熟悉的主要 Horizon 設定選項是 <code>environments</code> 設定選項。此設定選項是您的應用程式運行的環境陣列，並定義每個環境的 Worker 進程選項。預設情況下，此條目包含 <code>production</code> 和 <code>local</code> 環境。然而，您可以根據需要自由新增更多環境：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            &#39;maxProcesses&#39; =&gt; 10,
+            &#39;balanceMaxShift&#39; =&gt; 1,
+            &#39;balanceCooldown&#39; =&gt; 3,
+        ],
+    ],
+
+    &#39;local&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            &#39;maxProcesses&#39; =&gt; 3,
+        ],
+    ],
+],
+</code></pre>
+<p>您還可以定義一個通配符環境（<code>*</code>），當找不到其他匹配的環境時將使用它：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    // ...
+
+    &#39;*&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            &#39;maxProcesses&#39; =&gt; 3,
+        ],
+    ],
+],
+</code></pre>
+<p>當您啟動 Horizon 時，它將使用您的應用程式運行的環境的 Worker 進程設定選項。通常，環境由 <code>APP_ENV</code> <a href="/docs/configuration#determining-the-current-environment">環境變數</a>的值決定。例如，預設的 <code>local</code> Horizon 環境被設定為啟動三個 Worker 進程，並自動平衡分配給每個佇列的 Worker 進程數量。預設的 <code>production</code> 環境被設定為最多啟動 10 個 Worker 進程，並自動平衡分配給每個佇列的 Worker 進程數量。</p>
+<blockquote>
+<p>[!WARNING]
+您應該確保 <code>horizon</code> 設定檔的 <code>environments</code> 部分包含您計劃運行 Horizon 的每個<a href="/docs/configuration#environment-configuration">環境</a>的條目。</p>
+</blockquote>
+<p><a name="supervisors"></a></p>
+<h4>Supervisors</h4>
+<p>正如您在 Horizon 的預設設定檔中看到的，每個環境可以包含一個或多個「supervisors」。預設情況下，設定檔將此 supervisor 定義為 <code>supervisor-1</code>；然而，您可以自由地為您的 supervisors 命名。每個 supervisor 本質上負責「監督」一組 Worker 進程，並負責在佇列之間平衡 Worker 進程。</p>
+<p>如果您想要定義一個應該在該環境中運行的新 Worker 進程群組，您可以向給定環境新增額外的 supervisors。如果您想要為應用程式使用的給定佇列定義不同的平衡策略或 Worker 進程數量，您可以選擇這樣做。</p>
+<p><a name="maintenance-mode"></a></p>
+<h4>維護模式</h4>
+<p>當您的應用程式處於<a href="/docs/configuration#maintenance-mode">維護模式</a>時，除非在 Horizon 設定檔中將 supervisor 的 <code>force</code> 選項定義為 <code>true</code>，否則佇列任務將不會被 Horizon 處理：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;force&#39; =&gt; true,
+        ],
+    ],
+],
+</code></pre>
+<p><a name="default-values"></a></p>
+<h4>預設值</h4>
+<p>在 Horizon 的預設設定檔中，您會注意到一個 <code>defaults</code> 設定選項。此設定選項指定應用程式 <a href="#supervisors">supervisors</a> 的預設值。Supervisor 的預設設定值將合併到每個環境的 supervisor 設定中，讓您在定義 supervisors 時避免不必要的重複。</p>
+<p><a name="dashboard-authorization"></a></p>
+<h3>儀表板授權</h3>
+<p>可以透過 <code>/horizon</code> 路由存取 Horizon 儀表板。預設情況下，您只能在 <code>local</code> 環境中存取此儀表板。然而，在您的 <code>app/Providers/HorizonServiceProvider.php</code> 檔案中，有一個<a href="/docs/authorization#gates">授權閘道</a>定義。此授權閘道控制在<strong>非本地</strong>環境中對 Horizon 的存取。您可以根據需要自由修改此閘道來限制對 Horizon 安裝的存取：</p>
+<pre><code class="language-php">/**
+ * 註冊 Horizon 閘道。
+ *
+ * 此閘道決定誰可以在非本地環境中存取 Horizon。
+ */
+protected function gate(): void
+{
+    Gate::define(&#39;viewHorizon&#39;, function (User $user) {
+        return in_array($user-&gt;email, [
+            &#39;taylor@laravel.com&#39;,
+        ]);
+    });
+}
+</code></pre>
+<p><a name="alternative-authentication-strategies"></a></p>
+<h4>替代認證策略</h4>
+<p>請記住，Laravel 會自動將已認證的使用者注入到閘道閉包中。如果您的應用程式透過另一種方法（例如 IP 限制）提供 Horizon 安全性，那麼您的 Horizon 使用者可能不需要「登入」。因此，您需要將上面的 <code>function (User $user)</code> 閉包簽章更改為 <code>function (User $user = null)</code>，以強制 Laravel 不要求認證。</p>
+<p><a name="max-job-attempts"></a></p>
+<h3>最大任務嘗試次數</h3>
+<blockquote>
+<p>[!NOTE]
+在調整這些選項之前，請確保您熟悉 Laravel 的預設<a href="/docs/queues#max-job-attempts-and-timeout">佇列服務</a>和「嘗試」的概念。</p>
+</blockquote>
+<p>您可以在 supervisor 的設定中定義任務可以消耗的最大嘗試次數：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;tries&#39; =&gt; 10,
+        ],
+    ],
+],
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+此選項類似於使用 Artisan 指令處理佇列時的 <code>--tries</code> 選項。</p>
+</blockquote>
+<p>使用 <code>WithoutOverlapping</code> 或 <code>RateLimited</code> 等中介層時，調整 <code>tries</code> 選項至關重要，因為它們會消耗嘗試次數。要處理此問題，請在 supervisor 級別調整 <code>tries</code> 設定值，或在任務類別上定義 <code>$tries</code> 屬性。</p>
+<p>如果您不設定 <code>tries</code> 選項，Horizon 預設為單次嘗試，除非任務類別定義了 <code>$tries</code>，它優先於 Horizon 設定。</p>
+<p>將 <code>tries</code> 或 <code>$tries</code> 設為 0 允許無限嘗試，這在嘗試次數不確定時非常理想。為了防止無止盡的失敗，您可以透過在任務類別上設定 <code>$maxExceptions</code> 屬性來限制允許的例外數量。</p>
+<p><a name="job-timeout"></a></p>
+<h3>任務逾時</h3>
+<p>同樣地，您可以在 supervisor 級別設定 <code>timeout</code> 值，指定 Worker 進程可以運行任務多少秒後才會被強制終止。一旦終止，任務將根據您的佇列設定被重試或標記為失敗：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;timeout&#39; =&gt; 60,
+        ],
+    ],
+],
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+使用 <code>auto</code> 平衡策略時，Horizon 會將進行中的 Worker 視為「掛起」，並在縮容時在 Horizon 逾時後強制終止它們。始終確保 Horizon 逾時大於任何任務級別的逾時，否則任務可能在執行中被終止。此外，<code>timeout</code> 值應始終比 <code>config/queue.php</code> 設定檔中定義的 <code>retry_after</code> 值短至少幾秒鐘。否則，您的任務可能會被處理兩次。</p>
+</blockquote>
+<p><a name="job-backoff"></a></p>
+<h3>任務退避</h3>
+<p>您可以在 supervisor 級別定義 <code>backoff</code> 值，指定 Horizon 在重試遇到未處理例外的任務之前應等待多久：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;backoff&#39; =&gt; 10,
+        ],
+    ],
+],
+</code></pre>
+<p>您還可以使用 <code>backoff</code> 值的陣列來設定「指數」退避。在此範例中，第一次重試的延遲為 1 秒，第二次為 5 秒，第三次為 10 秒，如果有更多剩餘嘗試，則每次後續重試為 10 秒：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;backoff&#39; =&gt; [1, 5, 10],
+        ],
+    ],
+],
+</code></pre>
+<p><a name="silenced-jobs"></a></p>
+<h3>靜音任務</h3>
+<p>有時，您可能對檢視應用程式或第三方套件分派的某些任務不感興趣。與其讓這些任務佔用「已完成任務」列表中的空間，您可以將它們靜音。要開始，請將任務的類別名稱新增到應用程式 <code>horizon</code> 設定檔的 <code>silenced</code> 設定選項中：</p>
+<pre><code class="language-php">&#39;silenced&#39; =&gt; [
+    App\\Jobs\\ProcessPodcast::class,
+],
+</code></pre>
+<p>除了靜音單個任務類別外，Horizon 還支援基於<a href="#tags">標籤</a>靜音任務。如果您想要隱藏共享共同標籤的多個任務，這非常有用：</p>
+<pre><code class="language-php">&#39;silenced_tags&#39; =&gt; [
+    &#39;notifications&#39;
+],
+</code></pre>
+<p>或者，您想要靜音的任務可以實現 <code>Laravel\\Horizon\\Contracts\\Silenced</code> 介面。如果任務實現了此介面，即使它不在 <code>silenced</code> 設定陣列中，它也會自動被靜音：</p>
+<pre><code class="language-php">use Laravel\\Horizon\\Contracts\\Silenced;
+
+class ProcessPodcast implements ShouldQueue, Silenced
+{
+    use Queueable;
+
+    // ...
+}
+</code></pre>
+<p><a name="balancing-strategies"></a></p>
+<h2>平衡策略</h2>
+<p>每個 supervisor 可以處理一個或多個佇列，但與 Laravel 的預設佇列系統不同，Horizon 允許您從三種 Worker 平衡策略中選擇：<code>auto</code>、<code>simple</code> 和 <code>false</code>。</p>
+<p><a name="auto-balancing"></a></p>
+<h3>自動平衡</h3>
+<p><code>auto</code> 策略（也是預設策略）會根據佇列的當前工作量來調整每個佇列的 Worker 進程數量。例如，如果您的 <code>notifications</code> 佇列有 1,000 個待處理任務，而您的 <code>default</code> 佇列是空的，Horizon 將分配更多 Worker 到您的 <code>notifications</code> 佇列，直到該佇列清空。</p>
+<p>使用 <code>auto</code> 策略時，您還可以設定 <code>minProcesses</code> 和 <code>maxProcesses</code> 設定選項：</p>
+<div class="content-list" markdown="1"><ul>
+<li><code>minProcesses</code> 定義每個佇列的最小 Worker 進程數。此值必須大於或等於 1。</li>
+<li><code>maxProcesses</code> 定義 Horizon 可以在所有佇列之間擴展到的最大 Worker 進程總數。此值通常應大於佇列數量乘以 <code>minProcesses</code> 值。為了防止 supervisor 產生任何進程，您可以將此值設為 0。</li>
+</ul>
+</div><p>例如，您可以設定 Horizon 在每個佇列上至少維護一個進程，並最多擴展到 10 個 Worker 進程：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            &#39;connection&#39; =&gt; &#39;redis&#39;,
+            &#39;queue&#39; =&gt; [&#39;default&#39;, &#39;notifications&#39;],
+            &#39;balance&#39; =&gt; &#39;auto&#39;,
+            &#39;autoScalingStrategy&#39; =&gt; &#39;time&#39;,
+            &#39;minProcesses&#39; =&gt; 1,
+            &#39;maxProcesses&#39; =&gt; 10,
+            &#39;balanceMaxShift&#39; =&gt; 1,
+            &#39;balanceCooldown&#39; =&gt; 3,
+        ],
+    ],
+],
+</code></pre>
+<p><code>autoScalingStrategy</code> 設定選項決定 Horizon 如何為佇列分配更多 Worker 進程。您可以選擇兩種策略之一：</p>
+<div class="content-list" markdown="1"><ul>
+<li><code>time</code> 策略將根據清除佇列所需的總預估時間來分配 Worker。</li>
+<li><code>size</code> 策略將根據佇列上的任務總數來分配 Worker。</li>
+</ul>
+</div><p><code>balanceMaxShift</code> 和 <code>balanceCooldown</code> 設定值決定 Horizon 擴展以滿足 Worker 需求的速度。在上面的範例中，每三秒最多會建立或銷毀一個新進程。您可以根據應用程式的需求自由調整這些值。</p>
+<p><a name="auto-queue-priorities"></a></p>
+<h4>佇列優先順序與自動平衡</h4>
+<p>使用 <code>auto</code> 平衡策略時，Horizon 不會在佇列之間實施嚴格的優先順序。佇列在 supervisor 設定中的順序不會影響 Worker 進程的分配方式。相反，Horizon 依賴所選的 <code>autoScalingStrategy</code> 來根據佇列負載動態分配 Worker 進程。</p>
+<p>例如，在以下設定中，high 佇列並沒有優先於 default 佇列，儘管它出現在列表的第一位：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;high&#39;, &#39;default&#39;],
+            &#39;minProcesses&#39; =&gt; 1,
+            &#39;maxProcesses&#39; =&gt; 10,
+        ],
+    ],
+],
+</code></pre>
+<p>如果您需要在佇列之間實施相對優先順序，您可以定義多個 supervisors 並明確分配處理資源：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;default&#39;],
+            &#39;minProcesses&#39; =&gt; 1,
+            &#39;maxProcesses&#39; =&gt; 10,
+        ],
+        &#39;supervisor-2&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;images&#39;],
+            &#39;minProcesses&#39; =&gt; 1,
+            &#39;maxProcesses&#39; =&gt; 1,
+        ],
+    ],
+],
+</code></pre>
+<p>在此範例中，預設 <code>queue</code> 可以擴展到 10 個進程，而 <code>images</code> 佇列限制為一個進程。此設定確保您的佇列可以獨立擴展。</p>
+<blockquote>
+<p>[!NOTE]
+分派資源密集型任務時，最好將它們分配到一個具有有限 <code>maxProcesses</code> 值的專用佇列。否則，這些任務可能會消耗過多的 CPU 資源並使您的系統過載。</p>
+</blockquote>
+<p><a name="simple-balancing"></a></p>
+<h3>簡單平衡</h3>
+<p><code>simple</code> 策略將 Worker 進程均勻分配到指定的佇列中。使用此策略時，Horizon 不會自動擴展 Worker 進程數量。相反，它使用固定數量的進程：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;default&#39;, &#39;notifications&#39;],
+            &#39;balance&#39; =&gt; &#39;simple&#39;,
+            &#39;processes&#39; =&gt; 10,
+        ],
+    ],
+],
+</code></pre>
+<p>在上面的範例中，Horizon 將為每個佇列分配 5 個進程，將總共 10 個均勻分配。</p>
+<p>如果您想要單獨控制分配給每個佇列的 Worker 進程數量，您可以定義多個 supervisors：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;default&#39;],
+            &#39;balance&#39; =&gt; &#39;simple&#39;,
+            &#39;processes&#39; =&gt; 10,
+        ],
+        &#39;supervisor-notifications&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;notifications&#39;],
+            &#39;balance&#39; =&gt; &#39;simple&#39;,
+            &#39;processes&#39; =&gt; 2,
+        ],
+    ],
+],
+</code></pre>
+<p>使用此設定，Horizon 將為 <code>default</code> 佇列分配 10 個進程，為 <code>notifications</code> 佇列分配 2 個進程。</p>
+<p><a name="no-balancing"></a></p>
+<h3>無平衡</h3>
+<p>當 <code>balance</code> 選項設為 <code>false</code> 時，Horizon 會嚴格按照佇列列出的順序處理它們，類似於 Laravel 的預設佇列系統。然而，如果任務開始累積，它仍然會擴展 Worker 進程數量：</p>
+<pre><code class="language-php">&#39;environments&#39; =&gt; [
+    &#39;production&#39; =&gt; [
+        &#39;supervisor-1&#39; =&gt; [
+            // ...
+            &#39;queue&#39; =&gt; [&#39;default&#39;, &#39;notifications&#39;],
+            &#39;balance&#39; =&gt; false,
+            &#39;minProcesses&#39; =&gt; 1,
+            &#39;maxProcesses&#39; =&gt; 10,
+        ],
+    ],
+],
+</code></pre>
+<p>在上面的範例中，<code>default</code> 佇列中的任務始終優先於 <code>notifications</code> 佇列中的任務。例如，如果 <code>default</code> 中有 1,000 個任務，而 <code>notifications</code> 中只有 10 個，Horizon 將在處理任何來自 <code>notifications</code> 的任務之前完全處理所有 <code>default</code> 任務。</p>
+<p>您可以使用 <code>minProcesses</code> 和 <code>maxProcesses</code> 選項來控制 Horizon 擴展 Worker 進程的能力：</p>
+<div class="content-list" markdown="1"><ul>
+<li><code>minProcesses</code> 定義 Worker 進程的最小總數。此值必須大於或等於 1。</li>
+<li><code>maxProcesses</code> 定義 Horizon 可以擴展到的最大 Worker 進程總數。</li>
+</ul>
+</div><p><a name="upgrading-horizon"></a></p>
+<h2>升級 Horizon</h2>
+<p>升級到新的主要版本 Horizon 時，請務必仔細查閱<a href="https://github.com/laravel/horizon/blob/master/UPGRADE.md">升級指南</a>。</p>
+<p><a name="running-horizon"></a></p>
+<h2>運行 Horizon</h2>
+<p>在應用程式的 <code>config/horizon.php</code> 設定檔中配置好 supervisors 和 workers 後，您可以使用 <code>horizon</code> Artisan 指令啟動 Horizon。此單一指令將啟動當前環境的所有已設定 Worker 進程：</p>
+<pre><code class="language-shell">php artisan horizon
+</code></pre>
+<p>您可以使用 <code>horizon:pause</code> 和 <code>horizon:continue</code> Artisan 指令來暫停 Horizon 進程並指示它繼續處理任務：</p>
+<pre><code class="language-shell">php artisan horizon:pause
+
+php artisan horizon:continue
+</code></pre>
+<p>您還可以使用 <code>horizon:pause-supervisor</code> 和 <code>horizon:continue-supervisor</code> Artisan 指令來暫停和繼續特定的 Horizon <a href="#supervisors">supervisors</a>：</p>
+<pre><code class="language-shell">php artisan horizon:pause-supervisor supervisor-1
+
+php artisan horizon:continue-supervisor supervisor-1
+</code></pre>
+<p>您可以使用 <code>horizon:status</code> Artisan 指令來檢查 Horizon 進程的當前狀態：</p>
+<pre><code class="language-shell">php artisan horizon:status
+</code></pre>
+<p>您可以使用 <code>horizon:supervisor-status</code> Artisan 指令來檢查特定 Horizon <a href="#supervisors">supervisor</a> 的當前狀態：</p>
+<pre><code class="language-shell">php artisan horizon:supervisor-status supervisor-1
+</code></pre>
+<p>您可以使用 <code>horizon:terminate</code> Artisan 指令優雅地終止 Horizon 進程。當前正在處理的任何任務將被完成，然後 Horizon 將停止執行：</p>
+<pre><code class="language-shell">php artisan horizon:terminate
+</code></pre>
+<p><a name="automatically-restarting-horizon"></a></p>
+<h4>自動重新啟動 Horizon</h4>
+<p>在本地開發期間，您可以運行 <code>horizon:listen</code> 指令。使用 <code>horizon:listen</code> 指令時，您不需要在想要重新載入更新的程式碼時手動重新啟動 Horizon。使用此功能之前，您應該確保 <a href="https://nodejs.org">Node</a> 已安裝在您的本地開發環境中。此外，您應該在專案中安裝 <a href="https://github.com/paulmillr/chokidar">Chokidar</a> 檔案監聽庫：</p>
+<pre><code class="language-shell">npm install --save-dev chokidar
+</code></pre>
+<p>Chokidar 安裝後，您可以使用 <code>horizon:listen</code> 指令啟動 Horizon：</p>
+<pre><code class="language-shell">php artisan horizon:listen
+</code></pre>
+<p>在 Docker 或 Vagrant 中運行時，您應該使用 <code>--poll</code> 選項：</p>
+<pre><code class="language-shell">php artisan horizon:listen --poll
+</code></pre>
+<p>您可以使用應用程式 <code>config/horizon.php</code> 設定檔中的 <code>watch</code> 設定選項來設定應被監聽的目錄和檔案：</p>
+<pre><code class="language-php">&#39;watch&#39; =&gt; [
+    &#39;app&#39;,
+    &#39;bootstrap&#39;,
+    &#39;config&#39;,
+    &#39;database&#39;,
+    &#39;public/**/*.php&#39;,
+    &#39;resources/**/*.php&#39;,
+    &#39;routes&#39;,
+    &#39;composer.lock&#39;,
+    &#39;.env&#39;,
+],
+</code></pre>
+<p><a name="deploying-horizon"></a></p>
+<h3>部署 Horizon</h3>
+<p>當您準備好將 Horizon 部署到應用程式的實際伺服器時，您應該設定一個進程監控器來監控 <code>php artisan horizon</code> 指令，並在其意外退出時重新啟動它。不用擔心，我們將在下面討論如何安裝進程監控器。</p>
+<p>在應用程式的部署過程中，您應該指示 Horizon 進程終止，以便它將被您的進程監控器重新啟動並接收您的程式碼變更：</p>
+<pre><code class="language-shell">php artisan horizon:terminate
+</code></pre>
+<p><a name="installing-supervisor"></a></p>
+<h4>安裝 Supervisor</h4>
+<p>Supervisor 是 Linux 作業系統的進程監控器，如果 <code>horizon</code> 進程停止執行，它將自動重新啟動它。要在 Ubuntu 上安裝 Supervisor，您可以使用以下指令。如果您不使用 Ubuntu，您可以像往常一樣使用作業系統的套件管理器安裝 Supervisor：</p>
+<pre><code class="language-shell">sudo apt-get install supervisor
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果自己設定 Supervisor 聽起來很麻煩，請考慮使用 <a href="https://cloud.laravel.com">Laravel Cloud</a>，它可以為您的 Laravel 應用程式管理背景進程。</p>
+</blockquote>
+<p><a name="supervisor-configuration"></a></p>
+<h4>Supervisor 設定</h4>
+<p>Supervisor 設定檔通常儲存在伺服器的 <code>/etc/supervisor/conf.d</code> 目錄中。在此目錄中，您可以建立任意數量的設定檔來指示 supervisor 如何監控您的進程。例如，讓我們建立一個 <code>horizon.conf</code> 檔案來啟動和監控 <code>horizon</code> 進程：</p>
+<pre><code class="language-ini">[program:horizon]
+process_name=%(program_name)s
+command=php /home/forge/example.com/artisan horizon
+autostart=true
+autorestart=true
+user=forge
+redirect_stderr=true
+stdout_logfile=/home/forge/example.com/horizon.log
+stopwaitsecs=3600
+</code></pre>
+<p>定義 Supervisor 設定時，您應該確保 <code>stopwaitsecs</code> 的值大於您運行時間最長的任務消耗的秒數。否則，Supervisor 可能在任務完成處理之前就將其殺死。</p>
+<blockquote>
+<p>[!WARNING]
+雖然上面的範例對基於 Ubuntu 的伺服器有效，但其他伺服器作業系統上 Supervisor 設定檔的位置和副檔名可能有所不同。請查閱伺服器的文件了解更多資訊。</p>
+</blockquote>
+<p><a name="starting-supervisor"></a></p>
+<h4>啟動 Supervisor</h4>
+<p>建立設定檔後，您可以使用以下指令更新 Supervisor 設定並啟動被監控的進程：</p>
+<pre><code class="language-shell">sudo supervisorctl reread
+
+sudo supervisorctl update
+
+sudo supervisorctl start horizon
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有關運行 Supervisor 的更多資訊，請參閱 <a href="http://supervisord.org/index.html">Supervisor 文件</a>。</p>
+</blockquote>
+<p><a name="tags"></a></p>
+<h2>標籤</h2>
+<p>Horizon 允許您為任務分配「標籤」，包括郵件、廣播事件、通知和佇列事件監聽器。事實上，Horizon 會根據附加到任務的 Eloquent 模型來智能地自動標記大多數任務。例如，看看以下任務：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Jobs;
+
+use App\\Models\\Video;
+use Illuminate\\Contracts\\Queue\\ShouldQueue;
+use Illuminate\\Foundation\\Queue\\Queueable;
+
+class RenderVideo implements ShouldQueue
+{
+    use Queueable;
+
+    /**
+     * 建立新的任務實例。
+     */
+    public function __construct(
+        public Video $video,
+    ) {}
+
+    /**
+     * 執行任務。
+     */
+    public function handle(): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>如果此任務與一個 <code>id</code> 屬性為 <code>1</code> 的 <code>App\\Models\\Video</code> 實例一起被佇列化，它將自動接收標籤 <code>App\\Models\\Video:1</code>。這是因為 Horizon 將搜尋任務的屬性以查找任何 Eloquent 模型。如果找到 Eloquent 模型，Horizon 將使用模型的類別名稱和主鍵來智能地標記任務：</p>
+<pre><code class="language-php">use App\\Jobs\\RenderVideo;
+use App\\Models\\Video;
+
+$video = Video::find(1);
+
+RenderVideo::dispatch($video);
+</code></pre>
+<p><a name="manually-tagging-jobs"></a></p>
+<h4>手動標記任務</h4>
+<p>如果您想要手動定義可佇列化物件之一的標籤，您可以在類別上定義一個 <code>tags</code> 方法：</p>
+<pre><code class="language-php">class RenderVideo implements ShouldQueue
+{
+    /**
+     * 取得應分配給任務的標籤。
+     *
+     * @return array&lt;int, string&gt;
+     */
+    public function tags(): array
+    {
+        return [&#39;render&#39;, &#39;video:&#39;.$this-&gt;video-&gt;id];
+    }
+}
+</code></pre>
+<p><a name="manually-tagging-event-listeners"></a></p>
+<h4>手動標記事件監聽器</h4>
+<p>檢索佇列事件監聽器的標籤時，Horizon 將自動將事件實例傳遞給 <code>tags</code> 方法，允許您將事件資料新增到標籤中：</p>
+<pre><code class="language-php">class SendRenderNotifications implements ShouldQueue
+{
+    /**
+     * 取得應分配給監聽器的標籤。
+     *
+     * @return array&lt;int, string&gt;
+     */
+    public function tags(VideoRendered $event): array
+    {
+        return [&#39;video:&#39;.$event-&gt;video-&gt;id];
+    }
+}
+</code></pre>
+<p><a name="notifications"></a></p>
+<h2>通知</h2>
+<blockquote>
+<p>[!WARNING]
+設定 Horizon 發送 Slack 或 SMS 通知時，您應該查閱<a href="/docs/notifications">相關通知通道的先決條件</a>。</p>
+</blockquote>
+<p>如果您想要在其中一個佇列等待時間過長時收到通知，您可以使用 <code>Horizon::routeMailNotificationsTo</code>、<code>Horizon::routeSlackNotificationsTo</code> 和 <code>Horizon::routeSmsNotificationsTo</code> 方法。您可以從應用程式的 <code>App\\Providers\\HorizonServiceProvider</code> 的 <code>boot</code> 方法中呼叫這些方法：</p>
+<pre><code class="language-php">/**
+ * 引導任何應用程式服務。
+ */
+public function boot(): void
+{
+    parent::boot();
+
+    Horizon::routeSmsNotificationsTo(&#39;15556667777&#39;);
+    Horizon::routeMailNotificationsTo(&#39;example@example.com&#39;);
+    Horizon::routeSlackNotificationsTo(&#39;slack-webhook-url&#39;, &#39;#channel&#39;);
+}
+</code></pre>
+<p><a name="configuring-notification-wait-time-thresholds"></a></p>
+<h4>設定通知等待時間閾值</h4>
+<p>您可以在應用程式的 <code>config/horizon.php</code> 設定檔中設定多少秒被視為「長時間等待」。此檔案中的 <code>waits</code> 設定選項允許您控制每個連接 / 佇列組合的長時間等待閾值。任何未定義的連接 / 佇列組合將預設為 60 秒的長時間等待閾值：</p>
+<pre><code class="language-php">&#39;waits&#39; =&gt; [
+    &#39;redis:critical&#39; =&gt; 30,
+    &#39;redis:default&#39; =&gt; 60,
+    &#39;redis:batch&#39; =&gt; 120,
+],
+</code></pre>
+<p>將佇列的閾值設為 <code>0</code> 將停用該佇列的長時間等待通知。</p>
+<p><a name="metrics"></a></p>
+<h2>指標</h2>
+<p>Horizon 包含一個指標儀表板，提供有關任務和佇列等待時間及吞吐量的資訊。為了填充此儀表板，您應該設定 Horizon 的 <code>snapshot</code> Artisan 指令在應用程式的 <code>routes/console.php</code> 檔案中每五分鐘執行一次：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Schedule;
+
+Schedule::command(&#39;horizon:snapshot&#39;)-&gt;everyFiveMinutes();
+</code></pre>
+<p>如果您想要刪除所有指標資料，您可以呼叫 <code>horizon:clear-metrics</code> Artisan 指令：</p>
+<pre><code class="language-shell">php artisan horizon:clear-metrics
+</code></pre>
+<p><a name="deleting-failed-jobs"></a></p>
+<h2>刪除失敗任務</h2>
+<p>如果您想要刪除失敗任務，您可以使用 <code>horizon:forget</code> 指令。<code>horizon:forget</code> 指令接受失敗任務的 ID 或 UUID 作為其唯一參數：</p>
+<pre><code class="language-shell">php artisan horizon:forget 5
+</code></pre>
+<p>如果您想要刪除所有失敗任務，您可以向 <code>horizon:forget</code> 指令提供 <code>--all</code> 選項：</p>
+<pre><code class="language-shell">php artisan horizon:forget --all
+</code></pre>
+<p><a name="clearing-jobs-from-queues"></a></p>
+<h2>清除佇列中的任務</h2>
+<p>如果您想要從應用程式的預設佇列中刪除所有任務，您可以使用 <code>horizon:clear</code> Artisan 指令來實現：</p>
+<pre><code class="language-shell">php artisan horizon:clear
+</code></pre>
+<p>您可以提供 <code>queue</code> 選項來從特定佇列中刪除任務：</p>
+<pre><code class="language-shell">php artisan horizon:clear --queue=emails
+</code></pre>
+`;
+---
+
+<DocsLayout title="Horizon" currentPath="horizon">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Horizon</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Horizon</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/horizon" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,561 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>外觀</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#when-to-use-facades">何時使用外觀</a><ul>
+<li><a href="#facades-vs-dependency-injection">外觀 vs. 依賴注入</a></li>
+<li><a href="#facades-vs-helper-functions">外觀 vs. 輔助函數</a></li>
+</ul>
+</li>
+<li><a href="#how-facades-work">外觀如何運作</a></li>
+<li><a href="#real-time-facades">即時外觀</a></li>
+<li><a href="#facade-class-reference">外觀類別參考</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>在整個 Laravel 文檔中，您會看到透過「外觀」與 Laravel 功能互動的代碼範例。外觀為應用程式<a href="/docs/container">服務容器</a>中可用的類別提供了一個「靜態」介面。Laravel 附帶許多外觀，提供了對幾乎所有 Laravel 功能的存取。</p>
+<p>Laravel 外觀作為服務容器中底層類別的「靜態代理」，提供了簡潔、富有表達力的語法的好處，同時保持了比傳統靜態方法更好的可測試性和靈活性。如果您不完全了解外觀如何運作也沒關係——只需隨波逐流，繼續學習 Laravel。</p>
+<p>所有 Laravel 外觀都定義在 <code>Illuminate\\Support\\Facades</code> 命名空間中。因此，我們可以輕鬆地像這樣存取外觀：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::get('/cache', function () {
+    return Cache::get('key');
+});
+</code></pre>
+<p>在整個 Laravel 文檔中，許多範例將使用外觀來演示框架的各種功能。</p>
+<p><a name="helper-functions"></a></p>
+<h4>輔助函數</h4>
+<p>為了補充外觀，Laravel 提供了多種全域「輔助函數」，使與常見 Laravel 功能的互動變得更加容易。您可能互動的一些常見輔助函數包括 <code>view</code>、<code>response</code>、<code>url</code>、<code>config</code> 等。Laravel 提供的每個輔助函數都在其對應的功能中記錄；但是，完整的列表可在專用的<a href="/docs/helpers">輔助文檔</a>中找到。</p>
+<p>例如，與其使用 <code>Illuminate\\Support\\Facades\\Response</code> 外觀來生成 JSON 回應，我們可以簡單地使用 <code>response</code> 函數。由於輔助函數是全域可用的，因此您不需要匯入任何類別即可使用它們：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Response;
+
+Route::get('/users', function () {
+    return Response::json([
+        // ...
+    ]);
+});
+
+Route::get('/users', function () {
+    return response()->json([
+        // ...
+    ]);
+});
+</code></pre>
+<p><a name="when-to-use-facades"></a></p>
+<h2>何時使用外觀</h2>
+<p>外觀有許多好處。它們提供了簡潔、易記的語法，允許您使用 Laravel 的功能而無需記住必須手動注入或配置的長類別名稱。此外，由於它們對 PHP 動態方法的獨特使用，它們很容易測試。</p>
+<p>但是，使用外觀時必須小心。外觀的主要危險是類別「範圍蔓延」。由於外觀非常容易使用且不需要注入，因此很容易讓您的類別繼續增長並在單個類別中使用許多外觀。使用依賴注入時，大型構造函數提供的視覺回饋可以緩解這種可能性，讓您知道您的類別增長過大。因此，使用外觀時，請特別注意類別的大小，以便其職責範圍保持狹窄。如果您的類別變得太大，請考慮將其拆分為多個較小的類別。</p>
+<p><a name="facades-vs-dependency-injection"></a></p>
+<h3>外觀 vs. 依賴注入</h3>
+<p>依賴注入的主要好處之一是能夠交換注入類別的實現。這在測試時很有用，因為您可以注入一個模擬或存根，並斷言在存根上呼叫了各種方法。</p>
+<p>通常，不可能模擬或存根真正的靜態類別方法。但是，由於外觀使用動態方法將方法呼叫代理到從服務容器解析的物件，因此我們實際上可以像測試注入的類別實例一樣測試外觀。例如，給定以下路由：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+Route::get('/cache', function () {
+    return Cache::get('key');
+});
+</code></pre>
+<p>使用 Laravel 的外觀測試方法，我們可以編寫以下測試來驗證 <code>Cache::get</code> 方法是否以我們預期的參數被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+test('basic example', function () {
+    Cache::shouldReceive('get')
+        ->with('key')
+        ->andReturn('value');
+
+    $response = $this->get('/cache');
+
+    $response->assertSee('value');
+});
+</code></pre>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+/**
+ * A basic functional test example.
+ */
+public function test_basic_example(): void
+{
+    Cache::shouldReceive('get')
+        ->with('key')
+        ->andReturn('value');
+
+    $response = $this->get('/cache');
+
+    $response->assertSee('value');
+}
+</code></pre>
+<p><a name="facades-vs-helper-functions"></a></p>
+<h3>外觀 vs. 輔助函數</h3>
+<p>除了外觀外，Laravel 還包含多種可以執行常見任務（如生成視圖、觸發事件、派發作業或發送 HTTP 回應）的「輔助」函數。這些輔助函數中有許多執行與相應外觀相同的功能。例如，以下外觀呼叫和輔助呼叫是等效的：</p>
+<pre><code class="language-php">return Illuminate\\Support\\Facades\\View::make('profile');
+
+return view('profile');
+</code></pre>
+<p>外觀和輔助函數之間 absolutely 沒有實際差異。使用輔助函數時，您仍然可以完全按照對相應外觀的測試方式來測試它們。例如，給定以下路由：</p>
+<pre><code class="language-php">Route::get('/cache', function () {
+    return cache('key');
+});
+</code></pre>
+<p><code>cache</code> 輔助函數將呼叫 <code>Cache</code> 外觀底層類別上的 <code>get</code> 方法。因此，即使我們正在使用輔助函數，我們也可以編寫以下測試來驗證該方法是否以我們預期的參數被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+/**
+ * A basic functional test example.
+ */
+public function test_basic_example(): void
+{
+    Cache::shouldReceive('get')
+        ->with('key')
+        ->andReturn('value');
+
+    $response = $this->get('/cache');
+
+    $response->assertSee('value');
+}
+</code></pre>
+<p><a name="how-facades-work"></a></p>
+<h2>外觀如何運作</h2>
+<p>在 Laravel 應用程式中，外觀是一個提供從容器存取物件的類別。實現此功能的機制在 <code>Facade</code> 類別中。Laravel 的外觀以及您創建的任何自訂外觀都將擴展底層 <code>Illuminate\\Support\\Facades\\Facade</code> 類別。</p>
+<p><code>Facade</code> 基類利用 <code>__callStatic()</code> 魔術方法將外觀的呼叫延遲到從容器解析的物件。在下面的範例中，對 Laravel 快取系統進行了呼叫。瞥一眼這段代碼，可能會假設正在 <code>Cache</code> 類別上呼叫靜態 <code>get</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Support\\Facades\\Cache;
+use Illuminate\\View\\View;
+
+class UserController extends Controller
+{
+    /**
+     * 顯示給定使用者的個人資料。
+     */
+    public function showProfile(string $id): View
+    {
+        $user = Cache::get('user:'.$id);
+
+        return view('profile', ['user' => $user]);
+    }
+}
+</code></pre>
+<p>請注意，在檔案頂部附近我們「匯入」了 <code>Cache</code> 外觀。此外觀作為存取 <code>Illuminate\\Contracts\\Cache\\Factory</code> 介面底層實現的代理。我們使用外觀進行的任何呼叫都將被傳遞給 Laravel 快取服務的底層實例。</p>
+<p>如果我們查看 <code>Illuminate\\Support\\Facades\\Cache</code> 類別，您會看到沒有靜態方法 <code>get</code>：</p>
+<pre><code class="language-php">class Cache extends Facade
+{
+    /**
+     * 獲取已註冊的組件名稱。
+     */
+    protected static function getFacadeAccessor(): string
+    {
+        return 'cache';
+    }
+}
+</code></pre>
+<p>相反，<code>Cache</code> 外觀擴展了基底 <code>Facade</code> 類別並定義了 <code>getFacadeAccessor()</code> 方法。此方法的工作是返回服務容器綁定的名稱。當使用者引用 <code>Cache</code> 外觀上的任何靜態方法時，Laravel 從<a href="/docs/container">服務容器</a>解析 <code>cache</code> 綁定，並對該物件執行請求的方法（在這種情況下是 <code>get</code>）。</p>
+<p><a name="real-time-facades"></a></p>
+<h2>即時外觀</h2>
+<p>使用即時外觀，您可以將應用程式中的任何類別視為外觀。為了說明如何使用它，讓我們首先檢查一些不使用即時外觀的代碼。例如，假設我們的 <code>Podcast</code> 模型有一個 <code>publish</code> 方法。但是，為了發布播客，我們需要注入一個 <code>Publisher</code> 實例：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Contracts\\Publisher;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Podcast extends Model
+{
+    /**
+     * 發布播客。
+     */
+    public function publish(Publisher $publisher): void
+    {
+        $this->update(['publishing' => now()]);
+
+        $publisher->publish($this);
+    }
+}
+</code></pre>
+<p>將發布者實現注入到方法中允許我們輕鬆地單獨測試該方法，因為我們可以模擬注入的發布者。但是，它要求我們每次呼叫 <code>publish</code> 方法時都傳遞一個發布者實例。使用即時外觀，我們可以保持相同的可測試性，而無需明確傳遞 <code>Publisher</code> 實例。要生成即時外觀，請在匯入的類別的命名空間前添加 <code>Facades</code> 前綴：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Contracts\\Publisher; // [tl! remove]
+use Facades\\App\\Contracts\\Publisher; // [tl! add]
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Podcast extends Model
+{
+    /**
+     * 發布播客。
+     */
+    public function publish(Publisher $publisher): void // [tl! remove]
+    public function publish(): void // [tl! add]
+    {
+        $this->update(['publishing' => now()]);
+
+        $publisher->publish($this); // [tl! remove]
+        Publisher::publish($this); // [tl! add]
+    }
+}
+</code></pre>
+<p>使用即時外觀時，發布者實現將使用 <code>Facades</code> 前綴之後出現的介面或類別名稱部分從服務容器中解析。測試時，我們可以使用 Laravel 的內建外觀測試輔助工具來模擬此方法呼叫：</p>
+<pre><code class="language-php">&lt;?php
+
+use App\\Models\\Podcast;
+use Facades\\App\\Contracts\\Publisher;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+
+pest()->use(RefreshDatabase::class);
+
+test('podcast can be published', function () {
+    $podcast = Podcast::factory()->create();
+
+    Publisher::shouldReceive('publish')->once()->with($podcast);
+
+    $podcast->publish();
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use App\\Models\\Podcast;
+use Facades\\App\\Contracts\\Publisher;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
+
+class PodcastTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * A test example.
+     */
+    public function test_podcast_can_be_published(): void
+    {
+        $podcast = Podcast::factory()->create();
+
+        Publisher::shouldReceive('publish')->once()->with($podcast);
+
+        $podcast->publish();
+    }
+}
+</code></pre>
+<p><a name="facade-class-reference"></a></p>
+<h2>外觀類別參考</h2>
+<p>在下面，您將找到每個外觀及其底層類別。這是一個有用的工具，可以快速深入了解給定外觀根的 API 文檔。<a href="/docs/container">服務容器綁定</a>鍵也已在適用的地方包含。</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>外觀</th>
+<th>類別</th>
+<th>服務容器綁定</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Foundation/Application.html">Illuminate\\Foundation\\Application</a></td>
+<td><code>app</code></td>
+</tr>
+<tr>
+<td>Artisan</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Console/Kernel.html">Illuminate\\Contracts\\Console\\Kernel</a></td>
+<td><code>artisan</code></td>
+</tr>
+<tr>
+<td>Auth (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Auth/Guard.html">Illuminate\\Contracts\\Auth\\Guard</a></td>
+<td><code>auth.driver</code></td>
+</tr>
+<tr>
+<td>Auth</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Auth/AuthManager.html">Illuminate\\Auth\\AuthManager</a></td>
+<td><code>auth</code></td>
+</tr>
+<tr>
+<td>Blade</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/View/Compilers/BladeCompiler.html">Illuminate\\View\\Compilers\\BladeCompiler</a></td>
+<td><code>blade.compiler</code></td>
+</tr>
+<tr>
+<td>Broadcast (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Broadcasting/Broadcaster.html">Illuminate\\Contracts\\Broadcasting\\Broadcaster</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Broadcast</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Broadcasting/Factory.html">Illuminate\\Contracts\\Broadcasting\\Factory</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Bus</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Bus/Dispatcher.html">Illuminate\\Contracts\\Bus\\Dispatcher</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Cache (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Cache/Repository.html">Illuminate\\Cache\\Repository</a></td>
+<td><code>cache.store</code></td>
+</tr>
+<tr>
+<td>Cache</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Cache/CacheManager.html">Illuminate\\Cache\\CacheManager</a></td>
+<td><code>cache</code></td>
+</tr>
+<tr>
+<td>Config</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Config/Repository.html">Illuminate\\Config\\Repository</a></td>
+<td><code>config</code></td>
+</tr>
+<tr>
+<td>Context</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Log/Context/Repository.html">Illuminate\\Log\\Context\\Repository</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Cookie</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Cookie/CookieJar.html">Illuminate\\Cookie\\CookieJar</a></td>
+<td><code>cookie</code></td>
+</tr>
+<tr>
+<td>Crypt</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Encryption/Encrypter.html">Illuminate\\Encryption\\Encrypter</a></td>
+<td><code>encrypter</code></td>
+</tr>
+<tr>
+<td>Date</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Support/DateFactory.html">Illuminate\\Support\\DateFactory</a></td>
+<td><code>date</code></td>
+</tr>
+<tr>
+<td>DB (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Database/Connection.html">Illuminate\\Database\\Connection</a></td>
+<td><code>db.connection</code></td>
+</tr>
+<tr>
+<td>DB</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Database/DatabaseManager.html">Illuminate\\Database\\DatabaseManager</a></td>
+<td><code>db</code></td>
+</tr>
+<tr>
+<td>Event</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Events/Dispatcher.html">Illuminate\\Events\\Dispatcher</a></td>
+<td><code>events</code></td>
+</tr>
+<tr>
+<td>Exceptions (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Debug/ExceptionHandler.html">Illuminate\\Contracts\\Debug\\ExceptionHandler</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Exceptions</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Foundation/Exceptions/Handler.html">Illuminate\\Foundation\\Exceptions\\Handler</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>File</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Filesystem/Filesystem.html">Illuminate\\Filesystem\\Filesystem</a></td>
+<td><code>files</code></td>
+</tr>
+<tr>
+<td>Gate</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Auth/Access/Gate.html">Illuminate\\Contracts\\Auth\\Access\\Gate</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Hash</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Hashing/Hasher.html">Illuminate\\Contracts\\Hashing\\Hasher</a></td>
+<td><code>hash</code></td>
+</tr>
+<tr>
+<td>Http</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Http/Client/Factory.html">Illuminate\\Http\\Client\\Factory</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Lang</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Translation/Translator.html">Illuminate\\Translation\\Translator</a></td>
+<td><code>translator</code></td>
+</tr>
+<tr>
+<td>Log</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Log/LogManager.html">Illuminate\\Log\\LogManager</a></td>
+<td><code>log</code></td>
+</tr>
+<tr>
+<td>Mail</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Mail/Mailer.html">Illuminate\\Mail\\Mailer</a></td>
+<td><code>mailer</code></td>
+</tr>
+<tr>
+<td>Notification</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Notifications/ChannelManager.html">Illuminate\\Notifications\\ChannelManager</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Password (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Auth/Passwords/PasswordBroker.html">Illuminate\\Auth\\Passwords\\PasswordBroker</a></td>
+<td><code>auth.password.broker</code></td>
+</tr>
+<tr>
+<td>Password</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Auth/Passwords/PasswordBrokerManager.html">Illuminate\\Auth\\Passwords\\PasswordBrokerManager</a></td>
+<td><code>auth.password</code></td>
+</tr>
+<tr>
+<td>Pipeline (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Pipeline/Pipeline.html">Illuminate\\Pipeline\\Pipeline</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Process</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Process/Factory.html">Illuminate\\Process\\Factory</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Queue (基底類別)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Queue/Queue.html">Illuminate\\Queue\\Queue</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Queue (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Queue/Queue.html">Illuminate\\Contracts\\Queue\\Queue</a></td>
+<td><code>queue.connection</code></td>
+</tr>
+<tr>
+<td>Queue</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Queue/QueueManager.html">Illuminate\\Queue\\QueueManager</a></td>
+<td><code>queue</code></td>
+</tr>
+<tr>
+<td>RateLimiter</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Cache/RateLimiter.html">Illuminate\\Cache\\RateLimiter</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Redirect</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Routing/Redirector.html">Illuminate\\Routing\\Redirector</a></td>
+<td><code>redirect</code></td>
+</tr>
+<tr>
+<td>Redis (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Redis/Connections/Connection.html">Illuminate\\Redis\\Connections\\Connection</a></td>
+<td><code>redis.connection</code></td>
+</tr>
+<tr>
+<td>Redis</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Redis/RedisManager.html">Illuminate\\Redis\\RedisManager</a></td>
+<td><code>redis</code></td>
+</tr>
+<tr>
+<td>Request</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Http/Request.html">Illuminate\\Http\\Request</a></td>
+<td><code>request</code></td>
+</tr>
+<tr>
+<td>Response (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Http/Response.html">Illuminate\\Http\\Response</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Response</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Routing/ResponseFactory.html">Illuminate\\Contracts\\Routing\\ResponseFactory</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Route</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Routing/Router.html">Illuminate\\Routing\\Router</a></td>
+<td><code>router</code></td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Console/Scheduling/Schedule.html">Illuminate\\Console\\Scheduling\\Schedule</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Schema</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Database/Schema/Builder.html">Illuminate\\Database\\Schema\\Builder</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Session (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Session/Store.html">Illuminate\\Session\\Store</a></td>
+<td><code>session.store</code></td>
+</tr>
+<tr>
+<td>Session</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Session/SessionManager.html">Illuminate\\Session\\SessionManager</a></td>
+<td><code>session</code></td>
+</tr>
+<tr>
+<td>Storage (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Contracts/Filesystem/Filesystem.html">Illuminate\\Contracts\\Filesystem\\Filesystem</a></td>
+<td><code>filesystem.disk</code></td>
+</tr>
+<tr>
+<td>Storage</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Filesystem/FilesystemManager.html">Illuminate\\Filesystem\\FilesystemManager</a></td>
+<td><code>filesystem</code></td>
+</tr>
+<tr>
+<td>URL</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Routing/UrlGenerator.html">Illuminate\\Routing\\UrlGenerator</a></td>
+<td><code>url</code></td>
+</tr>
+<tr>
+<td>Validator (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Validation/Validator.html">Illuminate\\Validation\\Validator</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>Validator</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Validation/Factory.html">Illuminate\\Validation\\Factory</a></td>
+<td><code>validator</code></td>
+</tr>
+<tr>
+<td>View (實例)</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/View/View.html">Illuminate\\View\\View</a></td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>View</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/View/Factory.html">Illuminate\\View\\Factory</a></td>
+<td><code>view</code></td>
+</tr>
+<tr>
+<td>Vite</td>
+<td><a href="https://api.laravel.com/docs/Illuminate/Foundation/Vite.html">Illuminate\\Foundation\\Vite</a></td>
+<td>&nbsp;</td>
+</tr>
+</tbody></table>
+</div>
+`;
+---
+
+<DocsLayout title="外觀" currentPath="facades">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>外觀</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">外觀</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/facades" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

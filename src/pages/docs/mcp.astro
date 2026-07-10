@@ -1,0 +1,283 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel MCP</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#publishing-routes">發佈路由</a></li>
+</ul>
+</li>
+<li><a href="#creating-servers">建立伺服器</a><ul>
+<li><a href="#server-registration">伺服器註冊</a></li>
+<li><a href="#web-servers">Web 伺服器</a></li>
+<li><a href="#local-servers">本地伺服器</a></li>
+</ul>
+</li>
+<li><a href="#tools">工具</a><ul>
+<li><a href="#creating-tools">建立工具</a></li>
+<li><a href="#tool-input-schemas">工具輸入綱要</a></li>
+<li><a href="#tool-output-schemas">工具輸出綱要</a></li>
+<li><a href="#validating-tool-arguments">驗證工具參數</a></li>
+<li><a href="#tool-dependency-injection">工具依賴注入</a></li>
+<li><a href="#tool-annotations">工具標註</a></li>
+<li><a href="#conditional-tool-registration">條件式工具註冊</a></li>
+<li><a href="#tool-responses">工具回應</a></li>
+</ul>
+</li>
+<li><a href="#prompts">提示詞</a><ul>
+<li><a href="#creating-prompts">建立提示詞</a></li>
+<li><a href="#prompt-arguments">提示詞參數</a></li>
+<li><a href="#validating-prompt-arguments">驗證提示詞參數</a></li>
+<li><a href="#prompt-dependency-injection">提示詞依賴注入</a></li>
+<li><a href="#conditional-prompt-registration">條件式提示詞註冊</a></li>
+<li><a href="#prompt-responses">提示詞回應</a></li>
+</ul>
+</li>
+<li><a href="#resources">資源</a><ul>
+<li><a href="#creating-resources">建立資源</a></li>
+<li><a href="#resource-templates">資源模板</a></li>
+<li><a href="#resource-uri-and-mime-type">資源 URI 與 MIME 類型</a></li>
+<li><a href="#resource-request">資源請求</a></li>
+<li><a href="#resource-dependency-injection">資源依賴注入</a></li>
+<li><a href="#resource-annotations">資源標註</a></li>
+<li><a href="#conditional-resource-registration">條件式資源註冊</a></li>
+<li><a href="#resource-responses">資源回應</a></li>
+</ul>
+</li>
+<li><a href="#apps">應用程式</a><ul>
+<li><a href="#creating-app-resources">建立應用程式資源</a></li>
+<li><a href="#rendering-apps-from-tools">從工具渲染應用程式</a></li>
+<li><a href="#app-tool-visibility">應用程式工具可見性</a></li>
+<li><a href="#app-configuration">應用程式配置</a></li>
+<li><a href="#building-apps-with-boost">使用 Boost 建立應用程式</a></li>
+</ul>
+</li>
+<li><a href="#metadata">元資料</a></li>
+<li><a href="#icons">圖示</a></li>
+<li><a href="#authentication">認證</a><ul>
+<li><a href="#oauth">OAuth 2.1</a></li>
+<li><a href="#sanctum">Sanctum</a></li>
+</ul>
+</li>
+<li><a href="#authorization">授權</a></li>
+<li><a href="#client">MCP 客戶端</a><ul>
+<li><a href="#client-connecting">連接伺服器</a></li>
+<li><a href="#named-clients">命名客戶端</a></li>
+<li><a href="#client-authentication">客戶端認證</a></li>
+<li><a href="#client-tools">工具</a></li>
+<li><a href="#client-prompts">提示詞</a></li>
+<li><a href="#client-resources">資源</a></li>
+</ul>
+</li>
+<li><a href="#testing-servers">測試伺服器</a><ul>
+<li><a href="#mcp-inspector">MCP Inspector</a></li>
+<li><a href="#unit-tests">單元測試</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/mcp">Laravel MCP</a> 提供了一種簡單優雅的方式，讓 AI 客戶端通過<a href="https://modelcontextprotocol.io/docs/getting-started/intro">模型上下文協定</a>與您的 Laravel 應用程式互動。它提供了一個表達力強、流暢的介面來定義伺服器、工具、資源和提示詞，從而實現 AI 驅動的應用程式互動。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器將 Laravel MCP 安裝到您的專案中：</p>
+<pre><code class="language-shell">composer require laravel/mcp</code></pre>
+<p><a name="publishing-routes"></a></p>
+<h3>發佈路由</h3>
+<p>安裝 Laravel MCP 後，執行 <code>vendor:publish</code> Artisan 命令來發佈 <code>routes/ai.php</code> 檔案，您將在此定義 MCP 伺服器：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=ai-routes</code></pre>
+<p>此命令在應用程式的 <code>routes</code> 目錄中建立 <code>routes/ai.php</code> 檔案，您將用它來註冊 MCP 伺服器。</p>
+<p><a name="creating-servers"></a></p>
+<h2>建立伺服器</h2>
+<p>您可以使用 <code>make:mcp-server</code> Artisan 命令建立 MCP 伺服器。伺服器作為中央通訊點，向 AI 客戶端公開工具、資源和提示詞等 MCP 功能：</p>
+<pre><code class="language-shell">php artisan make:mcp-server WeatherServer</code></pre>
+<p>此命令將在 <code>app/Mcp/Servers</code> 目錄中建立一個新的伺服器類別。生成的伺服器類別擴展了 Laravel MCP 的基礎 <code>Laravel\\Mcp\\Server</code> 類別，並提供了用於配置伺服器和註冊工具、資源和提示詞的屬性和方法。</p>
+<p><a name="server-registration"></a></p>
+<h3>伺服器註冊</h3>
+<p>建立伺服器後，您必須在 <code>routes/ai.php</code> 檔案中註冊它，使其可被存取。Laravel MCP 提供了兩種註冊伺服器的方法：<code>web</code> 用於 HTTP 可存取的伺服器，<code>local</code> 用於命令列伺服器。</p>
+<p><a name="web-servers"></a></p>
+<h3>Web 伺服器</h3>
+<p>Web 伺服器是最常見的伺服器類型，可通過 HTTP POST 請求存取，非常適合遠端 AI 客戶端或基於 Web 的整合。使用 <code>web</code> 方法註冊 Web 伺服器：</p>
+<pre><code class="language-php">use App\\Mcp\\Servers\\WeatherServer;
+use Laravel\\Mcp\\Facades\\Mcp;
+
+Mcp::web('/mcp/weather', WeatherServer::class);</code></pre>
+<p>就像常規路由一樣，您可以應用中介層來保護 Web 伺服器：</p>
+<pre><code class="language-php">Mcp::web('/mcp/weather', WeatherServer::class)
+    ->middleware(['throttle:mcp']);</code></pre>
+<p><a name="local-servers"></a></p>
+<h3>本地伺服器</h3>
+<p>本地伺服器作為 Artisan 命令執行，非常適合建立本地 AI 助手整合，如 <a href="/docs/installation#installing-laravel-boost">Laravel Boost</a>。使用 <code>local</code> 方法註冊本地伺服器：</p>
+<pre><code class="language-php">use App\\Mcp\\Servers\\WeatherServer;
+use Laravel\\Mcp\\Facades\\Mcp;
+
+Mcp::local('weather', WeatherServer::class);</code></pre>
+<p>註冊後，您通常不需要手動執行 <code>mcp:start</code> Artisan 命令。相反，請配置您的 MCP 客戶端（AI 代理）來啟動伺服器，或使用 <a href="#mcp-inspector">MCP Inspector</a>。</p>
+<p><a name="tools"></a></p>
+<h2>工具</h2>
+<p>工具使您的伺服器能夠公開 AI 客戶端可以呼叫的功能。它們允許語言模型執行操作、執行程式碼或與外部系統互動。</p>
+<p><a name="creating-tools"></a></p>
+<h3>建立工具</h3>
+<p>要建立工具，請執行 <code>make:mcp-tool</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan make:mcp-tool CurrentWeatherTool</code></pre>
+<p>建立工具後，在伺服器的 <code>$tools</code> 屬性中註冊它。</p>
+<p><a name="tool-input-schemas"></a></p>
+<h3>工具輸入綱要</h3>
+<p>工具可以定義輸入綱要來指定它們從 AI 客戶端接受哪些參數。使用 Laravel 的 <code>Illuminate\\Contracts\\JsonSchema\\JsonSchema</code> 建構器來定義工具的輸入要求。</p>
+<p><a name="tool-output-schemas"></a></p>
+<h3>工具輸出綱要</h3>
+<p>工具可以定義<a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools#output-schema">輸出綱要</a>來指定其回應的結構。這使得與需要可解析工具結果的 AI 客戶端更好地整合。</p>
+<p><a name="validating-tool-arguments"></a></p>
+<h3>驗證工具參數</h3>
+<p>JSON Schema 定義為工具參數提供了基本結構，但您可能還希望強制執行更複雜的驗證規則。Laravel MCP 與 Laravel 的<a href="/docs/validation">驗證功能</a>無縫整合。您可以在工具的 <code>handle</code> 方法中驗證傳入的工具參數。</p>
+<p><a name="tool-dependency-injection"></a></p>
+<h3>工具依賴注入</h3>
+<p>Laravel <a href="/docs/container">服務容器</a>用於解析所有工具。因此，您可以在建構函數中類型提示工具可能需要的任何依賴項。除了建構函數注入之外，您還可以在工具的 <code>handle()</code> 方法中類型提示依賴項。</p>
+<p><a name="tool-annotations"></a></p>
+<h3>工具標註</h3>
+<p>您可以使用<a href="https://modelcontextprotocol.io/specification/2025-06-18/schema#toolannotations">標註</a>來增強工具，為 AI 客戶端提供額外的元資料。可用標註包括 <code>IsReadOnly</code>、<code>IsDestructive</code>、<code>IsIdempotent</code> 和 <code>IsOpenWorld</code>。</p>
+<p><a name="conditional-tool-registration"></a></p>
+<h3>條件式工具註冊</h3>
+<p>您可以通過在工具類別中實作 <code>shouldRegister</code> 方法來在運行時有條件地註冊工具。當此方法返回 <code>false</code> 時，該工具不會出現在可用工具列表中。</p>
+<p><a name="tool-responses"></a></p>
+<h3>工具回應</h3>
+<p>工具必須返回一個 <code>Laravel\\Mcp\\Response</code> 實例。Response 類別提供了多種便捷方法來建立不同類型的回應：<code>text</code>、<code>error</code>、<code>image</code>、<code>audio</code>、<code>fromStorage</code>、<code>structured</code> 等。工具可以通過返回 Response 實例陣列來返回多個內容，也可以通過從 <code>handle</code> 方法返回<a href="https://www.php.net/manual/en/language.generators.overview.php">生成器</a>來進行串流回應。</p>
+<p><a name="prompts"></a></p>
+<h2>提示詞</h2>
+<p><a href="https://modelcontextprotocol.io/specification/2025-06-18/server/prompts">提示詞</a>使您的伺服器能夠共享可重用的提示模板，AI 客戶端可以使用它們與語言模型互動。它們提供了一種標準化方式來建構常見查詢和互動。</p>
+<p><a name="creating-prompts"></a></p>
+<h3>建立提示詞</h3>
+<p>執行 <code>make:mcp-prompt</code> Artisan 命令來建立提示詞：</p>
+<pre><code class="language-shell">php artisan make:mcp-prompt DescribeWeatherPrompt</code></pre>
+<p>建立後，在伺服器的 <code>$prompts</code> 屬性中註冊它。</p>
+<p><a name="prompt-arguments"></a></p>
+<h3>提示詞參數</h3>
+<p>提示詞可以定義參數，允許 AI 客戶端使用特定值自訂提示模板。</p>
+<p><a name="validating-prompt-arguments"></a></p>
+<h3>驗證提示詞參數</h3>
+<p>提示詞參數會根據其定義自動驗證，但您也可以強制執行更複雜的驗證規則。</p>
+<p><a name="prompt-dependency-injection"></a></p>
+<h3>提示詞依賴注入</h3>
+<p>服務容器用於解析所有提示詞，支援建構函數和方法注入。</p>
+<p><a name="conditional-prompt-registration"></a></p>
+<h3>條件式提示詞註冊</h3>
+<p>通過實作 <code>shouldRegister</code> 方法有條件地註冊提示詞。</p>
+<p><a name="prompt-responses"></a></p>
+<h3>提示詞回應</h3>
+<p>提示詞可以返回單個 <code>Laravel\\Mcp\\Response</code> 或可迭代的 Response 實例。使用 <code>asAssistant()</code> 方法指示回應消息應被視為來自 AI 助手。</p>
+<p><a name="resources"></a></p>
+<h2>資源</h2>
+<p><a href="https://modelcontextprotocol.io/specification/2025-06-18/server/resources">資源</a>使您的伺服器能夠公開資料和內容，AI 客戶端可以讀取並用作與語言模型互動時的上下文。</p>
+<p><a name="creating-resources"></a></p>
+<h3>建立資源</h3>
+<p>執行 <code>make:mcp-resource</code> Artisan 命令來建立資源，然後在伺服器的 <code>$resources</code> 屬性中註冊它。</p>
+<p><a name="resource-templates"></a></p>
+<h3>資源模板</h3>
+<p><a href="https://modelcontextprotocol.io/specification/2025-06-18/server/resources#resource-templates">資源模板</a>使您的伺服器能夠公開與包含變數的 URI 模式匹配的動態資源。通過實作 <code>HasUriTemplate</code> 介面並定義 <code>uriTemplate</code> 方法來建立資源模板。</p>
+<p><a name="resource-uri-and-mime-type"></a></p>
+<h3>資源 URI 與 MIME 類型</h3>
+<p>每個資源由一個唯一的 URI 標識，並具有一個關聯的 MIME 類型。可以使用 <code>Uri</code> 和 <code>MimeType</code> 屬性自訂這些值。</p>
+<p><a name="resource-request"></a></p>
+<h3>資源請求</h3>
+<p>與工具和提示詞不同，資源不能定義輸入綱要或參數。但是，您仍然可以在資源的 <code>handle</code> 方法中與請求物件互動。</p>
+<p><a name="resource-dependency-injection"></a></p>
+<h3>資源依賴注入</h3>
+<p>支援建構函數和方法注入。</p>
+<p><a name="resource-annotations"></a></p>
+<h3>資源標註</h3>
+<p>可用標註包括 <code>Audience</code>、<code>Priority</code> 和 <code>LastModified</code>。</p>
+<p><a name="conditional-resource-registration"></a></p>
+<h3>條件式資源註冊</h3>
+<p>通過實作 <code>shouldRegister</code> 方法有條件地註冊資源。</p>
+<p><a name="resource-responses"></a></p>
+<h3>資源回應</h3>
+<p>資源可以返回文字內容、資源鏈接（<code>resourceLink</code>）、二進位內容（<code>blob</code>）或錯誤回應（<code>error</code>）。</p>
+<p><a name="apps"></a></p>
+<h2>應用程式</h2>
+<p>Laravel MCP 支援 <a href="https://modelcontextprotocol.io/extensions/apps/overview">MCP Apps</a>，這是模型上下文協定的一個擴展，允許工具在支援的主機中的沙箱 iframe 內渲染互動式 HTML 應用程式。</p>
+<p><a name="creating-app-resources"></a></p>
+<h3>建立應用程式資源</h3>
+<p>使用 <code>make:mcp-app-resource</code> Artisan 命令建立應用程式資源。這會建立一個 PHP 類別和一個 Blade 檢視。</p>
+<p><a name="rendering-apps-from-tools"></a></p>
+<h3>從工具渲染應用程式</h3>
+<p>要顯示應用程式資源，使用 <code>RendersApp</code> 屬性將工具鏈接到它。</p>
+<p><a name="app-tool-visibility"></a></p>
+<h3>應用程式工具可見性</h3>
+<p>每個 <code>RendersApp</code> 工具可以通過 <code>visibility</code> 參數限制誰可以呼叫它。</p>
+<p><a name="app-configuration"></a></p>
+<h3>應用程式配置</h3>
+<p><code>AppMeta</code> 屬性配置 iframe 的內容安全政策、瀏覽器權限和應包含在檢視中的庫腳本。</p>
+<p><a name="building-apps-with-boost"></a></p>
+<h3>使用 Boost 建立應用程式</h3>
+<p>Laravel MCP 包含一個專用的 <a href="/docs/boost">Boost</a> 技能參考。</p>
+<p><a name="metadata"></a></p>
+<h2>元資料</h2>
+<p>Laravel MCP 支援 MCP 規範中定義的 <code>_meta</code> 欄位。元資料可以應用於所有 MCP 基元以及它們的回應。使用 <code>withMeta</code> 方法附加元資料，或使用 <code>$meta</code> 屬性。</p>
+<p><a name="icons"></a></p>
+<h2>圖示</h2>
+<p>使用 <code>Icon</code> 屬性在伺服器、工具、資源或提示詞上宣告圖示。該屬性可重複使用以提供不同大小或主題變體。</p>
+<p><a name="authentication"></a></p>
+<h2>認證</h2>
+<p>就像路由一樣，您可以使用中介層認證 Web MCP 伺服器。Laravel MCP 支援通過 <a href="/docs/sanctum">Sanctum</a> 的基於令牌的認證，以及使用 <a href="/docs/passport">Laravel Passport</a> 的 OAuth 認證。</p>
+<p><a name="oauth"></a></p>
+<h3>OAuth 2.1</h3>
+<p>通過 OAuth 認證 MCP 伺服器時，在 <code>routes/ai.php</code> 中呼叫 <code>Mcp::oauthRoutes()</code> 方法來註冊所需的 OAuth2 發現和客戶端註冊路由。然後將 Passport 的 <code>auth:api</code> 中介層應用到您的 <code>Mcp::web</code> 路由。</p>
+<p><a name="sanctum"></a></p>
+<h3>Sanctum</h3>
+<p>如果您想使用 <a href="/docs/sanctum">Sanctum</a> 保護 MCP 伺服器，只需在 <code>routes/ai.php</code> 中將 Sanctum 的認證中介層添加到伺服器。然後確保您的 MCP 客戶端提供 <code>Authorization: Bearer &lt;token&gt;</code> 標頭。</p>
+<p><a name="authorization"></a></p>
+<h2>授權</h2>
+<p>您可以通過 <code>$request->user()</code> 方法存取當前已認證的使用者，從而在 MCP 工具和資源中執行<a href="/docs/authorization">授權檢查</a>。</p>
+<p><a name="client"></a></p>
+<h2>MCP 客戶端</h2>
+<p>除了建立伺服器之外，Laravel MCP 還包含一個用於連接到其他 MCP 伺服器的客戶端。客戶端讓您的應用程式發現和呼叫 MCP 伺服器公開的工具。</p>
+<p><a name="client-connecting"></a></p>
+<h3>連接伺服器</h3>
+<p>使用 <code>Client::web</code> 方法連接到 HTTP 可存取的 MCP 伺服器，或使用 <code>Client::local</code> 方法連接到本地 MCP 伺服器。</p>
+<p><a name="named-clients"></a></p>
+<h3>命名客戶端</h3>
+<p>使用 <code>Mcp::registerClient</code> 註冊可重用的命名客戶端。</p>
+<p><a name="client-authentication"></a></p>
+<h3>客戶端認證</h3>
+<p>使用 <code>withToken</code> 方法進行令牌認證，或使用 <code>withOAuth</code> 方法進行 OAuth 認證。</p>
+<p><a name="client-tools"></a></p>
+<h3>工具</h3>
+<p>使用 <code>tools</code> 方法檢索工具，使用 <code>callTool</code> 方法呼叫工具。</p>
+<p><a name="client-prompts"></a></p>
+<h3>提示詞</h3>
+<p>使用 <code>prompts</code> 方法檢索提示詞，使用 <code>getPrompt</code> 方法獲取提示詞。</p>
+<p><a name="client-resources"></a></p>
+<h3>資源</h3>
+<p>使用 <code>resources</code> 方法檢索資源，使用 <code>readResource</code> 方法讀取資源。</p>
+<p><a name="testing-servers"></a></p>
+<h2>測試伺服器</h2>
+<p>您可以使用內建的 MCP Inspector 或編寫單元測試來測試 MCP 伺服器。</p>
+<p><a name="mcp-inspector"></a></p>
+<h3>MCP Inspector</h3>
+<p><a href="https://modelcontextprotocol.io/docs/tools/inspector">MCP Inspector</a> 是一個用於測試和除錯 MCP 伺服器的互動式工具。對任何已註冊的伺服器執行 <code>php artisan mcp:inspector</code> 命令。</p>
+<p><a name="unit-tests"></a></p>
+<h3>單元測試</h3>
+<p>您可以為 MCP 伺服器編寫單元測試。使用 <code>WeatherServer::tool()</code>、<code>WeatherServer::prompt()</code> 或 <code>WeatherServer::resource()</code> 方法來測試基元。使用 <code>assertOk</code>、<code>assertSee</code>、<code>assertHasErrors</code> 等方法驗證回應。</p>
+`;
+---
+
+<DocsLayout title="Laravel MCP" currentPath="mcp">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel MCP</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">Laravel MCP</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/mcp" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

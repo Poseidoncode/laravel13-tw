@@ -1,0 +1,685 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Artisan 命令列</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#tinker">Tinker (REPL)</a></li>
+</ul>
+</li>
+<li><a href="#writing-commands">編寫指令</a><ul>
+<li><a href="#generating-commands">生成指令</a></li>
+<li><a href="#command-structure">指令結構</a></li>
+<li><a href="#closure-commands">閉包指令</a></li>
+<li><a href="#isolatable-commands">可隔離指令</a></li>
+</ul>
+</li>
+<li><a href="#defining-input-expectations">定義輸入預期</a><ul>
+<li><a href="#arguments">參數</a></li>
+<li><a href="#options">選項</a></li>
+<li><a href="#input-arrays">輸入陣列</a></li>
+<li><a href="#input-descriptions">輸入描述</a></li>
+<li><a href="#prompting-for-missing-input">提示缺少的輸入</a></li>
+</ul>
+</li>
+<li><a href="#command-io">指令 I/O</a><ul>
+<li><a href="#retrieving-input">檢索輸入</a></li>
+<li><a href="#prompting-for-input">提示輸入</a></li>
+<li><a href="#writing-output">寫入輸出</a></li>
+</ul>
+</li>
+<li><a href="#registering-commands">註冊指令</a></li>
+<li><a href="#programmatically-executing-commands">程式化執行指令</a><ul>
+<li><a href="#calling-commands-from-other-commands">從其他指令呼叫指令</a></li>
+</ul>
+</li>
+<li><a href="#signal-handling">訊號處理</a></li>
+<li><a href="#stub-customization">Stub 自訂</a></li>
+<li><a href="#events">事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Artisan 是 Laravel 包含的命令列介面。Artisan 以 <code>artisan</code> 腳本的形式存在於您應用程式的根目錄，並提供了許多有用的指令，可以在您建構應用程式時提供協助。要查看所有可用 Artisan 指令的列表，您可以使用 <code>list</code> 指令：</p>
+<pre><code class="language-shell">php artisan list
+</code></pre>
+<p>每個指令還包含一個「說明」畫面，顯示並描述該指令可用的參數和選項。要查看說明畫面，請在指令名稱前加上 <code>help</code>：</p>
+<pre><code class="language-shell">php artisan help migrate
+</code></pre>
+<p><a name="laravel-sail"></a></p>
+<h4>Laravel Sail</h4>
+<p>如果您使用 <a href="/docs/sail">Laravel Sail</a> 作為您的本地開發環境，請記住使用 <code>sail</code> 命令列來呼叫 Artisan 指令。Sail 將在您應用程式的 Docker 容器中執行您的 Artisan 指令：</p>
+<pre><code class="language-shell">./vendor/bin/sail artisan list
+</code></pre>
+<p><a name="tinker"></a></p>
+<h3>Tinker (REPL)</h3>
+<p><a href="https://github.com/laravel/tinker">Laravel Tinker</a> 是一個強大的 Laravel 框架 REPL，由 <a href="https://github.com/bobthecow/psysh">PsySH</a> 套件提供支援。</p>
+<p><a name="installation"></a></p>
+<h4>安裝</h4>
+<p>所有 Laravel 應用程式預設都包含 Tinker。然而，如果您先前已將其從應用程式中移除，您可以使用 Composer 安裝 Tinker：</p>
+<pre><code class="language-shell">composer require laravel/tinker
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+在與您的 Laravel 應用程式互動時尋找熱重載、多行程式碼編輯和自動完成嗎？請查看 <a href="https://tinkerwell.app">Tinkerwell</a>！</p>
+</blockquote>
+<p><a name="usage"></a></p>
+<h4>使用方式</h4>
+<p>Tinker 允許您在命令列上與整個 Laravel 應用程式互動，包括您的 Eloquent 模型、任務、事件等。要進入 Tinker 環境，請執行 <code>tinker</code> Artisan 指令：</p>
+<pre><code class="language-shell">php artisan tinker
+</code></pre>
+<p>您可以使用 <code>vendor:publish</code> 指令來發佈 Tinker 的設定檔：</p>
+<pre><code class="language-shell">php artisan vendor:publish --provider=&quot;Laravel\\Tinker\\TinkerServiceProvider&quot;
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+<code>dispatch</code> 輔助函數和 <code>Dispatchable</code> 類別上的 <code>dispatch</code> 方法依賴垃圾回收來將任務放入佇列。因此，使用 Tinker 時，您應該使用 <code>Bus::dispatch</code> 或 <code>Queue::push</code> 來分派任務。</p>
+</blockquote>
+<p><a name="command-allow-list"></a></p>
+<h4>指令允許清單</h4>
+<p>Tinker 使用「允許」清單來確定哪些 Artisan 指令允許在其 shell 中運行。預設情況下，您可以運行 <code>clear-compiled</code>、<code>down</code>、<code>env</code>、<code>inspire</code>、<code>migrate</code>、<code>migrate:install</code>、<code>up</code> 和 <code>optimize</code> 指令。如果您想要允許更多指令，您可以將它們新增到 <code>tinker.php</code> 設定檔中的 <code>commands</code> 陣列中：</p>
+<pre><code class="language-php">&#39;commands&#39; =&gt; [
+    // App\\Console\\Commands\\ExampleCommand::class,
+],
+</code></pre>
+<p><a name="classes-that-should-not-be-aliased"></a></p>
+<h4>不應被別名化的類別</h4>
+<p>通常，Tinker 會在您與類別互動時自動為它們建立別名。然而，您可能希望永遠不為某些類別建立別名。您可以透過在 <code>tinker.php</code> 設定檔的 <code>dont_alias</code> 陣列中列出這些類別來實現：</p>
+<pre><code class="language-php">&#39;dont_alias&#39; =&gt; [
+    App\\Models\\User::class,
+],
+</code></pre>
+<p><a name="writing-commands"></a></p>
+<h2>編寫指令</h2>
+<p>除了 Artisan 提供的指令外，您還可以建構自己的自訂指令。指令通常儲存在 <code>app/Console/Commands</code> 目錄中；然而，您可以自由選擇自己的儲存位置，只要您指示 Laravel<a href="#registering-commands">掃描其他目錄中的 Artisan 指令</a>。</p>
+<p><a name="generating-commands"></a></p>
+<h3>生成指令</h3>
+<p>要建立新指令，您可以使用 <code>make:command</code> Artisan 指令。此指令將在 <code>app/Console/Commands</code> 目錄中建立一個新的指令類別。如果此目錄在您的應用程式中不存在，請不要擔心 - 它將在您首次執行 <code>make:command</code> Artisan 指令時建立：</p>
+<pre><code class="language-shell">php artisan make:command SendEmails
+</code></pre>
+<p><a name="command-structure"></a></p>
+<h3>指令結構</h3>
+<p>生成指令後，您應該使用 <code>Signature</code> 和 <code>Description</code> 屬性來定義指令的簽章和描述。<code>Signature</code> 屬性還允許您定義<a href="#defining-input-expectations">指令的輸入預期</a>。當您的指令被執行時，<code>handle</code> 方法將被呼叫。您可以將指令邏輯放在此方法中。</p>
+<p>讓我們來看看一個範例指令。請注意，我們可以透過指令的 <code>handle</code> 方法請求任何我們需要的依賴項。Laravel <a href="/docs/container">服務容器</a>將自動注入在此方法簽章中型別提示的所有依賴項：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Console\\Commands;
+
+use App\\Models\\User;
+use App\\Support\\DripEmailer;
+use Illuminate\\Console\\Attributes\\Description;
+use Illuminate\\Console\\Attributes\\Signature;
+use Illuminate\\Console\\Command;
+
+#[Signature(&#39;mail:send {user}&#39;)]
+#[Description(&#39;Send a marketing email to a user&#39;)]
+class SendEmails extends Command
+{
+    /**
+     * 執行控制台指令。
+     */
+    public function handle(DripEmailer $drip): void
+    {
+        $drip-&gt;send(User::find($this-&gt;argument(&#39;user&#39;)));
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+為了更好的程式碼重用，最佳實踐是保持控制台指令簡潔，並讓它們委託給應用程式服務來完成任務。在上面的範例中，請注意我們注入了一個服務類別來完成發送電子郵件的「繁重工作」。</p>
+</blockquote>
+<p><a name="exit-codes"></a></p>
+<h4>退出代碼</h4>
+<p>如果 <code>handle</code> 方法沒有回傳任何內容且指令成功執行，指令將以 <code>0</code> 退出代碼退出，表示成功。然而，<code>handle</code> 方法可以選擇性地回傳一個整數來手動指定指令的退出代碼：</p>
+<pre><code class="language-php">$this-&gt;error(&#39;發生了某些錯誤。&#39;);
+
+return 1;
+</code></pre>
+<p>如果您想要從指令中的任何方法「失敗」該指令，您可以使用 <code>fail</code> 方法。<code>fail</code> 方法將立即終止指令的執行並回傳退出代碼 <code>1</code>：</p>
+<pre><code class="language-php">$this-&gt;fail(&#39;發生了某些錯誤。&#39;);
+</code></pre>
+<p><a name="closure-commands"></a></p>
+<h3>閉包指令</h3>
+<p>基於閉包的指令提供了將控制台指令定義為類別的替代方案。就像路由閉包是控制器的替代方案一樣，您可以將指令閉包視為指令類別的替代方案。</p>
+<p>即使 <code>routes/console.php</code> 檔案沒有定義 HTTP 路由，它也定義了基於控制台的進入點（路由）。在此檔案中，您可以使用 <code>Artisan::command</code> 方法定義所有基於閉包的控制台指令。<code>command</code> 方法接受兩個參數：<a href="#defining-input-expectations">指令簽章</a>和一個閉包，該閉包接收指令的參數和選項：</p>
+<pre><code class="language-php">Artisan::command(&#39;mail:send {user}&#39;, function (string $user) {
+    $this-&gt;info(&quot;正在將電子郵件發送至：{$user}!&quot;);
+});
+</code></pre>
+<p>閉包被綁定到底層指令實例，因此您可以完全存取您通常可以在完整指令類別上存取的所有輔助方法。</p>
+<p><a name="type-hinting-dependencies"></a></p>
+<h4>型別提示依賴項</h4>
+<p>除了接收指令的參數和選項外，指令閉包還可以型別提示您想要從<a href="/docs/container">服務容器</a>解析的額外依賴項：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use App\\Support\\DripEmailer;
+use Illuminate\\Support\\Facades\\Artisan;
+
+Artisan::command(&#39;mail:send {user}&#39;, function (DripEmailer $drip, string $user) {
+    $drip-&gt;send(User::find($user));
+});
+</code></pre>
+<p><a name="closure-command-descriptions"></a></p>
+<h4>閉包指令描述</h4>
+<p>定義基於閉包的指令時，您可以使用 <code>purpose</code> 方法為指令新增描述。當您執行 <code>php artisan list</code> 或 <code>php artisan help</code> 指令時，將顯示此描述：</p>
+<pre><code class="language-php">Artisan::command(&#39;mail:send {user}&#39;, function (string $user) {
+    // ...
+})-&gt;purpose(&#39;向使用者發送行銷電子郵件&#39;);
+</code></pre>
+<p><a name="isolatable-commands"></a></p>
+<h3>可隔離指令</h3>
+<blockquote>
+<p>[!WARNING]
+要使用此功能，您的應用程式必須使用 <code>memcached</code>、<code>redis</code>、<code>dynamodb</code>、<code>database</code>、<code>file</code> 或 <code>array</code> 快取驅動程式作為應用程式的預設快取驅動程式。此外，所有伺服器必須與同一個中央快取伺服器通訊。</p>
+</blockquote>
+<p>有時您可能希望確保指令的實例一次只能運行一個。為此，您可以在指令類別上實現 <code>Illuminate\\Contracts\\Console\\Isolatable</code> 介面：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Console\\Commands;
+
+use Illuminate\\Console\\Command;
+use Illuminate\\Contracts\\Console\\Isolatable;
+
+class SendEmails extends Command implements Isolatable
+{
+    // ...
+}
+</code></pre>
+<p>當您將指令標記為 <code>Isolatable</code> 時，Laravel 會自動使 <code>--isolated</code> 選項可用於該指令，而無需在指令的選項中明確定義它。當使用該選項呼叫指令時，Laravel 將確保沒有該指令的其他實例正在運行。Laravel 透過嘗試使用應用程式的預設快取驅動程式獲取原子鎖來實現這一點。如果指令的其他實例正在運行，該指令將不會執行；然而，該指令仍將以成功的退出狀態代碼退出：</p>
+<pre><code class="language-shell">php artisan mail:send 1 --isolated
+</code></pre>
+<p>如果您想要指定指令無法執行時應回傳的退出狀態代碼，您可以透過 <code>isolated</code> 選項提供所需的狀態代碼：</p>
+<pre><code class="language-shell">php artisan mail:send 1 --isolated=12
+</code></pre>
+<p><a name="lock-id"></a></p>
+<h4>鎖 ID</h4>
+<p>預設情況下，Laravel 將使用指令的名稱來生成用於在應用程式的快取中獲取原子鎖的字串鍵。然而，您可以透過在 Artisan 指令類別上定義 <code>isolatableId</code> 方法來自訂此鍵，允許您將指令的參數或選項整合到鍵中：</p>
+<pre><code class="language-php">/**
+ * 取得指令的可隔離 ID。
+ */
+public function isolatableId(): string
+{
+    return $this-&gt;argument(&#39;user&#39;);
+}
+</code></pre>
+<p><a name="lock-expiration-time"></a></p>
+<h4>鎖過期時間</h4>
+<p>預設情況下，隔離鎖在指令完成後過期。或者，如果指令被中斷且無法完成，鎖將在一小時後過期。然而，您可以透過在指令上定義 <code>isolationLockExpiresAt</code> 方法來調整鎖過期時間：</p>
+<pre><code class="language-php">use DateTimeInterface;
+use DateInterval;
+
+/**
+ * 決定指令的隔離鎖何時過期。
+ */
+public function isolationLockExpiresAt(): DateTimeInterface|DateInterval
+{
+    return now()-&gt;plus(minutes: 5);
+}
+</code></pre>
+<p><a name="defining-input-expectations"></a></p>
+<h2>定義輸入預期</h2>
+<p>編寫控制台指令時，通常需要透過參數或選項從使用者那裡收集輸入。Laravel 使得使用指令上的 <code>signature</code> 屬性來定義您從使用者那裡預期的輸入變得非常方便。<code>signature</code> 屬性允許您在單個表達力強的、類路由的語法中定義指令的名稱、參數和選項。</p>
+<p><a name="arguments"></a></p>
+<h3>參數</h3>
+<p>所有使用者提供的參數和選項都包裹在花括號中。在以下範例中，指令定義了一個必需參數：<code>user</code>：</p>
+<pre><code class="language-php">/**
+ * 控制台指令的名稱和簽章。
+ *
+ * @var string
+ */
+protected $signature = &#39;mail:send {user}&#39;;
+</code></pre>
+<p>您還可以使參數可選或為參數定義預設值：</p>
+<pre><code class="language-php">// 可選參數...
+&#39;mail:send {user?}&#39;
+
+// 帶有預設值的可選參數...
+&#39;mail:send {user=foo}&#39;
+</code></pre>
+<p><a name="options"></a></p>
+<h3>選項</h3>
+<p>選項與參數一樣，是使用者輸入的另一種形式。當透過命令列提供選項時，它們以兩個連字元（<code>--</code>）為前綴。有兩種類型的選項：接受值的選項和不接受值的選項。不接受值的選項充當布林「開關」。讓我們來看看這種類型選項的範例：</p>
+<pre><code class="language-php">/**
+ * 控制台指令的名稱和簽章。
+ *
+ * @var string
+ */
+protected $signature = &#39;mail:send {user} {--queue}&#39;;
+</code></pre>
+<p>在此範例中，可以在呼叫 Artisan 指令時指定 <code>--queue</code> 開關。如果傳遞了 <code>--queue</code> 開關，選項的值將為 <code>true</code>。否則，值將為 <code>false</code>：</p>
+<pre><code class="language-shell">php artisan mail:send 1 --queue
+</code></pre>
+<p><a name="options-with-values"></a></p>
+<h4>帶有值的選項</h4>
+<p>接下來，讓我們來看看一個期望值的選項。如果使用者必須為選項指定值，您應該在選項名稱後加上 <code>=</code> 號：</p>
+<pre><code class="language-php">/**
+ * 控制台指令的名稱和簽章。
+ *
+ * @var string
+ */
+protected $signature = &#39;mail:send {user} {--queue=}&#39;;
+</code></pre>
+<p>在此範例中，使用者可以像這樣傳遞選項的值。如果在呼叫指令時未指定選項，其值將為 <code>null</code>：</p>
+<pre><code class="language-shell">php artisan mail:send 1 --queue=default
+</code></pre>
+<p>您可以透過在選項名稱後指定預設值來為選項分配預設值。如果使用者沒有傳遞選項值，將使用預設值：</p>
+<pre><code class="language-php">&#39;mail:send {user} {--queue=default}&#39;
+</code></pre>
+<p><a name="option-shortcuts"></a></p>
+<h4>選項捷徑</h4>
+<p>要在定義選項時分配捷徑，您可以在選項名稱之前指定它，並使用 <code>|</code> 字元作為分隔符來分隔捷徑和完整選項名稱：</p>
+<pre><code class="language-php">&#39;mail:send {user} {--Q|queue=}&#39;
+</code></pre>
+<p>在終端機上呼叫指令時，選項捷徑應以單個連字元為前綴，且在為選項指定值時不應包含 <code>=</code> 字元：</p>
+<pre><code class="language-shell">php artisan mail:send 1 -Qdefault
+</code></pre>
+<p><a name="input-arrays"></a></p>
+<h3>輸入陣列</h3>
+<p>如果您想要定義期望多個輸入值的參數或選項，您可以使用 <code>*</code> 字元。首先，讓我們來看看一個指定此類參數的範例：</p>
+<pre><code class="language-php">&#39;mail:send {user*}&#39;
+</code></pre>
+<p>運行此指令時，<code>user</code> 參數可以透過命令列傳遞。例如，以下指令將把 <code>user</code> 的值設為一個包含 <code>1</code> 和 <code>2</code> 作為其值的陣列：</p>
+<pre><code class="language-shell">php artisan mail:send 1 2
+</code></pre>
+<p>此 <code>*</code> 字元可以與可選參數定義結合使用，以允許零個或多個參數實例：</p>
+<pre><code class="language-php">&#39;mail:send {user?*}&#39;
+</code></pre>
+<p><a name="option-arrays"></a></p>
+<h4>選項陣列</h4>
+<p>定義期望多個輸入值的選項時，傳遞給指令的每個選項值都應以選項名稱為前綴：</p>
+<pre><code class="language-php">&#39;mail:send {--id=*}&#39;
+</code></pre>
+<p>可以透過傳遞多個 <code>--id</code> 參數來呼叫此類指令：</p>
+<pre><code class="language-shell">php artisan mail:send --id=1 --id=2
+</code></pre>
+<p><a name="input-descriptions"></a></p>
+<h3>輸入描述</h3>
+<p>您可以透過使用冒號將參數名稱與描述分隔開來，為輸入參數和選項分配描述。如果您需要更多空間來定義指令，請隨時將定義分散在多行中：</p>
+<pre><code class="language-php">/**
+ * 控制台指令的名稱和簽章。
+ *
+ * @var string
+ */
+protected $signature = &#39;mail:send
+                        {user : 使用者的 ID}
+                        {--queue : 任務是否應被佇列化}&#39;;
+</code></pre>
+<p><a name="prompting-for-missing-input"></a></p>
+<h3>提示缺少的輸入</h3>
+<p>如果您的指令包含必需參數，當未提供時使用者將收到錯誤訊息。或者，您可以透過實現 <code>PromptsForMissingInput</code> 介面來設定您的指令在缺少必需參數時自動提示使用者：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Console\\Commands;
+
+use Illuminate\\Console\\Command;
+use Illuminate\\Contracts\\Console\\PromptsForMissingInput;
+
+class SendEmails extends Command implements PromptsForMissingInput
+{
+    /**
+     * 控制台指令的名稱和簽章。
+     *
+     * @var string
+     */
+    protected $signature = &#39;mail:send {user}&#39;;
+
+    // ...
+}
+</code></pre>
+<p>如果 Laravel 需要從使用者那裡收集必需參數，它將透過使用參數名稱或描述智能地措辭問題來自動向使用者詢問參數。如果您想要自訂用於收集必需參數的問題，您可以實現 <code>promptForMissingArgumentsUsing</code> 方法，回傳一個以參數名稱為鍵的問題陣列：</p>
+<pre><code class="language-php">/**
+ * 使用回傳的問題提示缺少的輸入參數。
+ *
+ * @return array&lt;string, string&gt;
+ */
+protected function promptForMissingArgumentsUsing(): array
+{
+    return [
+        &#39;user&#39; =&gt; &#39;哪個使用者 ID 應該收到郵件？&#39;,
+    ];
+}
+</code></pre>
+<p>您還可以透過使用包含問題和佔位符的元組來提供佔位符文本：</p>
+<pre><code class="language-php">return [
+    &#39;user&#39; =&gt; [&#39;哪個使用者 ID 應該收到郵件？&#39;, &#39;例如 123&#39;],
+];
+</code></pre>
+<p>如果您想要完全控制提示，您可以提供一個應該提示使用者並回傳其答案的閉包：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use function Laravel\\Prompts\\search;
+
+// ...
+
+return [
+    &#39;user&#39; =&gt; fn () =&gt; search(
+        label: &#39;搜尋使用者：&#39;,
+        placeholder: &#39;例如 Taylor Otwell&#39;,
+        options: fn ($value) =&gt; strlen($value) &gt; 0
+            ? User::whereLike(&#39;name&#39;, &quot;%{$value}%&quot;)-&gt;pluck(&#39;name&#39;, &#39;id&#39;)-&gt;all()
+            : []
+    ),
+];
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+全面的 <a href="/docs/prompts">Laravel Prompts</a> 文件包含了有關可用提示及其使用方式的額外資訊。</p>
+</blockquote>
+<p>如果您想要提示使用者選擇或輸入<a href="#options">選項</a>，您可以在指令的 <code>handle</code> 方法中包含提示。然而，如果您只想要在使用者也被自動提示缺少參數時才提示他們，那麼您可以實現 <code>afterPromptingForMissingArguments</code> 方法：</p>
+<pre><code class="language-php">use Symfony\\Component\\Console\\Input\\InputInterface;
+use Symfony\\Component\\Console\\Output\\OutputInterface;
+use function Laravel\\Prompts\\confirm;
+
+// ...
+
+/**
+ * 在使用者被提示缺少參數後執行操作。
+ */
+protected function afterPromptingForMissingArguments(InputInterface $input, OutputInterface $output): void
+{
+    $input-&gt;setOption(&#39;queue&#39;, confirm(
+        label: &#39;您想要佇列化郵件嗎？&#39;,
+        default: $this-&gt;option(&#39;queue&#39;)
+    ));
+}
+</code></pre>
+<p><a name="command-io"></a></p>
+<h2>指令 I/O</h2>
+<p><a name="retrieving-input"></a></p>
+<h3>檢索輸入</h3>
+<p>當您的指令執行時，您通常需要存取指令接受的參數和選項的值。為此，您可以使用 <code>argument</code> 和 <code>option</code> 方法。如果參數或選項不存在，將回傳 <code>null</code>：</p>
+<pre><code class="language-php">/**
+ * 執行控制台指令。
+ */
+public function handle(): void
+{
+    $userId = $this-&gt;argument(&#39;user&#39;);
+}
+</code></pre>
+<p>如果您需要將所有參數作為 <code>array</code> 檢索，請呼叫 <code>arguments</code> 方法：</p>
+<pre><code class="language-php">$arguments = $this-&gt;arguments();
+</code></pre>
+<p>選項可以像參數一樣輕鬆地使用 <code>option</code> 方法檢索。要將所有選項作為陣列檢索，請呼叫 <code>options</code> 方法：</p>
+<pre><code class="language-php">// 檢索特定選項...
+$queueName = $this-&gt;option(&#39;queue&#39;);
+
+// 將所有選項作為陣列檢索...
+$options = $this-&gt;options();
+</code></pre>
+<p><a name="prompting-for-input"></a></p>
+<h3>提示輸入</h3>
+<blockquote>
+<p>[!NOTE]
+<a href="/docs/prompts">Laravel Prompts</a> 是一個 PHP 套件，用於為您的命令列應用程式新增美麗且易於使用的表單，具有類瀏覽器的功能，包括佔位符文本和驗證。</p>
+</blockquote>
+<p>除了顯示輸出外，您還可以在指令執行期間要求使用者提供輸入。<code>ask</code> 方法將提示使用者輸入給定的問題，接受他們的輸入，然後將使用者的輸入回傳給您的指令：</p>
+<pre><code class="language-php">/**
+ * 執行控制台指令。
+ */
+public function handle(): void
+{
+    $name = $this-&gt;ask(&#39;您的名字是什麼？&#39;);
+
+    // ...
+}
+</code></pre>
+<p><code>ask</code> 方法還接受一個可選的第二個參數，該參數指定如果未提供使用者輸入時應回傳的預設值：</p>
+<pre><code class="language-php">$name = $this-&gt;ask(&#39;您的名字是什麼？&#39;, &#39;Taylor&#39;);
+</code></pre>
+<p><code>secret</code> 方法類似於 <code>ask</code>，但使用者的輸入在他們在控制台中輸入時對他們不可見。此方法在詢問敏感資訊（如密碼）時非常有用：</p>
+<pre><code class="language-php">$password = $this-&gt;secret(&#39;密碼是什麼？&#39;);
+</code></pre>
+<p><a name="asking-for-confirmation"></a></p>
+<h4>請求確認</h4>
+<p>如果您需要向使用者詢問簡單的「是或否」確認，您可以使用 <code>confirm</code> 方法。預設情況下，此方法將回傳 <code>false</code>。然而，如果使用者輸入 <code>y</code> 或 <code>yes</code> 作為對提示的回應，該方法將回傳 <code>true</code>。</p>
+<pre><code class="language-php">if ($this-&gt;confirm(&#39;您想要繼續嗎？&#39;)) {
+    // ...
+}
+</code></pre>
+<p>如有必要，您可以透過將 <code>true</code> 作為第二個參數傳遞給 <code>confirm</code> 方法來指定確認提示應預設回傳 <code>true</code>：</p>
+<pre><code class="language-php">if ($this-&gt;confirm(&#39;您想要繼續嗎？&#39;, true)) {
+    // ...
+}
+</code></pre>
+<p><a name="auto-completion"></a></p>
+<h4>自動完成</h4>
+<p><code>anticipate</code> 方法可用於為可能的選擇提供自動完成。使用者仍然可以提供任何答案，無論自動完成提示如何：</p>
+<pre><code class="language-php">$name = $this-&gt;anticipate(&#39;您的名字是什麼？&#39;, [&#39;Taylor&#39;, &#39;Dayle&#39;]);
+</code></pre>
+<p>或者，您可以將閉包作為第二個參數傳遞給 <code>anticipate</code> 方法。每次使用者輸入一個輸入字元時，都會呼叫該閉包。閉包應接受一個包含使用者到目前為止的輸入的字串參數，並回傳一個用於自動完成的選項陣列：</p>
+<pre><code class="language-php">use App\\Models\\Address;
+
+$name = $this-&gt;anticipate(&#39;您的地址是什麼？&#39;, function (string $input) {
+    return Address::whereLike(&#39;name&#39;, &quot;{$input}%&quot;)
+        -&gt;limit(5)
+        -&gt;pluck(&#39;name&#39;)
+        -&gt;all();
+});
+</code></pre>
+<p><a name="multiple-choice-questions"></a></p>
+<h4>選擇題</h4>
+<p>如果您需要在提問時給使用者一組預定義的選擇，您可以使用 <code>choice</code> 方法。您可以透過將索引作為第三個參數傳遞給方法來設定如果未選擇選項時應回傳的預設值的陣列索引：</p>
+<pre><code class="language-php">$name = $this-&gt;choice(
+    &#39;您的名字是什麼？&#39;,
+    [&#39;Taylor&#39;, &#39;Dayle&#39;],
+    $defaultIndex
+);
+</code></pre>
+<p>此外，<code>choice</code> 方法接受可選的第四和第五個參數，用於確定選擇有效回應的最大嘗試次數以及是否允許多選：</p>
+<pre><code class="language-php">$name = $this-&gt;choice(
+    &#39;您的名字是什麼？&#39;,
+    [&#39;Taylor&#39;, &#39;Dayle&#39;],
+    $defaultIndex,
+    $maxAttempts = null,
+    $allowMultipleSelections = false
+);
+</code></pre>
+<p><a name="writing-output"></a></p>
+<h3>寫入輸出</h3>
+<p>要將輸出傳送到控制台，您可以使用 <code>line</code>、<code>newLine</code>、<code>info</code>、<code>comment</code>、<code>question</code>、<code>warn</code>、<code>alert</code> 和 <code>error</code> 方法。這些方法中的每一個都將使用適當的 ANSI 顏色。例如，讓我們向使用者顯示一些一般資訊。通常，<code>info</code> 方法將在控制台中以綠色文本顯示：</p>
+<pre><code class="language-php">/**
+ * 執行控制台指令。
+ */
+public function handle(): void
+{
+    // ...
+
+    $this-&gt;info(&#39;指令執行成功！&#39;);
+}
+</code></pre>
+<p>要顯示錯誤訊息，請使用 <code>error</code> 方法。錯誤訊息文本通常以紅色顯示：</p>
+<pre><code class="language-php">$this-&gt;error(&#39;發生了某些錯誤！&#39;);
+</code></pre>
+<p>您可以使用 <code>line</code> 方法來顯示純色、無色文本：</p>
+<pre><code class="language-php">$this-&gt;line(&#39;在螢幕上顯示此內容&#39;);
+</code></pre>
+<p>您可以使用 <code>newLine</code> 方法來顯示空白行：</p>
+<pre><code class="language-php">// 寫入一行空白行...
+$this-&gt;newLine();
+
+// 寫入三行空白行...
+$this-&gt;newLine(3);
+</code></pre>
+<p><a name="tables"></a></p>
+<h4>表格</h4>
+<p><code>table</code> 方法使正確格式化多行/多列資料變得簡單。您只需要提供欄名和表格的資料，Laravel 將自動為您計算表格的適當寬度和高度：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$this-&gt;table(
+    [&#39;Name&#39;, &#39;Email&#39;],
+    User::all([&#39;name&#39;, &#39;email&#39;])-&gt;toArray()
+);
+</code></pre>
+<p><a name="progress-bars"></a></p>
+<h4>進度條</h4>
+<p>對於長時間運行的任務，顯示一個進度條來告知使用者任務的完成程度會很有幫助。使用 <code>withProgressBar</code> 方法，Laravel 將顯示一個進度條，並在對給定可迭代值的每次迭代中推進其進度：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = $this-&gt;withProgressBar(User::all(), function (User $user) {
+    $this-&gt;performTask($user);
+});
+</code></pre>
+<p>有時，您可能需要更多手動控制進度條的推進方式。首先，定義流程將迭代的總步數。然後，在處理每個項目後推進進度條：</p>
+<pre><code class="language-php">$users = App\\Models\\User::all();
+
+$bar = $this-&gt;output-&gt;createProgressBar(count($users));
+
+$bar-&gt;start();
+
+foreach ($users as $user) {
+    $this-&gt;performTask($user);
+
+    $bar-&gt;advance();
+}
+
+$bar-&gt;finish();
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有關更多進階選項，請查看 <a href="https://symfony.com/doc/current/components/console/helpers/progressbar.html">Symfony 進度條元件文件</a>。</p>
+</blockquote>
+<p><a name="registering-commands"></a></p>
+<h2>註冊指令</h2>
+<p>預設情況下，Laravel 會自動註冊 <code>app/Console/Commands</code> 目錄中的所有指令。但是，您可以使用應用程式 <code>bootstrap/app.php</code> 檔案中的 <code>withCommands</code> 方法指示 Laravel 掃描其他目錄中的 Artisan 指令：</p>
+<pre><code class="language-php">-&gt;withCommands([
+    __DIR__.&#39;/../app/Domain/Orders/Commands&#39;,
+])
+</code></pre>
+<p>如有必要，您還可以透過將指令的類別名稱提供給 <code>withCommands</code> 方法來手動註冊指令：</p>
+<pre><code class="language-php">use App\\Domain\\Orders\\Commands\\SendEmails;
+
+-&gt;withCommands([
+    SendEmails::class,
+])
+</code></pre>
+<p>當 Artisan 啟動時，應用程式中的所有指令都將由<a href="/docs/container">服務容器</a>解析並註冊到 Artisan。</p>
+<p><a name="programmatically-executing-commands"></a></p>
+<h2>程式化執行指令</h2>
+<p>有時您可能希望在 CLI 之外執行 Artisan 指令。例如，您可能希望從路由或控制器執行 Artisan 指令。您可以使用 <code>Artisan</code> 外觀上的 <code>call</code> 方法來實現。<code>call</code> 方法接受指令的簽章名稱或類別名稱作為其第一個參數，並接受指令參數陣列作為第二個參數。將回傳退出代碼：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Artisan;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::post(&#39;/user/{user}/mail&#39;, function (string $user) {
+    $exitCode = Artisan::call(&#39;mail:send&#39;, [
+        &#39;user&#39; =&gt; $user, &#39;--queue&#39; =&gt; &#39;default&#39;
+    ]);
+
+    // ...
+});
+</code></pre>
+<p>或者，您可以將整個 Artisan 指令作為字串傳遞給 <code>call</code> 方法：</p>
+<pre><code class="language-php">Artisan::call(&#39;mail:send 1 --queue=default&#39;);
+</code></pre>
+<p><a name="passing-array-values"></a></p>
+<h4>傳遞陣列值</h4>
+<p>如果您的指令定義了一個接受陣列的選項，您可以將值陣列傳遞給該選項：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Artisan;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::post(&#39;/mail&#39;, function () {
+    $exitCode = Artisan::call(&#39;mail:send&#39;, [
+        &#39;--id&#39; =&gt; [5, 13]
+    ]);
+});
+</code></pre>
+<p><a name="passing-boolean-values"></a></p>
+<h4>傳遞布林值</h4>
+<p>如果您需要指定不接受字串值的選項的值，例如 <code>migrate:refresh</code> 指令上的 <code>--force</code> 標誌，您應該傳遞 <code>true</code> 或 <code>false</code> 作為選項的值：</p>
+<pre><code class="language-php">$exitCode = Artisan::call(&#39;migrate:refresh&#39;, [
+    &#39;--force&#39; =&gt; true,
+]);
+</code></pre>
+<p><a name="queueing-artisan-commands"></a></p>
+<h4>佇列化 Artisan 指令</h4>
+<p>使用 <code>Artisan</code> 外觀上的 <code>queue</code> 方法，您甚至可以將 Artisan 指令佇列化，以便它們在背景中由<a href="/docs/queues">佇列 Worker</a>處理。使用此方法之前，請確保您已設定佇列並正在運行佇列監聽器：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Artisan;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::post(&#39;/user/{user}/mail&#39;, function (string $user) {
+    Artisan::queue(&#39;mail:send&#39;, [
+        &#39;user&#39; =&gt; $user, &#39;--queue&#39; =&gt; &#39;default&#39;
+    ]);
+
+    // ...
+});
+</code></pre>
+<p>使用 <code>onConnection</code> 和 <code>onQueue</code> 方法，您可以指定 Artisan 指令應被分派到的連接或佇列：</p>
+<pre><code class="language-php">Artisan::queue(&#39;mail:send&#39;, [
+    &#39;user&#39; =&gt; 1, &#39;--queue&#39; =&gt; &#39;default&#39;
+])-&gt;onConnection(&#39;redis&#39;)-&gt;onQueue(&#39;commands&#39;);
+</code></pre>
+<p><a name="calling-commands-from-other-commands"></a></p>
+<h3>從其他指令呼叫指令</h3>
+<p>有時您可能希望從現有的 Artisan 指令中呼叫其他指令。您可以使用 <code>call</code> 方法來實現。此 <code>call</code> 方法接受指令名稱和指令參數/選項陣列：</p>
+<pre><code class="language-php">/**
+ * 執行控制台指令。
+ */
+public function handle(): void
+{
+    $this-&gt;call(&#39;mail:send&#39;, [
+        &#39;user&#39; =&gt; 1, &#39;--queue&#39; =&gt; &#39;default&#39;
+    ]);
+
+    // ...
+}
+</code></pre>
+<p>如果您想要呼叫另一個控制台指令並抑制其所有輸出，您可以使用 <code>callSilently</code> 方法。<code>callSilently</code> 方法與 <code>call</code> 方法具有相同的簽章：</p>
+<pre><code class="language-php">$this-&gt;callSilently(&#39;mail:send&#39;, [
+    &#39;user&#39; =&gt; 1, &#39;--queue&#39; =&gt; &#39;default&#39;
+]);
+</code></pre>
+<p><a name="signal-handling"></a></p>
+<h2>訊號處理</h2>
+<p>如您所知，作業系統允許向正在運行的進程發送訊號。例如，<code>SIGTERM</code> 訊號是作業系統要求程式優雅終止的方式。如果您想要在 Artisan 控制台指令中監聽訊號並在它們發生時執行程式碼，您可以使用 <code>trap</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 執行控制台指令。
+ */
+public function handle(): void
+{
+    $this-&gt;trap(SIGTERM, fn () =&gt; $this-&gt;shouldKeepRunning = false);
+
+    while ($this-&gt;shouldKeepRunning) {
+        // ...
+    }
+}
+</code></pre>
+<p>要同時監聽多個訊號，您可以向 <code>trap</code> 方法提供一個訊號陣列：</p>
+<pre><code class="language-php">$this-&gt;trap([SIGTERM, SIGQUIT], function (int $signal) {
+    $this-&gt;shouldKeepRunning = false;
+
+    dump($signal); // SIGTERM / SIGQUIT
+});
+</code></pre>
+<p><a name="stub-customization"></a></p>
+<h2>Stub 自訂</h2>
+<p>Artisan 控制台的 <code>make</code> 指令用於建立各種類別，例如控制器、任務、遷移和測試。這些類別是使用「stub」檔案生成的，這些檔案根據您的輸入填充值。但是，您可能想要對 Artisan 生成的檔案進行小的更改。為此，您可以使用 <code>stub:publish</code> 指令將最常見的 stub 發佈到您的應用程式，以便您可以自訂它們：</p>
+<pre><code class="language-shell">php artisan stub:publish
+</code></pre>
+<p>已發佈的 stub 將位於您應用程式根目錄中的 <code>stubs</code> 目錄中。您對這些 stub 所做的任何更改都將在您使用 Artisan 的 <code>make</code> 指令生成相應類別時反映出來。</p>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Artisan 在運行指令時會分派三個事件：<code>Illuminate\\Console\\Events\\ArtisanStarting</code>、<code>Illuminate\\Console\\Events\\CommandStarting</code> 和 <code>Illuminate\\Console\\Events\\CommandFinished</code>。<code>ArtisanStarting</code> 事件在 Artisan 開始運行時立即分派。接下來，<code>CommandStarting</code> 事件在指令運行之前立即分派。最後，<code>CommandFinished</code> 事件在指令完成執行後分派。</p>
+`;
+---
+
+<DocsLayout title="Artisan 命令列" currentPath="artisan">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Artisan 命令列</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Artisan 命令列</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/artisan" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,280 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Folio</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#page-paths-uris">頁面路徑 / URI</a></li>
+<li><a href="#subdomain-routing">子網域路由</a></li>
+</ul>
+</li>
+<li><a href="#creating-routes">創建路由</a><ul>
+<li><a href="#nested-routes">嵌套路由</a></li>
+<li><a href="#index-routes">索引路由</a></li>
+</ul>
+</li>
+<li><a href="#route-parameters">路由參數</a></li>
+<li><a href="#route-model-binding">路由模型綁定</a><ul>
+<li><a href="#soft-deleted-models">軟刪除模型</a></li>
+</ul>
+</li>
+<li><a href="#render-hooks">渲染鉤子</a></li>
+<li><a href="#named-routes">命名路由</a></li>
+<li><a href="#middleware">中介層</a></li>
+<li><a href="#route-caching">路由快取</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/folio">Laravel Folio</a> 是一個強大的基於頁面的路由器，旨在簡化 Laravel 應用程式中的路由。使用 Laravel Folio，生成路由變得像在應用程式的 <code>resources/views/pages</code> 目錄中創建 Blade 範本一樣簡單。</p>
+<p>例如，要創建一個可透過 <code>/greeting</code> URL 存取的頁面，只需在應用程式的 <code>resources/views/pages</code> 目錄中創建一個 <code>greeting.blade.php</code> 檔案：</p>
+<pre><code class="language-php">&lt;div&gt;
+    Hello World
+&lt;/div&gt;
+</code></pre>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器將 Folio 安裝到您的專案中：</p>
+<pre><code class="language-shell">composer require laravel/folio
+</code></pre>
+<p>安裝 Folio 後，您可以執行 <code>folio:install</code> Artisan 命令，它將把 Folio 的服務提供者安裝到您的應用程式中。此服務提供者會註冊 Folio 將搜尋路由/頁面的目錄：</p>
+<pre><code class="language-shell">php artisan folio:install
+</code></pre>
+<p><a name="page-paths-uris"></a></p>
+<h3>頁面路徑 / URI</h3>
+<p>預設情況下，Folio 從應用程式的 <code>resources/views/pages</code> 目錄提供頁面，但您可以在 Folio 服務提供者的 <code>boot</code> 方法中自訂這些目錄。</p>
+<p>例如，有時在同一個 Laravel 應用程式中指定多個 Folio 路徑可能很方便。您可能希望為應用程式的「管理」區域有一個單獨的 Folio 頁面目錄，而為應用程式的其餘頁面使用另一個目錄。</p>
+<p>您可以使用 <code>Folio::path</code> 和 <code>Folio::uri</code> 方法來執行此操作。<code>path</code> 方法註冊一個目錄，Folio 在路由傳入 HTTP 請求時會掃描該目錄中的頁面，而 <code>uri</code> 方法指定該頁面目錄的「基礎 URI」：</p>
+<pre><code class="language-php">use Laravel\\Folio\\Folio;
+
+Folio::path(resource_path('views/pages/guest'))->uri('/');
+
+Folio::path(resource_path('views/pages/admin'))
+    ->uri('/admin')
+    ->middleware([
+        '*' => [
+            'auth',
+            'verified',
+
+            // ...
+        ],
+    ]);
+</code></pre>
+<p><a name="subdomain-routing"></a></p>
+<h3>子網域路由</h3>
+<p>您還可以根據傳入請求的子網域來路由到頁面。例如，您可能希望將來自 <code>admin.example.com</code> 的請求路由到與其餘 Folio 頁面不同的頁面目錄。您可以透過在呼叫 <code>Folio::path</code> 方法後呼叫 <code>domain</code> 方法來實現這一點：</p>
+<pre><code class="language-php">use Laravel\\Folio\\Folio;
+
+Folio::domain('admin.example.com')
+    ->path(resource_path('views/pages/admin'));
+</code></pre>
+<p><code>domain</code> 方法還允許您將網域或子網域的部分作為參數捕獲。這些參數將被注入到您的頁面範本中：</p>
+<pre><code class="language-php">use Laravel\\Folio\\Folio;
+
+Folio::domain('{account}.example.com')
+    ->path(resource_path('views/pages/admin'));
+</code></pre>
+<p><a name="creating-routes"></a></p>
+<h2>創建路由</h2>
+<p>您可以透過在任何 Folio 掛載目錄中放置 Blade 範本來創建 Folio 路由。預設情況下，Folio 掛載 <code>resources/views/pages</code> 目錄，但您可以在 Folio 服務提供者的 <code>boot</code> 方法中自訂這些目錄。</p>
+<p>將 Blade 範本放在 Folio 掛載目錄中後，您可以立即透過瀏覽器存取它。例如，放在 <code>pages/schedule.blade.php</code> 中的頁面可以透過 <code>http://example.com/schedule</code> 在瀏覽器中存取。</p>
+<p>要快速查看所有 Folio 頁面/路由的列表，您可以呼叫 <code>folio:list</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan folio:list
+</code></pre>
+<p><a name="nested-routes"></a></p>
+<h3>嵌套路由</h3>
+<p>您可以透過在 Folio 的其中一個目錄中創建一個或多個目錄來創建嵌套路由。例如，要創建一個可透過 <code>/user/profile</code> 存取的頁面，請在 <code>pages/user</code> 目錄中創建一個 <code>profile.blade.php</code> 範本：</p>
+<pre><code class="language-shell">php artisan folio:page user/profile
+
+# pages/user/profile.blade.php → /user/profile
+</code></pre>
+<p><a name="index-routes"></a></p>
+<h3>索引路由</h3>
+<p>有時，您可能希望將給定頁面設為目錄的「索引」。透過在 Folio 目錄中放置一個 <code>index.blade.php</code> 範本，對該目錄根目錄的任何請求都將被路由到該頁面：</p>
+<pre><code class="language-shell">php artisan folio:page index
+# pages/index.blade.php → /
+
+php artisan folio:page users/index
+# pages/users/index.blade.php → /users
+</code></pre>
+<p><a name="route-parameters"></a></p>
+<h2>路由參數</h2>
+<p>通常，您需要將傳入請求 URL 的片段注入到頁面中，以便與它們互動。例如，您可能需要存取正在顯示個人資料的使用者的「ID」。為此，您可以將頁面檔名的片段封裝在方括號中：</p>
+<pre><code class="language-shell">php artisan folio:page "users/[id]"
+
+# pages/users/[id].blade.php → /users/1
+</code></pre>
+<p>捕獲的片段可以在 Blade 範本中作為變數存取：</p>
+<pre><code class="language-html">&lt;div&gt;
+    User {{ $id }}
+&lt;/div&gt;
+</code></pre>
+<p>要捕獲多個片段，您可以在封裝的片段前添加三個點 <code>...</code>：</p>
+<pre><code class="language-shell">php artisan folio:page "users/[...ids]"
+
+# pages/users/[...ids].blade.php → /users/1/2/3
+</code></pre>
+<p>捕獲多個片段時，捕獲的片段將作為陣列注入到頁面中：</p>
+<pre><code class="language-html">&lt;ul&gt;
+    @foreach ($ids as $id)
+        &lt;li&gt;User {{ $id }}&lt;/li&gt;
+    @endforeach
+&lt;/ul&gt;
+</code></pre>
+<p><a name="route-model-binding"></a></p>
+<h2>路由模型綁定</h2>
+<p>如果頁面範本檔名的萬用字元片段對應於您應用程式的一個 Eloquent 模型，Folio 將自動利用 Laravel 的路由模型綁定功能，並嘗試將解析的模型實例注入到您的頁面中：</p>
+<pre><code class="language-shell">php artisan folio:page "users/[User]"
+
+# pages/users/[User].blade.php → /users/1
+</code></pre>
+<p>捕獲的模型可以在 Blade 範本中作為變數存取。模型的變數名稱將被轉換為「駝峰式」：</p>
+<pre><code class="language-html">&lt;div&gt;
+    User {{ $user-&gt;id }}
+&lt;/div&gt;
+</code></pre>
+<h4>自訂金鑰</h4>
+<p>有時您可能希望使用 <code>id</code> 以外的欄位來解析綁定的 Eloquent 模型。為此，您可以在頁面的檔名中指定該欄位。例如，檔名為 <code>[Post:slug].blade.php</code> 的頁面將嘗試透過 <code>slug</code> 欄位而不是 <code>id</code> 欄位來解析綁定的模型。</p>
+<p>在 Windows 上，您應該使用 <code>-</code> 來分隔模型名稱和金鑰：<code>[Post-slug].blade.php</code>。</p>
+<h4>模型位置</h4>
+<p>預設情況下，Folio 將在應用程式的 <code>app/Models</code> 目錄中搜尋您的模型。但是，如果需要，您可以在範本的檔名中指定完全限定的模型類別名稱：</p>
+<pre><code class="language-shell">php artisan folio:page "users/[.App.Models.User]"
+
+# pages/users/[.App.Models.User].blade.php → /users/1
+</code></pre>
+<p><a name="soft-deleted-models"></a></p>
+<h3>軟刪除模型</h3>
+<p>預設情況下，在解析隱式模型綁定時不會檢索已被軟刪除的模型。但是，如果您願意，可以透過在頁面的範本中呼叫 <code>withTrashed</code> 函數來指示 Folio 檢索軟刪除的模型：</p>
+<pre><code class="language-php">&lt;?php
+
+use function Laravel\\Folio\\{withTrashed};
+
+withTrashed();
+
+?&gt;
+
+&lt;div&gt;
+    User {{ $user-&gt;id }}
+&lt;/div&gt;
+</code></pre>
+<p><a name="render-hooks"></a></p>
+<h2>渲染鉤子</h2>
+<p>預設情況下，Folio 將返回頁面 Blade 範本的內容作為傳入請求的回應。但是，您可以透過在頁面的範本中呼叫 <code>render</code> 函數來自訂回應。</p>
+<p><code>render</code> 函數接受一個閉包，該閉包將接收 Folio 正在渲染的 <code>View</code> 實例，允許您向視圖添加額外的資料或自訂整個回應。除了接收 <code>View</code> 實例外，任何額外的路由參數或模型綁定也將提供給 <code>render</code> 閉包：</p>
+<pre><code class="language-php">&lt;?php
+
+use App\\Models\\Post;
+use Illuminate\\Support\\Facades\\Auth;
+use Illuminate\\View\\View;
+
+use function Laravel\\Folio\\render;
+
+render(function (View $view, Post $post) {
+    if (! Auth::user()->can('view', $post)) {
+        return response('Unauthorized', 403);
+    }
+
+    return $view->with('photos', $post->author->photos);
+}); ?&gt;
+
+&lt;div&gt;
+    {{ $post-&gt;content }}
+&lt;/div&gt;
+
+&lt;div&gt;
+    This author has also taken {{ count($photos) }} photos.
+&lt;/div&gt;
+</code></pre>
+<p><a name="named-routes"></a></p>
+<h2>命名路由</h2>
+<p>您可以使用 <code>name</code> 函數為給定頁面的路由指定名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+use function Laravel\\Folio\\name;
+
+name('users.index');
+</code></pre>
+<p>就像 Laravel 的命名路由一樣，您可以使用 <code>route</code> 函數來生成已分配名稱的 Folio 頁面的 URL：</p>
+<pre><code class="language-php">&lt;a href="{{ route('users.index') }}"&gt;
+    All Users
+&lt;/a&gt;
+</code></pre>
+<p>如果頁面有參數，您可以簡單地將它們的值傳遞給 <code>route</code> 函數：</p>
+<pre><code class="language-php">route('users.show', ['user' => $user]);
+</code></pre>
+<p><a name="middleware"></a></p>
+<h2>中介層</h2>
+<p>您可以透過在頁面的範本中呼叫 <code>middleware</code> 函數來將中介層應用於特定頁面：</p>
+<pre><code class="language-php">&lt;?php
+
+use function Laravel\\Folio\\{middleware};
+
+middleware(['auth', 'verified']);
+
+?&gt;
+
+&lt;div&gt;
+    Dashboard
+&lt;/div&gt;
+</code></pre>
+<p>或者，要將中介層分配給一組頁面，您可以在呼叫 <code>Folio::path</code> 方法後鏈式呼叫 <code>middleware</code> 方法。</p>
+<p>要指定中介層應應用於哪些頁面，中介層陣列可以使用它們應應用於的頁面的相應 URL 模式作為鍵。<code>*</code> 字元可用作萬用字元：</p>
+<pre><code class="language-php">use Laravel\\Folio\\Folio;
+
+Folio::path(resource_path('views/pages'))->middleware([
+    'admin/*' => [
+        'auth',
+        'verified',
+
+        // ...
+    ],
+]);
+</code></pre>
+<p>您可以在中介層陣列中包含閉包來定義行內、匿名中介層：</p>
+<pre><code class="language-php">use Closure;
+use Illuminate\\Http\\Request;
+use Laravel\\Folio\\Folio;
+
+Folio::path(resource_path('views/pages'))->middleware([
+    'admin/*' => [
+        'auth',
+        'verified',
+
+        function (Request $request, Closure $next) {
+            // ...
+
+            return $next($request);
+        },
+    ],
+]);
+</code></pre>
+<p><a name="route-caching"></a></p>
+<h2>路由快取</h2>
+<p>使用 Folio 時，您應該始終利用 <a href="/docs/routing#route-caching">Laravel 的路由快取功能</a>。Folio 監聽 <code>route:cache</code> Artisan 命令，以確保 Folio 頁面定義和路由名稱被正確快取以獲得最佳效能。</p>
+`;
+---
+
+<DocsLayout title="Folio" currentPath="folio">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Folio</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Folio</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/folio" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

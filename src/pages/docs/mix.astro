@@ -1,0 +1,50 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Mix</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<blockquote>
+<p>[!WARNING]
+Laravel Mix 是一個舊版套件，目前已不再積極維護。<a href="/docs/vite">Vite</a> 可作為現代替代方案。</p>
+</blockquote>
+<p><a href="https://github.com/laravel-mix/laravel-mix">Laravel Mix</a> 是由 <a href="https://laracasts.com">Laracasts</a> 建立者 Jeffrey Way 開發的套件，它提供了一個流式 API，用於使用多個常見的 CSS 和 JavaScript 前處理器為您的 Laravel 應用程式定義 <a href="https://webpack.js.org">webpack</a> 建構步驟。</p>
+<p>換句話說，Mix 讓您能輕鬆編譯和壓縮應用程式的 CSS 和 JavaScript 檔案。透過簡單的方法鏈，您可以流暢地定義您的資產管線。例如：</p>
+<pre><code class="language-js">mix.js('resources/js/app.js', 'public/js')
+    .postCss('resources/css/app.css', 'public/css');
+</code></pre>
+<p>如果您曾經對 webpack 和資產編譯感到困惑和不知所措，您會喜歡 Laravel Mix。但是，在開發應用程式時您不一定需要使用它；您可以自由使用任何您喜歡的資產管線工具，甚至完全不使用。</p>
+<blockquote>
+<p>[!NOTE]
+Vite 已在新的 Laravel 安裝中取代了 Laravel Mix。有關 Mix 文件，請訪問 <a href="https://laravel-mix.com/">官方 Laravel Mix</a> 網站。如果您想切換到 Vite，請參閱我們的 <a href="https://github.com/laravel/vite-plugin/blob/main/UPGRADE.md#migrating-from-laravel-mix-to-vite">Vite 遷移指南</a>。</p>
+</blockquote>
+`;
+---
+
+<DocsLayout title="Laravel Mix" currentPath="mix">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Mix</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Mix</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/mix" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

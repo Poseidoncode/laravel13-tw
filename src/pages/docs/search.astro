@@ -1,0 +1,262 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>搜尋</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#introduction-full-text-search">全文搜尋</a></li>
+<li><a href="#introduction-semantic-vector-search">語意向量搜尋</a></li>
+<li><a href="#introduction-reranking">重新排序</a></li>
+<li><a href="#introduction-scout-search-engines">Scout 搜尋引擎</a></li>
+</ul>
+</li>
+<li><a href="#full-text-search">全文搜尋</a><ul>
+<li><a href="#adding-full-text-indexes">新增全文索引</a></li>
+<li><a href="#running-full-text-queries">執行全文查詢</a></li>
+</ul>
+</li>
+<li><a href="#semantic-vector-search">語意向量搜尋</a><ul>
+<li><a href="#generating-embeddings">生成嵌入向量</a></li>
+<li><a href="#storing-and-indexing-vectors">儲存和索引向量</a></li>
+<li><a href="#querying-by-similarity">相似度查詢</a></li>
+</ul>
+</li>
+<li><a href="#reranking-results">重新排序結果</a></li>
+<li><a href="#laravel-scout">Laravel Scout</a><ul>
+<li><a href="#database-engine">資料庫引擎</a></li>
+<li><a href="#third-party-engines">第三方引擎</a></li>
+</ul>
+</li>
+<li><a href="#combining-techniques">結合技術</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>幾乎每個應用程式都需要搜尋功能。無論您的用戶是在知識庫中搜尋相關文章、瀏覽產品目錄，還是對文件語料庫提出自然語言問題，Laravel 都提供了內建工具來處理這些場景 — 而且您通常不需要任何外部服務就能實現。</p>
+<p>大多數應用程式會發現 Laravel 提供的內建資料庫驅動選項已綽綽有餘 — 外部搜尋服務僅在您需要大規模的拼字容錯、分面篩選或地理搜尋等進階功能時才必要。</p>
+<p><a name="introduction-full-text-search"></a></p>
+<h4>全文搜尋</h4>
+<p>當您需要關鍵字相關性排序 — 即資料庫根據搜尋詞的匹配程度對結果進行評分和排序 — 時，Laravel 的 <code>whereFullText</code> 查詢建構器方法利用了 MariaDB、MySQL 和 PostgreSQL 上的原生全文索引。全文搜尋理解詞語邊界和字根提取，因此搜尋「running」可以匹配包含「run」的記錄。不需要外部服務。</p>
+<p><a name="introduction-semantic-vector-search"></a></p>
+<h4>語意向量搜尋</h4>
+<p>對於基於 AI 的語意搜尋，它根據*含義*而非精確關鍵字來匹配結果，<code>whereVectorSimilarTo</code> 查詢建構器方法使用儲存在帶有 <code>pgvector</code> 擴充功能的 PostgreSQL 中的向量嵌入。例如，搜尋「Napa Valley 最好的酒莊」可以浮現一篇標題為「頂級必訪酒莊」的文章 — 即使詞語完全不重疊。向量搜尋需要帶有 <code>pgvector</code> 擴充功能的 PostgreSQL 和 <a href="/docs/ai-sdk">Laravel AI SDK</a>。</p>
+<p><a name="introduction-reranking"></a></p>
+<h4>重新排序</h4>
+<p>Laravel 的 <a href="/docs/ai-sdk">AI SDK</a> 提供重新排序功能，使用 AI 模型根據與查詢的語意相關性重新排列任何結果集。重新排序作為快速初始檢索步驟（如全文搜尋）之後的第二階段尤其強大 — 讓您同時獲得速度和語意準確性。</p>
+<p><a name="introduction-scout-search-engines"></a></p>
+<h4>Laravel Scout 搜尋</h4>
+<p>對於希望使用 <code>Searchable</code> trait 自動保持搜尋索引與 Eloquent 模型同步的應用程式，<a href="/docs/scout">Laravel Scout</a> 提供了內建的資料庫引擎以及用於 Algolia、Meilisearch 和 Typesense 等第三方服務的驅動程式。</p>
+<p><a name="full-text-search"></a></p>
+<h2>全文搜尋</h2>
+<p>雖然 <code>LIKE</code> 查詢對於簡單的子字串匹配效果良好，但它們不理解語言。對「running」進行 <code>LIKE</code> 搜尋不會找到包含「run」的記錄，而且結果不會按相關性排序 — 它們只是以資料庫找到的任何順序返回。全文搜尋透過使用理解詞語邊界、字根提取和相關性評分的專用索引來解決這兩個問題，讓資料庫能先返回最相關的結果。</p>
+<p>快速全文搜尋內建於 MariaDB、MySQL 和 PostgreSQL 中 — 不需要外部搜尋服務。您只需要為要搜尋的欄位新增全文索引，然後使用 <code>whereFullText</code> 查詢建構器方法來搜尋它們。</p>
+<blockquote>
+<p>[!WARNING]
+全文搜尋目前由 MariaDB、MySQL 和 PostgreSQL 支援。</p>
+</blockquote>
+<p><a name="adding-full-text-indexes"></a></p>
+<h3>新增全文索引</h3>
+<p>要使用全文搜尋，首先為要搜尋的欄位新增全文索引。您可以將索引新增到單一欄位，或傳遞欄位陣列來建立跨多個欄位搜尋的複合索引：</p>
+<pre><code class="language-php">Schema::create('articles', function (Blueprint $table) {
+    $table->id();
+    $table->string('title');
+    $table->text('body');
+    $table->timestamps();
+
+    $table->fullText(['title', 'body']);
+});
+</code></pre>
+<p>在 PostgreSQL 上，您可以為索引指定語言設定，這控制了詞語的字根提取方式：</p>
+<pre><code class="language-php">$table->fullText('body')->language('english');
+</code></pre>
+<p>要了解更多關於建立索引的資訊，請參閱<a href="/docs/migrations#available-index-types">遷移文件</a>。</p>
+<p><a name="running-full-text-queries"></a></p>
+<h3>執行全文查詢</h3>
+<p>索引就緒後，使用 <code>whereFullText</code> 查詢建構器方法來搜尋它。Laravel 將為您的資料庫驅動程式生成適當的 SQL — 例如，在 MariaDB 和 MySQL 上為 <code>MATCH(...) AGAINST(...)</code>，在 PostgreSQL 上為 <code>to_tsvector(...) @@ plainto_tsquery(...)</code>：</p>
+<pre><code class="language-php">$articles = Article::whereFullText('body', 'web developer')->get();
+</code></pre>
+<p>使用 MariaDB 和 MySQL 時，結果會自動按相關性評分排序。在 PostgreSQL 上，<code>whereFullText</code> 會篩選匹配的記錄但不會按相關性排序 — 如果您需要在 PostgreSQL 上自動按相關性排序，可以考慮使用 <a href="#database-engine">Scout 的資料庫引擎</a>。</p>
+<p>如果您建立了跨多個欄位的複合全文索引，可以透過向 <code>whereFullText</code> 傳遞相同的欄位陣列來搜尋所有欄位：</p>
+<pre><code class="language-php">$articles = Article::whereFullText(
+    ['title', 'body'], 'web developer'
+)->get();
+</code></pre>
+<p><code>orWhereFullText</code> 方法可用於將全文搜尋子句作為「或」條件新增。要了解更多詳細資訊，請參閱<a href="/docs/queries#full-text-where-clauses">查詢建構器文件</a>。</p>
+<p><a name="semantic-vector-search"></a></p>
+<h2>語意向量搜尋</h2>
+<p>全文搜尋依賴關鍵字匹配 — 查詢中的詞語必須以某種形式出現在資料中。語意搜尋採用完全不同的方法：它使用 AI 生成的向量嵌入將文字的*含義*表示為數字陣列，然後找到含義與查詢最相似的結果。例如，搜尋「Napa Valley 最好的酒莊」可以浮現一篇標題為「頂級必訪酒莊」的文章 — 即使詞語完全不重疊。</p>
+<p>向量搜尋的基本工作流程是：為每個內容生成一個嵌入向量（數字陣列）並與資料一起儲存，然後在搜尋時為用戶的查詢生成一個嵌入向量，並在向量空間中找到與之最接近的已儲存嵌入向量。</p>
+<blockquote>
+<p>[!NOTE]
+向量搜尋需要 <a href="/docs/ai-sdk">Laravel AI SDK</a>，由 PostgreSQL（需要 <code>pgvector</code> 擴充功能）和 MongoDB（需要 <a href="https://laravel.com/docs/13.x/mongodb">Laravel MongoDB 套件</a>）支援。<a href="https://laravel.com/cloud">Laravel Cloud</a> 上的所有 Postgres 資料庫都已安裝 <code>pgvector</code>。</p>
+</blockquote>
+<p><a name="generating-embeddings"></a></p>
+<h3>生成嵌入向量</h3>
+<p>嵌入向量是一個高維數字陣列（通常有數百或數千個數字），代表一段文字的語意含義。您可以使用 Laravel 的 <code>Stringable</code> 類別上可用的 <code>toEmbeddings</code> 方法為字串生成嵌入向量：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$embedding = Str::of('Napa Valley has great wine.')->toEmbeddings();
+</code></pre>
+<p>要一次為多個輸入生成嵌入向量 — 這比逐個生成更有效率，因為它只需要對嵌入提供者進行一次 API 呼叫 — 請使用 <code>Embeddings</code> 類別：</p>
+<pre><code class="language-php">use Laravel\\Ai\\Embeddings;
+
+$response = Embeddings::for([
+    'Napa Valley has great wine.',
+    'Laravel is a PHP framework.',
+])->generate();
+
+$response->embeddings; // [[0.123, 0.456, ...], [0.789, 0.012, ...]]
+</code></pre>
+<p>要了解更多關於設定嵌入提供者、自訂維度和快取的資訊，請參閱 <a href="/docs/ai-sdk#embeddings">AI SDK 文件</a>。</p>
+<p><a name="storing-and-indexing-vectors"></a></p>
+<h3>儲存和索引向量</h3>
+<p>要儲存向量嵌入，請在遷移中定義一個 <code>vector</code> 欄位，指定與嵌入提供者輸出匹配的維度數（例如，OpenAI 的 <code>text-embedding-3-small</code> 模型為 1536）。您還應該在欄位上呼叫 <code>index</code> 來建立 HNSW（分層可導航小型世界）索引，這可以大幅加速大型資料集上的相似度搜尋：</p>
+<pre><code class="language-php">Schema::ensureVectorExtensionExists();
+
+Schema::create('documents', function (Blueprint $table) {
+    $table->id();
+    $table->string('title');
+    $table->text('content');
+    $table->vector('embedding', dimensions: 1536)->index();
+    $table->timestamps();
+});
+</code></pre>
+<p><code>Schema::ensureVectorExtensionExists</code> 方法在建立資料表之前確保 PostgreSQL 資料庫上已啟用 <code>pgvector</code> 擴充功能。</p>
+<p>在您的 Eloquent 模型上，將向量欄位轉換為 <code>array</code>，以便 Laravel 自動處理 PHP 陣列與資料庫向量格式之間的轉換：</p>
+<pre><code class="language-php">protected function casts(): array
+{
+    return [
+        'embedding' => 'array',
+    ];
+}
+</code></pre>
+<p>要了解更多關於向量欄位和索引的資訊，請參閱<a href="/docs/migrations#available-column-types">遷移文件</a>。</p>
+<p><a name="querying-by-similarity"></a></p>
+<h3>相似度查詢</h3>
+<p>儲存內容的嵌入向量後，您可以使用 <code>whereVectorSimilarTo</code> 方法搜尋相似的記錄。此方法使用餘弦相似度將給定的嵌入向量與已儲存的向量進行比較，過濾掉低於 <code>minSimilarity</code> 閾值的結果，並自動按相關性排序結果 — 最相似的記錄排在最前面。閾值應為 <code>0.0</code> 到 <code>1.0</code> 之間的值，其中 <code>1.0</code> 表示向量完全相同：</p>
+<pre><code class="language-php">$documents = Document::query()
+    ->whereVectorSimilarTo('embedding', $queryEmbedding, minSimilarity: 0.4)
+    ->limit(10)
+    ->get();
+</code></pre>
+<p>作為便利功能，當給定純文字字串而非嵌入向量陣列時，Laravel 將使用您設定的嵌入提供者自動為您生成嵌入向量。這意味著您可以直接傳遞用戶的搜尋查詢，而無需先手動將其轉換為嵌入向量：</p>
+<pre><code class="language-php">$documents = Document::query()
+    ->whereVectorSimilarTo('embedding', 'best wineries in Napa Valley')
+    ->limit(10)
+    ->get();
+</code></pre>
+<p>要對向量查詢進行更底層的控制，<code>whereVectorDistanceLessThan</code>、<code>selectVectorDistance</code> 和 <code>orderByVectorDistance</code> 方法也可用。這些方法讓您可以直接使用距離值而非相似度評分、在結果中選擇計算的距離作為欄位，或手動控制排序。要了解更多詳細資訊，請參閱<a href="/docs/queries#vector-similarity-clauses">查詢建構器文件</a>和 <a href="/docs/ai-sdk#querying-embeddings">AI SDK 文件</a>。</p>
+<p><a name="reranking-results"></a></p>
+<h2>重新排序結果</h2>
+<p>重新排序是一種技術，AI 模型根據每個結果與給定查詢的語意相關性重新排列結果集。與需要預先計算和儲存嵌入向量的向量搜尋不同，重新排序適用於任何文字集合 — 它接受原始內容和查詢作為輸入，並返回按相關性排序的項目。</p>
+<p>重新排序作為快速初始檢索步驟之後的第二階段尤其強大。例如，您可以使用全文搜尋快速將數千條記錄縮減到前 50 個候選者，然後使用重新排序將最相關的結果放在最前面。這種「先檢索再重新排序」的模式讓您同時獲得速度和語意準確性。</p>
+<p>您可以使用 <code>Reranking</code> 類別對字串陣列進行重新排序：</p>
+<pre><code class="language-php">use Laravel\\Ai\\Reranking;
+
+$response = Reranking::of([
+    'Django is a Python web framework.',
+    'Laravel is a PHP web application framework.',
+    'React is a JavaScript library for building user interfaces.',
+])->rerank('PHP frameworks');
+
+$response->first()->document; // "Laravel is a PHP web application framework."
+</code></pre>
+<p>Laravel 集合還有一個 <code>rerank</code> 宏，它接受一個欄位名稱（或閉包）和一個查詢，使得重新排序 Eloquent 結果變得很容易：</p>
+<pre><code class="language-php">$articles = Article::all()
+    ->rerank('body', 'Laravel tutorials');
+</code></pre>
+<p>要了解更多關於設定重新排序提供者和可用選項的資訊，請參閱 <a href="/docs/ai-sdk#reranking">AI SDK 文件</a>。</p>
+<p><a name="laravel-scout"></a></p>
+<h2>Laravel Scout</h2>
+<p>上述搜尋技術都是您在程式碼中直接呼叫的查詢建構器方法。<a href="/docs/scout">Laravel Scout</a> 採用了不同的方法：它提供了一個 <code>Searchable</code> trait，您將其新增到 Eloquent 模型中，Scout 會在記錄建立、更新和刪除時自動保持搜尋索引同步。當您希望模型始終可搜尋而無需手動管理索引更新時，這特別方便。</p>
+<p><a name="database-engine"></a></p>
+<h3>資料庫引擎</h3>
+<p>Scout 的內建資料庫引擎對您現有的資料庫執行全文和 <code>LIKE</code> 搜尋 — 不需要外部服務或額外的基礎設施。只需將 <code>Searchable</code> trait 新增到模型中，並定義一個 <code>toSearchableArray</code> 方法，返回您要搜尋的欄位。</p>
+<p>您可以使用 PHP 屬性來控制每個欄位的搜尋策略。<code>SearchUsingFullText</code> 將使用資料庫的全文索引，<code>SearchUsingPrefix</code> 將僅從字串的開頭匹配（<code>example%</code>），沒有屬性的任何欄位使用預設的 <code>LIKE</code> 策略，兩側都有萬用字元（<code>%example%</code>）：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Scout\\Attributes\\SearchUsingFullText;
+use Laravel\\Scout\\Attributes\\SearchUsingPrefix;
+use Laravel\\Scout\\Searchable;
+
+class Article extends Model
+{
+    use Searchable;
+
+    #[SearchUsingPrefix(['id'])]
+    #[SearchUsingFullText(['title', 'body'])]
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'body' => $this->body,
+        ];
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+在指定欄位應使用全文查詢約束之前，請確保該欄位已分配<a href="/docs/migrations#available-index-types">全文索引</a>。</p>
+</blockquote>
+<p>新增 trait 後，您可以使用 Scout 的 <code>search</code> 方法來搜尋模型。Scout 的資料庫引擎將自動按相關性排序結果，即使在 PostgreSQL 上也是如此：</p>
+<pre><code class="language-php">$articles = Article::search('Laravel')->get();
+</code></pre>
+<p>當您的搜尋需求適中且您希望享受 Scout 自動索引同步的便利而無需部署外部服務時，資料庫引擎是一個很好的選擇。它能很好地處理最常見的搜尋使用場景，包括篩選、分頁和軟刪除記錄處理。要了解更多詳細資訊，請參閱 <a href="/docs/scout#database-engine">Scout 文件</a>。</p>
+<p><a name="third-party-engines"></a></p>
+<h3>第三方引擎</h3>
+<p>Scout 還支援第三方搜尋引擎，如 <a href="https://www.algolia.com/">Algolia</a>、<a href="https://www.meilisearch.com">Meilisearch</a> 和 <a href="https://typesense.org">Typesense</a>。這些專用搜尋服務提供進階功能，如拼字容錯、分面篩選、地理搜尋和自訂排序規則 — 這些功能在非常大規模或需要高度精緻的即打即搜體驗時變得很重要。</p>
+<p>由於 Scout 在所有驅動程式之間提供統一的 API，以後從資料庫引擎切換到第三方引擎只需要最少的程式碼變更。您可以從資料庫引擎開始，僅在應用程式的需求超出資料庫所能提供的範圍時才遷移到第三方服務。</p>
+<p>要了解更多關於設定第三方引擎的資訊，請參閱 <a href="/docs/scout">Scout 文件</a>。</p>
+<blockquote>
+<p>[!NOTE]
+許多應用程式永遠不需要外部搜尋引擎。本頁面描述的內建技術涵蓋了絕大多數使用場景。</p>
+</blockquote>
+<p><a name="combining-techniques"></a></p>
+<h2>結合技術</h2>
+<p>本頁面描述的搜尋技術並非互斥 — 結合它們通常能產生最佳結果。以下是兩個常見模式，展示這些工具如何协同工作。</p>
+<p><strong>全文檢索 + 重新排序</strong></p>
+<p>使用全文搜尋快速將大型資料集縮減到候選集，然後套用重新排序按語意相關性排序這些候選者。這讓您獲得資料庫原生全文搜尋的速度和 AI 驅動的相關性評分的準確性：</p>
+<pre><code class="language-php">$articles = Article::query()
+    ->whereFullText('body', $request->input('query'))
+    ->limit(50)
+    ->get()
+    ->rerank('body', $request->input('query'), limit: 10);
+</code></pre>
+<p><strong>向量搜尋 + 傳統篩選</strong></p>
+<p>將向量相似度與標準 <code>where</code> 子句結合，將語意搜尋範圍限定到記錄的子集。當您想要基於含義的搜尋但需要按所有權、類別或任何其他屬性限制結果時，這很有用：</p>
+<pre><code class="language-php">$documents = Document::query()
+    ->where('team_id', $user->team_id)
+    ->whereVectorSimilarTo('embedding', $request->input('query'))
+    ->limit(10)
+    ->get();
+</code></pre>
+`;
+---
+
+<DocsLayout title="搜尋" currentPath="search">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>搜尋</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">搜尋</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/search" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

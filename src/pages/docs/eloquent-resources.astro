@@ -1,0 +1,1074 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Eloquent: API 資源</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#generating-resources">生成資源</a></li>
+<li><a href="#concept-overview">概念概述</a><ul>
+<li><a href="#resource-collections">資源集合</a></li>
+</ul>
+</li>
+<li><a href="#writing-resources">編寫資源</a><ul>
+<li><a href="#data-wrapping">資料包裝</a></li>
+<li><a href="#pagination">分頁</a></li>
+<li><a href="#conditional-attributes">條件屬性</a></li>
+<li><a href="#conditional-relationships">條件關係</a></li>
+<li><a href="#adding-meta-data">添加元資料</a></li>
+</ul>
+</li>
+<li><a href="#jsonapi-resources">JSON:API 資源</a><ul>
+<li><a href="#generating-jsonapi-resources">生成 JSON:API 資源</a></li>
+<li><a href="#defining-jsonapi-attributes">定義屬性</a></li>
+<li><a href="#defining-jsonapi-relationships">定義關係</a></li>
+<li><a href="#jsonapi-resource-type-and-id">資源類型與 ID</a></li>
+<li><a href="#jsonapi-sparse-fieldsets-and-includes">稀疏欄位集與包含</a></li>
+<li><a href="#jsonapi-links-and-meta">連結與元資料</a></li>
+</ul>
+</li>
+<li><a href="#resource-responses">資源回應</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>在構建 API 時，您可能需要一個轉換層，它位於您的 Eloquent 模型與實際返回給應用程式使用者的 JSON 回應之間。例如，您可能希望為某些使用者子集顯示某些屬性而不為其他使用者顯示，或者您可能希望在模型的 JSON 表示中始終包含某些關係。Eloquent 的資源類別允許您以表達性且簡便的方式將您的模型和模型集合轉換為 JSON。</p>
+<p>當然，您可以隨時使用它們的 <code>toJson</code> 方法將 Eloquent 模型或集合轉換為 JSON；但是，Eloquent 資源提供了對模型及其關係的 JSON 序列化的更細粒度和更強大的控制。</p>
+<p><a name="generating-resources"></a></p>
+<h2>生成資源</h2>
+<p>要生成一個資源類別，您可以使用 <code>make:resource</code> Artisan 命令。預設情況下，資源將放置在應用程式的 <code>app/Http/Resources</code> 目錄中。資源擴展 <code>Illuminate\\Http\\Resources\\Json\\JsonResource</code> 類別：</p>
+<pre><code class="language-shell">php artisan make:resource UserResource
+</code></pre>
+<p><a name="generating-resource-collections"></a></p>
+<h4>資源集合</h4>
+<p>除了生成轉換單個模型的資源外，您還可以生成負責轉換模型集合的資源。這使您的 JSON 回應能夠包含與給定資源的整個集合相關的連結和其他元資訊。</p>
+<p>要建立資源集合，您應該在創建資源時使用 <code>--collection</code> 標誌。或者，在資源名稱中包含單詞 <code>Collection</code> 將向 Laravel 指示它應該創建一個集合資源。集合資源擴展 <code>Illuminate\\Http\\Resources\\Json\\ResourceCollection</code> 類別：</p>
+<pre><code class="language-shell">php artisan make:resource User --collection
+
+php artisan make:resource UserCollection
+</code></pre>
+<p><a name="concept-overview"></a></p>
+<h2>概念概述</h2>
+<blockquote>
+<p>[!NOTE]
+這是對資源和資源集合的高階概述。強烈建議您閱讀本文件的其他部分，以更深入地了解資源為您提供的自訂和強大功能。</p>
+</blockquote>
+<p>在深入探討編寫資源時可用的所有選項之前，讓我們首先從高階角度看看資源如何在 Laravel 中使用。一個資源類別代表一個需要轉換為 JSON 結構的單個模型。例如，以下是一個簡單的 <code>UserResource</code> 資源類別：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Resources\\Json\\JsonResource;
+
+class UserResource extends JsonResource
+{
+    /**
+     * 將資源轉換為陣列。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
+</code></pre>
+<p>每個資源類別都定義了一個 <code>toArray</code> 方法，該方法返回當資源從路由或控制器方法作為回應返回時應轉換為 JSON 的屬性陣列。</p>
+<p>注意我們可以直接從 <code>$this</code> 變數存取模型屬性。這是因為資源類別會自動將屬性和方法存取代理到基礎模型，以便於存取。一旦定義了資源，就可以從路由或控制器返回它。資源透過其構造函數接受基礎模型實例：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserResource;
+use App\\Models\\User;
+
+Route::get('/user/{id}', function (string $id) {
+    return new UserResource(User::findOrFail($id));
+});
+</code></pre>
+<p>為了方便，您可以使用模型的 <code>toResource</code> 方法，它將使用框架慣例自動發現模型的基礎資源：</p>
+<pre><code class="language-php">return User::findOrFail($id)->toResource();
+</code></pre>
+<p>呼叫 <code>toResource</code> 方法時，Laravel 將嘗試在最接近模型命名空間的 <code>Http\\Resources</code> 命名空間中找到與模型名稱匹配並可選地以 <code>Resource</code> 為後綴的資源。</p>
+<p>如果您的資源類別不遵循此命名慣例或位於不同的命名空間中，您可以使用 <code>UseResource</code> 屬性為模型指定預設資源：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Http\\Resources\\CustomUserResource;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\Attributes\\UseResource;
+
+#[UseResource(CustomUserResource::class)]
+class User extends Model
+{
+    // ...
+}
+</code></pre>
+<p>或者，您可以透過將資源類別傳遞給 <code>toResource</code> 方法來指定它：</p>
+<pre><code class="language-php">return User::findOrFail($id)->toResource(CustomUserResource::class);
+</code></pre>
+<p><a name="resource-collections"></a></p>
+<h3>資源集合</h3>
+<p>如果您返回一個資源集合或分頁回應，您應該在路由或控制器中創建資源實例時使用資源類別提供的 <code>collection</code> 方法：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserResource;
+use App\\Models\\User;
+
+Route::get('/users', function () {
+    return UserResource::collection(User::all());
+});
+</code></pre>
+<p>或者，為了方便，您可以使用 Eloquent 集合的 <code>toResourceCollection</code> 方法，它將使用框架慣例自動發現模型的基礎資源集合：</p>
+<pre><code class="language-php">return User::all()->toResourceCollection();
+</code></pre>
+<p>呼叫 <code>toResourceCollection</code> 方法時，Laravel 將嘗試在最接近模型命名空間的 <code>Http\\Resources</code> 命名空間中找到與模型名稱匹配並以 <code>Collection</code> 為後綴的資源集合。</p>
+<p>如果您的資源集合類別不遵循此命名慣例或位於不同的命名空間中，您可以使用 <code>UseResourceCollection</code> 屬性為模型指定預設資源集合：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Http\\Resources\\CustomUserCollection;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\Attributes\\UseResourceCollection;
+
+#[UseResourceCollection(CustomUserCollection::class)]
+class User extends Model
+{
+    // ...
+}
+</code></pre>
+<p>或者，您可以透過將資源集合類別傳遞給 <code>toResourceCollection</code> 方法來指定它：</p>
+<pre><code class="language-php">return User::all()->toResourceCollection(CustomUserCollection::class);
+</code></pre>
+<p><a name="custom-resource-collections"></a></p>
+<h4>自訂資源集合</h4>
+<p>預設情況下，資源集合不允許添加可能需要隨集合返回的任何自訂元資料。如果您希望自訂資源集合回應，您可以創建一個專用的資源來表示該集合：</p>
+<pre><code class="language-shell">php artisan make:resource UserCollection
+</code></pre>
+<p>生成資源集合類別後，您可以輕鬆定義應與回應一起包含的任何元資料：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Resources\\Json\\ResourceCollection;
+
+class UserCollection extends ResourceCollection
+{
+    /**
+     * 將資源集合轉換為陣列。
+     *
+     * @return array&lt;int|string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'data' => $this->collection,
+            'links' => [
+                'self' => 'link-value',
+            ],
+        ];
+    }
+}
+</code></pre>
+<p>定義資源集合後，可以從路由或控制器返回它：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserCollection;
+use App\\Models\\User;
+
+Route::get('/users', function () {
+    return new UserCollection(User::all());
+});
+</code></pre>
+<p>或者，為了方便，您可以使用 Eloquent 集合的 <code>toResourceCollection</code> 方法，它將使用框架慣例自動發現模型的基礎資源集合：</p>
+<pre><code class="language-php">return User::all()->toResourceCollection();
+</code></pre>
+<p>呼叫 <code>toResourceCollection</code> 方法時，Laravel 將嘗試在最接近模型命名空間的 <code>Http\\Resources</code> 命名空間中找到與模型名稱匹配並以 <code>Collection</code> 為後綴的資源集合。</p>
+<p><a name="preserving-collection-keys"></a></p>
+<h4>保留集合鍵</h4>
+<p>從路由返回資源集合時，Laravel 會重設集合的鍵，使其按數字順序排列。但是，您可以在資源類別上使用 <code>PreserveKeys</code> 屬性來指示是否應保留集合的原始鍵：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Resources\\Attributes\\PreserveKeys;
+use Illuminate\\Http\\Resources\\Json\\JsonResource;
+
+#[PreserveKeys]
+class UserResource extends JsonResource
+{
+    // ...
+}
+</code></pre>
+<p>當 <code>preserveKeys</code> 屬性設定為 <code>true</code> 時，當從路由或控制器返回集合時，集合鍵將被保留：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserResource;
+use App\\Models\\User;
+
+Route::get('/users', function () {
+    return UserResource::collection(User::all()->keyBy->id);
+});
+</code></pre>
+<p><a name="customizing-the-underlying-resource-class"></a></p>
+<h4>自訂基礎資源類別</h4>
+<p>通常，資源集合的 <code>$this-&gt;collection</code> 屬性會自動填充將集合的每個項目映射到其單數資源類別的結果。單數資源類別被假設為集合的類別名稱（去掉類別名稱末尾的 <code>Collection</code> 部分）。此外，根據您的個人偏好，單數資源類別可能帶有或不帶 <code>Resource</code> 後綴。</p>
+<p>例如，<code>UserCollection</code> 將嘗試將給定的使用者實例映射到 <code>UserResource</code> 資源。要自訂此行為，您可以在資源集合上使用 <code>Collects</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Resources\\Attributes\\Collects;
+use Illuminate\\Http\\Resources\\Json\\ResourceCollection;
+
+#[Collects(Member::class)]
+class UserCollection extends ResourceCollection
+{
+    // ...
+}
+</code></pre>
+<p><a name="writing-resources"></a></p>
+<h2>編寫資源</h2>
+<blockquote>
+<p>[!NOTE]
+如果您尚未閱讀<a href="#concept-overview">概念概述</strong>，強烈建議您在繼續閱讀本文件之前先閱讀它。</p>
+</blockquote>
+<p>資源只需要將給定模型轉換為陣列。因此，每個資源都包含一個 <code>toArray</code> 方法，該方法將您的模型屬性轉換為 API 友好的陣列，可以從應用程式的路由或控制器返回：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Resources\\Json\\JsonResource;
+
+class UserResource extends JsonResource
+{
+    /**
+     * 將資源轉換為陣列。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
+</code></pre>
+<p>一旦定義了資源，就可以直接從路由或控制器返回它：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/user/{id}', function (string $id) {
+    return User::findOrFail($id)->toUserResource();
+});
+</code></pre>
+<p><a name="relationships"></a></p>
+<h4>關係</h4>
+<p>如果您希望在回應中包含相關資源，您可以將它們添加到資源的 <code>toArray</code> 方法返回的陣列中。在此範例中，我們將使用 <code>PostResource</code> 資源的 <code>collection</code> 方法將使用者的部落格文章添加到資源回應中：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\PostResource;
+use Illuminate\\Http\\Request;
+
+/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'posts' => PostResource::collection($this->posts),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您希望僅在關係已被載入時才包含它們，請查閱<a href="#conditional-relationships">條件關係</a>的文件。</p>
+</blockquote>
+<p><a name="writing-resource-collections"></a></p>
+<h4>資源集合</h4>
+<p>雖然資源將單個模型轉換為陣列，但資源集合將模型集合轉換為陣列。但是，並非絕對需要為每個模型定義一個資源集合類別，因為所有 Eloquent 模型集合都提供了一個 <code>toResourceCollection</code> 方法來即時生成一個「臨時」資源集合：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users', function () {
+    return User::all()->toResourceCollection();
+});
+</code></pre>
+<p>但是，如果您需要自訂隨集合返回的元資料，則有必要定義您自己的資源集合：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Resources\\Json\\ResourceCollection;
+
+class UserCollection extends ResourceCollection
+{
+    /**
+     * 將資源集合轉換為陣列。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'data' => $this->collection,
+            'links' => [
+                'self' => 'link-value',
+            ],
+        ];
+    }
+}
+</code></pre>
+<p>像單數資源一樣，資源集合可以直接從路由或控制器返回：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserCollection;
+use App\\Models\\User;
+
+Route::get('/users', function () {
+    return new UserCollection(User::all());
+});
+</code></pre>
+<p>或者，為了方便，您可以使用 Eloquent 集合的 <code>toResourceCollection</code> 方法，它將使用框架慣例自動發現模型的基礎資源集合：</p>
+<pre><code class="language-php">return User::all()->toResourceCollection();
+</code></pre>
+<p>呼叫 <code>toResourceCollection</code> 方法時，Laravel 將嘗試在最接近模型命名空間的 <code>Http\\Resources</code> 命名空間中找到與模型名稱匹配並以 <code>Collection</code> 為後綴的資源集合。</p>
+<p><a name="data-wrapping"></a></p>
+<h3>資料包裝</h3>
+<p>預設情況下，當資源回應轉換為 JSON 時，您的最外層資源會包裝在 <code>data</code> 鍵中。因此，例如，一個典型的資源集合回應如下所示：</p>
+<pre><code class="language-json">{
+    "data": [
+        {
+            "id": 1,
+            "name": "Eladio Schroeder Sr.",
+            "email": "therese28@example.com"
+        },
+        {
+            "id": 2,
+            "name": "Liliana Mayert",
+            "email": "evandervort@example.com"
+        }
+    ]
+}
+</code></pre>
+<p>如果您希望禁用最外層資源的包裝，您應該在基礎 <code>Illuminate\\Http\\Resources\\Json\\JsonResource</code> 類別上呼叫 <code>withoutWrapping</code> 方法。通常，您應該從 <code>AppServiceProvider</code> 或在每次請求到應用程式時載入的其他<a href="/docs/providers">服務提供者</a>中呼叫此方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Http\\Resources\\Json\\JsonResource;
+use Illuminate\\Support\\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 註冊任何應用程式服務。
+     */
+    public function register(): void
+    {
+        // ...
+    }
+
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        JsonResource::withoutWrapping();
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+<code>withoutWrapping</code> 方法只影響最外層回應，不會移除您手動添加到自己的資源集合中的 <code>data</code> 鍵。</p>
+</blockquote>
+<p><a name="wrapping-nested-resources"></a></p>
+<h4>包裝巢狀資源</h4>
+<p>您有完全的自由來決定如何包裝資源的關係。如果您希望所有資源集合都包裝在 <code>data</code> 鍵中，而不論其巢狀結構如何，您應該為每個資源定義一個資源集合類別，並在 <code>data</code> 鍵中返回該集合。</p>
+<p>您可能想知道這是否會導致最外層資源被包裝在兩個 <code>data</code> 鍵中。不用擔心，Laravel 永遠不會讓您的資源被意外地雙重包裝，因此您不必擔心正在轉換的資源集合的巢狀層級：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Resources\\Json\\ResourceCollection;
+
+class CommentsCollection extends ResourceCollection
+{
+    /**
+     * 將資源集合轉換為陣列。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return ['data' => $this->collection];
+    }
+}
+</code></pre>
+<p><a name="data-wrapping-and-pagination"></a></p>
+<h4>資料包裝與分頁</h4>
+<p>透過資源回應返回分頁集合時，即使已呼叫 <code>withoutWrapping</code> 方法，Laravel 仍會將您的資源資料包裝在 <code>data</code> 鍵中。這是因為分頁回應始終包含帶有關於分頁器狀態資訊的 <code>meta</code> 和 <code>links</code> 鍵：</p>
+<pre><code class="language-json">{
+    "data": [
+        {
+            "id": 1,
+            "name": "Eladio Schroeder Sr.",
+            "email": "therese28@example.com"
+        },
+        {
+            "id": 2,
+            "name": "Liliana Mayert",
+            "email": "evandervort@example.com"
+        }
+    ],
+    "links":{
+        "first": "http://example.com/users?page=1",
+        "last": "http://example.com/users?page=1",
+        "prev": null,
+        "next": null
+    },
+    "meta":{
+        "current_page": 1,
+        "from": 1,
+        "last_page": 1,
+        "path": "http://example.com/users",
+        "per_page": 15,
+        "to": 10,
+        "total": 10
+    }
+}
+</code></pre>
+<p><a name="pagination"></a></p>
+<h3>分頁</h3>
+<p>您可以將 Laravel 分頁器實例傳遞給資源的 <code>collection</code> 方法或自訂資源集合：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserCollection;
+use App\\Models\\User;
+
+Route::get('/users', function () {
+    return new UserCollection(User::paginate());
+});
+</code></pre>
+<p>或者，為了方便，您可以使用分頁器的 <code>toResourceCollection</code> 方法，它將使用框架慣例自動發現分頁模型的基礎資源集合：</p>
+<pre><code class="language-php">return User::paginate()->toResourceCollection();
+</code></pre>
+<p>分頁回應始終包含帶有關於分頁器狀態資訊的 <code>meta</code> 和 <code>links</code> 鍵：</p>
+<pre><code class="language-json">{
+    "data": [
+        {
+            "id": 1,
+            "name": "Eladio Schroeder Sr.",
+            "email": "therese28@example.com"
+        },
+        {
+            "id": 2,
+            "name": "Liliana Mayert",
+            "email": "evandervort@example.com"
+        }
+    ],
+    "links":{
+        "first": "http://example.com/users?page=1",
+        "last": "http://example.com/users?page=1",
+        "prev": null,
+        "next": null
+    },
+    "meta":{
+        "current_page": 1,
+        "from": 1,
+        "last_page": 1,
+        "path": "http://example.com/users",
+        "per_page": 15,
+        "to": 10,
+        "total": 10
+    }
+}
+</code></pre>
+<p><a name="customizing-the-pagination-information"></a></p>
+<h4>自訂分頁資訊</h4>
+<p>如果您希望自訂分頁回應的 <code>links</code> 或 <code>meta</code> 鍵中包含的資訊，您可以在資源上定義一個 <code>paginationInformation</code> 方法。此方法將接收 <code>$paginated</code> 資料和 <code>$default</code> 資訊陣列，該陣列包含 <code>links</code> 和 <code>meta</code> 鍵：</p>
+<pre><code class="language-php">/**
+ * 自訂資源的分頁資訊。
+ *
+ * @param  \\Illuminate\\Http\\Request  $request
+ * @param  array  $paginated
+ * @param  array  $default
+ * @return array
+ */
+public function paginationInformation($request, $paginated, $default)
+{
+    $default['links']['custom'] = 'https://example.com';
+
+    return $default;
+}
+</code></pre>
+<p><a name="conditional-attributes"></a></p>
+<h3>條件屬性</h3>
+<p>有時您可能希望僅在滿足給定條件時才在資源回應中包含屬性。例如，您可能希望僅在當前使用者是「管理員」時才包含一個值。Laravel 提供了各種輔助方法來協助您處理這種情況。<code>when</code> 方法可用於有條件地向資源回應添加屬性：</p>
+<pre><code class="language-php">/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'secret' => $this->when($request->user()->isAdmin(), 'secret-value'),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+</code></pre>
+<p>在此範例中，<code>secret</code> 鍵僅在已認證使用者的 <code>isAdmin</code> 方法返回 <code>true</code> 時才會在最終資源回應中返回。如果該方法返回 <code>false</code>，<code>secret</code> 鍵將在回應發送給客戶端之前從資源回應中移除。<code>when</code> 方法允許您以表達性的方式定義資源，而無需在構建陣列時使用條件語句。</p>
+<p><code>when</code> 方法還接受一個閉包作為其第二個參數，允許您僅在給定條件為 <code>true</code> 時才計算結果值：</p>
+<pre><code class="language-php">'secret' => $this->when($request->user()->isAdmin(), function () {
+    return 'secret-value';
+}),
+</code></pre>
+<p><code>whenHas</code> 方法可用於在基礎模型上實際存在該屬性時包含它：</p>
+<pre><code class="language-php">'name' => $this->whenHas('name'),
+</code></pre>
+<p>此外，<code>whenNotNull</code> 方法可用於在屬性不為 null 時將其包含在資源回應中：</p>
+<pre><code class="language-php">'name' => $this->whenNotNull($this->name),
+</code></pre>
+<p><a name="merging-conditional-attributes"></a></p>
+<h4>合併條件屬性</h4>
+<p>有時您可能有幾個屬性僅基於相同條件才應包含在資源回應中。在這種情況下，您可以使用 <code>mergeWhen</code> 方法，僅在給定條件為 <code>true</code> 時才將這些屬性包含在回應中：</p>
+<pre><code class="language-php">/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        $this->mergeWhen($request->user()->isAdmin(), [
+            'first-secret' => 'value',
+            'second-secret' => 'value',
+        ]),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+</code></pre>
+<p>同樣，如果給定條件為 <code>false</code>，這些屬性將在回應發送給客戶端之前從資源回應中移除。</p>
+<blockquote>
+<p>[!WARNING]
+<code>mergeWhen</code> 方法不應在混合字串和數字鍵的陣列中使用。此外，它不應在具有未按順序排列的數字鍵的陣列中使用。</p>
+</blockquote>
+<p><a name="conditional-relationships"></a></p>
+<h3>條件關係</h3>
+<p>除了有條件地載入屬性外，您還可以基於關係是否已在模型上載入來有條件地在資源回應中包含關係。這使您的控制器可以決定應在模型上載入哪些關係，而您的資源可以輕鬆地僅在它們實際被載入時才包含它們。最終，這使得更容易避免資源中的「N+1」查詢問題。</p>
+<p><code>whenLoaded</code> 方法可用於有條件地載入關係。為了避免不必要的載入關係，此方法接受關係的名稱而不是關係本身：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\PostResource;
+
+/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'posts' => PostResource::collection($this->whenLoaded('posts')),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+</code></pre>
+<p>在此範例中，如果關係尚未載入，<code>posts</code> 鍵將在回應發送給客戶端之前從資源回應中移除。</p>
+<p><a name="conditional-relationship-counts"></a></p>
+<h4>條件關係計數</h4>
+<p>除了有條件地包含關係外，您還可以基於關係的計數是否已在模型上載入來有條件地在資源回應中包含關係「計數」：</p>
+<pre><code class="language-php">new UserResource($user->loadCount('posts'));
+</code></pre>
+<p><code>whenCounted</code> 方法可用於有條件地在資源回應中包含關係的計數。此方法避免在關係計數不存在時不必要地包含該屬性：</p>
+<pre><code class="language-php">/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'posts_count' => $this->whenCounted('posts'),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+</code></pre>
+<p>在此範例中，如果 <code>posts</code> 關係的計數尚未載入，<code>posts_count</code> 鍵將在回應發送給客戶端之前從資源回應中移除。</p>
+<p>其他類型的聚合，例如 <code>avg</code>、<code>sum</code>、<code>min</code> 和 <code>max</code>，也可以使用 <code>whenAggregated</code> 方法有條件地載入：</p>
+<pre><code class="language-php">'words_avg' => $this->whenAggregated('posts', 'words', 'avg'),
+'words_sum' => $this->whenAggregated('posts', 'words', 'sum'),
+'words_min' => $this->whenAggregated('posts', 'words', 'min'),
+'words_max' => $this->whenAggregated('posts', 'words', 'max'),
+</code></pre>
+<p><a name="conditional-pivot-information"></a></p>
+<h4>條件樞紐資訊</h4>
+<p>除了在資源回應中有條件地包含關係資訊外，您還可以使用 <code>whenPivotLoaded</code> 方法有條件地從多對多關係的中間表中包含資料。<code>whenPivotLoaded</code> 方法接受樞紐表的名稱作為其第一個參數。第二個參數應是一個閉包，該閉包返回如果模型上存在樞紐資訊時應返回的值：</p>
+<pre><code class="language-php">/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'expires_at' => $this->whenPivotLoaded('role_user', function () {
+            return $this->pivot->expires_at;
+        }),
+    ];
+}
+</code></pre>
+<p>如果您的關係使用<a href="/docs/eloquent-relationships#defining-custom-intermediate-table-models">自訂中間表模型</a>，您可以將中間表模型的實例作為第一個參數傳遞給 <code>whenPivotLoaded</code> 方法：</p>
+<pre><code class="language-php">'expires_at' => $this->whenPivotLoaded(new Membership, function () {
+    return $this->pivot->expires_at;
+}),
+</code></pre>
+<p>如果您的中間表使用的是 <code>pivot</code> 以外的存取器，您可以使用 <code>whenPivotLoadedAs</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'expires_at' => $this->whenPivotLoadedAs('subscription', 'role_user', function () {
+            return $this->subscription->expires_at;
+        }),
+    ];
+}
+</code></pre>
+<p><a name="adding-meta-data"></a></p>
+<h3>添加元資料</h3>
+<p>某些 JSON API 標準要求在您的資源和資源集合回應中添加元資料。這通常包括像到資源或相關資源的 <code>links</code>，或關於資源本身的元資料等內容。如果您需要返回關於資源的額外元資料，請將其包含在您的 <code>toArray</code> 方法中。例如，您可能在轉換資源集合時包含 <code>links</code> 資訊：</p>
+<pre><code class="language-php">/**
+ * 將資源轉換為陣列。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toArray(Request $request): array
+{
+    return [
+        'data' => $this->collection,
+        'links' => [
+            'self' => 'link-value',
+        ],
+    ];
+}
+</code></pre>
+<p>從資源返回額外元資料時，您無需擔心意外覆蓋 Laravel 在返回分頁回應時自動添加的 <code>links</code> 或 <code>meta</code> 鍵。您定義的任何額外 <code>links</code> 都將與分頁器提供的連結合併。</p>
+<p><a name="top-level-meta-data"></a></p>
+<h4>頂層元資料</h4>
+<p>有時您可能希望僅在資源是最外層資源時才在資源回應中包含某些元資料。通常，這包括關於整個回應的元資訊。要定義此元資料，請在您的資源類別中添加一個 <code>with</code> 方法。此方法應返回一個元資料陣列，僅當資源是最外層正在轉換的資源時才與資源回應一起包含：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Resources\\Json\\ResourceCollection;
+
+class UserCollection extends ResourceCollection
+{
+    /**
+     * 將資源集合轉換為陣列。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return parent::toArray($request);
+    }
+
+    /**
+     * 獲取應與資源陣列一起返回的額外資料。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function with(Request $request): array
+    {
+        return [
+            'meta' => [
+                'key' => 'value',
+            ],
+        ];
+    }
+}
+</code></pre>
+<p><a name="adding-meta-data-when-constructing-resources"></a></p>
+<h4>創建資源時添加元資料</h4>
+<p>您也可以在路由或控制器中創建資源實例時添加頂層資料。所有資源上都可用的 <code>additional</code> 方法接受一個資料陣列，該資料應添加到資源回應中：</p>
+<pre><code class="language-php">return User::all()
+    ->load('roles')
+    ->toResourceCollection()
+    ->additional(['meta' => [
+        'key' => 'value',
+    ]]);
+</code></pre>
+<p><a name="jsonapi-resources"></a></p>
+<h2>JSON:API 資源</h2>
+<p>Laravel 附帶了 <code>JsonApiResource</code>，一個產生符合 <a href="https://jsonapi.org/">JSON:API 規範</a>的回應的資源類別。它擴展了標準 <code>JsonResource</code> 類別，並自動處理資源物件結構、關係、稀疏欄位集、包含、惰性屬性求值，並將 <code>Content-Type</code> 標頭設定為 <code>application/vnd.api+json</code>。</p>
+<blockquote>
+<p>[!NOTE]
+Laravel 的 JSON:API 資源處理回應的序列化。如果您還需要解析傳入的 JSON:API 查詢參數（如過濾器和排序），<a href="https://spatie.be/docs/laravel-query-builder">Spatie 的 Laravel Query Builder</a> 是一個很棒的配套套件。</p>
+</blockquote>
+<p><a name="generating-jsonapi-resources"></a></p>
+<h3>生成 JSON:API 資源</h3>
+<p>要生成一個 JSON:API 資源，請使用帶有 <code>--json-api</code> 標誌的 <code>make:resource</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan make:resource PostResource --json-api
+</code></pre>
+<p>生成的類別將擴展 <code>Illuminate\\Http\\Resources\\JsonApi\\JsonApiResource</code>，並包含供您定義的 <code>$attributes</code> 和 <code>$relationships</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Resources\\JsonApi\\JsonApiResource;
+
+class PostResource extends JsonApiResource
+{
+    /**
+     * 資源的屬性。
+     */
+    public $attributes = [
+        // ...
+    ];
+
+    /**
+     * 資源的關係。
+     */
+    public $relationships = [
+        // ...
+    ];
+}
+</code></pre>
+<p>JSON:API 資源可以像標準資源一樣從路由和控制器返回：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\PostResource;
+use App\\Models\\Post;
+
+Route::get('/api/posts/{post}', function (Post $post) {
+    return new PostResource($post);
+});
+</code></pre>
+<p>或者，為了方便，您可以使用模型的 <code>toResource</code> 方法：</p>
+<pre><code class="language-php">Route::get('/api/posts/{post}', function (Post $post) {
+    return $post->toResource();
+});
+</code></pre>
+<p>這將產生一個符合 JSON:API 的回應：</p>
+<pre><code class="language-json">{
+    "data": {
+        "id": "1",
+        "type": "posts",
+        "attributes": {
+            "title": "Hello World",
+            "body": "This is my first post."
+        }
+    }
+}
+</code></pre>
+<p>要返回一個 JSON:API 資源集合，請使用 <code>collection</code> 方法或 <code>toResourceCollection</code> 便利方法：</p>
+<pre><code class="language-php">return PostResource::collection(Post::all());
+
+return Post::all()->toResourceCollection();
+</code></pre>
+<p><a name="defining-jsonapi-attributes"></a></p>
+<h3>定義屬性</h3>
+<p>有兩種方式可以定義 JSON:API 資源中包含哪些屬性。</p>
+<p>最簡單的方法是在資源上定義一個 <code>$attributes</code> 屬性。您可以列出作為值的屬性名稱，這些名稱將直接從基礎模型讀取：</p>
+<pre><code class="language-php">public $attributes = [
+    'title',
+    'body',
+    'created_at',
+];
+</code></pre>
+<p>如果某個屬性的計算成本很高，您可以從 <code>toAttributes</code> 返回一個閉包，以便僅在回應中實際需要該屬性時才對其求值。</p>
+<p>或者，要完全控制資源的屬性，您可以覆蓋資源上的 <code>toAttributes</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 獲取資源的屬性。
+ *
+ * @return array&lt;string, mixed&gt;
+ */
+public function toAttributes(Request $request): array
+{
+    return [
+        'title' => $this->title,
+        'body' => $this->body,
+        'is_published' => fn () => $this->published_at !== null,
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+</code></pre>
+<p><a name="defining-jsonapi-relationships"></a></p>
+<h3>定義關係</h3>
+<p>JSON:API 資源支援定義遵循 JSON:API 規範的關係。關係僅在客戶端透過 <code>include</code> 查詢參數請求時才被序列化。</p>
+<h4><code>$relationships</code> 屬性</h4>
+<p>您可以透過資源上的 <code>$relationships</code> 屬性定義資源的可包含關係：</p>
+<pre><code class="language-php">public $relationships = [
+    'author',
+    'comments',
+];
+</code></pre>
+<p>當將關係名稱列為值時，Laravel 將解析相應的 Eloquent 關係並自動發現適當的資源類別。如果您需要明確指定資源類別，您可以將關係定義為鍵/類別對：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserResource;
+
+public $relationships = [
+    'author' => UserResource::class,
+    'comments',
+];
+</code></pre>
+<p>或者，您可以覆蓋資源上的 <code>toRelationships</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 獲取資源的關係。
+ */
+public function toRelationships(Request $request): array
+{
+    return [
+        'author' => UserResource::class,
+        'comments' => fn () => CommentResource::collection(
+            $request->user()->is($this->resource)
+                ? $this->comments
+                : $this->comments->where('is_public', true),
+        ),
+    ];
+}
+</code></pre>
+<p>使用閉包可以讓您對關係有效載荷有更多控制，同時仍僅在客戶端請求時才解析關係。</p>
+<h4>包含關係</h4>
+<p>客戶端可以使用 <code>include</code> 查詢參數請求相關資源：</p>
+<pre><code>GET /api/posts/1?include=author,comments
+</code></pre>
+<p>這會產生一個回應，其中 <code>relationships</code> 鍵中包含資源標識物件，頂層 <code>included</code> 陣列中包含完整的資源物件：</p>
+<pre><code class="language-json">{
+    "data": {
+        "id": "1",
+        "type": "posts",
+        "attributes": {
+            "title": "Hello World"
+        },
+        "relationships": {
+            "author": {
+                "data": {
+                    "id": "1",
+                    "type": "users"
+                }
+            },
+            "comments": {
+                "data": [
+                    {
+                        "id": "1",
+                        "type": "comments"
+                    }
+                ]
+            }
+        }
+    },
+    "included": [
+        {
+            "id": "1",
+            "type": "users",
+            "attributes": {
+                "name": "Taylor Otwell"
+            }
+        },
+        {
+            "id": "1",
+            "type": "comments",
+            "attributes": {
+                "body": "Great post!"
+            }
+        }
+    ]
+}
+</code></pre>
+<p>巢狀關係可以使用點號表示法包含：</p>
+<pre><code>GET /api/posts/1?include=comments.author
+</code></pre>
+<p><a name="jsonapi-relationship-depth"></a></p>
+<h4>關係深度</h4>
+<p>預設情況下，巢狀關係包含的深度有限制。您可以使用 <code>maxRelationshipDepth</code> 方法自訂此限制，通常在應用程式的其中一個服務提供者中：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Resources\\JsonApi\\JsonApiResource;
+
+JsonApiResource::maxRelationshipDepth(3);
+</code></pre>
+<p><a name="jsonapi-resource-type-and-id"></a></p>
+<h3>資源類型與 ID</h3>
+<p>預設情況下，資源的 <code>type</code> 派生自資源類別名稱。例如，<code>PostResource</code> 產生類型 <code>posts</code>，<code>BlogPostResource</code> 產生 <code>blog-posts</code>。資源的 <code>id</code> 從模型的主鍵解析。</p>
+<p>如果您需要自訂這些值，您可以覆蓋資源上的 <code>toType</code> 和 <code>toId</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 獲取資源的類型。
+ */
+public function toType(Request $request): string
+{
+    return 'articles';
+}
+
+/**
+ * 獲取資源的 ID。
+ */
+public function toId(Request $request): string
+{
+    return (string) $this->uuid;
+}
+</code></pre>
+<p>當資源的類型應與其類別名稱不同時，這特別有用，例如當 <code>AuthorResource</code> 包裝一個 <code>User</code> 模型並應輸出類型 <code>authors</code> 時。</p>
+<p><a name="jsonapi-sparse-fieldsets-and-includes"></a></p>
+<h3>稀疏欄位集與包含</h3>
+<p>JSON:API 資源支援<a href="https://jsonapi.org/format/#fetching-sparse-fieldsets">稀疏欄位集</a>，允許客戶端使用 <code>fields</code> 查詢參數僅請求每種資源類型的特定屬性：</p>
+<pre><code>GET /api/posts?fields[posts]=title,created_at&amp;fields[users]=name
+</code></pre>
+<p>這將僅為 <code>posts</code> 資源包含 <code>title</code> 和 <code>created_at</code> 屬性，為 <code>users</code> 資源包含 <code>name</code> 屬性。</p>
+<p><a name="jsonapi-ignoring-query-string"></a></p>
+<h4>忽略查詢字串</h4>
+<p>如果您希望為給定的資源回應禁用稀疏欄位集篩選，您可以呼叫 <code>ignoreFieldsAndIncludesInQueryString</code> 方法：</p>
+<pre><code class="language-php">return $post->toResource()
+    ->ignoreFieldsAndIncludesInQueryString();
+</code></pre>
+<p><a name="jsonapi-including-previously-loaded-relationships"></a></p>
+<h4>包含先前載入的關係</h4>
+<p>預設情況下，僅在透過 <code>include</code> 查詢參數請求時才在回應中包含關係。如果您希望不論查詢字串如何都包含所有先前預先載入的關係，您可以呼叫 <code>includePreviouslyLoadedRelationships</code> 方法：</p>
+<pre><code class="language-php">return $post->load('author', 'comments')
+    ->toResource()
+    ->includePreviouslyLoadedRelationships();
+</code></pre>
+<p><a name="jsonapi-links-and-meta"></a></p>
+<h3>連結與元資料</h3>
+<p>您可以透過覆蓋資源上的 <code>toLinks</code> 和 <code>toMeta</code> 方法來向 JSON:API 資源物件添加連結和元資訊：</p>
+<pre><code class="language-php">/**
+ * 獲取資源的連結。
+ */
+public function toLinks(Request $request): array
+{
+    return [
+        'self' => route('api.posts.show', $this->resource),
+    ];
+}
+
+/**
+ * 獲取資源的元資訊。
+ */
+public function toMeta(Request $request): array
+{
+    return [
+        'readable_created_at' => $this->created_at->diffForHumans(),
+    ];
+}
+</code></pre>
+<p>這將向回應中的資源物件添加 <code>links</code> 和 <code>meta</code> 鍵：</p>
+<pre><code class="language-json">{
+    "data": {
+        "id": "1",
+        "type": "posts",
+        "attributes": {
+            "title": "Hello World"
+        },
+        "links": {
+            "self": "https://example.com/api/posts/1"
+        },
+        "meta": {
+            "readable_created_at": "2 hours ago"
+        }
+    }
+}
+</code></pre>
+<p><a name="resource-responses"></a></p>
+<h2>資源回應</h2>
+<p>如您已經閱讀的，資源可以直接從路由和控制器返回：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/user/{id}', function (string $id) {
+    return User::findOrFail($id)->toResource();
+});
+</code></pre>
+<p>但是，有時您可能需要在發送給客戶端之前自訂傳出的 HTTP 回應。有兩種方法可以實現這一點。首先，您可以在資源上鏈式呼叫 <code>response</code> 方法。此方法將返回一個 <code>Illuminate\\Http\\JsonResponse</code> 實例，使您可以完全控制回應的標頭：</p>
+<pre><code class="language-php">use App\\Http\\Resources\\UserResource;
+use App\\Models\\User;
+
+Route::get('/user', function () {
+    return User::find(1)
+        ->toResource()
+        ->response()
+        ->header('X-Value', 'True');
+});
+</code></pre>
+<p>或者，您可以在資源本身內定義一個 <code>withResponse</code> 方法。當資源作為最外層資源從回應中返回時，將呼叫此方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Resources;
+
+use Illuminate\\Http\\JsonResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Resources\\Json\\JsonResource;
+
+class UserResource extends JsonResource
+{
+    /**
+     * 將資源轉換為陣列。
+     *
+     * @return array&lt;string, mixed&gt;
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+        ];
+    }
+
+    /**
+     * 自訂資源的傳出回應。
+     */
+    public function withResponse(Request $request, JsonResponse $response): void
+    {
+        $response->header('X-Value', 'True');
+    }
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="Eloquent API 資源" currentPath="eloquent-resources">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Eloquent API 資源</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Eloquent API 資源</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/eloquent-resources" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

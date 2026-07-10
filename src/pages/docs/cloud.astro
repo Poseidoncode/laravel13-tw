@@ -1,0 +1,98 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Cloud</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#provisioning-and-scaling">配置和擴展</a></li>
+<li><a href="#databases">資料庫</a></li>
+<li><a href="#caches-and-stores">快取和儲存</a></li>
+<li><a href="#environments">環境</a></li>
+<li><a href="#continuous-deployment">持續部署</a></li>
+<li><a href="#serving-websites">託管網站</a></li>
+<li><a href="#worker-processes">工作者程序</a></li>
+<li><a href="#logs">日誌</a></li>
+<li><a href="#notifications">通知</a></li>
+<li><a href="#scaling">擴展</a></li>
+<li><a href="#help-and-issues">幫助和問題</a></li>
+<li><a href="#managing-your-cloud-account">管理您的 Cloud 帳戶</a></li>
+<li><a href="#cli">CLI</a></li>
+<li><a href="#api">API</a></li>
+<li><a href="#billing-and-pricing">計費和定價</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel Cloud 是 Laravel 應用程式的託管和擴展平台。您可以將程式碼推送到 Git 儲存庫，Laravel Cloud 將自動構建並部署您的應用程式。除了部署 Laravel 應用程式外，Laravel Cloud 還可以為您的應用程式提供和配置多種類型的資料庫、Redis 快取和儲存空間。</p>
+<p><a name="provisioning-and-scaling"></a></p>
+<h2>配置和擴展</h2>
+<p>Laravel Cloud 透過管理基礎設施來確保您的應用程式高效運行。您可以配置計算資源、選擇所需的資料庫類型、啟用快取和儲存選項，以及配置工作者程序來處理背景任務。所有這些都可以透過您的 Cloud 儀表板進行管理。</p>
+<p><a name="databases"></a></p>
+<h2>資料庫</h2>
+<p>Laravel Cloud 為您的應用程式提供完全託管的 MySQL 和 PostgreSQL 資料庫。資料庫會自動備份、安全加密，並可以根據您的需求進行擴展。您也可以連接到外部資料庫。</p>
+<p><a name="caches-and-stores"></a></p>
+<h2>快取和儲存</h2>
+<p>Laravel Cloud 提供整合的 Redis 快取和儲存解決方案。您可以輕鬆地為您的應用程式啟用 Redis 快取，以提高效能。此外，Laravel Cloud 還提供可擴展的物件儲存空間，用於儲存和管理您的應用程式檔案。</p>
+<p><a name="environments"></a></p>
+<h2>環境</h2>
+<p>Laravel Cloud 允許您為您的應用程式創建多個環境，例如生產環境、預發布環境和開發環境。每個環境都可以有其獨立的配置、資料庫和環境變數，讓您能夠在部署到生產環境之前安全地進行測試。</p>
+<p><a name="continuous-deployment"></a></p>
+<h2>持續部署</h2>
+<p>Laravel Cloud 與 GitHub 和 GitLab 整合，提供持續部署功能。當您將程式碼推送到儲存庫時，Laravel Cloud 會自動構建和部署您的應用程式。您也可以配置自動部署規則，以便在特定分支或標籤上推送時觸發部署。</p>
+<p><a name="serving-websites"></a></p>
+<h2>託管網站</h2>
+<p>Laravel Cloud 會自動為您的應用程式配置 Web 伺服器和 SSL 憑證。您無需擔心伺服器配置、負載平衡或 HTTPS 設定。Laravel Cloud 會處理所有這些，讓您專注於開發。</p>
+<p><a name="worker-processes"></a></p>
+<h2>工作者程序</h2>
+<p>您可以輕鬆地在 Laravel Cloud 上配置工作者程序來處理您的 Laravel 排隊任務。工作者程序會自動擴展以處理您的工作負載，確保您的背景任務始終及時完成。</p>
+<p><a name="logs"></a></p>
+<h2>日誌</h2>
+<p>Laravel Cloud 提供即時日誌查看功能，讓您可以監控應用程式的健康狀況和效能。您可以透過 Cloud 儀表板查看應用程式日誌、錯誤訊息和效能指標。</p>
+<p><a name="notifications"></a></p>
+<h2>通知</h2>
+<p>Laravel Cloud 支援透過 Slack、電子郵件和 Webhook 發送通知。您可以配置通知規則，以便在部署完成、錯誤發生或其他重要事件時接收通知。</p>
+<p><a name="scaling"></a></p>
+<h2>擴展</h2>
+<p>Laravel Cloud 提供一鍵式自動擴展功能。您可以根據您的需求調整計算資源、資料庫大小和工作者程序數量。Laravel Cloud 會根據您的配置和流量模式自動擴展或縮減資源。</p>
+<p><a name="help-and-issues"></a></p>
+<h2>幫助和問題</h2>
+<p>如果您在使用 Laravel Cloud 時遇到任何問題，可以透過 Cloud 儀表板提交支援請求。Laravel Cloud 團隊會及時回應並協助您解決問題。</p>
+<p><a name="managing-your-cloud-account"></a></p>
+<h2>管理您的 Cloud 帳戶</h2>
+<p>您可以透過 Cloud 儀表板管理您的帳戶設定、付款方式和團隊成員。您還可以查看使用情況和帳單詳情。</p>
+<p><a name="cli"></a></p>
+<h2>命令列介面</h2>
+<p>Laravel Cloud CLI 是一個命令列工具，讓您可以從終端機管理您的 Cloud 資源。您可以使用 CLI 來部署應用程式、查看日誌和管理環境。</p>
+<p><a name="api"></a></p>
+<h2>API</h2>
+<p>Laravel Cloud API 讓您可以透過程式化的方式管理您的 Cloud 資源。您可以使用 API 來自動化部署、監控應用程式和管理基礎設施。</p>
+<p><a name="billing-and-pricing"></a></p>
+<h2>計費和定價</h2>
+<p>Laravel Cloud 根據您的使用情況進行計費。您可以選擇適合您需求的定價方案，並透過 Cloud 儀表板查看您的使用情況和帳單。</p>
+<p>如需更多資訊，請訪問 <a href="https://cloud.laravel.com/docs">Laravel Cloud 官方文檔</a>。</p>
+`;
+---
+
+<DocsLayout title="Laravel Cloud" currentPath="cloud">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>其他</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Cloud</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Cloud</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel Cloud 的繁體中文翻譯。
+        <a href="https://cloud.laravel.com/docs" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

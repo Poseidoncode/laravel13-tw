@@ -1,0 +1,337 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>HTTP Session</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#configuration">設定</a></li>
+<li><a href="#driver-prerequisites">驅動程式先決條件</a></li>
+</ul>
+</li>
+<li><a href="#interacting-with-the-session">與 Session 互動</a><ul>
+<li><a href="#retrieving-data">檢索資料</a></li>
+<li><a href="#storing-data">儲存資料</a></li>
+<li><a href="#flash-data">Flash 資料</a></li>
+<li><a href="#deleting-data">刪除資料</a></li>
+<li><a href="#regenerating-the-session-id">重新生成 Session ID</a></li>
+</ul>
+</li>
+<li><a href="#session-cache">Session 快取</a></li>
+<li><a href="#session-blocking">Session 阻塞</a></li>
+<li><a href="#adding-custom-session-drivers">新增自訂 Session 驅動程式</a><ul>
+<li><a href="#implementing-the-driver">實作驅動程式</a></li>
+<li><a href="#registering-the-driver">註冊驅動程式</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>由於 HTTP 驅動的應用程式是無狀態的，Session 提供了一種在多個請求之間儲存用戶資訊的方式。這些用戶資訊通常放置在持久化儲存 / 後端中，可從後續請求存取。</p>
+<p>Laravel 附帶了多種 Session 後端，透過表達性、統一的 API 進行存取。支援 Memcached、Redis 和資料庫等熱門後端。</p>
+<p><a name="configuration"></a></p>
+<h3>設定</h3>
+<p>應用程式的 Session 設定檔儲存在 <code>config/session.php</code>。請務必查看此檔案中可用的選項。預設情況下，Laravel 設定為使用 <code>database</code> Session 驅動程式。</p>
+<p>Session <code>driver</code> 設定選項定義了每個請求的 Session 資料儲存位置。Laravel 包含多種驅動程式：</p>
+<div class="content-list" markdown="1">
+<ul>
+<li><code>file</code> - Session 儲存在 <code>storage/framework/sessions</code>。</li>
+<li><code>cookie</code> - Session 儲存在安全、加密的 cookie 中。</li>
+<li><code>database</code> - Session 儲存在關聯式資料庫中。</li>
+<li><code>memcached</code> / <code>redis</code> - Session 儲存在這些快速的快取儲存中。</li>
+<li><code>dynamodb</code> - Session 儲存在 AWS DynamoDB 中。</li>
+<li><code>array</code> - Session 儲存在 PHP 陣列中，不會被持久化。</li>
+</ul>
+</div>
+<blockquote>
+<p>[!NOTE]
+陣列驅動程式主要用於<a href="/docs/testing">測試</a>，防止儲存在 Session 中的資料被持久化。</p>
+</blockquote>
+<p><a name="driver-prerequisites"></a></p>
+<h3>驅動程式先決條件</h3>
+<p><a name="database"></a></p>
+<h4>資料庫</h4>
+<p>使用 <code>database</code> Session 驅動程式時，您需要確保有一個資料庫表來容納 Session 資料。通常，這已包含在 Laravel 的預設 <code>0001_01_01_000000_create_users_table.php</code> <a href="/docs/migrations">資料庫遷移</a>中；但是，如果因為某種原因您沒有 <code>sessions</code> 表，可以使用 <code>make:session-table</code> Artisan 命令來生成此遷移：</p>
+<pre><code class="language-shell">php artisan make:session-table
+
+php artisan migrate
+</code></pre>
+<p><a name="redis"></a></p>
+<h4>Redis</h4>
+<p>在 Laravel 中使用 Redis Session 之前，您需要透過 PECL 安裝 PhpRedis PHP 擴充功能，或透過 Composer 安裝 <code>predis/predis</code> 套件（~1.0）。要了解更多關於設定 Redis 的資訊，請參閱 Laravel 的 <a href="/docs/redis#configuration">Redis 文件</a>。</p>
+<blockquote>
+<p>[!NOTE]
+<code>SESSION_CONNECTION</code> 環境變數或 <code>session.php</code> 設定檔中的 <code>connection</code> 選項可用於指定用於 Session 儲存的 Redis 連線。</p>
+</blockquote>
+<p><a name="interacting-with-the-session"></a></p>
+<h2>與 Session 互動</h2>
+<p><a name="retrieving-data"></a></p>
+<h3>檢索資料</h3>
+<p>在 Laravel 中處理 Session 資料有兩種主要方式：全域 <code>session</code> 輔助函數和透過 <code>Request</code> 實例。首先，讓我們看看透過 <code>Request</code> 實例存取 Session，這可以在路由閉包或控制器方法中進行類型提示。請記住，控制器方法的依賴項透過 Laravel <a href="/docs/container">服務容器</a>自動注入：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\View\\View;
+
+class UserController extends Controller
+{
+    /**
+     * Show the profile for the given user.
+     */
+    public function show(Request $request, string $id): View
+    {
+        $value = $request->session()->get('key');
+
+        // ...
+
+        $user = $this->users->find($id);
+
+        return view('user.profile', ['user' => $user]);
+    }
+}
+</code></pre>
+<p>從 Session 檢索項目時，您也可以將預設值作為第二個參數傳遞給 <code>get</code> 方法。如果指定的索引鍵不存在於 Session 中，將返回此預設值。如果您將閉包作為預設值傳遞給 <code>get</code> 方法，且請求的索引鍵不存在，則會執行該閉包並返回其結果：</p>
+<pre><code class="language-php">$value = $request->session()->get('key', 'default');
+
+$value = $request->session()->get('key', function () {
+    return 'default';
+});
+</code></pre>
+<p><a name="the-global-session-helper"></a></p>
+<h4>全域 Session 輔助函數</h4>
+<p>您也可以使用全域 <code>session</code> PHP 函數來檢索和儲存 Session 中的資料。當 <code>session</code> 輔助函數以單一字串參數呼叫時，它將返回該 Session 索引鍵的值。當輔助函數以索引鍵 / 值對陣列呼叫時，這些值將被儲存在 Session 中：</p>
+<pre><code class="language-php">Route::get('/home', function () {
+    // 從 Session 檢索一筆資料...
+    $value = session('key');
+
+    // 指定預設值...
+    $value = session('key', 'default');
+
+    // 在 Session 中儲存一筆資料...
+    session(['key' => 'value']);
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+透過 HTTP 請求實例使用 Session 與使用全域 <code>session</code> 輔助函數之間幾乎沒有實際差異。兩種方法都可以透過 <code>assertSessionHas</code> 方法進行<a href="/docs/testing">測試</a>。</p>
+</blockquote>
+<p><a name="retrieving-all-session-data"></a></p>
+<h4>檢索所有 Session 資料</h4>
+<p>如果您想檢索 Session 中的所有資料，可以使用 <code>all</code> 方法：</p>
+<pre><code class="language-php">$data = $request->session()->all();
+</code></pre>
+<p><a name="retrieving-a-portion-of-the-session-data"></a></p>
+<h4>檢索部分 Session 資料</h4>
+<p><code>only</code> 和 <code>except</code> 方法可用於檢索 Session 資料的子集：</p>
+<pre><code class="language-php">$data = $request->session()->only(['username', 'email']);
+
+$data = $request->session()->except(['username', 'email']);
+</code></pre>
+<p><a name="determining-if-an-item-exists-in-the-session"></a></p>
+<h4>判斷項目是否存在於 Session 中</h4>
+<p>要判斷某個項目是否存在於 Session 中，可以使用 <code>has</code> 方法。如果項目存在且不為 <code>null</code>，<code>has</code> 方法返回 <code>true</code>：</p>
+<pre><code class="language-php">if ($request->session()->has('users')) {
+    // ...
+}
+</code></pre>
+<p>要判斷某個項目是否存在於 Session 中，即使其值為 <code>null</code>，可以使用 <code>exists</code> 方法：</p>
+<pre><code class="language-php">if ($request->session()->exists('users')) {
+    // ...
+}
+</code></pre>
+<p>要判斷某個項目不存在於 Session 中，可以使用 <code>missing</code> 方法。如果項目不存在，<code>missing</code> 方法返回 <code>true</code>：</p>
+<pre><code class="language-php">if ($request->session()->missing('users')) {
+    // ...
+}
+</code></pre>
+<p><a name="storing-data"></a></p>
+<h3>儲存資料</h3>
+<p>要在 Session 中儲存資料，您通常會使用請求實例的 <code>put</code> 方法或全域 <code>session</code> 輔助函數：</p>
+<pre><code class="language-php">// 透過請求實例...
+$request->session()->put('key', 'value');
+
+// 透過全域 "session" 輔助函數...
+session(['key' => 'value']);
+</code></pre>
+<p><a name="pushing-to-array-session-values"></a></p>
+<h4>推入陣列 Session 值</h4>
+<p><code>push</code> 方法可用於將新值推入陣列類型的 Session 值。例如，如果 <code>user.teams</code> 索引鍵包含團隊名稱陣列，您可以這樣推入新值：</p>
+<pre><code class="language-php">$request->session()->push('user.teams', 'developers');
+</code></pre>
+<p><a name="retrieving-deleting-an-item"></a></p>
+<h4>檢索並刪除項目</h4>
+<p><code>pull</code> 方法將在單一語句中檢索並從 Session 中刪除一個項目：</p>
+<pre><code class="language-php">$value = $request->session()->pull('key', 'default');
+</code></pre>
+<p><a name="incrementing-and-decrementing-session-values"></a></p>
+<h4>遞增和遞減 Session 值</h4>
+<p>如果您的 Session 資料包含您想遞增或遞減的整數，可以使用 <code>increment</code> 和 <code>decrement</code> 方法：</p>
+<pre><code class="language-php">$request->session()->increment('count');
+
+$request->session()->increment('count', $incrementBy = 2);
+
+$request->session()->decrement('count');
+
+$request->session()->decrement('count', $decrementBy = 2);
+</code></pre>
+<p><a name="flash-data"></a></p>
+<h3>Flash 資料</h3>
+<p>有時您可能希望將項目儲存在 Session 中供下一個請求使用。您可以使用 <code>flash</code> 方法來實現。使用此方法儲存在 Session 中的資料將立即可用，並在後續的 HTTP 請求中可用。在後續的 HTTP 請求之後，Flash 資料將被刪除。Flash 資料主要用於短期狀態訊息：</p>
+<pre><code class="language-php">$request->session()->flash('status', 'Task was successful!');
+</code></pre>
+<p>如果您需要將 Flash 資料持續多個請求，可以使用 <code>reflash</code> 方法，它將保留所有 Flash 資料再額外一個請求。如果您只需要保留特定的 Flash 資料，可以使用 <code>keep</code> 方法：</p>
+<pre><code class="language-php">$request->session()->reflash();
+
+$request->session()->keep(['username', 'email']);
+</code></pre>
+<p>要僅為當前請求保留 Flash 資料，可以使用 <code>now</code> 方法：</p>
+<pre><code class="language-php">$request->session()->now('status', 'Task was successful!');
+</code></pre>
+<p><a name="deleting-data"></a></p>
+<h3>刪除資料</h3>
+<p><code>forget</code> 方法將從 Session 中移除一筆資料。如果您想從 Session 中移除所有資料，可以使用 <code>flush</code> 方法：</p>
+<pre><code class="language-php">// 忘記單一索引鍵...
+$request->session()->forget('name');
+
+// 忘記多個索引鍵...
+$request->session()->forget(['name', 'status']);
+
+$request->session()->flush();
+</code></pre>
+<p><a name="regenerating-the-session-id"></a></p>
+<h3>重新生成 Session ID</h3>
+<p>重新生成 Session ID 通常是為了防止惡意用戶利用<a href="https://owasp.org/www-community/attacks/Session_fixation">Session 固定</a>攻擊來攻擊您的應用程式。</p>
+<p>如果您使用 Laravel <a href="/docs/starter-kits">應用程式入門套件</a>或 <a href="/docs/fortify">Laravel Fortify</a>，Laravel 會在認證期間自動重新生成 Session ID；但是，如果您需要手動重新生成 Session ID，可以使用 <code>regenerate</code> 方法：</p>
+<pre><code class="language-php">$request->session()->regenerate();
+</code></pre>
+<p>如果您需要在單一語句中重新生成 Session ID 並從 Session 中移除所有資料，可以使用 <code>invalidate</code> 方法：</p>
+<pre><code class="language-php">$request->session()->invalidate();
+</code></pre>
+<p><a name="session-cache"></a></p>
+<h2>Session 快取</h2>
+<p>Laravel 的 Session 快取提供了一種方便的方式來快取限定於個別用戶 Session 的資料。與全域應用程式快取不同，Session 快取資料會自動按 Session 隔離，並在 Session 過期或被銷毀時清理。Session 快取支援所有常見的 <a href="/docs/cache">Laravel 快取方法</a>，如 <code>get</code>、<code>put</code>、<code>remember</code>、<code>forget</code> 等，但限定於當前 Session。</p>
+<p>Session 快取非常適合儲存您希望在同一 Session 內跨多個請求持久化但不需要永久儲存的臨時、用戶特定資料。這包括表單資料、臨時計算、API 響應或任何其他應綁定到特定用戶 Session 的暫時資料。</p>
+<p>您可以透過 Session 上的 <code>cache</code> 方法存取 Session 快取：</p>
+<pre><code class="language-php">$discount = $request->session()->cache()->get('discount');
+
+$request->session()->cache()->put(
+    'discount', 10, now()->plus(minutes: 5)
+);
+</code></pre>
+<p>要了解更多關於 Laravel 快取方法的資訊，請參閱<a href="/docs/cache">快取文件</a>。</p>
+<p><a name="session-blocking"></a></p>
+<h2>Session 阻塞</h2>
+<blockquote>
+<p>[!WARNING]
+要使用 Session 阻塞，您的應用程式必須使用支援<a href="/docs/cache#atomic-locks">原子鎖</a>的快取驅動程式。目前，這些快取驅動程式包括 <code>memcached</code>、<code>dynamodb</code>、<code>redis</code>、<code>mongodb</code>（包含在官方 <code>mongodb/laravel-mongodb</code> 套件中）、<code>database</code>、<code>file</code> 和 <code>array</code> 驅動程式。此外，您不能使用 <code>cookie</code> Session 驅動程式。</p>
+</blockquote>
+<p>預設情況下，Laravel 允許使用相同 Session 的請求並發執行。因此，例如，如果您使用 JavaScript HTTP 函式庫向應用程式發出兩個 HTTP 請求，它們將同時執行。對於大多數應用程式來說，這不是問題；但是，對於一小部分向兩個不同的應用程式端點並發發出請求且兩者都向 Session 寫入資料的應用程式，可能會發生 Session 資料遺失。</p>
+<p>為了緩解此問題，Laravel 提供了允許您限制給定 Session 並發請求的功能。首先，您可以簡單地在路由定義上鏈接 <code>block</code> 方法。在此範例中，傳入 <code>/profile</code> 端點的請求將獲取一個 Session 鎖。當此鎖被持有时，任何傳入 <code>/profile</code> 或 <code>/order</code> 端點且共享相同 Session ID 的請求將等待第一個請求完成執行後才繼續其執行：</p>
+<pre><code class="language-php">Route::post('/profile', function () {
+    // ...
+})->block($lockSeconds = 10, $waitSeconds = 10);
+
+Route::post('/order', function () {
+    // ...
+})->block($lockSeconds = 10, $waitSeconds = 10);
+</code></pre>
+<p><code>block</code> 方法接受兩個可選參數。第一個參數是 Session 鎖在釋放前應持有的最大秒數。當然，如果請求在此時間之前完成執行，鎖將提前釋放。</p>
+<p>第二個參數是請求在嘗試獲取 Session 鎖時應等待的秒數。如果請求無法在給定秒數內獲取 Session 鎖，將拋出 <code>Illuminate\\Contracts\\Cache\\LockTimeoutException</code>。</p>
+<p>如果兩個參數都未傳遞，鎖將最多持有 10 秒，請求在嘗試獲取鎖時最多等待 10 秒：</p>
+<pre><code class="language-php">Route::post('/profile', function () {
+    // ...
+})->block();
+</code></pre>
+<p><a name="adding-custom-session-drivers"></a></p>
+<h2>新增自訂 Session 驅動程式</h2>
+<p><a name="implementing-the-driver"></a></p>
+<h3>實作驅動程式</h3>
+<p>如果現有的 Session 驅動程式都不符合您應用程式的需求，Laravel 讓您有可能編寫自己的 Session 處理器。您的自訂 Session 驅動程式應實作 PHP 內建的 <code>SessionHandlerInterface</code>。此介面僅包含幾個簡單的方法。MongoDB 的實作範例如下：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Extensions;
+
+class MongoSessionHandler implements \\SessionHandlerInterface
+{
+    public function open($savePath, $sessionName) {}
+    public function close() {}
+    public function read($sessionId) {}
+    public function write($sessionId, $data) {}
+    public function destroy($sessionId) {}
+    public function gc($lifetime) {}
+}
+</code></pre>
+<p>由於 Laravel 不包含用於存放擴充功能的預設目錄，您可以自由地將它們放置在任何地方。在此範例中，我們建立了一個 <code>Extensions</code> 目錄來存放 <code>MongoSessionHandler</code>。</p>
+<p>由於這些方法的目的不容易理解，以下是每個方法的用途概述：</p>
+<div class="content-list" markdown="1">
+<ul>
+<li><code>open</code> 方法通常用於基於檔案的 Session 儲存系統。由於 Laravel 附帶 <code>file</code> Session 驅動程式，您很少需要在此方法中放入任何內容。您可以簡單地將此方法留空。</li>
+<li><code>close</code> 方法與 <code>open</code> 方法一樣，通常也可以被忽略。對於大多數驅動程式，它不需要。</li>
+<li><code>write</code> 方法應將給定的 <code>$data</code> 字串與 <code>$sessionId</code> 一起寫入某個持久化儲存系統。同樣地，您不應執行任何序列化 — Laravel 已經為您處理了。</li>
+<li><code>destroy</code> 方法應從持久化儲存中移除與 <code>$sessionId</code> 相關的資料。</li>
+<li><code>gc</code> 方法應銷毀所有比給定 <code>$lifetime</code> 更舊的 Session 資料。對於像 Memcached 和 Redis 這樣的自動過期系統，此方法可以留空。</li>
+</ul>
+</div>
+<p><a name="registering-the-driver"></a></p>
+<h3>註冊驅動程式</h3>
+<p>驅動程式實作完成後，您就可以將其註冊到 Laravel。要向 Laravel 的 Session 後端新增額外的驅動程式，可以使用 <code>Session</code> <a href="/docs/facades">facade</a> 提供的 <code>extend</code> 方法。您應該從<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中呼叫 <code>extend</code> 方法。您可以從現有的 <code>App\\Providers\\AppServiceProvider</code> 或建立一個全新的提供者來實現：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Extensions\\MongoSessionHandler;
+use Illuminate\\Contracts\\Foundation\\Application;
+use Illuminate\\Support\\Facades\\Session;
+use Illuminate\\Support\\ServiceProvider;
+
+class SessionServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        // ...
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        Session::extend('mongo', function (Application $app) {
+            // Return an implementation of SessionHandlerInterface...
+            return new MongoSessionHandler;
+        });
+    }
+}
+</code></pre>
+<p>Session 驅動程式註冊後，您可以使用 <code>SESSION_DRIVER</code> 環境變數或在應用程式的 <code>config/session.php</code> 設定檔中將 <code>mongo</code> 驅動程式指定為應用程式的 Session 驅動程式。</p>
+`;
+---
+
+<DocsLayout title="HTTP Session" currentPath="session">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>HTTP Session</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">HTTP Session</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/session" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

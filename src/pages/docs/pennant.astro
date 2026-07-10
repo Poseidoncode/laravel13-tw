@@ -1,0 +1,971 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Pennant</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#configuration">配置</a></li>
+<li><a href="#defining-features">定義功能</a><ul>
+<li><a href="#class-based-features">基於類別的功能</a></li>
+</ul>
+</li>
+<li><a href="#checking-features">檢查功能</a><ul>
+<li><a href="#conditional-execution">條件執行</a></li>
+<li><a href="#the-has-features-trait"><code>HasFeatures</code> Trait</a></li>
+<li><a href="#blade-directive">Blade 指令</a></li>
+<li><a href="#middleware">中介層</a></li>
+<li><a href="#intercepting-feature-checks">攔截功能檢查</a></li>
+<li><a href="#in-memory-cache">記憶體快取</a></li>
+</ul>
+</li>
+<li><a href="#scope">作用域</a><ul>
+<li><a href="#specifying-the-scope">指定作用域</a></li>
+<li><a href="#default-scope">預設作用域</a></li>
+<li><a href="#nullable-scope">可空作用域</a></li>
+<li><a href="#identifying-scope">識別作用域</a></li>
+<li><a href="#serializing-scope">序列化作用域</a></li>
+</ul>
+</li>
+<li><a href="#rich-feature-values">富功能值</a></li>
+<li><a href="#retrieving-multiple-features">檢索多個功能</a></li>
+<li><a href="#eager-loading">預先載入</a></li>
+<li><a href="#updating-values">更新值</a><ul>
+<li><a href="#bulk-updates">批量更新</a></li>
+<li><a href="#purging-features">清除功能</a></li>
+</ul>
+</li>
+<li><a href="#testing">測試</a></li>
+<li><a href="#adding-custom-pennant-drivers">添加自訂 Pennant 驅動程式</a><ul>
+<li><a href="#implementing-the-driver">實現驅動程式</a></li>
+<li><a href="#registering-the-driver">註冊驅動程式</a></li>
+<li><a href="#defining-features-externally">外部定義功能</a></li>
+</ul>
+</li>
+<li><a href="#events">事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/pennant">Laravel Pennant</a> 是一個簡單且輕量級的功能開關套件——沒有額外的複雜性。功能開關使您能夠自信地逐步推出新的應用程式功能、對新的介面設計進行 A/B 測試、補充基於主幹的開發策略等等。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器將 Pennant 安裝到您的專案中：</p>
+<pre><code class="language-shell">composer require laravel/pennant
+</code></pre>
+<p>接下來，您應該使用 <code>vendor:publish</code> Artisan 命令來發佈 Pennant 的配置和遷移檔案：</p>
+<pre><code class="language-shell">php artisan vendor:publish --provider="Laravel\\Pennant\\PennantServiceProvider"
+</code></pre>
+<p>最後，您應該運行應用程式的資料庫遷移。這將創建一個 <code>features</code> 表，Pennant 使用它來驅動其 <code>database</code> 驅動程式：</p>
+<pre><code class="language-shell">php artisan migrate
+</code></pre>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p>發佈 Pennant 的資源後，其配置檔案將位於 <code>config/pennant.php</code>。此配置檔案允許您指定 Pennant 將用於儲存已解析功能開關值的預設儲存機制。</p>
+<p>Pennant 包含透過 <code>array</code> 驅動程式將已解析的功能開關值儲存在記憶體陣列中的支援。或者，Pennant 可以透過 <code>database</code> 驅動程式將已解析的功能開關值持久化儲存在關聯式資料庫中，這是 Pennant 使用的預設儲存機制。</p>
+<p><a name="defining-features"></a></p>
+<h2>定義功能</h2>
+<p>要定義一個功能，您可以使用 <code>Feature</code> 外觀提供的 <code>define</code> 方法。您需要為功能提供一個名稱，以及一個將被呼叫以解析功能初始值的閉包。</p>
+<p>通常，功能在服務提供者中使用 <code>Feature</code> 外觀來定義。閉包將接收功能檢查的「作用域」。最常見的是，作用域是當前已認證的使用者。在此範例中，我們將為逐步向應用程式使用者推出的新 API 定義一個功能：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Models\\User;
+use Illuminate\\Support\\Lottery;
+use Illuminate\\Support\\ServiceProvider;
+use Laravel\\Pennant\\Feature;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Feature::define('new-api', fn (User $user) => match (true) {
+            $user->isInternalTeamMember() => true,
+            $user->isHighTrafficCustomer() => false,
+            default => Lottery::odds(1 / 100),
+        });
+    }
+}
+</code></pre>
+<p>如您所見，我們的功能有以下規則：</p>
+<ul>
+<li>所有內部團隊成員都應使用新 API。</li>
+<li>任何高流量客戶不應使用新 API。</li>
+<li>否則，該功能應隨機分配給使用者，活躍的機率為百分之一。</li>
+</ul>
+<p>第一次為給定使用者檢查 <code>new-api</code> 功能時，閉包的結果將由儲存驅動程式儲存。下一次對同一使用者檢查該功能時，將從儲存中檢索該值，並且不會再呼叫閉包。</p>
+<p>為了方便，如果功能定義只返回一個抽獎，您可以完全省略閉包：</p>
+<pre><code class="language-php">Feature::define('site-redesign', Lottery::odds(1, 1000));
+</code></pre>
+<p><a name="class-based-features"></a></p>
+<h3>基於類別的功能</h3>
+<p>Pennant 還允許您定義基於類別的功能。與基於閉包的功能定義不同，無需在服務提供者中註冊基於類別的功能。要創建基於類別的功能，您可以呼叫 <code>pennant:feature</code> Artisan 命令。預設情況下，功能類別將放置在應用程式的 <code>app/Features</code> 目錄中：</p>
+<pre><code class="language-shell">php artisan pennant:feature NewApi
+</code></pre>
+<p>編寫功能類別時，您只需要定義一個 <code>resolve</code> 方法，該方法將被呼叫以解析給定作用域的功能初始值。同樣，作用域通常是當前已認證的使用者：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Features;
+
+use App\\Models\\User;
+use Illuminate\\Support\\Lottery;
+
+class NewApi
+{
+    /**
+     * 解析功能的初始值。
+     */
+    public function resolve(User $user): mixed
+    {
+        return match (true) {
+            $user->isInternalTeamMember() => true,
+            $user->isHighTrafficCustomer() => false,
+            default => Lottery::odds(1 / 100),
+        };
+    }
+}
+</code></pre>
+<p>如果您希望手動解析基於類別的功能的實例，可以在 <code>Feature</code> 外觀上呼叫 <code>instance</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Feature;
+
+$instance = Feature::instance(NewApi::class);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+功能類別是透過<a href="/docs/container">容器</a>解析的，因此您可以根據需要向功能類別的構造函數注入依賴。</p>
+</blockquote>
+<h4>自訂儲存的功能名稱</h4>
+<p>預設情況下，Pennant 將儲存功能類別的完全限定類別名稱。如果您希望將儲存的功能名稱與應用程式的內部結構解耦，可以在功能類別上添加 <code>Name</code> 屬性。此屬性的值將被儲存以代替類別名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Features;
+
+use Laravel\\Pennant\\Attributes\\Name;
+
+#[Name('new-api')]
+class NewApi
+{
+    // ...
+}
+</code></pre>
+<p><a name="checking-features"></a></p>
+<h2>檢查功能</h2>
+<p>要判斷功能是否活躍，可以使用 <code>Feature</code> 外觀上的 <code>active</code> 方法。預設情況下，功能是針對當前已認證的使用者進行檢查的：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Response;
+use Laravel\\Pennant\\Feature;
+
+class PodcastController
+{
+    /**
+     * 顯示資源的列表。
+     */
+    public function index(Request $request): Response
+    {
+        return Feature::active('new-api')
+            ? $this->resolveNewApiResponse($request)
+            : $this->resolveLegacyApiResponse($request);
+    }
+
+    // ...
+}
+</code></pre>
+<p>雖然功能預設是針對當前已認證的使用者進行檢查的，但您可以輕鬆地針對另一個使用者或<a href="#scope">作用域</a>檢查功能。為此，請使用 <code>Feature</code> 外觀提供的 <code>for</code> 方法：</p>
+<pre><code class="language-php">return Feature::for($user)->active('new-api')
+    ? $this->resolveNewApiResponse($request)
+    : $this->resolveLegacyApiResponse($request);
+</code></pre>
+<p>Pennant 還提供了一些額外的便利方法，在判斷功能是否活躍時可能很有用：</p>
+<pre><code class="language-php">// 判斷所有給定的功能是否活躍...
+Feature::allAreActive(['new-api', 'site-redesign']);
+
+// 判斷任何給定的功能是否活躍...
+Feature::someAreActive(['new-api', 'site-redesign']);
+
+// 判斷功能是否非活躍...
+Feature::inactive('new-api');
+
+// 判斷所有給定的功能是否非活躍...
+Feature::allAreInactive(['new-api', 'site-redesign']);
+
+// 判斷任何給定的功能是否非活躍...
+Feature::someAreInactive(['new-api', 'site-redesign']);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+在 HTTP 上下文之外使用 Pennant 時（例如在 Artisan 命令或佇列作業中），您通常應該<a href="#specifying-the-scope">明確指定功能的作用域</a>。或者，您可以定義一個<a href="#default-scope">預設作用域</a>來同時考慮已認證的 HTTP 上下文和未認證的上下文。</p>
+</blockquote>
+<p><a name="checking-class-based-features"></a></p>
+<h4>檢查基於類別的功能</h4>
+<p>對於基於類別的功能，您應該在檢查功能時提供類別名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Features\\NewApi;
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Response;
+use Laravel\\Pennant\\Feature;
+
+class PodcastController
+{
+    /**
+     * 顯示資源的列表。
+     */
+    public function index(Request $request): Response
+    {
+        return Feature::active(NewApi::class)
+            ? $this->resolveNewApiResponse($request)
+            : $this->resolveLegacyApiResponse($request);
+    }
+
+    // ...
+}
+</code></pre>
+<p><a name="conditional-execution"></a></p>
+<h3>條件執行</h3>
+<p><code>when</code> 方法可用於在功能活躍時流暢地執行給定的閉包。此外，可以提供第二個閉包，如果功能非活躍，則執行該閉包：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Features\\NewApi;
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Response;
+use Laravel\\Pennant\\Feature;
+
+class PodcastController
+{
+    /**
+     * 顯示資源的列表。
+     */
+    public function index(Request $request): Response
+    {
+        return Feature::when(NewApi::class,
+            fn () => $this->resolveNewApiResponse($request),
+            fn () => $this->resolveLegacyApiResponse($request),
+        );
+    }
+
+    // ...
+}
+</code></pre>
+<p><code>unless</code> 方法作為 <code>when</code> 方法的反向，在功能非活躍時執行第一個閉包：</p>
+<pre><code class="language-php">return Feature::unless(NewApi::class,
+    fn () => $this->resolveLegacyApiResponse($request),
+    fn () => $this->resolveNewApiResponse($request),
+);
+</code></pre>
+<p><a name="the-has-features-trait"></a></p>
+<h3><code>HasFeatures</code> Trait</h3>
+<p>Pennant 的 <code>HasFeatures</code> trait 可以添加到應用程式的 <code>User</code> 模型（或任何其他具有功能的模型），以提供一種流暢、便利的方式來直接從模型檢查功能：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Laravel\\Pennant\\Concerns\\HasFeatures;
+
+class User extends Authenticatable
+{
+    use HasFeatures;
+
+    // ...
+}
+</code></pre>
+<p>將 trait 添加到模型後，您可以透過呼叫 <code>features</code> 方法輕鬆檢查功能：</p>
+<pre><code class="language-php">if ($user->features()->active('new-api')) {
+    // ...
+}
+</code></pre>
+<p>當然，<code>features</code> 方法提供了許多其他便利的方法來與功能互動：</p>
+<pre><code class="language-php">// 值...
+$value = $user->features()->value('purchase-button')
+$values = $user->features()->values(['new-api', 'purchase-button']);
+
+// 狀態...
+$user->features()->active('new-api');
+$user->features()->allAreActive(['new-api', 'server-api']);
+$user->features()->someAreActive(['new-api', 'server-api']);
+
+$user->features()->inactive('new-api');
+$user->features()->allAreInactive(['new-api', 'server-api']);
+$user->features()->someAreInactive(['new-api', 'server-api']);
+
+// 條件執行...
+$user->features()->when('new-api',
+    fn () => /* ... */,
+    fn () => /* ... */,
+);
+
+$user->features()->unless('new-api',
+    fn () => /* ... */,
+    fn () => /* ... */,
+);
+</code></pre>
+<p><a name="blade-directive"></a></p>
+<h3>Blade 指令</h3>
+<p>為了使在 Blade 中檢查功能變得無縫，Pennant 提供了 <code>@feature</code> 和 <code>@featureany</code> 指令：</p>
+<pre><code class="language-blade">@feature('site-redesign')
+    <!-- 'site-redesign' 已活躍 -->
+@else
+    <!-- 'site-redesign' 已非活躍 -->
+@endfeature
+
+@featureany(['site-redesign', 'beta'])
+    <!-- 'site-redesign' 或 \`beta\` 已活躍 -->
+@endfeatureany
+</code></pre>
+<p><a name="middleware"></a></p>
+<h3>中介層</h3>
+<p>Pennant 還包含一個<a href="/docs/middleware">中介層</a>，可在路由被調用之前用於驗證當前已認證的使用者是否有權存取某個功能。您可以將中介層分配給路由，並指定存取該路由所需的功能。如果任何指定的功能對當前已認證的使用者而言是非活躍的，路由將返回 <code>400 Bad Request</code> HTTP 回應。可以向靜態 <code>using</code> 方法傳遞多個功能。</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Route;
+use Laravel\\Pennant\\Middleware\\EnsureFeaturesAreActive;
+
+Route::get('/api/servers', function () {
+    // ...
+})->middleware(EnsureFeaturesAreActive::using('new-api', 'servers-api'));
+</code></pre>
+<p><a name="customizing-the-response"></a></p>
+<h4>自訂回應</h4>
+<p>如果您希望自訂中介層在列出的功能之一為非活躍時返回的回應，可以使用 <code>EnsureFeaturesAreActive</code> 中介層提供的 <code>whenInactive</code> 方法。通常，此方法應在應用程式的其中一個服務提供者的 <code>boot</code> 方法中被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Response;
+use Laravel\\Pennant\\Middleware\\EnsureFeaturesAreActive;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    EnsureFeaturesAreActive::whenInactive(
+        function (Request $request, array $features) {
+            return new Response(status: 403);
+        }
+    );
+
+    // ...
+}
+</code></pre>
+<p><a name="intercepting-feature-checks"></a></p>
+<h3>攔截功能檢查</h3>
+<p>有時，在檢索給定功能的儲存值之前執行一些記憶體內檢查可能很有用。想像您正在一個功能開關後面開發一個新 API，並且希望能夠禁用新 API 而不會丟失儲存中任何已解析的功能值。如果您在新 API 中發現了一個錯誤，您可以輕鬆地為除內部團隊成員以外的所有人禁用它，修復錯誤，然後為先前有權存取該功能的使用者重新啟用新 API。</p>
+<p>您可以透過<a href="#class-based-features">基於類別的功能</a>的 <code>before</code> 方法來實現這一點。存在時，<code>before</code> 方法始終在從儲存檢索值之前在記憶體中運行。如果從該方法返回了非 <code>null</code> 值，則在請求持續時間內，它將代替功能的儲存值使用：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Features;
+
+use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Config;
+use Illuminate\\Support\\Lottery;
+
+class NewApi
+{
+    /**
+     * 在檢索儲存值之前運行始終在記憶體中的檢查。
+     */
+    public function before(User $user): mixed
+    {
+        if (Config::get('features.new-api.disabled')) {
+            return $user->isInternalTeamMember();
+        }
+    }
+
+    /**
+     * 解析功能的初始值。
+     */
+    public function resolve(User $user): mixed
+    {
+        return match (true) {
+            $user->isInternalTeamMember() => true,
+            $user->isHighTrafficCustomer() => false,
+            default => Lottery::odds(1 / 100),
+        };
+    }
+}
+</code></pre>
+<p>您還可以使用此功能來排程先前在功能開關後面的功能的全域推出：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Features;
+
+use Illuminate\\Support\\Carbon;
+use Illuminate\\Support\\Facades\\Config;
+
+class NewApi
+{
+    /**
+     * 在檢索儲存值之前運行始終在記憶體中的檢查。
+     */
+    public function before(User $user): mixed
+    {
+        if (Config::get('features.new-api.disabled')) {
+            return $user->isInternalTeamMember();
+        }
+
+        if (Carbon::parse(Config::get('features.new-api.rollout-date'))->isPast()) {
+            return true;
+        }
+    }
+
+    // ...
+}
+</code></pre>
+<p><a name="in-memory-cache"></a></p>
+<h3>記憶體快取</h3>
+<p>檢查功能時，Pennant 將創建一個結果的記憶體快取。如果您正在使用 <code>database</code> 驅動程式，這意味著在單個請求內重新檢查同一功能將不會觸發額外的資料庫查詢。這還確保了功能在請求持續時間內具有一致的結果。</p>
+<p>如果您需要手動刷新記憶體快取，可以使用 <code>Feature</code> 外觀提供的 <code>flushCache</code> 方法：</p>
+<pre><code class="language-php">Feature::flushCache();
+</code></pre>
+<p><a name="scope"></a></p>
+<h2>作用域</h2>
+<p><a name="specifying-the-scope"></a></p>
+<h3>指定作用域</h3>
+<p>如前所述，功能通常是針對當前已認證的使用者進行檢查的。但是，這可能並非總是適合您的需求。因此，可以透過 <code>Feature</code> 外觀的 <code>for</code> 方法來指定您希望檢查給定功能的作用域：</p>
+<pre><code class="language-php">return Feature::for($user)->active('new-api')
+    ? $this->resolveNewApiResponse($request)
+    : $this->resolveLegacyApiResponse($request);
+</code></pre>
+<p>當然，功能作用域不限於「使用者」。想像您已經構建了一個新的計費體驗，您正在向整個團隊而不是單個使用者推出。也許您希望較老的團隊比新團隊有較慢的推出。您的功能解析閉包可能看起來像這樣：</p>
+<pre><code class="language-php">use App\\Models\\Team;
+use Illuminate\\Support\\Carbon;
+use Illuminate\\Support\\Lottery;
+use Laravel\\Pennant\\Feature;
+
+Feature::define('billing-v2', function (Team $team) {
+    if ($team->created_at->isAfter(new Carbon('1st Jan, 2023'))) {
+        return true;
+    }
+
+    if ($team->created_at->isAfter(new Carbon('1st Jan, 2019'))) {
+        return Lottery::odds(1 / 100);
+    }
+
+    return Lottery::odds(1 / 1000);
+});
+</code></pre>
+<p>您會注意到我們定義的閉包不期望 <code>User</code>，而是期望 <code>Team</code> 模型。要判斷此功能是否對使用者的團隊活躍，您應該將團隊傳遞給 <code>Feature</code> 外觀提供的 <code>for</code> 方法：</p>
+<pre><code class="language-php">if (Feature::for($user->team)->active('billing-v2')) {
+    return redirect('/billing/v2');
+}
+
+// ...
+</code></pre>
+<p><a name="default-scope"></a></p>
+<h3>預設作用域</h3>
+<p>還可以自訂 Pennant 用於檢查功能的預設作用域。例如，也許您所有的功能都是針對當前已認證使用者的團隊而不是使用者進行檢查的。與其每次檢查功能時都必須呼叫 <code>Feature::for($user->team)</code>，您可以將團隊指定為預設作用域。通常，這應該在應用程式的其中一個服務提供者中完成：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\Facades\\Auth;
+use Illuminate\\Support\\ServiceProvider;
+use Laravel\\Pennant\\Feature;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Feature::resolveScopeUsing(fn ($driver) => Auth::user()?->team);
+
+        // ...
+    }
+}
+</code></pre>
+<p>如果未透過 <code>for</code> 方法明確提供作用域，則功能檢查現在將使用當前已認證使用者的團隊作為預設作用域：</p>
+<pre><code class="language-php">Feature::active('billing-v2');
+
+// 現在等效於...
+
+Feature::for($user->team)->active('billing-v2');
+</code></pre>
+<p><a name="nullable-scope"></a></p>
+<h3>可空作用域</h3>
+<p>如果您在檢查功能時提供的作用域為 <code>null</code>，並且功能的定義不支援透過可空類型或在聯集類型中包含 <code>null</code> 來支援 <code>null</code>，則 Pennant 將自動返回 <code>false</code> 作為功能的結果值。</p>
+<p>因此，如果您傳遞給功能的作用域可能為 <code>null</code>，並且您希望調用功能的值解析器，則應在功能的定義中考慮到這一點。如果您在 Artisan 命令、佇列作業或未認證的路由中檢查功能，可能會發生 <code>null</code> 作用域。由於在這些上下文中通常沒有已認證的使用者，因此預設作用域將為 <code>null</code>。</p>
+<p>如果您不總是<a href="#specifying-the-scope">明確指定功能作用域</code>，則應確保作用域的類型是「可空的」，並在功能定義邏輯中處理 <code>null</code> 作用域值：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Lottery;
+use Laravel\\Pennant\\Feature;
+
+Feature::define('new-api', fn (User $user) => match (true) {// [tl! remove]
+Feature::define('new-api', fn (User|null $user) => match (true) {// [tl! add]
+    $user === null => true,// [tl! add]
+    $user->isInternalTeamMember() => true,
+    $user->isHighTrafficCustomer() => false,
+    default => Lottery::odds(1 / 100),
+});
+</code></pre>
+<p><a name="identifying-scope"></a></p>
+<h3>識別作用域</h3>
+<p>Pennant 的內建 <code>array</code> 和 <code>database</code> 儲存驅動程式知道如何正確地儲存所有 PHP 資料類型以及 Eloquent 模型的作用域標識符。但是，如果您的應用程式使用第三方 Pennant 驅動程式，則該驅動程式可能不知道如何正確地儲存 Eloquent 模型或應用程式中其他自訂類型的標識符。</p>
+<p>鑑於此，Pennant 允許您透過在用作 Pennant 作用域的應用程式物件上實現 <code>FeatureScopeable</code> 合約來格式化用於儲存的作用域值。</p>
+<p>例如，假設您在單個應用程式中使用兩個不同的功能驅動程式：內建的 <code>database</code> 驅動程式和第三方「Flag Rocket」驅動程式。「Flag Rocket」驅動程式不知道如何正確地儲存 Eloquent 模型。相反，它需要一個 <code>FlagRocketUser</code> 實例。透過實現 <code>FeatureScopeable</code> 合約定義的 <code>toFeatureIdentifier</code>，我們可以自訂提供給應用程式使用的每個驅動程式的可儲存作用域值：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use FlagRocket\\FlagRocketUser;
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Pennant\\Contracts\\FeatureScopeable;
+
+class User extends Model implements FeatureScopeable
+{
+    /**
+     * 將物件轉換為給定驅動程式的作用域標識符。
+     */
+    public function toFeatureIdentifier(string $driver): mixed
+    {
+        return match($driver) {
+            'database' => $this,
+            'flag-rocket' => FlagRocketUser::fromId($this->flag_rocket_id),
+        };
+    }
+}
+</code></pre>
+<p><a name="serializing-scope"></a></p>
+<h3>序列化作用域</h4>
+<p>預設情況下，Pennant 在儲存與 Eloquent 模型關聯的功能時將使用完全限定的類別名稱。如果您已經在使用 <a href="/docs/eloquent-relationships#custom-polymorphic-types">Eloquent 多態映射</a>，您可以選擇讓 Pennant 也使用多態映射來將儲存的功能與應用程式結構解耦。</p>
+<p>要實現這一點，在服務提供者中定義 Eloquent 多態映射後，您可以呼叫 <code>Feature</code> 外觀的 <code>useMorphMap</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Relations\\Relation;
+use Laravel\\Pennant\\Feature;
+
+Relation::enforceMorphMap([
+    'post' => 'App\\Models\\Post',
+    'video' => 'App\\Models\\Video',
+]);
+
+Feature::useMorphMap();
+</code></pre>
+<p><a name="rich-feature-values"></a></p>
+<h2>富功能值</h2>
+<p>到目前為止，我們主要展示了功能處於二進位狀態，意味著它們要麼「活躍」要麼「非活躍」，但 Pennant 也允許您儲存富值。</p>
+<p>例如，假設您正在測試應用程式「立即購買」按鈕的三種新顏色。與其從功能定義返回 <code>true</code> 或 <code>false</code>，您可以返回一個字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+use Laravel\\Pennant\\Feature;
+
+Feature::define('purchase-button', fn (User $user) => Arr::random([
+    'blue-sapphire',
+    'seafoam-green',
+    'tart-orange',
+]));
+</code></pre>
+<p>您可以使用 <code>value</code> 方法來檢索 <code>purchase-button</code> 功能的值：</p>
+<pre><code class="language-php">$color = Feature::value('purchase-button');
+</code></pre>
+<p>Pennant 內建的 Blade 指令也使得根據功能的當前值有條件地渲染內容變得非常容易：</p>
+<pre><code class="language-blade">@feature('purchase-button', 'blue-sapphire')
+    <!-- 'blue-sapphire' 已活躍 -->
+@elsefeature('purchase-button', 'seafoam-green')
+    <!-- 'seafoam-green' 已活躍 -->
+@elsefeature('purchase-button', 'tart-orange')
+    <!-- 'tart-orange' 已活躍 -->
+@endfeature
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+使用富值時，重要的是要知道當功能具有除 <code>false</code> 之外的任何值時，它被視為「活躍」。</p>
+</blockquote>
+<p>呼叫<a href="#conditional-execution">條件 <code>when</code></a> 方法時，功能的富值將提供給第一個閉包：</p>
+<pre><code class="language-php">Feature::when('purchase-button',
+    fn ($color) => /* ... */,
+    fn () => /* ... */,
+);
+</code></pre>
+<p>同樣，呼叫條件 <code>unless</code> 方法時，功能的富值將提供給可選的第二個閉包：</p>
+<pre><code class="language-php">Feature::unless('purchase-button',
+    fn () => /* ... */,
+    fn ($color) => /* ... */,
+);
+</code></pre>
+<p><a name="retrieving-multiple-features"></a></p>
+<h2>檢索多個功能</h2>
+<p><code>values</code> 方法允許檢索給定作用域的多個功能：</p>
+<pre><code class="language-php">Feature::values(['billing-v2', 'purchase-button']);
+
+// [
+//     'billing-v2' => false,
+//     'purchase-button' => 'blue-sapphire',
+// ]
+</code></pre>
+<p>或者，您可以使用 <code>all</code> 方法來檢索給定作用域的所有已定義功能的值：</p>
+<pre><code class="language-php">Feature::all();
+
+// [
+//     'billing-v2' => false,
+//     'purchase-button' => 'blue-sapphire',
+//     'site-redesign' => true,
+// ]
+</code></pre>
+<p>但是，基於類別的功能是動態註冊的，並且在它們被明確檢查之前 Pennant 不知道它們。這意味著如果您在當前請求期間尚未檢查，則應用程式的基於類別的功能可能不會出現在 <code>all</code> 方法返回的結果中。</p>
+<p>如果您希望確保使用 <code>all</code> 方法時始終包含功能類別，可以使用 Pennant 的功能發現功能。首先，在應用程式的其中一個服務提供者中呼叫 <code>discover</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\ServiceProvider;
+use Laravel\\Pennant\\Feature;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Feature::discover();
+
+        // ...
+    }
+}
+</code></pre>
+<p><code>discover</code> 方法將註冊應用程式 <code>app/Features</code> 目錄中的所有功能類別。<code>all</code> 方法現在將在結果中包含這些類別，無論它們是否在當前請求期間已被檢查：</p>
+<pre><code class="language-php">Feature::all();
+
+// [
+//     'App\\Features\\NewApi' => true,
+//     'billing-v2' => false,
+//     'purchase-button' => 'blue-sapphire',
+//     'site-redesign' => true,
+// ]
+</code></pre>
+<p><a name="eager-loading"></a></p>
+<h2>預先載入</h2>
+<p>雖然 Pennant 為單個請求保留了所有已解析功能的記憶體快取，但仍然可能遇到效能問題。為了緩解此問題，Pennant 提供了預先載入功能值的功能。</p>
+<p>為了說明這一點，想像我們正在迴圈中檢查功能是否活躍：</p>
+<pre><code class="language-php">use Laravel\\Pennant\\Feature;
+
+foreach ($users as $user) {
+    if (Feature::for($user)->active('notifications-beta')) {
+        $user->notify(new RegistrationSuccess);
+    }
+}
+</code></pre>
+<p>假設我們正在使用資料庫驅動程式，此代碼將為迴圈中的每個使用者執行一次資料庫查詢——可能執行數百次查詢。但是，使用 Pennant 的 <code>load</code> 方法，我們可以透過為使用者或作用域集合預先載入功能值來消除這種潛在的效能瓶頸：</p>
+<pre><code class="language-php">Feature::for($users)->load(['notifications-beta']);
+
+foreach ($users as $user) {
+    if (Feature::for($user)->active('notifications-beta')) {
+        $user->notify(new RegistrationSuccess);
+    }
+}
+</code></pre>
+<p>要僅在尚未載入時載入功能值，可以使用 <code>loadMissing</code> 方法：</p>
+<pre><code class="language-php">Feature::for($users)->loadMissing([
+    'new-api',
+    'purchase-button',
+    'notifications-beta',
+]);
+</code></pre>
+<p>您可以使用 <code>loadAll</code> 方法載入所有已定義的功能：</p>
+<pre><code class="language-php">Feature::for($users)->loadAll();
+</code></pre>
+<p><a name="updating-values"></a></p>
+<h2>更新值</h2>
+<p>當功能的值首次被解析時，底層驅動程式將結果儲存在儲存中。這通常是必要的，以確保使用者在請求之間獲得一致的體驗。但是，有時您可能希望手動更新功能的儲存值。</p>
+<p>為此，您可以使用 <code>activate</code> 和 <code>deactivate</code> 方法來切換功能的「開啟」或「關閉」：</p>
+<pre><code class="language-php">use Laravel\\Pennant\\Feature;
+
+// 為預設作用域啟用功能...
+Feature::activate('new-api');
+
+// 為給定作用域停用功能...
+Feature::for($user->team)->deactivate('billing-v2');
+</code></pre>
+<p>還可以透過向 <code>activate</code> 方法提供第二個參數來手動設定功能的富值：</p>
+<pre><code class="language-php">Feature::activate('purchase-button', 'seafoam-green');
+</code></pre>
+<p>要指示 Pennant 忘記功能的儲存值，可以使用 <code>forget</code> 方法。再次檢查功能時，Pennant 將從其功能定義解析功能的值：</p>
+<pre><code class="language-php">Feature::forget('purchase-button');
+</code></pre>
+<p><a name="bulk-updates"></a></p>
+<h3>批量更新</h3>
+<p>要批量更新儲存的功能值，您可以使用 <code>activateForEveryone</code> 和 <code>deactivateForEveryone</code> 方法。</p>
+<p>例如，假設您現在對 <code>new-api</code> 功能的穩定性充滿信心，並且已經為您的結帳流程找到了最佳的 <code>'purchase-button'</code> 顏色——您可以相應地更新所有使用者的儲存值：</p>
+<pre><code class="language-php">use Laravel\\Pennant\\Feature;
+
+Feature::activateForEveryone('new-api');
+
+Feature::activateForEveryone('purchase-button', 'seafoam-green');
+</code></pre>
+<p>或者，您可以為所有使用者停用該功能：</p>
+<pre><code class="language-php">Feature::deactivateForEveryone('new-api');
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+這只會更新由 Pennant 的儲存驅動程式儲存的已解析功能值。您還需要更新應用程式中的功能定義。</p>
+</blockquote>
+<p><a name="purging-features"></a></p>
+<h3>清除功能</h3>
+<p>有時，從儲存中清除整個功能可能很有用。如果您已從應用程式中移除了該功能，或者您已對功能定義進行了調整並希望將其推出給所有使用者，通常需要這樣做。</p>
+<p>您可以使用 <code>purge</code> 方法來移除功能的所有儲存值：</p>
+<pre><code class="language-php">// 清除單個功能...
+Feature::purge('new-api');
+
+// 清除多個功能...
+Feature::purge(['new-api', 'purchase-button']);
+</code></pre>
+<p>如果您希望清除儲存中的<em>所有</em>功能，可以在不提供任何參數的情況下呼叫 <code>purge</code> 方法：</p>
+<pre><code class="language-php">Feature::purge();
+</code></pre>
+<p>由於清除功能可能作為應用程式部署管線的一部分而有用，Pennant 包含一個 <code>pennant:purge</code> Artisan 命令，它將從儲存中清除提供的功能：</p>
+<pre><code class="language-shell">php artisan pennant:purge new-api
+
+php artisan pennant:purge new-api purchase-button
+</code></pre>
+<p>還可以清除<em>除</em>給定功能列表之外的所有功能。例如，假設您想要清除所有功能，但保留「new-api」和「purchase-button」功能的值在儲存中。為此，您可以將這些功能名稱傳遞給 <code>--except</code> 選項：</p>
+<pre><code class="language-shell">php artisan pennant:purge --except=new-api --except=purchase-button
+</code></pre>
+<p>為了方便，<code>pennant:purge</code> 命令還支援 <code>--except-registered</code> 標誌。此標誌表示應清除除在服務提供者中明確註冊的功能之外的所有功能：</p>
+<pre><code class="language-shell">php artisan pennant:purge --except-registered
+</code></pre>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>測試與功能開關互動的代碼時，控制測試中功能開關返回值的最簡單方法是簡單地重新定義該功能。例如，假設您在應用程式的其中一個服務提供者中定義了以下功能：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+use Laravel\\Pennant\\Feature;
+
+Feature::define('purchase-button', fn () => Arr::random([
+    'blue-sapphire',
+    'seafoam-green',
+    'tart-orange',
+]));
+</code></pre>
+<p>要修改測試中功能的返回值，您可以在測試開始時重新定義該功能。以下測試將始終通過，即使服務提供者中仍然存在 <code>Arr::random()</code> 實現：</p>
+<pre><code class="language-php">use Laravel\\Pennant\\Feature;
+
+test('it can control feature values', function () {
+    Feature::define('purchase-button', 'seafoam-green');
+
+    expect(Feature::value('purchase-button'))->toBe('seafoam-green');
+});
+</code></pre>
+<pre><code class="language-php">use Laravel\\Pennant\\Feature;
+
+public function test_it_can_control_feature_values()
+{
+    Feature::define('purchase-button', 'seafoam-green');
+
+    $this->assertSame('seafoam-green', Feature::value('purchase-button'));
+}
+</code></pre>
+<p>同樣的方法可用於基於類別的功能：</p>
+<pre><code class="language-php">use Laravel\\Pennant\\Feature;
+
+test('it can control feature values', function () {
+    Feature::define(NewApi::class, true);
+
+    expect(Feature::value(NewApi::class))->toBeTrue();
+});
+</code></pre>
+<pre><code class="language-php">use App\\Features\\NewApi;
+use Laravel\\Pennant\\Feature;
+
+public function test_it_can_control_feature_values()
+{
+    Feature::define(NewApi::class, true);
+
+    $this->assertTrue(Feature::value(NewApi::class));
+}
+</code></pre>
+<p>如果您的功能返回一個 <code>Lottery</code> 實例，則有一些有用的<a href="/docs/helpers#testing-lotteries">測試輔助工具</a>可用。</p>
+<p><a name="store-configuration"></a></p>
+<h4>儲存配置</h4>
+<p>您可以透過在應用程式的 <code>phpunit.xml</code> 檔案中定義 <code>PENNANT_STORE</code> 環境變數來配置 Pennant 在測試期間將使用的儲存：</p>
+<pre><code class="language-xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+<phpunit colors="true">
+    <!-- ... -->
+    <php>
+        <env name="PENNANT_STORE" value="array"/>
+        <!-- ... -->
+    </php>
+</phpunit>
+</code></pre>
+<p><a name="adding-custom-pennant-drivers"></a></p>
+<h2>添加自訂 Pennant 驅動程式</h2>
+<p><a name="implementing-the-driver"></a></p>
+<h4>實現驅動程式</h4>
+<p>如果 Pennant 的現有儲存驅動程式都不符合您應用程式的需求，您可以編寫自己的儲存驅動程式。您的自訂驅動程式應實現 <code>Laravel\\Pennant\\Contracts\\Driver</code> 介面：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Extensions;
+
+use Laravel\\Pennant\\Contracts\\Driver;
+
+class RedisFeatureDriver implements Driver
+{
+    public function define(string $feature, callable $resolver): void {}
+    public function defined(): array {}
+    public function getAll(array $features): array {}
+    public function get(string $feature, mixed $scope): mixed {}
+    public function set(string $feature, mixed $scope, mixed $value): void {}
+    public function setForAllScopes(string $feature, mixed $value): void {}
+    public function delete(string $feature, mixed $scope): void {}
+    public function purge(array|null $features): void {}
+}
+</code></pre>
+<p>現在，我們只需要使用 Redis 連接來實現這些方法。有關如何實現這些方法的範例，請查看 <a href="https://github.com/laravel/pennant/blob/1.x/src/Drivers/DatabaseDriver.php">Pennant 原始碼</a>中的 <code>Laravel\\Pennant\\Drivers\\DatabaseDriver</code></p>
+<blockquote>
+<p>[!NOTE]
+Laravel 不附帶用於存放擴展的目錄。您可以自由地將它們放在任何您喜歡的地方。在此範例中，我們創建了一個 <code>Extensions</code> 目錄來存放 <code>RedisFeatureDriver</code>。</p>
+</blockquote>
+<p><a name="registering-the-driver"></a></p>
+<h4>註冊驅動程式</h4>
+<p>實現好驅動程式後，您就可以將其註冊到 Laravel。要向 Pennant 添加額外的驅動程式，可以使用 <code>Feature</code> 外觀提供的 <code>extend</code> 方法。您應該從應用程式的<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中呼叫 <code>extend</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Extensions\\RedisFeatureDriver;
+use Illuminate\\Contracts\\Foundation\\Application;
+use Illuminate\\Support\\ServiceProvider;
+use Laravel\\Pennant\\Feature;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 註冊任何應用程式服務。
+     */
+    public function register(): void
+    {
+        // ...
+    }
+
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Feature::extend('redis', function (Application $app) {
+            return new RedisFeatureDriver($app->make('redis'), $app->make('events'), []);
+        });
+    }
+}
+</code></pre>
+<p>註冊驅動程式後，您可以在應用程式的 <code>config/pennant.php</code> 配置檔案中使用 <code>redis</code> 驅動程式：</p>
+<pre><code class="language-php">'stores' => [
+
+    'redis' => [
+        'driver' => 'redis',
+        'connection' => null,
+    ],
+
+    // ...
+
+],
+</code></pre>
+<p><a name="defining-features-externally"></a></p>
+<h3>外部定義功能</h3>
+<p>如果您的驅動程式是第三方功能開關平台的包裝器，您可能希望在平台上定義功能而不是使用 Pennant 的 <code>Feature::define</code> 方法。如果是這種情況，您的自訂驅動程式還應實現 <code>Laravel\\Pennant\\Contracts\\DefinesFeaturesExternally</code> 介面：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Extensions;
+
+use Laravel\\Pennant\\Contracts\\Driver;
+use Laravel\\Pennant\\Contracts\\DefinesFeaturesExternally;
+
+class FeatureFlagServiceDriver implements Driver, DefinesFeaturesExternally
+{
+    /**
+     * 獲取為給定作用域定義的功能。
+     */
+    public function definedFeaturesForScope(mixed $scope): array {}
+
+    /* ... */
+}
+</code></pre>
+<p><code>definedFeaturesForScope</code> 方法應返回為提供的作用域定義的功能名稱列表。</p>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Pennant 派發各種事件，在整個應用程式中追蹤功能開關時可能很有用。</p>
+<h3><code>Laravel\\Pennant\\Events\\FeatureRetrieved</code></h3>
+<p>每次<a href="#checking-features">檢查功能</a>時都會派發此事件。此事件對於在整個應用程式中創建和追蹤功能開關使用情況的指標可能很有用。</p>
+<h3><code>Laravel\\Pennant\\Events\\FeatureResolved</code></h3>
+<p>當功能的值首次為特定作用域解析時，會派發此事件。</p>
+<h3><code>Laravel\\Pennant\\Events\\UnknownFeatureResolved</code></h3>
+<p>當未知功能首次為特定作用域解析時，會派發此事件。如果您打算移除一個功能開關但在應用程式中意外留下了對它的孤立引用，監聽此事件可能很有用：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\ServiceProvider;
+use Illuminate\\Support\\Facades\\Event;
+use Illuminate\\Support\\Facades\\Log;
+use Laravel\\Pennant\\Events\\UnknownFeatureResolved;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Event::listen(function (UnknownFeatureResolved $event) {
+            Log::error("Resolving unknown feature [{$event->feature}].");
+        });
+    }
+}
+</code></pre>
+<h3><code>Laravel\\Pennant\\Events\\DynamicallyRegisteringFeatureClass</code></h3>
+<p>當<a href="#class-based-features">基於類別的功能</a>在請求期間首次被動態檢查時，會派發此事件。</p>
+<h3><code>Laravel\\Pennant\\Events\\UnexpectedNullScopeEncountered</code></h3>
+<p>當 <code>null</code> 作用域傳遞給<a href="#nullable-scope">不支援 null</a> 的功能定義時，會派發此事件。</p>
+<p>這種情況會被優雅地處理，功能將返回 <code>false</code>。但是，如果您希望退出此功能的預設優雅行為，可以在應用程式 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中註冊一個監聽此事件的監聽器：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+use Laravel\\Pennant\\Events\\UnexpectedNullScopeEncountered;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Event::listen(UnexpectedNullScopeEncountered::class, fn () => abort(500));
+}
+</code></pre>
+<h3><code>Laravel\\Pennant\\Events\\FeatureUpdated</code></h3>
+<p>當更新給定作用域的功能時，會派發此事件，通常是透過呼叫 <code>activate</code> 或 <code>deactivate</code>。</p>
+<h3><code>Laravel\\Pennant\\Events\\FeatureUpdatedForAllScopes</code></h3>
+<p>當更新所有作用域的功能時，會派發此事件，通常是透過呼叫 <code>activateForEveryone</code> 或 <code>deactivateForEveryone</code>。</p>
+<h3><code>Laravel\\Pennant\\Events\\FeatureDeleted</code></h3>
+<p>當刪除給定作用域的功能時，會派發此事件，通常是透過呼叫 <code>forget</code>。</p>
+<h3><code>Laravel\\Pennant\\Events\\FeaturesPurged</code></h3>
+<p>當清除特定功能時，會派發此事件。</p>
+<h3><code>Laravel\\Pennant\\Events\\AllFeaturesPurged</code></h3>
+<p>當清除所有功能時，會派發此事件。</p>
+`;
+---
+
+<DocsLayout title="Pennant" currentPath="pennant">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Pennant</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Pennant</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/pennant" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

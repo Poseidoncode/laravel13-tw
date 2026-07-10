@@ -1,0 +1,161 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>電子郵件驗證</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#model-preparation">模型準備</a></li>
+<li><a href="#database-preparation">資料庫準備</a></li>
+</ul>
+</li>
+<li><a href="#verification-routing">路由</a><ul>
+<li><a href="#the-email-verification-notice">電子郵件驗證通知</a></li>
+<li><a href="#the-email-verification-handler">電子郵件驗證處理器</a></li>
+<li><a href="#resending-the-verification-email">重新傳送驗證電子郵件</a></li>
+<li><a href="#protecting-routes">保護路由</a></li>
+</ul>
+</li>
+<li><a href="#customization">自訂</a></li>
+<li><a href="#events">事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>許多 Web 應用程式要求使用者在使用應用程式前驗證其電子郵件地址。Laravel 提供了方便的內建服務來傳送和驗證電子郵件驗證請求，而不是強迫您為每個建立的應用程式手動重新實作此功能。</p>
+<blockquote>
+<p>[!NOTE]
+想要快速開始？在全新的 Laravel 應用程式中安裝其中一個 <a href="/docs/starter-kits">Laravel 應用程式入門套件</a>。入門套件將負責建立您的整個認證系統的腳手架，包括電子郵件驗證支援。</p>
+</blockquote>
+<p><a name="model-preparation"></a></p>
+<h3>模型準備</h3>
+<p>開始之前，請確認您的 <code>App\\Models\\User</code> 模型實作了 <code>Illuminate\\Contracts\\Auth\\MustVerifyEmail</code> 合約：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Contracts\\Auth\\MustVerifyEmail;
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use Notifiable;
+
+    // ...
+}
+</code></pre>
+<p>一旦此介面被加入到您的模型中，新註冊的使用者將自動收到包含電子郵件驗證連結的電子郵件。這是無縫發生的，因為 Laravel 自動為 <code>Illuminate\\Auth\\Events\\Registered</code> 事件註冊了 <code>Illuminate\\Auth\\Listeners\\SendEmailVerificationNotification</code> <a href="/docs/events">監聽器</a>。</p>
+<p>如果您正在應用程式中手動實作註冊，而不是使用<a href="/docs/starter-kits">入門套件</a>，您應該確保在使用者註冊成功後派發 <code>Illuminate\\Auth\\Events\\Registered</code> 事件：</p>
+<pre><code class="language-php">use Illuminate\\Auth\\Events\\Registered;
+
+event(new Registered($user));
+</code></pre>
+<p><a name="database-preparation"></a></p>
+<h3>資料庫準備</h3>
+<p>接下來，您的 <code>users</code> 資料表必須包含 <code>email_verified_at</code> 欄位，以儲存使用者電子郵件地址被驗證的日期和時間。通常，這已包含在 Laravel 預設的 <code>0001_01_01_000000_create_users_table.php</code> 資料庫遷移中。</p>
+<p><a name="verification-routing"></a></p>
+<h2>路由</h2>
+<p>為了正確實作電子郵件驗證，需要定義三個路由。首先，需要一個路由來向使用者顯示通知，告知他們應點擊 Laravel 在註冊後傳送的驗證電子郵件中的驗證連結。</p>
+<p>其次，需要一個路由來處理使用者點擊電子郵件中的驗證連結時產生的請求。</p>
+<p>第三，需要一個路由，以便在使用者意外遺失第一個驗證連結時重新傳送驗證連結。</p>
+<p><a name="the-email-verification-notice"></a></p>
+<h3>電子郵件驗證通知</h3>
+<p>如前所述，應定義一個路由，該路由將返回一個視圖，指示使用者點擊 Laravel 在註冊後透過電子郵件傳送給他們的驗證連結。當使用者嘗試在未先驗證電子郵件地址的情況下存取應用程式的其他部分時，將向他們顯示此視圖。請記住，只要您的 <code>App\\Models\\User</code> 模型實作了 <code>MustVerifyEmail</code> 介面，該連結就會自動透過電子郵件傳送給使用者：</p>
+<pre><code class="language-php">Route::get(&#39;/email/verify&#39;, function () {
+    return view(&#39;auth.verify-email&#39;);
+})-&gt;middleware(&#39;auth&#39;)-&gt;name(&#39;verification.notice&#39;);
+</code></pre>
+<p>返回電子郵件驗證通知的路由應命名為 <code>verification.notice</code>。重要的是該路由必須被賦予此確切名稱，因為 <code>verified</code> 中介層<a href="#protecting-routes">（Laravel 附含）</a>將在使用者未驗證其電子郵件地址時自動重新導向到此路由名稱。</p>
+<blockquote>
+<p>[!NOTE]
+手動實作電子郵件驗證時，您需要自行定義驗證通知視圖的內容。如果您希望包含所有必要認證和驗證視圖的腳手架，請查看 <a href="/docs/starter-kits">Laravel 應用程式入門套件</a>。</p>
+</blockquote>
+<p><a name="the-email-verification-handler"></a></p>
+<h3>電子郵件驗證處理器</h3>
+<p>接下來，我們需要定義一個路由來處理使用者點擊透過電子郵件傳送給他們的驗證連結時產生的請求。此路由應命名為 <code>verification.verify</code>，並分配 <code>auth</code> 和 <code>signed</code> 中介層：</p>
+<pre><code class="language-php">use Illuminate\\Foundation\\Auth\\EmailVerificationRequest;
+
+Route::get(&#39;/email/verify/{id}/{hash}&#39;, function (EmailVerificationRequest $request) {
+    $request-&gt;fulfill();
+
+    return redirect(&#39;/home&#39;);
+})-&gt;middleware([&#39;auth&#39;, &#39;signed&#39;])-&gt;name(&#39;verification.verify&#39;);
+</code></pre>
+<p>在繼續之前，讓我們仔細看看這個路由。首先，您會注意到我們使用 <code>EmailVerificationRequest</code> 請求類型，而不是典型的 <code>Illuminate\\Http\\Request</code> 實例。<code>EmailVerificationRequest</code> 是 Laravel 附含的<a href="/docs/validation#form-request-validation">表單請求</a>。此請求將自動處理驗證請求的 <code>id</code> 和 <code>hash</code> 參數。</p>
+<p>接下來，我們可以直接呼叫請求上的 <code>fulfill</code> 方法。此方法將在已認證的使用者上呼叫 <code>markEmailAsVerified</code> 方法，並派發 <code>Illuminate\\Auth\\Events\\Verified</code> 事件。<code>markEmailAsVerified</code> 方法透過 <code>Illuminate\\Foundation\\Auth\\User</code> 基礎類別對預設的 <code>App\\Models\\User</code> 模型可用。一旦使用者的電子郵件地址被驗證，您可以將其重新導向到任何您希望的位置。</p>
+<p><a name="resending-the-verification-email"></a></p>
+<h3>重新傳送驗證電子郵件</h3>
+<p>有時候使用者可能會遺失或意外刪除電子郵件地址驗證電子郵件。為此，您可能希望定義一個路由，允許使用者請求重新傳送驗證電子郵件。然後，您可以在<a href="#the-email-verification-notice">驗證通知視圖</a>中放置一個簡單的表單提交按鈕來向此路由發出請求：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::post(&#39;/email/verification-notification&#39;, function (Request $request) {
+    $request-&gt;user()-&gt;sendEmailVerificationNotification();
+
+    return back()-&gt;with(&#39;message&#39;, &#39;Verification link sent!&#39;);
+})-&gt;middleware([&#39;auth&#39;, &#39;throttle:6,1&#39;])-&gt;name(&#39;verification.send&#39;);
+</code></pre>
+<p><a name="protecting-routes"></a></p>
+<h3>保護路由</h3>
+<p><a href="/docs/middleware">路由中介層</a>可用於僅允許已驗證的使用者存取給定路由。Laravel 包含一個 <code>verified</code> <a href="/docs/middleware#middleware-aliases">中介層別名</a>，它是 <code>Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified</code> 中介層類別的別名。由於此別名已被 Laravel 自動註冊，您只需將 <code>verified</code> 中介層附加到路由定義即可。通常，此中介層與 <code>auth</code> 中介層配對：</p>
+<pre><code class="language-php">Route::get(&#39;/profile&#39;, function () {
+    // Only verified users may access this route...
+})-&gt;middleware([&#39;auth&#39;, &#39;verified&#39;]);
+</code></pre>
+<p>如果未驗證的使用者嘗試存取已分配此中介層的路由，他們將被自動重新導向到 <code>verification.notice</code> <a href="/docs/routing#named-routes">命名路由</a>。</p>
+<p><a name="customization"></a></p>
+<h2>自訂</h2>
+<p><a name="verification-email-customization"></a></p>
+<h4>驗證電子郵件自訂</h4>
+<p>雖然預設的電子郵件驗證通知應滿足大多數應用程式的需求，但 Laravel 允許您自訂電子郵件驗證郵件訊息的建構方式。</p>
+<p>要開始，請將閉包傳遞給 <code>Illuminate\\Auth\\Notifications\\VerifyEmail</code> 通知提供的 <code>toMailUsing</code> 方法。閉包將接收接收通知的可通知模型實例，以及使用者必須訪問以驗證其電子郵件地址的已簽署電子郵件驗證 URL。閉包應返回 <code>Illuminate\\Notifications\\Messages\\MailMessage</code> 的實例。通常，應從您應用程式的 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫 <code>toMailUsing</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Auth\\Notifications\\VerifyEmail;
+use Illuminate\\Notifications\\Messages\\MailMessage;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    // ...
+
+    VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
+        return (new MailMessage)
+            -&gt;subject(&#39;Verify Email Address&#39;)
+            -&gt;line(&#39;Click the button below to verify your email address.&#39;)
+            -&gt;action(&#39;Verify Email Address&#39;, $url);
+    });
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如需了解更多關於郵件通知的資訊，請參閱<a href="/docs/notifications#mail-notifications">郵件通知文件</a>。</p>
+</blockquote>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>使用 <a href="/docs/starter-kits">Laravel 應用程式入門套件</a>時，Laravel 會在電子郵件驗證過程中派發 <code>Illuminate\\Auth\\Events\\Verified</code> <a href="/docs/events">事件</a>。如果您正在為應用程式手動處理電子郵件驗證，您可能希望在驗證完成後手動派發這些事件。</p>
+`;
+---
+
+<DocsLayout title="驗證" currentPath="verification">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>驗證</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">驗證</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 本文翻譯自 Laravel 官方文檔。
+        <a href="https://laravel.com/docs/13.x/verification" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

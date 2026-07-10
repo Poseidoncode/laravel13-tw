@@ -1,0 +1,210 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>測試：入門</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#environment">環境</a></li>
+<li><a href="#creating-tests">建立測試</a></li>
+<li><a href="#running-tests">執行測試</a><ul>
+<li><a href="#running-tests-in-parallel">平行執行測試</a></li>
+<li><a href="#reporting-test-coverage">報告測試覆蓋率</a></li>
+<li><a href="#profiling-tests">分析測試</a></li>
+</ul>
+</li>
+<li><a href="#configuration-caching">配置快取</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 在建構時就考慮了測試。事實上，支援使用 <a href="https://pestphp.com">Pest</a> 和 <a href="https://phpunit.de">PHPUnit</a> 進行測試是開箱即用的，並且已經為您的應用程式設定了 <code>phpunit.xml</code> 檔案。框架還附帶了方便的輔助方法，允許您表達性地測試您的應用程式。</p>
+<p>預設情況下，應用程式的 <code>tests</code> 目錄包含兩個目錄：<code>Feature</code> 和 <code>Unit</code>。單元測試是專注於程式碼中非常小、隔離部分的測試。事實上，大多數單元測試可能專注於單一方法。「Unit」測試目錄中的測試不會啟動 Laravel 應用程式，因此無法存取應用程式的資料庫或其他框架服務。</p>
+<p>功能測試可以測試更大範圍的程式碼，包括多個物件如何彼此互動，甚至是對 JSON 端點的完整 HTTP 請求。<strong>一般來說，大多數測試都應該是功能測試。這些類型的測試提供了最大的信心，確保您的系統整體按預期運作。</strong></p>
+<p><code>Feature</code> 和 <code>Unit</code> 測試目錄中都提供了一個 <code>ExampleTest.php</code> 檔案。安裝新的 Laravel 應用程式後，執行 <code>vendor/bin/pest</code>、<code>vendor/bin/phpunit</code> 或 <code>php artisan test</code> 命令來運行您的測試。</p>
+<p><a name="environment"></a></p>
+<h2>環境</h2>
+<p>運行測試時，Laravel 將自動將<a href="/docs/configuration#environment-configuration">配置環境</a>設為 <code>testing</code>，這是因為 <code>phpunit.xml</code> 檔案中定義的環境變數。Laravel 還自動將 Session 和快取配置為 <code>array</code> 驅動程式，以便在測試期間不會持久化 Session 或快取資料。</p>
+<p>您可以根據需要自由定義其他測試環境配置值。可以在應用程式的 <code>phpunit.xml</code> 檔案中配置 <code>testing</code> 環境變數，但請在運行測試之前使用 <code>config:clear</code> Artisan 命令清除配置快取！</p>
+<p><a name="the-env-testing-environment-file"></a></p>
+<h4><code>.env.testing</code> 環境檔案</h4>
+<p>此外，您可以在專案根目錄中建立一個 <code>.env.testing</code> 檔案。此檔案將在運行 Pest 和 PHPUnit 測試或使用 <code>--env=testing</code> 選項執行 Artisan 命令時取代 <code>.env</code> 檔案。</p>
+<p><a name="creating-tests"></a></p>
+<h2>建立測試</h2>
+<p>要建立新的測試用例，請使用 <code>make:test</code> Artisan 命令。預設情況下，測試將放在 <code>tests/Feature</code> 目錄中：</p>
+<pre><code class="language-shell">php artisan make:test UserTest
+</code></pre>
+<p>如果您想在 <code>tests/Unit</code> 目錄中建立測試，可以在執行 <code>make:test</code> 命令時使用 <code>--unit</code> 選項：</p>
+<pre><code class="language-shell">php artisan make:test UserTest --unit
+</code></pre>
+<p>如果您有一個主要依賴 Laravel 測試功能的測試類別，但特定測試方法不需要啟動框架，可以將 <code>#[UnitTest]</code> 屬性套用到該方法，以跳過僅為該測試啟動應用程式。</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Foundation\\Testing\\Attributes\\UnitTest;
+use Tests\\TestCase;
+
+class LocationServiceTest extends TestCase
+{
+    public function test_get_coordinates_resolves_address(): void
+    {
+        // This test uses Laravel's testing features...
+    }
+
+    #[UnitTest]
+    public function test_get_state_returns_state_from_abbreviation(): void
+    {
+        // This test runs without booting the application...
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+測試模板可以使用<a href="/docs/artisan#stub-customization">模板發佈</a>來自訂。</p>
+</blockquote>
+<p>測試生成後，您可以像平常一樣使用 Pest 或 PHPUnit 定義測試。要運行測試，請從終端執行 <code>vendor/bin/pest</code>、<code>vendor/bin/phpunit</code> 或 <code>php artisan test</code> 命令：</p>
+<pre><code class="language-php">&lt;?php
+
+test('basic', function () {
+    expect(true)->toBeTrue();
+});
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果您在測試類別中定義了自己的 <code>setUp</code> / <code>tearDown</code> 方法，請務必在父類別上呼叫相應的 <code>parent::setUp()</code> / <code>parent::tearDown()</code> 方法。通常，您應該在 <code>setUp</code> 方法的開始呼叫 <code>parent::setUp()</code>，在 <code>tearDown</code> 方法的結尾呼叫 <code>parent::tearDown()</code>。</p>
+</blockquote>
+<p><a name="running-tests"></a></p>
+<h2>執行測試</h2>
+<p>如前所述，編寫測試後，您可以使用 <code>pest</code> 或 <code>phpunit</code> 來運行它們：</p>
+<pre><code class="language-shell">./vendor/bin/pest
+</code></pre>
+<p>除了 <code>pest</code> 或 <code>phpunit</code> 命令外，您還可以使用 <code>test</code> Artisan 命令來運行測試。Artisan 測試運行器提供詳細的測試報告，以便於開發和除錯：</p>
+<pre><code class="language-shell">php artisan test
+</code></pre>
+<p>可以傳遞給 <code>pest</code> 或 <code>phpunit</code> 命令的任何參數也可以傳遞給 Artisan <code>test</code> 命令：</p>
+<pre><code class="language-shell">php artisan test --testsuite=Feature --stop-on-failure
+</code></pre>
+<p><a name="running-tests-in-parallel"></a></p>
+<h3>平行執行測試</h3>
+<p>預設情況下，Laravel 和 Pest / PHPUnit 在單一進程中按順序執行您的測試。但是，您可以透過在多個進程中同時運行測試來大幅減少運行測試所需的時間。首先，您應該將 <code>brianium/paratest</code> Composer 套件安裝為「dev」依賴項。然後，在執行 <code>test</code> Artisan 命令時包含 <code>--parallel</code> 選項：</p>
+<pre><code class="language-shell">composer require brianium/paratest --dev
+
+php artisan test --parallel
+</code></pre>
+<p>預設情況下，Laravel 將建立與您機器上可用 CPU 核心數一樣多的進程。但是，您可以使用 <code>--processes</code> 選項調整進程數：</p>
+<pre><code class="language-shell">php artisan test --parallel --processes=4
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+平行運行測試時，某些 Pest / PHPUnit 選項（如 <code>--do-not-cache-result</code>）可能不可用。</p>
+</blockquote>
+<p><a name="parallel-testing-and-databases"></a></p>
+<h4>平行測試與資料庫</h4>
+<p>只要您已配置了主資料庫連線，Laravel 就會自動為每個運行測試的平行進程建立和遷移測試資料庫。測試資料庫將附加一個進程令牌後綴，該令牌對每個進程都是唯一的。例如，如果您有兩個平行測試進程，Laravel 將建立並使用 <code>your_db_test_1</code> 和 <code>your_db_test_2</code> 測試資料庫。</p>
+<p>預設情況下，測試資料庫在呼叫 <code>test</code> Artisan 命令之間持久化，以便它們可以被後續的 <code>test</code> 呼叫再次使用。但是，您可以使用 <code>--recreate-databases</code> 選項重新建立它們：</p>
+<pre><code class="language-shell">php artisan test --parallel --recreate-databases
+</code></pre>
+<p><a name="parallel-testing-hooks"></a></p>
+<h4>平行測試鉤子</h4>
+<p>有時，您可能需要準備應用程式測試使用的某些資源，以便它們可以被多個測試進程安全使用。</p>
+<p>使用 <code>ParallelTesting</code> facade，您可以指定在進程或測試用例的 <code>setUp</code> 和 <code>tearDown</code> 上執行的程式碼。給定的閉包接收分別包含進程令牌和當前測試用例的 <code>$token</code> 和 <code>$testCase</code> 變數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\Facades\\Artisan;
+use Illuminate\\Support\\Facades\\ParallelTesting;
+use Illuminate\\Support\\ServiceProvider;
+use PHPUnit\\Framework\\TestCase;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        ParallelTesting::setUpProcess(function (int $token) {
+            // ...
+        });
+
+        ParallelTesting::setUpTestCase(function (int $token, TestCase $testCase) {
+            // ...
+        });
+
+        // Executed when a test database is created...
+        ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
+            Artisan::call('db:seed');
+        });
+
+        ParallelTesting::tearDownTestCase(function (int $token, TestCase $testCase) {
+            // ...
+        });
+
+        ParallelTesting::tearDownProcess(function (int $token) {
+            // ...
+        });
+    }
+}
+</code></pre>
+<p><a name="accessing-the-parallel-testing-token"></a></p>
+<h4>存取平行測試令牌</h4>
+<p>如果您想從應用程式測試程式碼中的任何其他位置存取當前平行進程「令牌」，可以使用 <code>token</code> 方法。此令牌是個別測試進程的唯一字串識別碼，可用於跨平行測試進程分割資源。例如，Laravel 自動將此令牌附加到每個平行測試進程建立的測試資料庫的末尾：</p>
+<pre><code class="language-php">$token = ParallelTesting::token();
+</code></pre>
+<p><a name="reporting-test-coverage"></a></p>
+<h3>報告測試覆蓋率</h3>
+<blockquote>
+<p>[!WARNING]
+此功能需要 <a href="https://xdebug.org">Xdebug</a> 或 <a href="https://pecl.php.net/package/pcov">PCOV</a>。</p>
+</blockquote>
+<p>運行應用程式測試時，您可能想確定您的測試用例是否實際覆蓋了應用程式程式碼，以及運行測試時使用了多少應用程式程式碼。要實現此目的，您可以在呼叫 <code>test</code> 命令時提供 <code>--coverage</code> 選項：</p>
+<pre><code class="language-shell">php artisan test --coverage
+</code></pre>
+<p><a name="enforcing-a-minimum-coverage-threshold"></a></p>
+<h4>強制最低覆蓋率閾值</h4>
+<p>您可以使用 <code>--min</code> 選項為應用程式定義最低測試覆蓋率閾值。如果未達到此閾值，測試套件將失敗：</p>
+<pre><code class="language-shell">php artisan test --coverage --min=80.3
+</code></pre>
+<p><a name="profiling-tests"></a></p>
+<h3>分析測試</h3>
+<p>Artisan 測試運行器還包含一個方便的機制，用於列出應用程式最慢的測試。使用 <code>--profile</code> 選項呼叫 <code>test</code> 命令，將顯示最慢的十個測試的列表，讓您可以輕鬆調查哪些測試可以改進以加快測試套件的速度：</p>
+<pre><code class="language-shell">php artisan test --profile
+</code></pre>
+<p><a name="configuration-caching"></a></p>
+<h2>配置快取</h2>
+<p>運行測試時，Laravel 為每個單獨的測試方法啟動應用程式。如果沒有快取的配置檔，必須在測試開始時載入應用程式中的每個配置檔。要建立一次配置並在單次運行中的所有測試中重複使用，可以使用 <code>Illuminate\\Foundation\\Testing\\WithCachedConfig</code> trait：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Foundation\\Testing\\WithCachedConfig;
+
+pest()->use(WithCachedConfig::class);
+
+// ...
+</code></pre>
+`;
+---
+
+<DocsLayout title="測試：入門" currentPath="testing">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>測試</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">測試：入門</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/testing" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

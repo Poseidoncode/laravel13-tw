@@ -1,0 +1,386 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>上下文</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#how-it-works">運作方式</a></li>
+</ul>
+</li>
+<li><a href="#capturing-context">擷取上下文</a><ul>
+<li><a href="#stacks">堆疊</a></li>
+</ul>
+</li>
+<li><a href="#retrieving-context">檢索上下文</a><ul>
+<li><a href="#determining-item-existence">判斷項目是否存在</a></li>
+</ul>
+</li>
+<li><a href="#removing-context">移除上下文</a></li>
+<li><a href="#hidden-context">隱藏上下文</a></li>
+<li><a href="#events">事件</a><ul>
+<li><a href="#dehydrating">反序列化</a></li>
+<li><a href="#hydrated">序列化</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 的「上下文」功能使您能夠在應用程式內的請求、任務和命令執行過程中擷取、檢索和共享資訊。此擷取的資訊也會包含在應用程式寫入的日誌中，為您提供更深入的見解，了解在寫入日誌條目之前發生的周圍程式碼執行歷史，並允許您在分散式系統中追蹤執行流程。</p>
+<p><a name="how-it-works"></a></p>
+<h3>運作方式</h3>
+<p>理解 Laravel 上下文功能的最佳方式是使用內建的日誌功能來查看其實際運作。要開始，您可以使用 <code>Context</code> 外觀<a href="#capturing-context">向上下文添加資訊</a>。在此範例中，我們將使用<a href="/docs/middleware">中介層</a>在每個傳入請求上向上下文添加請求 URL 和唯一的追蹤 ID：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Context;
+use Illuminate\\Support\\Str;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class AddContext
+{
+    /**
+     * 處理傳入的請求。
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        Context::add('url', $request->url());
+        Context::add('trace_id', Str::uuid()->toString());
+
+        return $next($request);
+    }
+}
+</code></pre>
+<p>添加到上下文的資訊會自動作為元資料附加到請求過程中寫入的任何<a href="/docs/logging">日誌條目</a>中。將上下文作為元資料附加，使得傳遞給單個日誌條目的資訊可以與透過 <code>Context</code> 共享的資訊區分開來。例如，想像我們寫入以下日誌條目：</p>
+<pre><code class="language-php">Log::info('User authenticated.', ['auth_id' => Auth::id()]);
+</code></pre>
+<p>寫入的日誌將包含傳遞給日誌條目的 <code>auth_id</code>，但它也會包含作為元資料的上下文的 <code>url</code> 和 <code>trace_id</code>：</p>
+<pre><code class="language-text">User authenticated. {"auth_id":27} {"url":"https://example.com/login","trace_id":"e04e1a11-e75c-4db3-b5b5-cfef4ef56697"}
+</code></pre>
+<p>添加到上下文的資訊也可用於分派到佇列的任務。例如，想像我們在向上下文添加一些資訊後將一個 <code>ProcessPodcast</code> 任務分派到佇列：</p>
+<pre><code class="language-php">// 在我們的中介層中...
+Context::add('url', $request->url());
+Context::add('trace_id', Str::uuid()->toString());
+
+// 在我們的控制器中...
+ProcessPodcast::dispatch($podcast);
+</code></pre>
+<p>當任務被分派時，目前儲存在上下文中的任何資訊都會被擷取並與任務共享。然後，在任務執行期間，擷取的資訊會被序列化回當前上下文。因此，如果我們任務的 handle 方法要寫入日誌：</p>
+<pre><code class="language-php">class ProcessPodcast implements ShouldQueue
+{
+    use Queueable;
+
+    // ...
+
+    /**
+     * 執行任務。
+     */
+    public function handle(): void
+    {
+        Log::info('Processing podcast.', [
+            'podcast_id' => $this->podcast->id,
+        ]);
+
+        // ...
+    }
+}
+</code></pre>
+<p>產生的日誌條目將包含在原始分派任務的請求期間添加到上下文的資訊：</p>
+<pre><code class="language-text">Processing podcast. {"podcast_id":95} {"url":"https://example.com/login","trace_id":"e04e1a11-e75c-4db3-b5b5-cfef4ef56697"}
+</code></pre>
+<p>雖然我們一直專注於 Laravel 上下文的內建日誌相關功能，但以下文件將說明上下文如何允許您在 HTTP 請求/佇列任務邊界之間共享資訊，甚至如何添加<a href="#hidden-context">隱藏上下文資料</a>（不會隨日誌條目寫入）。</p>
+<p><a name="capturing-context"></a></p>
+<h2>擷取上下文</h2>
+<p>您可以使用 <code>Context</code> 外觀的 <code>add</code> 方法將資訊儲存在當前上下文中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+
+Context::add('key', 'value');
+</code></pre>
+<p>要一次添加多個項目，您可以將關聯陣列傳遞給 <code>add</code> 方法：</p>
+<pre><code class="language-php">Context::add([
+    'first_key' => 'value',
+    'second_key' => 'value',
+]);
+</code></pre>
+<p><code>add</code> 方法將覆蓋任何共享相同鍵的現有值。如果您只想在鍵尚不存在時才向上下文添加資訊，可以使用 <code>addIf</code> 方法：</p>
+<pre><code class="language-php">Context::add('key', 'first');
+
+Context::get('key');
+// "first"
+
+Context::addIf('key', 'second');
+
+Context::get('key');
+// "first"
+</code></pre>
+<p>Context 還提供了用於遞增或遞減給定鍵的便利方法。這兩個方法都至少接受一個參數：要追蹤的鍵。可以提供第二個參數來指定鍵應遞增或遞減的量：</p>
+<pre><code class="language-php">Context::increment('records_added');
+Context::increment('records_added', 5);
+
+Context::decrement('records_added');
+Context::decrement('records_added', 5);
+</code></pre>
+<p><a name="conditional-context"></a></p>
+<h4>條件上下文</h4>
+<p><code>when</code> 方法可用於基於給定條件向上下文添加資料。如果給定條件評估為 <code>true</code>，則會呼叫傳遞給 <code>when</code> 方法的第一個閉包；如果條件評估為 <code>false</code>，則會呼叫第二個閉包：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Auth;
+use Illuminate\\Support\\Facades\\Context;
+
+Context::when(
+    Auth::user()->isAdmin(),
+    fn ($context) => $context->add('permissions', Auth::user()->permissions),
+    fn ($context) => $context->add('permissions', []),
+);
+</code></pre>
+<p><a name="scoped-context"></a></p>
+<h4>作用域上下文</h4>
+<p><code>scope</code> 方法提供了一種在給定回呼執行期間暫時修改上下文，並在回呼完成執行後將上下文恢復到其原始狀態的方式。此外，您可以傳遞額外的資料，這些資料應在閉包執行期間合併到上下文中（作為第二個和第三個參數）。</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+use Illuminate\\Support\\Facades\\Log;
+
+Context::add('trace_id', 'abc-999');
+Context::addHidden('user_id', 123);
+
+Context::scope(
+    function () {
+        Context::add('action', 'adding_friend');
+
+        $userId = Context::getHidden('user_id');
+
+        Log::debug("Adding user [{$userId}] to friends list.");
+        // Adding user [987] to friends list.  {"trace_id":"abc-999","user_name":"taylor_otwell","action":"adding_friend"}
+    },
+    data: ['user_name' => 'taylor_otwell'],
+    hidden: ['user_id' => 987],
+);
+
+Context::all();
+// [
+//     'trace_id' => 'abc-999',
+// ]
+
+Context::allHidden();
+// [
+//     'user_id' => 123,
+// ]
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果作用域閉包內的上下文中的物件被修改，則該變更將反映在作用域外部。</p>
+</blockquote>
+<p><a name="stacks"></a></p>
+<h3>堆疊</h3>
+<p>Context 提供了建立「堆疊」的能力，堆疊是按添加順序儲存的資料清單。您可以透過呼叫 <code>push</code> 方法向上疊添加資訊：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+
+Context::push('breadcrumbs', 'first_value');
+
+Context::push('breadcrumbs', 'second_value', 'third_value');
+
+Context::get('breadcrumbs');
+// [
+//     'first_value',
+//     'second_value',
+//     'third_value',
+// ]
+</code></pre>
+<p>堆疊可用於擷取關於請求的歷史資訊，例如在應用程式中發生的事件。例如，您可以創建一個事件監聽器，在每次執行查詢時將其推送到堆疊中，將查詢 SQL 和持續時間作為元組擷取：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+use Illuminate\\Support\\Facades\\DB;
+
+// 在 AppServiceProvider.php 中...
+DB::listen(function ($event) {
+    Context::push('queries', [$event->time, $event->sql]);
+});
+</code></pre>
+<p>您可以使用 <code>stackContains</code> 和 <code>hiddenStackContains</code> 方法判斷值是否在堆疊中：</p>
+<pre><code class="language-php">if (Context::stackContains('breadcrumbs', 'first_value')) {
+    //
+}
+
+if (Context::hiddenStackContains('secrets', 'first_value')) {
+    //
+}
+</code></pre>
+<p><code>stackContains</code> 和 <code>hiddenStackContains</code> 方法還接受一個閉包作為它們的第二個參數，從而可以更精確地控制值比較操作：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+use Illuminate\\Support\\Str;
+
+return Context::stackContains('breadcrumbs', function ($value) {
+    return Str::startsWith($value, 'query_');
+});
+</code></pre>
+<p><a name="retrieving-context"></a></p>
+<h2>檢索上下文</h2>
+<p>您可以使用 <code>Context</code> 外觀的 <code>get</code> 方法從上下文中檢索資訊：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+
+$value = Context::get('key');
+</code></pre>
+<p><code>only</code> 和 <code>except</code> 方法可用於檢索上下文中的部分資訊：</p>
+<pre><code class="language-php">$data = Context::only(['first_key', 'second_key']);
+
+$data = Context::except(['first_key']);
+</code></pre>
+<p><code>pull</code> 方法可用於從上下文中檢索資訊並立即將其從上下文中移除：</p>
+<pre><code class="language-php">$value = Context::pull('key');
+</code></pre>
+<p>如果上下文資料儲存在<a href="#stacks">堆疊</a>中，您可以使用 <code>pop</code> 方法從堆疊中彈出項目：</p>
+<pre><code class="language-php">Context::push('breadcrumbs', 'first_value', 'second_value');
+
+Context::pop('breadcrumbs');
+// second_value
+
+Context::get('breadcrumbs');
+// ['first_value']
+</code></pre>
+<p><code>remember</code> 和 <code>rememberHidden</code> 方法可用於從上下文中檢索資訊，同時在請求的資訊不存在時將上下文值設定為給定閉包返回的值：</p>
+<pre><code class="language-php">$permissions = Context::remember(
+    'user-permissions',
+    fn () => $user->permissions,
+);
+</code></pre>
+<p>如果您希望檢索儲存在上下文中的所有資訊，您可以呼叫 <code>all</code> 方法：</p>
+<pre><code class="language-php">$data = Context::all();
+</code></pre>
+<p><a name="determining-item-existence"></a></p>
+<h3>判斷項目是否存在</h3>
+<p>您可以使用 <code>has</code> 和 <code>missing</code> 方法判斷上下文是否為給定鍵儲存了任何值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+
+if (Context::has('key')) {
+    // ...
+}
+
+if (Context::missing('key')) {
+    // ...
+}
+</code></pre>
+<p>無論儲存的值為何，<code>has</code> 方法都將返回 <code>true</code>。因此，例如，具有 <code>null</code> 值的鍵將被視為存在：</p>
+<pre><code class="language-php">Context::add('key', null);
+
+Context::has('key');
+// true
+</code></pre>
+<p><a name="removing-context"></a></p>
+<h2>移除上下文</h2>
+<p><code>forget</code> 方法可用於從當前上下文中移除一個鍵及其值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+
+Context::add(['first_key' => 1, 'second_key' => 2]);
+
+Context::forget('first_key');
+
+Context::all();
+
+// ['second_key' => 2]
+</code></pre>
+<p>您可以透過向 <code>forget</code> 方法傳遞一個陣列來一次忘記多個鍵：</p>
+<pre><code class="language-php">Context::forget(['first_key', 'second_key']);
+</code></pre>
+<p><a name="hidden-context"></a></p>
+<h2>隱藏上下文</h2>
+<p>Context 提供了儲存「隱藏」資料的能力。此隱藏資訊不會附加到日誌中，並且無法透過上述文件中記錄的資料檢索方法存取。Context 提供了一組不同的方法來與隱藏的上下文資訊互動：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Context;
+
+Context::addHidden('key', 'value');
+
+Context::getHidden('key');
+// 'value'
+
+Context::get('key');
+// null
+</code></pre>
+<p>「隱藏」方法鏡像了上述非隱藏方法的功能：</p>
+<pre><code class="language-php">Context::addHidden(/* ... */);
+Context::addHiddenIf(/* ... */);
+Context::pushHidden(/* ... */);
+Context::getHidden(/* ... */);
+Context::pullHidden(/* ... */);
+Context::popHidden(/* ... */);
+Context::onlyHidden(/* ... */);
+Context::exceptHidden(/* ... */);
+Context::allHidden(/* ... */);
+Context::hasHidden(/* ... */);
+Context::missingHidden(/* ... */);
+Context::forgetHidden(/* ... */);
+</code></pre>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Context 派發兩個事件，允許您掛鉤到上下文的序列化和反序列化過程。</p>
+<p>為了說明如何使用這些事件，想像在應用程式的一個中介層中，您根據傳入 HTTP 請求的 <code>Accept-Language</code> 標頭設定 <code>app.locale</code> 配置值。Context 的事件允許您在請求期間擷取此值並在佇列上恢復它，確保在佇列上發送的通知具有正確的 <code>app.locale</code> 值。我們可以使用上下文的事件和<a href="#hidden-context">隱藏</a>資料來實現這一點，以下文件將進行說明。</p>
+<p><a name="dehydrating"></a></p>
+<h3>反序列化</h3>
+<p>每當任務被分派到佇列時，上下文中的資料都會被「反序列化」並與任務的有效載荷一起擷取。<code>Context::dehydrating</code> 方法允許您註冊一個閉包，該閉包將在反序列化過程中被呼叫。在此閉包內，您可以對將與佇列任務共享的資料進行更改。</p>
+<p>通常，您應該在應用程式的 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法中註冊 <code>dehydrating</code> 回呼：</p>
+<pre><code class="language-php">use Illuminate\\Log\\Context\\Repository;
+use Illuminate\\Support\\Facades\\Config;
+use Illuminate\\Support\\Facades\\Context;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Context::dehydrating(function (Repository $context) {
+        $context->addHidden('locale', Config::get('app.locale'));
+    });
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您不應在 <code>dehydrating</code> 回呼內使用 <code>Context</code> 外觀，因為這會更改當前進程的上下文。確保您只對傳遞給回呼的儲存庫進行更改。</p>
+</blockquote>
+<p><a name="hydrated"></a></p>
+<h3>序列化</h3>
+<p>每當佇列任務開始在佇列上執行時，與任務共享的任何上下文都會被「序列化」回當前上下文。<code>Context::hydrated</code> 方法允許您註冊一個閉包，該閉包將在序列化過程中被呼叫。</p>
+<p>通常，您應該在應用程式的 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法中註冊 <code>hydrated</code> 回呼：</p>
+<pre><code class="language-php">use Illuminate\\Log\\Context\\Repository;
+use Illuminate\\Support\\Facades\\Config;
+use Illuminate\\Support\\Facades\\Context;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Context::hydrated(function (Repository $context) {
+        if ($context->hasHidden('locale')) {
+            Config::set('app.locale', $context->getHidden('locale'));
+        }
+    });
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您不應在 <code>hydrated</code> 回呼內使用 <code>Context</code> 外觀，而應確保您只對傳遞給回呼的儲存庫進行更改。</p>
+</blockquote>
+`;
+---
+
+<DocsLayout title="上下文" currentPath="context">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>上下文</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">上下文</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/context" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

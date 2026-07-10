@@ -1,0 +1,205 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Cashier（Stripe）</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#upgrading-cashier">升級 Cashier</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#configuration">配置</a><ul>
+<li><a href="#billable-model">可計費模型</a></li>
+<li><a href="#api-keys">API 金鑰</a></li>
+<li><a href="#currency-configuration">貨幣配置</a></li>
+<li><a href="#tax-configuration">稅務配置</a></li>
+<li><a href="#logging">日誌</a></li>
+<li><a href="#using-custom-models">使用自訂模型</a></li>
+</ul>
+</li>
+<li><a href="#quickstart">快速入門</a><ul>
+<li><a href="#quickstart-selling-products">銷售產品</a></li>
+<li><a href="#quickstart-selling-subscriptions">銷售訂閱</a></li>
+</ul>
+</li>
+<li><a href="#customers">客戶</a><ul>
+<li><a href="#retrieving-customers">檢索客戶</a></li>
+<li><a href="#creating-customers">建立客戶</a></li>
+<li><a href="#updating-customers">更新客戶</a></li>
+<li><a href="#balances">餘額</a></li>
+<li><a href="#tax-ids">稅號</a></li>
+<li><a href="#syncing-customer-data-with-stripe">與 Stripe 同步客戶資料</a></li>
+<li><a href="#billing-portal">計費入口</a></li>
+</ul>
+</li>
+<li><a href="#payment-methods">付款方式</a></li>
+<li><a href="#subscriptions">訂閱</a><ul>
+<li><a href="#creating-subscriptions">建立訂閱</a></li>
+<li><a href="#checking-subscription-status">檢查訂閱狀態</a></li>
+<li><a href="#changing-prices">更改價格</a></li>
+<li><a href="#subscription-quantity">訂閱數量</a></li>
+<li><a href="#cancelling-subscriptions">取消訂閱</a></li>
+<li><a href="#resuming-subscriptions">恢復訂閱</a></li>
+</ul>
+</li>
+<li><a href="#subscription-trials">訂閱試用</a></li>
+<li><a href="#handling-stripe-webhooks">處理 Stripe Webhook</a></li>
+<li><a href="#single-charges">單次扣款</a></li>
+<li><a href="#invoices">發票</a></li>
+<li><a href="#checkout">結帳</a></li>
+<li><a href="#handling-failed-payments">處理付款失敗</a></li>
+<li><a href="#testing">測試</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/cashier-stripe">Laravel Cashier Stripe</a> 為 <a href="https://stripe.com">Stripe</a> 的訂閱計費服務提供了一個表達力強、流暢的介面。它處理了幾乎所有您不想編寫的樣板訂閱計費代碼。除了基本的訂閱管理之外，Cashier 還可以處理優惠券、訂閱方案轉換、訂閱「數量」、取消寬限期，甚至產生發票 PDF。</p>
+<p><a name="upgrading-cashier"></a></p>
+<h2>升級 Cashier</h2>
+<p>升級到新版本的 Cashier 時，務必仔細查閱<a href="https://github.com/laravel/cashier-stripe/blob/16.x/UPGRADE.md">升級指南</a>。</p>
+<blockquote>
+<p>[!WARNING]
+為防止重大變更，Cashier 使用固定的 Stripe API 版本。Cashier 16 使用 Stripe API 版本 <code>2025-06-30.basil</code>。Stripe API 版本將在次要版本中更新，以便利用新的 Stripe 功能和改進。</p>
+</blockquote>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器安裝 Stripe 的 Cashier 套件：</p>
+<pre><code class="language-shell">composer require laravel/cashier</code></pre>
+<p>安裝套件後，使用 <code>vendor:publish</code> Artisan 命令發佈 Cashier 的遷移：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag="cashier-migrations"</code></pre>
+<p>然後，執行 <code>migrate</code> 命令來建立所需的資料表：</p>
+<pre><code class="language-shell">php artisan migrate</code></pre>
+<p>要發佈 Cashier 的配置檔，請使用：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag="cashier-config"</code></pre>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p><a name="billable-model"></a></p>
+<h3>可計費模型</h3>
+<p>在使用 Cashier 之前，您需要將 <code>Billable</code> trait 新增到您的使用者模型定義中。此 trait 提供了各種方法來允許您執行計費任務，例如建立訂閱、應用優惠券和更新付款方式：</p>
+<pre><code class="language-php">use Laravel\\Cashier\\Billable;
+
+class User extends Authenticatable
+{
+    use Billable;
+}
+</code></pre>
+<p><a name="api-keys"></a></p>
+<h3>API 金鑰</h3>
+<p>接下來，您應在 <code>.env</code> 檔案中配置您的 Stripe 金鑰：</p>
+<pre><code class="language-env">STRIPE_KEY=pk_test_...
+STRIPE_SECRET=sk_test_...</code></pre>
+<p><a name="currency-configuration"></a></p>
+<h3>貨幣配置</h3>
+<p>您可以通過設定 <code>CASHIER_CURRENCY</code> 環境變數來指定用於定價的貨幣，預設為 <code>usd</code>。</p>
+<p><a name="quickstart"></a></p>
+<h2>快速入門</h2>
+<p><a name="quickstart-selling-products"></a></p>
+<h3>銷售產品</h3>
+<p>Cashier 可以輕鬆處理一次性產品購買。當使用者想要購買產品時，使用 <code>checkout</code> 方法將他們重導向到 Stripe 託管的結帳頁面。Cashier 會自動處理成功的付款並觸發相關事件。</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Laravel\\Cashier\\Cashier;
+
+Route::get('/product/{product}/checkout', function (Request $request, string $product) {
+    $checkout = $request->user()->checkout([$product => 1]);
+
+    return $checkout->redirect();
+});</code></pre>
+<p><a name="quickstart-selling-subscriptions"></a></p>
+<h3>銷售訂閱</h3>
+<p>要建立訂閱，您需要首先建立一個 Stripe 價格 ID。然後使用 <code>newSubscription</code> 方法開始訂閱：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::post('/subscribe', function (Request $request) {
+    $subscription = $request->user()->newSubscription('default', 'price_monthly')
+        ->create($request->paymentMethodId);
+
+    return redirect('/home');
+});</code></pre>
+<p><a name="customers"></a></p>
+<h2>客戶</h2>
+<p><a name="retrieving-customers"></a></p>
+<h3>檢索客戶</h3>
+<p>您可以使用 <code>asStripeCustomer</code> 方法檢索 Stripe 客戶物件：</p>
+<pre><code class="language-php">$stripeCustomer = $user->asStripeCustomer();</code></pre>
+<p><a name="creating-customers"></a></p>
+<h3>建立客戶</h3>
+<p>當使用者開始首次付款時，Cashier 會自動在 Stripe 中建立客戶。如果您想手動建立客戶，可以使用 <code>createAsStripeCustomer</code> 方法。</p>
+<p><a name="payment-methods"></a></p>
+<h2>付款方式</h2>
+<p>Cashier 提供了管理付款方式的完整方法。使用 <code>createPaymentMethod</code>、<code>paymentMethods</code>、<code>defaultPaymentMethod</code>、<code>updateDefaultPaymentMethod</code>、<code>addPaymentMethod</code>、<code>deletePaymentMethod</code> 等方法。付款方式通常使用 Stripe 的 Elements UI 元件在前端收集。</p>
+<p><a name="subscriptions"></a></p>
+<h2>訂閱</h2>
+<p><a name="creating-subscriptions"></a></p>
+<h3>建立訂閱</h3>
+<p>使用 <code>newSubscription</code> 方法建立訂閱。第一個參數是訂閱的名稱，第二個參數是 Stripe 中的價格 ID：</p>
+<pre><code class="language-php">$user->newSubscription('default', 'price_monthly')
+    ->create($paymentMethodId);</code></pre>
+<p><a name="checking-subscription-status"></a></p>
+<h3>檢查訂閱狀態</h3>
+<p>您可以使用 <code>subscribed</code> 方法檢查使用者是否已訂閱：</p>
+<pre><code class="language-php">if ($user->subscribed('default')) {
+    // ...
+}</code></pre>
+<p>Cashier 還提供了 <code>onTrial</code>、<code>cancelled</code>、<code>onGracePeriod</code> 等方法來檢查訂閱狀態。</p>
+<p><a name="changing-prices"></a></p>
+<h3>更改價格</h3>
+<p>使用 <code>swap</code> 方法將訂閱變更為新價格：</p>
+<pre><code class="language-php">$user->subscription('default')->swap('price_yearly');</code></pre>
+<p><a name="cancelling-subscriptions"></a></p>
+<h3>取消訂閱</h3>
+<p>使用 <code>cancel</code> 方法取消訂閱：</p>
+<pre><code class="language-php">$user->subscription('default')->cancel();</code></pre>
+<p><a name="resuming-subscriptions"></a></p>
+<h3>恢復訂閱</h3>
+<p>如果訂閱仍在寬限期內，可以使用 <code>resume</code> 方法恢復訂閱：</p>
+<pre><code class="language-php">$user->subscription('default')->resume();</code></pre>
+<p><a name="subscription-trials"></a></p>
+<h2>訂閱試用</h2>
+<p>Cashier 支援在建立訂閱時提供試用期。使用 <code>trialDays</code> 方法指定試用天數，或使用 <code>trialUntil</code> 設定特定的結束日期。</p>
+<p><a name="handling-stripe-webhooks"></a></p>
+<h2>處理 Stripe Webhook</h2>
+<p>Cashier 自動處理 Stripe webhook。發佈 webhook 處理器路由：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag="cashier-webhooks"</code></pre>
+<p>然後在 Stripe 儀表板中配置 webhook URL。Cashier 處理諸如 <code>customer.subscription.updated</code>、<code>charge.refunded</code>、<code>invoice.payment_succeeded</code> 等常見 webhook。</p>
+<p><a name="single-charges"></a></p>
+<h2>單次扣款</h2>
+<p>使用 <code>charge</code> 方法對客戶進行單次扣款：</p>
+<pre><code class="language-php">$user->charge(1000, 'payment_method_id');</code></pre>
+<p>金額以貨幣最小單位（美分）為單位。使用 <code>refund</code> 方法退款：</p>
+<pre><code class="language-php">$user->refund($paymentIntentId);</code></pre>
+<p><a name="invoices"></a></p>
+<h2>發票</h2>
+<p>使用 <code>invoices</code> 方法檢索使用者的發票。使用 <code>downloadInvoice</code> 方法產生並下載發票 PDF。Cashier 使用 DomPDF 產生 PDF 檔案。</p>
+<p><a name="checkout"></a></p>
+<h2>結帳</h2>
+<p>Cashier 支援 Stripe Checkout 來處理一次性付款和訂閱。<code>checkout</code> 方法返回一個結帳實例，可以將使用者重導向到 Stripe 託管的結帳頁面。</p>
+<pre><code class="language-php">return $user->checkout(['price_standard' => 1])->redirect();</code></pre>
+<p><a name="handling-failed-payments"></a></p>
+<h2>處理付款失敗</h2>
+<p>Cashier 包含內建支援來處理需要額外確認的付款，特別是由於強客戶認證（SCA）的要求。您可以使用 <code>payment</code> 方法檢索失敗付款的付款意圖並顯示確認頁面。</p>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>Cashier 附帶了一個 Stripe「fake」實作，允許您在測試 Cashier 時定義預期行為。這允許您在不需要實際呼叫 Stripe API 的情況下測試您的程式碼：</p>
+<pre><code class="language-php">use Laravel\\Cashier\\Http\\Controllers\\WebhookController;
+
+$webhookController = new WebhookController;
+$response = $webhookController->handleWebhook($requestPayload);</code></pre>
+`;
+---
+
+<DocsLayout title="Laravel Cashier（Stripe）" currentPath="billing">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Cashier（Stripe）</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">Laravel Cashier（Stripe）</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/billing" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

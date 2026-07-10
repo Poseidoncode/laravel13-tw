@@ -1,0 +1,31 @@
+---
+interface Props {
+  code: string;
+  lang?: string;
+  title?: string;
+}
+
+const { code, lang = 'php', title } = Astro.props;
+---
+
+<figure class="code-block mb-6 rounded-lg overflow-hidden border border-border">
+  <!-- Optional title bar -->
+  {
+    title && (
+      <figcaption class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-text-tertiary border-b border-border bg-bg-secondary">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+        <span>{title}</span>
+        <span class="ml-auto text-text-tertiary/60">{lang}</span>
+      </figcaption>
+    )
+  }
+  <pre class="!mb-0 !border-0 !rounded-none"><code class={`language-${lang}`} set:html={code}></code></pre>
+</figure>
+
+<style>
+  .code-block pre {
+    border-left: 3px solid var(--clr-code-border);
+  }
+</style>

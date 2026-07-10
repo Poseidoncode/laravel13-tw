@@ -1,0 +1,204 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>控制台測試</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#success-failure-expectations">成功/失敗預期</a></li>
+<li><a href="#input-output-expectations">輸入/輸出預期</a></li>
+<li><a href="#console-events">控制台事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>除了簡化 HTTP 測試之外，Laravel 還提供了一個簡單的 API 來測試您應用程式的 <a href="/docs/artisan">自訂控制台命令</a>。</p>
+<p><a name="success-failure-expectations"></a></p>
+<h2>成功/失敗預期</h2>
+<p>首先，讓我們探索如何對 Artisan 命令的退出代碼進行斷言。為了實現這一點，我們將使用 <code>artisan</code> 方法從我們的測試中調用 Artisan 命令。然後，我們將使用 <code>assertExitCode</code> 方法來斷言命令已完成並返回給定的退出代碼：</p>
+<pre><code class="language-php">test(&#39;console command&#39;, function () {
+    $this-&gt;artisan(&#39;inspire&#39;)-&gt;assertExitCode(0);
+});
+</code></pre>
+<pre><code class="language-php">/**
+ * 測試控制台命令。
+ */
+public function test_console_command(): void
+{
+    $this-&gt;artisan(&#39;inspire&#39;)-&gt;assertExitCode(0);
+}
+</code></pre>
+<p>您可以使用 <code>assertNotExitCode</code> 方法來斷言命令沒有以給定的退出代碼退出：</p>
+<pre><code class="language-php">$this-&gt;artisan(&#39;inspire&#39;)-&gt;assertNotExitCode(1);
+</code></pre>
+<p>當然，所有終端命令通常在成功時以狀態代碼 <code>0</code> 退出，在不成功時以非零退出代碼退出。因此，為了方便起見，您可以使用 <code>assertSuccessful</code> 和 <code>assertFailed</code> 斷言來斷言給定的命令是否以成功的退出代碼退出：</p>
+<pre><code class="language-php">$this-&gt;artisan(&#39;inspire&#39;)-&gt;assertSuccessful();
+
+$this-&gt;artisan(&#39;inspire&#39;)-&gt;assertFailed();
+</code></pre>
+<p><a name="input-output-expectations"></a></p>
+<h2>輸入/輸出預期</h2>
+<p>Laravel 允許您使用 <code>expectsQuestion</code> 方法輕鬆「模擬」控制台命令的用戶輸入。此外，您可以使用 <code>assertExitCode</code> 和 <code>expectsOutput</code> 方法來指定您預期控制台命令輸出的退出代碼和文字。例如，考慮以下控制台命令：</p>
+<pre><code class="language-php">Artisan::command(&#39;question&#39;, function () {
+    $name = $this-&gt;ask(&#39;您的名字是什麼？&#39;);
+
+    $language = $this-&gt;choice(&#39;您偏好哪種語言？&#39;, [
+        &#39;PHP&#39;,
+        &#39;Ruby&#39;,
+        &#39;Python&#39;,
+    ]);
+
+    $this-&gt;line(&#39;您的名字是 &#39;.$name.&#39;，您偏好 &#39;.$language.&#39;。&#39;);
+});
+</code></pre>
+<p>您可以使用以下測試來測試此命令：</p>
+<pre><code class="language-php">test(&#39;console command&#39;, function () {
+    $this-&gt;artisan(&#39;question&#39;)
+        -&gt;expectsQuestion(&#39;您的名字是什麼？&#39;, &#39;Taylor Otwell&#39;)
+        -&gt;expectsQuestion(&#39;您偏好哪種語言？&#39;, &#39;PHP&#39;)
+        -&gt;expectsOutput(&#39;您的名字是 Taylor Otwell，您偏好 PHP。&#39;)
+        -&gt;doesntExpectOutput(&#39;您的名字是 Taylor Otwell，您偏好 Ruby。&#39;)
+        -&gt;assertExitCode(0);
+});
+</code></pre>
+<pre><code class="language-php">/**
+ * 測試控制台命令。
+ */
+public function test_console_command(): void
+{
+    $this-&gt;artisan(&#39;question&#39;)
+        -&gt;expectsQuestion(&#39;您的名字是什麼？&#39;, &#39;Taylor Otwell&#39;)
+        -&gt;expectsQuestion(&#39;您偏好哪種語言？&#39;, &#39;PHP&#39;)
+        -&gt;expectsOutput(&#39;您的名字是 Taylor Otwell，您偏好 PHP。&#39;)
+        -&gt;doesntExpectOutput(&#39;您的名字是 Taylor Otwell，您偏好 Ruby。&#39;)
+        -&gt;assertExitCode(0);
+}
+</code></pre>
+<p>如果您正在使用 <a href="/docs/prompts">Laravel Prompts</a> 提供的 <code>search</code> 或 <code>multisearch</code> 函數，您可以使用 <code>expectsSearch</code> 斷言來模擬用戶的輸入、搜尋結果和選擇：</p>
+<pre><code class="language-php">test(&#39;console command&#39;, function () {
+    $this-&gt;artisan(&#39;example&#39;)
+        -&gt;expectsSearch(&#39;您的名字是什麼？&#39;, search: &#39;Tay&#39;, answers: [
+            &#39;Taylor Otwell&#39;,
+            &#39;Taylor Swift&#39;,
+            &#39;Darian Taylor&#39;
+        ], answer: &#39;Taylor Otwell&#39;)
+        -&gt;assertExitCode(0);
+});
+</code></pre>
+<pre><code class="language-php">/**
+ * 測試控制台命令。
+ */
+public function test_console_command(): void
+{
+    $this-&gt;artisan(&#39;example&#39;)
+        -&gt;expectsSearch(&#39;您的名字是什麼？&#39;, search: &#39;Tay&#39;, answers: [
+            &#39;Taylor Otwell&#39;,
+            &#39;Taylor Swift&#39;,
+            &#39;Darian Taylor&#39;
+        ], answer: &#39;Taylor Otwell&#39;)
+        -&gt;assertExitCode(0);
+}
+</code></pre>
+<p>您也可以使用 <code>doesntExpectOutput</code> 方法來斷言控制台命令不產生任何輸出：</p>
+<pre><code class="language-php">test(&#39;console command&#39;, function () {
+    $this-&gt;artisan(&#39;example&#39;)
+        -&gt;doesntExpectOutput()
+        -&gt;assertExitCode(0);
+});
+</code></pre>
+<pre><code class="language-php">/**
+ * 測試控制台命令。
+ */
+public function test_console_command(): void
+{
+    $this-&gt;artisan(&#39;example&#39;)
+        -&gt;doesntExpectOutput()
+        -&gt;assertExitCode(0);
+}
+</code></pre>
+<p><code>expectsOutputToContain</code> 和 <code>doesntExpectOutputToContain</code> 方法可用於對部分輸出進行斷言：</p>
+<pre><code class="language-php">test(&#39;console command&#39;, function () {
+    $this-&gt;artisan(&#39;example&#39;)
+        -&gt;expectsOutputToContain(&#39;Taylor&#39;)
+        -&gt;assertExitCode(0);
+});
+</code></pre>
+<pre><code class="language-php">/**
+ * 測試控制台命令。
+ */
+public function test_console_command(): void
+{
+    $this-&gt;artisan(&#39;example&#39;)
+        -&gt;expectsOutputToContain(&#39;Taylor&#39;)
+        -&gt;assertExitCode(0);
+}
+</code></pre>
+<p><a name="confirmation-expectations"></a></p>
+<h4>確認預期</h4>
+<p>編寫期望以「是」或「否」形式確認的命令時，您可以使用 <code>expectsConfirmation</code> 方法：</p>
+<pre><code class="language-php">$this-&gt;artisan(&#39;module:import&#39;)
+    -&gt;expectsConfirmation(&#39;您真的要執行此命令嗎？&#39;, &#39;no&#39;)
+    -&gt;assertExitCode(1);
+</code></pre>
+<p><a name="table-expectations"></a></p>
+<h4>表格預期</h4>
+<p>如果您的命令使用 Artisan 的 <code>table</code> 方法顯示資訊表格，為整個表格編寫輸出預期可能很繁瑣。相反，您可以使用 <code>expectsTable</code> 方法。此方法接受表格的標題作為第一個參數，表格的資料作為第二個參數：</p>
+<pre><code class="language-php">$this-&gt;artisan(&#39;users:all&#39;)
+    -&gt;expectsTable([
+        &#39;ID&#39;,
+        &#39;Email&#39;,
+    ], [
+        [1, &#39;taylor@example.com&#39;],
+        [2, &#39;abigail@example.com&#39;],
+    ]);
+</code></pre>
+<p><a name="console-events"></a></p>
+<h2>控制台事件</h2>
+<p>預設情況下，在執行應用程式的測試時不會派發 <code>Illuminate\\Console\\Events\\CommandStarting</code> 和 <code>Illuminate\\Console\\Events\\CommandFinished</code> 事件。然而，您可以透過將 <code>Illuminate\\Foundation\\Testing\\WithConsoleEvents</code> trait 添加到類別來為給定的測試類別啟用這些事件：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Foundation\\Testing\\WithConsoleEvents;
+
+pest()-&gt;use(WithConsoleEvents::class);
+
+// ...
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Foundation\\Testing\\WithConsoleEvents;
+use Tests\\TestCase;
+
+class ConsoleEventTest extends TestCase
+{
+    use WithConsoleEvents;
+
+    // ...
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="控制台測試" currentPath="console-tests">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>控制台測試</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">控制台測試</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/console-tests" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

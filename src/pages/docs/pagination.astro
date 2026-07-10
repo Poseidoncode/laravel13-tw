@@ -1,0 +1,464 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>資料庫：分頁</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#basic-usage">基本用法</a><ul>
+<li><a href="#paginating-query-builder-results">分頁查詢建構器結果</a></li>
+<li><a href="#paginating-eloquent-results">分頁 Eloquent 結果</a></li>
+<li><a href="#cursor-pagination">游標分頁</a></li>
+<li><a href="#manually-creating-a-paginator">手動創建分頁器</a></li>
+<li><a href="#customizing-pagination-urls">自訂分頁 URL</a></li>
+</ul>
+</li>
+<li><a href="#displaying-pagination-results">顯示分頁結果</a><ul>
+<li><a href="#adjusting-the-pagination-link-window">調整分頁連結視窗</a></li>
+<li><a href="#converting-results-to-json">將結果轉換為 JSON</a></li>
+</ul>
+</li>
+<li><a href="#customizing-the-pagination-view">自訂分頁視圖</a><ul>
+<li><a href="#using-bootstrap">使用 Bootstrap</a></li>
+</ul>
+</li>
+<li><a href="#paginator-instance-methods">Paginator 和 LengthAwarePaginator 實例方法</a></li>
+<li><a href="#cursor-paginator-instance-methods">Cursor Paginator 實例方法</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>在其他框架中，分頁可能非常痛苦。我們希望 Laravel 的分頁方式能帶來一股清新的空氣。Laravel 的分頁器與<a href="/docs/queries">查詢建構器</a>和<a href="/docs/eloquent">Eloquent ORM</a> 整合，並提供便利、易用的資料庫記錄分頁，無需任何配置。</p>
+<p>預設情況下，分頁器生成的 HTML 與 <a href="https://tailwindcss.com/">Tailwind CSS 框架</a>相容；但是，也提供 Bootstrap 分頁支援。</p>
+<p><a name="tailwind"></a></p>
+<h4>Tailwind</h4>
+<p>如果您正在使用 Laravel 的預設 Tailwind 分頁視圖與 Tailwind 4.x，您應用程式的 <code>resources/css/app.css</code> 檔案已經正確配置為 <code>@source</code> Laravel 的分頁視圖：</p>
+<pre><code class="language-css">@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+</code></pre>
+<p><a name="basic-usage"></a></p>
+<h2>基本用法</h2>
+<p><a name="paginating-query-builder-results"></a></p>
+<h3>分頁查詢建構器結果</h3>
+<p>有多種方式可以對項目進行分頁。最簡單的方法是使用<a href="/docs/queries">查詢建構器</a>或<a href="/docs/eloquent">Eloquent 查詢</a>上的 <code>paginate</code> 方法。<code>paginate</code> 方法會自動根據使用者目前正在查看的頁面來設定查詢的「limit」和「offset」。預設情況下，當前頁面是透過 HTTP 請求上的 <code>page</code> 查詢字串參數的值來偵測的。此值會被 Laravel 自動偵測，也會自動插入到分頁器生成的連結中。</p>
+<p>在此範例中，傳遞給 <code>paginate</code> 方法的唯一參數是您希望每頁顯示的項目數。在此情況下，讓我們指定我們希望每頁顯示 <code>15</code> 個項目：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\View\\View;
+
+class UserController extends Controller
+{
+    /**
+     * 顯示所有應用程式使用者。
+     */
+    public function index(): View
+    {
+        return view('user.index', [
+            'users' => DB::table('users')->paginate(15)
+        ]);
+    }
+}
+</code></pre>
+<p><a name="simple-pagination"></a></p>
+<h4>簡單分頁</h4>
+<p><code>paginate</code> 方法會在從資料庫檢索記錄之前計算查詢匹配的總記錄數。這是為了讓分頁器知道總共有多少頁記錄。但是，如果您不打算在應用程式的 UI 中顯示總頁數，則記錄計數查詢是不必要的。</p>
+<p>因此，如果您只需要在應用程式的 UI 中顯示簡單的「下一頁」和「上一頁」連結，您可以使用 <code>simplePaginate</code> 方法來執行單個高效的查詢：</p>
+<pre><code class="language-php">$users = DB::table('users')->simplePaginate(15);
+</code></pre>
+<p><a name="paginating-eloquent-results"></a></p>
+<h3>分頁 Eloquent 結果</h3>
+<p>您也可以對<a href="/docs/eloquent">Eloquent</a> 查詢進行分頁。在此範例中，我們將對 <code>App\\Models\\User</code> 模型進行分頁，並指示我們計劃每頁顯示 15 條記錄。如您所見，語法與分頁查詢建構器結果幾乎相同：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = User::paginate(15);
+</code></pre>
+<p>當然，您可以在查詢上設定其他約束（例如 <code>where</code> 子句）後呼叫 <code>paginate</code> 方法：</p>
+<pre><code class="language-php">$users = User::where('votes', '>', 100)->paginate(15);
+</code></pre>
+<p>在分頁 Eloquent 模型時，您也可以使用 <code>simplePaginate</code> 方法：</p>
+<pre><code class="language-php">$users = User::where('votes', '>', 100)->simplePaginate(15);
+</code></pre>
+<p>同樣地，您可以使用 <code>cursorPaginate</code> 方法來游標分頁 Eloquent 模型：</p>
+<pre><code class="language-php">$users = User::where('votes', '>', 100)->cursorPaginate(15);
+</code></pre>
+<p><a name="multiple-paginator-instances-per-page"></a></p>
+<h4>每頁多個分頁器實例</h4>
+<p>有時您可能需要在單個螢幕上渲染兩個獨立的分頁器，該螢幕由您的應用程式渲染。但是，如果兩個分頁器實例都使用 <code>page</code> 查詢字串參數來儲存當前頁面，則兩個分頁器將會衝突。為了解決此衝突，您可以透過 <code>paginate</code>、<code>simplePaginate</code> 和 <code>cursorPaginate</code> 方法提供的第三個參數，傳遞您希望用於儲存分頁器當前頁面的查詢字串參數名稱：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = User::where('votes', '>', 100)->paginate(
+    $perPage = 15, $columns = ['*'], $pageName = 'users'
+);
+</code></pre>
+<p><a name="cursor-pagination"></a></p>
+<h3>游標分頁</h3>
+<p>雖然 <code>paginate</code> 和 <code>simplePaginate</code> 使用 SQL 的「offset」子句建立查詢，但游標分頁透過構建比較查詢中包含的有序列值的「where」子句來運作，在所有 Laravel 分頁方法中提供最高效的資料庫效能。這種分頁方式特別適合大型資料集和「無限」滾動使用者介面。</p>
+<p>與基於偏移量的分頁（在分頁器生成的 URL 的查詢字串中包含頁碼）不同，基於游標的分頁在查詢字串中放置一個「游標」字串。游標是一個編碼字串，包含下一個分頁查詢應開始分頁的位置以及應分頁的方向：</p>
+<pre><code class="language-text">http://localhost/users?cursor=eyJpZCI6MTUsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0
+</code></pre>
+<p>您可以透過查詢建構器提供的 <code>cursorPaginate</code> 方法創建一個基於游標的分頁器實例。此方法返回 <code>Illuminate\\Pagination\\CursorPaginator</code> 的一個實例：</p>
+<pre><code class="language-php">$users = DB::table('users')->orderBy('id')->cursorPaginate(15);
+</code></pre>
+<p>一旦您檢索到游標分頁器實例，您可以像使用 <code>paginate</code> 和 <code>simplePaginate</code> 方法一樣<a href="#displaying-pagination-results">顯示分頁結果</a>。有關游標分頁器提供的實例方法的更多資訊，請查閱<a href="#cursor-paginator-instance-methods">游標分頁器實例方法文件</a>。</p>
+<blockquote>
+<p>[!WARNING]
+您的查詢必須包含「order by」子句才能利用游標分頁。此外，查詢排序的列必須屬於您正在分頁的表格。</p>
+</blockquote>
+<p><a name="cursor-vs-offset-pagination"></a></p>
+<h4>游標分頁 vs. 偏移量分頁</h4>
+<p>為了說明偏移量分頁和游標分頁之間的差異，讓我們檢查一些範例 SQL 查詢。以下兩個查詢都將顯示按 <code>id</code> 排序的 <code>users</code> 表的「第二頁」結果：</p>
+<pre><code class="language-sql"># 偏移量分頁...
+select * from users order by id asc limit 15 offset 15;
+
+# 游標分頁...
+select * from users where id > 15 order by id asc limit 15;
+</code></pre>
+<p>游標分頁查詢相較於偏移量分頁提供了以下優勢：</p>
+<ul>
+<li>對於大型資料集，如果「order by」列已建立索引，游標分頁將提供更好的效能。這是因為「offset」子句會掃描所有先前匹配的資料。</li>
+<li>對於頻繁寫入的資料集，如果最近在使用者正在查看的頁面上新增或刪除了結果，偏移量分頁可能會跳過記錄或顯示重複項。</li>
+</ul>
+<p>但是，游標分頁有以下限制：</p>
+<ul>
+<li>與 <code>simplePaginate</code> 一樣，游標分頁只能用於顯示「下一頁」和「上一頁」連結，不支援生成帶有頁碼的連結。</li>
+<li>它要求排序基於至少一個唯一列或一組唯一列的組合。不支援具有 <code>null</code> 值的列。</li>
+<li>只有當「order by」子句中的查詢表達式具有別名並也添加到「select」子句中時，才支援它們。</li>
+<li>不支援帶有參數的查詢表達式。</li>
+</ul>
+<p><a name="manually-creating-a-paginator"></a></p>
+<h3>手動創建分頁器</h3>
+<p>有時您可能希望手動創建一個分頁器實例，並傳遞給它一個您已經在記憶體中的項目陣列。您可以透過創建 <code>Illuminate\\Pagination\\Paginator</code>、<code>Illuminate\\Pagination\\LengthAwarePaginator</code> 或 <code>Illuminate\\Pagination\\CursorPaginator</code> 實例來實現這一點，具體取決於您的需求。</p>
+<p><code>Paginator</code> 和 <code>CursorPaginator</code> 類別不需要知道結果集中的項目總數；但是，正因為如此，這些類別沒有用於檢索最後一頁索引的方法。<code>LengthAwarePaginator</code> 接受幾乎與 <code>Paginator</code> 相同的參數；但是，它需要結果集中項目總數的計數。</p>
+<p>換句話說，<code>Paginator</code> 對應查詢建構器上的 <code>simplePaginate</code> 方法，<code>CursorPaginator</code> 對應 <code>cursorPaginate</code> 方法，<code>LengthAwarePaginator</code> 對應 <code>paginate</code> 方法。</p>
+<blockquote>
+<p>[!WARNING]
+手動創建分頁器實例時，您應該手動「切片」傳遞給分頁器的結果陣列。如果您不確定如何做到這一點，請查看 <a href="https://secure.php.net/manual/en/function.array-slice.php">array_slice</a> PHP 函數。</p>
+</blockquote>
+<p><a name="customizing-pagination-urls"></a></p>
+<h3>自訂分頁 URL</h3>
+<p>預設情況下，分頁器生成的連結將與當前請求的 URI 匹配。但是，分頁器的 <code>withPath</code> 方法允許您自訂分頁器在生成連結時使用的 URI。例如，如果您希望分頁器生成像 <code>http://example.com/admin/users?page=N</code> 這樣的連結，您應該將 <code>/admin/users</code> 傳遞給 <code>withPath</code> 方法：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users', function () {
+    $users = User::paginate(15);
+
+    $users->withPath('/admin/users');
+
+    // ...
+});
+</code></pre>
+<p><a name="appending-query-string-values"></a></p>
+<h4>附加查詢字串值</h4>
+<p>您可以使用 <code>appends</code> 方法向分頁連結的查詢字串附加內容。例如，要向每個分頁連結附加 <code>sort=votes</code>，您應該對 <code>appends</code> 進行以下呼叫：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users', function () {
+    $users = User::paginate(15);
+
+    $users->appends(['sort' => 'votes']);
+
+    // ...
+});
+</code></pre>
+<p>如果您希望將所有當前請求的查詢字串值附加到分頁連結，可以使用 <code>withQueryString</code> 方法：</p>
+<pre><code class="language-php">$users = User::paginate(15)->withQueryString();
+</code></pre>
+<p><a name="appending-hash-fragments"></a></p>
+<h4>附加雜湊片段</h4>
+<p>如果您需要向分頁器生成的 URL 附加「雜湊片段」，可以使用 <code>fragment</code> 方法。例如，要向每個分頁連結的末尾附加 <code>#users</code>，您應該像這樣呼叫 <code>fragment</code> 方法：</p>
+<pre><code class="language-php">$users = User::paginate(15)->fragment('users');
+</code></pre>
+<p><a name="displaying-pagination-results"></a></p>
+<h2>顯示分頁結果</h2>
+<p>呼叫 <code>paginate</code> 方法時，您將收到 <code>Illuminate\\Pagination\\LengthAwarePaginator</code> 的一個實例，而呼叫 <code>simplePaginate</code> 方法返回 <code>Illuminate\\Pagination\\Paginator</code> 的一個實例。最後，呼叫 <code>cursorPaginate</code> 方法返回 <code>Illuminate\\Pagination\\CursorPaginator</code> 的一個實例。</p>
+<p>這些物件提供了幾個描述結果集的方法。除了這些輔助方法之外，分頁器實例還是迭代器，可以作為陣列進行迴圈。因此，一旦您檢索到結果，您就可以使用 <a href="/docs/blade">Blade</a> 顯示結果並渲染頁面連結：</p>
+<pre><code class="language-blade">&lt;div class="container"&gt;
+    @foreach ($users as $user)
+        {{ $user->name }}
+    @endforeach
+&lt;/div&gt;
+
+{{ $users->links() }}
+</code></pre>
+<p><code>links</code> 方法將渲染到結果集中其餘頁面的連結。這些連結中的每一個都將包含正確的 <code>page</code> 查詢字串變數。請記住，<code>links</code> 方法生成的 HTML 與 <a href="https://tailwindcss.com">Tailwind CSS 框架</a>相容。</p>
+<p><a name="adjusting-the-pagination-link-window"></a></p>
+<h3>調整分頁連結視窗</h3>
+<p>當分頁器顯示分頁連結時，當前頁碼會與當前頁面前後三頁的連結一起顯示。使用 <code>onEachSide</code> 方法，您可以控制在分頁器生成的中間滑動連結視窗中，當前頁面的每一側顯示多少個額外連結：</p>
+<pre><code class="language-blade">{{ $users->onEachSide(5)->links() }}
+</code></pre>
+<p><a name="converting-results-to-json"></a></p>
+<h3>將結果轉換為 JSON</h3>
+<p>Laravel 分頁器類別實現了 <code>Illuminate\\Contracts\\Support\\Jsonable</code> 介面合約並公開了 <code>toJson</code> 方法，因此將分頁結果轉換為 JSON 非常容易。您也可以透過從路由或控制器動作返回分頁器實例將其轉換為 JSON：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users', function () {
+    return User::paginate();
+});
+</code></pre>
+<p>來自分頁器的 JSON 將包含元資訊，例如 <code>total</code>、<code>current_page</code>、<code>last_page</code> 等。結果記錄可透過 JSON 陣列中的 <code>data</code> 鍵取得。以下是從路由返回分頁器實例所創建的 JSON 範例：</p>
+<pre><code class="language-json">{
+   "total": 50,
+   "per_page": 15,
+   "current_page": 1,
+   "last_page": 4,
+   "current_page_url": "http://laravel.app?page=1",
+   "first_page_url": "http://laravel.app?page=1",
+   "last_page_url": "http://laravel.app?page=4",
+   "next_page_url": "http://laravel.app?page=2",
+   "prev_page_url": null,
+   "path": "http://laravel.app",
+   "from": 1,
+   "to": 15,
+   "data":[
+        {
+            // 記錄...
+        },
+        {
+            // 記錄...
+        }
+   ]
+}
+</code></pre>
+<p><a name="customizing-the-pagination-view"></a></p>
+<h2>自訂分頁視圖</h2>
+<p>預設情況下，用於顯示分頁連結的視圖與 <a href="https://tailwindcss.com">Tailwind CSS</a> 框架相容。但是，如果您沒有使用 Tailwind，您可以自由地定義自己的視圖來渲染這些連結。在分頁器實例上呼叫 <code>links</code> 方法時，您可以將視圖名稱作為方法的第一個參數傳遞：</p>
+<pre><code class="language-blade">{{ $paginator->links('view.name') }}
+
+&lt;!-- 向視圖傳遞額外資料... --&gt;
+{{ $paginator->links('view.name', ['foo' => 'bar']) }}
+</code></pre>
+<p>但是，自訂分頁視圖最簡單的方法是使用 <code>vendor:publish</code> 命令將它們匯出到您的 <code>resources/views/vendor</code> 目錄：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=laravel-pagination
+</code></pre>
+<p>此命令將把視圖放在您應用程式的 <code>resources/views/vendor/pagination</code> 目錄中。此目錄中的 <code>tailwind.blade.php</code> 檔案對應預設的分頁視圖。您可以編輯此檔案來修改分頁 HTML。</p>
+<p>如果您希望指定一個不同的檔案作為預設分頁視圖，您可以在 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫分頁器的 <code>defaultView</code> 和 <code>defaultSimpleView</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Pagination\\Paginator;
+use Illuminate\\Support\\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Paginator::defaultView('view-name');
+
+        Paginator::defaultSimpleView('view-name');
+    }
+}
+</code></pre>
+<p><a name="using-bootstrap"></a></p>
+<h3>使用 Bootstrap</h3>
+<p>Laravel 包含使用 <a href="https://getbootstrap.com/">Bootstrap CSS</a> 建構的分頁視圖。要使用這些視圖而不是預設的 Tailwind 視圖，您可以在 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫分頁器的 <code>useBootstrapFour</code> 或 <code>useBootstrapFive</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Pagination\\Paginator;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Paginator::useBootstrapFive();
+    Paginator::useBootstrapFour();
+}
+</code></pre>
+<p><a name="paginator-instance-methods"></a></p>
+<h2>Paginator / LengthAwarePaginator 實例方法</h2>
+<p>每個分頁器實例透過以下方法提供額外的分頁資訊：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$paginator->count()</code></td>
+<td>獲取當前頁面的項目數。</td>
+</tr>
+<tr>
+<td><code>$paginator->currentPage()</code></td>
+<td>獲取當前頁碼。</td>
+</tr>
+<tr>
+<td><code>$paginator->firstItem()</code></td>
+<td>獲取結果中第一個項目的結果編號。</td>
+</tr>
+<tr>
+<td><code>$paginator->getOptions()</code></td>
+<td>獲取分頁器選項。</td>
+</tr>
+<tr>
+<td><code>$paginator->getUrlRange($start, $end)</code></td>
+<td>創建一個分頁 URL 範圍。</td>
+</tr>
+<tr>
+<td><code>$paginator->hasPages()</code></td>
+<td>判斷是否有足夠的項目可以分割成多頁。</td>
+</tr>
+<tr>
+<td><code>$paginator->hasMorePages()</code></td>
+<td>判斷資料儲存中是否有更多項目。</td>
+</tr>
+<tr>
+<td><code>$paginator->items()</code></td>
+<td>獲取當前頁面的項目。</td>
+</tr>
+<tr>
+<td><code>$paginator->lastItem()</code></td>
+<td>獲取結果中最後一個項目的結果編號。</td>
+</tr>
+<tr>
+<td><code>$paginator->lastPage()</code></td>
+<td>獲取最後一個可用頁面的頁碼。（使用 <code>simplePaginate</code> 時不可用）。</td>
+</tr>
+<tr>
+<td><code>$paginator->nextPageUrl()</code></td>
+<td>獲取下一頁的 URL。</td>
+</tr>
+<tr>
+<td><code>$paginator->onFirstPage()</code></td>
+<td>判斷分頁器是否在第一頁。</td>
+</tr>
+<tr>
+<td><code>$paginator->onLastPage()</code></td>
+<td>判斷分頁器是否在最後一頁。</td>
+</tr>
+<tr>
+<td><code>$paginator->perPage()</code></td>
+<td>每頁顯示的項目數。</td>
+</tr>
+<tr>
+<td><code>$paginator->previousPageUrl()</code></td>
+<td>獲取上一頁的 URL。</td>
+</tr>
+<tr>
+<td><code>$paginator->total()</code></td>
+<td>判斷資料儲存中匹配項目的總數。（使用 <code>simplePaginate</code> 時不可用）。</td>
+</tr>
+<tr>
+<td><code>$paginator->url($page)</code></td>
+<td>獲取給定頁碼的 URL。</td>
+</tr>
+<tr>
+<td><code>$paginator->getPageName()</code></td>
+<td>獲取用於儲存頁面的查詢字串變數。</td>
+</tr>
+<tr>
+<td><code>$paginator->setPageName($name)</code></td>
+<td>設定用於儲存頁面的查詢字串變數。</td>
+</tr>
+<tr>
+<td><code>$paginator->through($callback)</code></td>
+<td>使用回呼轉換每個項目。</td>
+</tr>
+</tbody></table>
+</div><p><a name="cursor-paginator-instance-methods"></a></p>
+<h2>Cursor Paginator 實例方法</h2>
+<p>每個游標分頁器實例透過以下方法提供額外的分頁資訊：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$paginator->count()</code></td>
+<td>獲取當前頁面的項目數。</td>
+</tr>
+<tr>
+<td><code>$paginator->cursor()</code></td>
+<td>獲取當前游標實例。</td>
+</tr>
+<tr>
+<td><code>$paginator->getOptions()</code></td>
+<td>獲取分頁器選項。</td>
+</tr>
+<tr>
+<td><code>$paginator->hasPages()</code></td>
+<td>判斷是否有足夠的項目可以分割成多頁。</td>
+</tr>
+<tr>
+<td><code>$paginator->hasMorePages()</code></td>
+<td>判斷資料儲存中是否有更多項目。</td>
+</tr>
+<tr>
+<td><code>$paginator->getCursorName()</code></td>
+<td>獲取用於儲存游標的查詢字串變數。</td>
+</tr>
+<tr>
+<td><code>$paginator->items()</code></td>
+<td>獲取當前頁面的項目。</td>
+</tr>
+<tr>
+<td><code>$paginator->nextCursor()</code></td>
+<td>獲取下一組項目的游標實例。</td>
+</tr>
+<tr>
+<td><code>$paginator->nextPageUrl()</code></td>
+<td>獲取下一頁的 URL。</td>
+</tr>
+<tr>
+<td><code>$paginator->onFirstPage()</code></td>
+<td>判斷分頁器是否在第一頁。</td>
+</tr>
+<tr>
+<td><code>$paginator->onLastPage()</code></td>
+<td>判斷分頁器是否在最後一頁。</td>
+</tr>
+<tr>
+<td><code>$paginator->perPage()</code></td>
+<td>每頁顯示的項目數。</td>
+</tr>
+<tr>
+<td><code>$paginator->previousCursor()</code></td>
+<td>獲取上一組項目的游標實例。</td>
+</tr>
+<tr>
+<td><code>$paginator->previousPageUrl()</code></td>
+<td>獲取上一頁的 URL。</td>
+</tr>
+<tr>
+<td><code>$paginator->setCursorName()</code></td>
+<td>設定用於儲存游標的查詢字串變數。</td>
+</tr>
+<tr>
+<td><code>$paginator->url($cursor)</code></td>
+<td>獲取給定游標實例的 URL。</td>
+</tr>
+</tbody></table>
+</div>
+`;
+---
+
+<DocsLayout title="分頁" currentPath="pagination">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>分頁</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">分頁</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/pagination" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

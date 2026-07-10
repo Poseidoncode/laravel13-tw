@@ -1,0 +1,553 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Octane</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#server-prerequisites">伺服器先決條件</a><ul>
+<li><a href="#frankenphp">FrankenPHP</a></li>
+<li><a href="#roadrunner">RoadRunner</a></li>
+<li><a href="#swoole">Swoole</a></li>
+</ul>
+</li>
+<li><a href="#serving-your-application">為您的應用程式提供服務</a><ul>
+<li><a href="#serving-your-application-via-https">透過 HTTPS 為您的應用程式提供服務</a></li>
+<li><a href="#serving-your-application-via-nginx">透過 Nginx 為您的應用程式提供服務</a></li>
+<li><a href="#watching-for-file-changes">監聽檔案變更</a></li>
+<li><a href="#specifying-the-worker-count">指定 Worker 數量</a></li>
+<li><a href="#specifying-the-max-request-count">指定最大請求數</a></li>
+<li><a href="#specifying-the-max-execution-time">指定最大執行時間</a></li>
+<li><a href="#reloading-the-workers">重新載入 Worker</a></li>
+<li><a href="#stopping-the-server">停止伺服器</a></li>
+</ul>
+</li>
+<li><a href="#dependency-injection-and-octane">依賴注入與 Octane</a><ul>
+<li><a href="#container-injection">容器注入</a></li>
+<li><a href="#request-injection">請求注入</a></li>
+<li><a href="#configuration-repository-injection">設定庫注入</a></li>
+</ul>
+</li>
+<li><a href="#managing-memory-leaks">管理記憶體洩漏</a></li>
+<li><a href="#concurrent-tasks">並發任務</a></li>
+<li><a href="#ticks-and-intervals">Ticks 與 Intervals</a></li>
+<li><a href="#the-octane-cache">Octane 快取</a></li>
+<li><a href="#tables">表格</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/octane">Laravel Octane</a> 透過使用強大的應用程式伺服器（包括 <a href="https://frankenphp.dev/">FrankenPHP</a>、<a href="https://openswoole.com/">Open Swoole</a>、<a href="https://github.com/swoole/swoole-src">Swoole</a> 和 <a href="https://roadrunner.dev">RoadRunner</a>）來為您的應用程式提供服務，從而增強其效能。Octane 會啟動您的應用程式一次，將其保留在記憶體中，然後以超音速的速度將請求餵送給它。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>可以透過 Composer 套件管理器安裝 Octane：</p>
+<pre><code class="language-shell">composer require laravel/octane
+</code></pre>
+<p>安裝 Octane 後，您可以執行 <code>octane:install</code> Artisan 指令，它將安裝 Octane 的設定檔到您的應用程式中：</p>
+<pre><code class="language-shell">php artisan octane:install
+</code></pre>
+<p><a name="server-prerequisites"></a></p>
+<h2>伺服器先決條件</h2>
+<p><a name="frankenphp"></a></p>
+<h3>FrankenPHP</h3>
+<p><a href="https://frankenphp.dev">FrankenPHP</a> 是一個用 Go 編寫的 PHP 應用程式伺服器，支援現代 Web 功能，如早期提示、Brotli 和 Zstandard 壓縮。當您安裝 Octane 並選擇 FrankenPHP 作為您的伺服器時，Octane 將自動為您下載並安裝 FrankenPHP 二進位檔案。</p>
+<p><a name="frankenphp-via-laravel-sail"></a></p>
+<h4>透過 Laravel Sail 使用 FrankenPHP</h4>
+<p>如果您計劃使用 <a href="/docs/sail">Laravel Sail</a> 開發您的應用程式，您應該執行以下指令來安裝 Octane 和 FrankenPHP：</p>
+<pre><code class="language-shell">./vendor/bin/sail up
+
+./vendor/bin/sail composer require laravel/octane
+</code></pre>
+<p>接下來，您應該使用 <code>octane:install</code> Artisan 指令來安裝 FrankenPHP 二進位檔案：</p>
+<pre><code class="language-shell">./vendor/bin/sail artisan octane:install --server=frankenphp
+</code></pre>
+<p>最後，在應用程式的 <code>docker-compose.yml</code> 檔案中的 <code>laravel.test</code> 服務定義中新增一個 <code>SUPERVISOR_PHP_COMMAND</code> 環境變數。此環境變數將包含 Sail 用於使用 Octane（而不是 PHP 開發伺服器）為您的應用程式提供服務的指令：</p>
+<pre><code class="language-yaml">services:
+  laravel.test:
+    environment:
+      SUPERVISOR_PHP_COMMAND: &quot;/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan octane:start --server=frankenphp --host=0.0.0.0 --admin-port=2019 --port=&#39;\${APP_PORT:-80}&#39;&quot; # [tl! add]
+      XDG_CONFIG_HOME:  /var/www/html/config # [tl! add]
+      XDG_DATA_HOME:  /var/www/html/data # [tl! add]
+</code></pre>
+<p>要啟用 HTTPS、HTTP/2 和 HTTP/3，請改為套用以下修改：</p>
+<pre><code class="language-yaml">services:
+  laravel.test:
+    ports:
+        - &#39;\${APP_PORT:-80}:80&#39;
+        - &#39;\${VITE_PORT:-5173}:\${VITE_PORT:-5173}&#39;
+        - &#39;443:443&#39; # [tl! add]
+        - &#39;443:443/udp&#39; # [tl! add]
+    environment:
+      SUPERVISOR_PHP_COMMAND: &quot;/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan octane:start --host=localhost --port=443 --admin-port=2019 --https&quot; # [tl! add]
+      XDG_CONFIG_HOME:  /var/www/html/config # [tl! add]
+      XDG_DATA_HOME:  /var/www/html/data # [tl! add]
+</code></pre>
+<p>通常，您應該透過 <code>https://localhost</code> 存取您的 FrankenPHP Sail 應用程式，因為使用 <code>https://127.0.0.1</code> 需要額外的設定且<a href="https://frankenphp.dev/docs/known-issues/#using-https127001-with-docker">不建議使用</a>。</p>
+<p><a name="frankenphp-via-docker"></a></p>
+<h4>透過 Docker 使用 FrankenPHP</h4>
+<p>使用 FrankenPHP 的官方 Docker 映像可以提供更好的效能以及使用 FrankenPHP 靜態安裝未包含的額外擴充功能。此外，官方 Docker 映像支援在 FrankenPHP 原生不支援的平台上運行 FrankenPHP，例如 Windows。FrankenPHP 的官方 Docker 映像適用於本地開發和生產使用。</p>
+<p>您可以使用以下 Dockerfile 作為將 FrankenPHP 驅動的 Laravel 應用程式容器化的起點：</p>
+<pre><code class="language-dockerfile">FROM dunglas/frankenphp
+
+RUN install-php-extensions \\
+    pcntl
+    # 在此新增其他 PHP 擴充功能...
+
+COPY . /app
+
+ENTRYPOINT [&quot;php&quot;, &quot;artisan&quot;, &quot;octane:frankenphp&quot;]
+</code></pre>
+<p>然後，在開發期間，您可以使用以下 Docker Compose 檔案來運行您的應用程式：</p>
+<pre><code class="language-yaml"># compose.yaml
+services:
+  frankenphp:
+    build:
+      context: .
+    entrypoint: php artisan octane:frankenphp --workers=1 --max-requests=1
+    ports:
+      - &quot;8000:8000&quot;
+    volumes:
+      - .:/app
+</code></pre>
+<p>如果 <code>--log-level</code> 選項被明確傳遞給 <code>php artisan octane:start</code> 指令，Octane 將使用 FrankenPHP 的原生日誌記錄器，除非另有設定，否則將產生結構化 JSON 日誌。</p>
+<p>您可以參閱 <a href="https://frankenphp.dev/docs/docker/">FrankenPHP 官方文件</a>了解有關使用 Docker 運行 FrankenPHP 的更多資訊。</p>
+<p><a name="frankenphp-caddyfile"></a></p>
+<h4>自訂 Caddyfile 設定</h4>
+<p>使用 FrankenPHP 時，您可以在啟動 Octane 時使用 <code>--caddyfile</code> 選項指定自訂 Caddyfile：</p>
+<pre><code class="language-shell">php artisan octane:start --server=frankenphp --caddyfile=/path/to/your/Caddyfile
+</code></pre>
+<p>這允許您自訂 FrankenPHP 的設定，超出預設設定的範圍，例如新增自訂中介層、設定進階路由或設定自訂指令。您可以參閱 <a href="https://caddyserver.com/docs/caddyfile">Caddy 官方文件</a>了解有關 Caddyfile 語法和設定選項的更多資訊。</p>
+<p><a name="roadrunner"></a></p>
+<h3>RoadRunner</h3>
+<p><a href="https://roadrunner.dev">RoadRunner</a> 由 RoadRunner 二進位檔案提供支援，該檔案是使用 Go 建構的。當您首次啟動基於 RoadRunner 的 Octane 伺服器時，Octane 將提供下載並安裝 RoadRunner 二進位檔案的選項。</p>
+<p><a name="roadrunner-via-laravel-sail"></a></p>
+<h4>透過 Laravel Sail 使用 RoadRunner</h4>
+<p>如果您計劃使用 <a href="/docs/sail">Laravel Sail</a> 開發您的應用程式，您應該執行以下指令來安裝 Octane 和 RoadRunner：</p>
+<pre><code class="language-shell">./vendor/bin/sail up
+
+./vendor/bin/sail composer require laravel/octane spiral/roadrunner-cli spiral/roadrunner-http
+</code></pre>
+<p>接下來，您應該啟動一個 Sail shell 並使用 <code>rr</code> 可執行檔案來取得 RoadRunner 二進位檔案的最新 Linux 版本：</p>
+<pre><code class="language-shell">./vendor/bin/sail shell
+
+# 在 Sail shell 中...
+./vendor/bin/rr get-binary
+</code></pre>
+<p>然後，在應用程式的 <code>docker-compose.yml</code> 檔案中的 <code>laravel.test</code> 服務定義中新增一個 <code>SUPERVISOR_PHP_COMMAND</code> 環境變數。此環境變數將包含 Sail 用於使用 Octane（而不是 PHP 開發伺服器）為您的應用程式提供服務的指令：</p>
+<pre><code class="language-yaml">services:
+  laravel.test:
+    environment:
+      SUPERVISOR_PHP_COMMAND: &quot;/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan octane:start --server=roadrunner --host=0.0.0.0 --rpc-port=6001 --port=&#39;\${APP_PORT:-80}&#39;&quot; # [tl! add]
+</code></pre>
+<p>最後，確保 <code>rr</code> 二進位檔案是可執行的，並建構您的 Sail 映像：</p>
+<pre><code class="language-shell">chmod +x ./rr
+
+./vendor/bin/sail build --no-cache
+</code></pre>
+<p><a name="swoole"></a></p>
+<h3>Swoole</h3>
+<p>如果您計劃使用 Swoole 應用程式伺服器來為您的 Laravel Octane 應用程式提供服務，您必須安裝 Swoole PHP 擴充功能。通常，可以透過 PECL 完成：</p>
+<pre><code class="language-shell">pecl install swoole
+</code></pre>
+<p><a name="openswoole"></a></p>
+<h4>Open Swoole</h4>
+<p>如果您想要使用 Open Swoole 應用程式伺服器來為您的 Laravel Octane 應用程式提供服務，您必須安裝 Open Swoole PHP 擴充功能。通常，可以透過 PECL 完成：</p>
+<pre><code class="language-shell">pecl install openswoole
+</code></pre>
+<p>將 Laravel Octane 與 Open Swoole 一起使用可提供與 Swoole 相同的功能，例如並發任務、ticks 和 intervals。</p>
+<p><a name="swoole-via-laravel-sail"></a></p>
+<h4>透過 Laravel Sail 使用 Swoole</h4>
+<blockquote>
+<p>[!WARNING]
+在透過 Sail 為 Octane 應用程式提供服務之前，請確保您擁有最新版本的 Laravel Sail，並在應用程式的根目錄中執行 <code>./vendor/bin/sail build --no-cache</code>。</p>
+</blockquote>
+<p>或者，您可以使用 <a href="/docs/sail">Laravel Sail</a>（Laravel 的官方 Docker 開發環境）來開發基於 Swoole 的 Octane 應用程式。Laravel Sail 預設包含 Swoole 擴充功能。然而，您仍然需要調整 Sail 使用的 <code>docker-compose.yml</code> 檔案。</p>
+<p>要開始，請在應用程式的 <code>docker-compose.yml</code> 檔案中的 <code>laravel.test</code> 服務定義中新增一個 <code>SUPERVISOR_PHP_COMMAND</code> 環境變數。此環境變數將包含 Sail 用於使用 Octane（而不是 PHP 開發伺服器）為您的應用程式提供服務的指令：</p>
+<pre><code class="language-yaml">services:
+  laravel.test:
+    environment:
+      SUPERVISOR_PHP_COMMAND: &quot;/usr/bin/php -d variables_order=EGPCS /var/www/html/artisan octane:start --server=swoole --host=0.0.0.0 --port=&#39;\${APP_PORT:-80}&#39;&quot; # [tl! add]
+</code></pre>
+<p>最後，建構您的 Sail 映像：</p>
+<pre><code class="language-shell">./vendor/bin/sail build --no-cache
+</code></pre>
+<p><a name="swoole-configuration"></a></p>
+<h4>Swoole 設定</h4>
+<p>Swoole 支援一些額外的設定選項，您可以在必要時將它們新增到 <code>octane</code> 設定檔中。由於它們很少需要修改，這些選項未包含在預設設定檔中：</p>
+<pre><code class="language-php">&#39;swoole&#39; =&gt; [
+    &#39;options&#39; =&gt; [
+        &#39;log_file&#39; =&gt; storage_path(&#39;logs/swoole_http.log&#39;),
+        &#39;package_max_length&#39; =&gt; 10 * 1024 * 1024,
+    ],
+],
+</code></pre>
+<p><a name="serving-your-application"></a></p>
+<h2>為您的應用程式提供服務</h2>
+<p>Octane 伺服器可以透過 <code>octane:start</code> Artisan 指令啟動。預設情況下，此指令將使用應用程式 <code>octane</code> 設定檔的 <code>server</code> 設定選項指定的伺服器：</p>
+<pre><code class="language-shell">php artisan octane:start
+</code></pre>
+<p>預設情況下，Octane 將在連接埠 8000 上啟動伺服器，因此您可以透過 <code>http://localhost:8000</code> 在瀏覽器中存取您的應用程式。</p>
+<p><a name="keeping-octane-running-in-production"></a></p>
+<h4>在生產環境中保持 Octane 運行</h4>
+<p>如果您正在將 Octane 應用程式部署到生產環境，您應該使用進程監控器（如 Supervisor）來確保 Octane 伺服器持續運行。Octane 的範例 Supervisor 設定檔可能如下所示：</p>
+<pre><code class="language-ini">[program:octane]
+process_name=%(program_name)s_%(process_num)02d
+command=php /home/forge/example.com/artisan octane:start --server=frankenphp --host=127.0.0.1 --port=8000
+autostart=true
+autorestart=true
+user=forge
+redirect_stderr=true
+stdout_logfile=/home/forge/example.com/storage/logs/octane.log
+stopwaitsecs=3600
+</code></pre>
+<p><a name="serving-your-application-via-https"></a></p>
+<h3>透過 HTTPS 為您的應用程式提供服務</h3>
+<p>預設情況下，透過 Octane 運行的應用程式會產生以 <code>http://</code> 為前綴的連結。在透過 HTTPS 為您的應用程式提供服務時，可以將應用程式 <code>config/octane.php</code> 設定檔中使用的 <code>OCTANE_HTTPS</code> 環境變數設為 <code>true</code>。當此設定值設為 <code>true</code> 時，Octane 將指示 Laravel 為所有產生的連結加上 <code>https://</code> 前綴：</p>
+<pre><code class="language-php">&#39;https&#39; =&gt; env(&#39;OCTANE_HTTPS&#39;, false),
+</code></pre>
+<p><a name="serving-your-application-via-nginx"></a></p>
+<h3>透過 Nginx 為您的應用程式提供服務</h3>
+<blockquote>
+<p>[!NOTE]
+如果您還沒有準備好管理自己的伺服器設定，或者對設定運行強大的 Laravel Octane 應用程式所需的各種服務感到不舒服，請查看 <a href="https://cloud.laravel.com">Laravel Cloud</a>，它提供完全託管的 Laravel Octane 支援。</p>
+</blockquote>
+<p>在生產環境中，您應該在傳統 Web 伺服器（如 Nginx 或 Apache）後面為您的 Octane 應用程式提供服務。這樣做將允許 Web 伺服器為您的靜態資源（如圖片和樣式表）提供服務，以及管理您的 SSL 憑證終止。</p>
+<p>在下面的 Nginx 設定範例中，Nginx 將為網站的靜態資源提供服務，並將請求代理到在連接埠 8000 上運行的 Octane 伺服器：</p>
+<pre><code class="language-nginx">map $http_upgrade $connection_upgrade {
+    default upgrade;
+    &#39;&#39;      close;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name domain.com;
+    server_tokens off;
+    root /home/forge/domain.com/public;
+
+    index index.php;
+
+    charset utf-8;
+
+    location /index.php {
+        try_files /not_exists @octane;
+    }
+
+    location / {
+        try_files $uri $uri/ @octane;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    access_log off;
+    error_log  /var/log/nginx/domain.com-error.log error;
+
+    error_page 404 /index.php;
+
+    location @octane {
+        set $suffix &quot;&quot;;
+
+        if ($uri = /index.php) {
+            set $suffix ?$query_string;
+        }
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header Scheme $scheme;
+        proxy_set_header SERVER_PORT $server_port;
+        proxy_set_header REMOTE_ADDR $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_pass http://127.0.0.1:8000$suffix;
+    }
+}
+</code></pre>
+<p><a name="watching-for-file-changes"></a></p>
+<h3>監聽檔案變更</h3>
+<p>由於您的應用程式在 Octane 伺服器啟動時會載入一次到記憶體中，因此應用程式檔案的任何變更都不會在您重新整理瀏覽器時反映出來。例如，新增到 <code>routes/web.php</code> 檔案的路由定義直到伺服器重新啟動後才會反映出來。為了方便，您可以使用 <code>--watch</code> 標誌來指示 Octane 在應用程式內的任何檔案變更時自動重新啟動伺服器：</p>
+<pre><code class="language-shell">php artisan octane:start --watch
+</code></pre>
+<p>使用此功能之前，您應該確保 <a href="https://nodejs.org">Node</a> 已安裝在您的本地開發環境中。此外，您應該在專案中安裝 <a href="https://github.com/paulmillr/chokidar">Chokidar</a> 檔案監聽庫：</p>
+<pre><code class="language-shell">npm install --save-dev chokidar
+</code></pre>
+<p>您可以使用應用程式 <code>config/octane.php</code> 設定檔中的 <code>watch</code> 設定選項來設定應被監聽的目錄和檔案。</p>
+<p><a name="specifying-the-worker-count"></a></p>
+<h3>指定 Worker 數量</h3>
+<p>預設情況下，Octane 將為您的機器提供的每個 CPU 核心啟動一個應用程式請求 Worker。這些 Worker 然後將被用來為進入您應用程式的傳入 HTTP 請求提供服務。您可以在呼叫 <code>octane:start</code> 指令時使用 <code>--workers</code> 選項來手動指定要啟動的 Worker 數量：</p>
+<pre><code class="language-shell">php artisan octane:start --workers=4
+</code></pre>
+<p>如果您使用的是 Swoole 應用程式伺服器，您還可以指定要啟動的<a href="#concurrent-tasks">「任務 Worker」</a>數量：</p>
+<pre><code class="language-shell">php artisan octane:start --workers=4 --task-workers=6
+</code></pre>
+<p><a name="specifying-the-max-request-count"></a></p>
+<h3>指定最大請求數</h3>
+<p>為了幫助防止記憶體洩漏，Octane 會在 Worker 處理完 500 個請求後優雅地重新啟動它。要調整此數字，您可以使用 <code>--max-requests</code> 選項：</p>
+<pre><code class="language-shell">php artisan octane:start --max-requests=250
+</code></pre>
+<p><a name="specifying-the-max-execution-time"></a></p>
+<h3>指定最大執行時間</h3>
+<p>預設情況下，Laravel Octane 透過應用程式 <code>config/octane.php</code> 設定檔中的 <code>max_execution_time</code> 選項為傳入請求設定 30 秒的最大執行時間：</p>
+<pre><code class="language-php">&#39;max_execution_time&#39; =&gt; 30,
+</code></pre>
+<p>此設定定義了傳入請求在被終止之前允許執行的最大秒數。將此值設為 <code>0</code> 將完全停用執行時間限制。此設定選項對於處理長時間運行請求的應用程式特別有用，例如檔案上傳、資料處理或對外部服務的 API 呼叫。</p>
+<blockquote>
+<p>[!WARNING]
+當您修改 <code>max_execution_time</code> 設定時，您必須重新啟動 Octane 伺服器才能使變更生效。</p>
+</blockquote>
+<p><a name="reloading-the-workers"></a></p>
+<h3>重新載入 Worker</h3>
+<p>您可以使用 <code>octane:reload</code> 指令優雅地重新啟動 Octane 伺服器的應用程式 Worker。通常，這應該在部署後執行，以便將新部署的程式碼載入記憶體並用於為後續請求提供服務：</p>
+<pre><code class="language-shell">php artisan octane:reload
+</code></pre>
+<p><a name="stopping-the-server"></a></p>
+<h3>停止伺服器</h3>
+<p>您可以使用 <code>octane:stop</code> Artisan 指令來停止 Octane 伺服器：</p>
+<pre><code class="language-shell">php artisan octane:stop
+</code></pre>
+<p><a name="checking-the-server-status"></a></p>
+<h4>檢查伺服器狀態</h4>
+<p>您可以使用 <code>octane:status</code> Artisan 指令來檢查 Octane 伺服器的當前狀態：</p>
+<pre><code class="language-shell">php artisan octane:status
+</code></pre>
+<p><a name="dependency-injection-and-octane"></a></p>
+<h2>依賴注入與 Octane</h2>
+<p>由於 Octane 會啟動您的應用程式一次並將其保留在記憶體中以處理請求，因此在建構應用程式時您應該考慮一些注意事項。例如，應用程式服務提供者的 <code>register</code> 和 <code>boot</code> 方法只會在請求 Worker 初始啟動時執行一次。在後續請求中，相同的應用程式實例將被重複使用。</p>
+<p>鑒於此，您在將應用程式服務容器或請求注入任何物件的構造函數時應特別小心。這樣做，該物件在後續請求中可能會持有容器或請求的過時版本。</p>
+<p>Octane 將自動處理在請求之間重設任何第一方框架狀態。然而，Octane 並不總是知道如何重設您的應用程式建立的全域狀態。因此，您應該注意如何以 Octane 友好的方式建構您的應用程式。下面，我們將討論使用 Octane 時可能導致問題的最常見情況。</p>
+<p><a name="container-injection"></a></p>
+<h3>容器注入</h3>
+<p>一般來說，您應該避免將應用程式服務容器或 HTTP 請求實例注入其他物件的構造函數中。例如，以下綁定將整個應用程式服務容器注入到一個作為單例綁定的物件中：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Contracts\\Foundation\\Application;
+
+/**
+ * 註冊任何應用程式服務。
+ */
+public function register(): void
+{
+    $this-&gt;app-&gt;singleton(Service::class, function (Application $app) {
+        return new Service($app);
+    });
+}
+</code></pre>
+<p>在此範例中，如果 <code>Service</code> 實例在應用程式啟動過程中被解析，容器將被注入到服務中，該容器將在後續請求中被 <code>Service</code> 實例持有。這<strong>可能</strong>不會對您的特定應用程式造成問題；然而，它可能導致容器意外缺少在啟動週期後期或由後續請求新增的綁定。</p>
+<p>作為解決方法，您可以停止將綁定註冊為單例，或者您可以將一個容器解析器閉包注入到服務中，該閉包始終解析當前容器實例：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Container\\Container;
+use Illuminate\\Contracts\\Foundation\\Application;
+
+$this-&gt;app-&gt;bind(Service::class, function (Application $app) {
+    return new Service($app);
+});
+
+$this-&gt;app-&gt;singleton(Service::class, function () {
+    return new Service(fn () =&gt; Container::getInstance());
+});
+</code></pre>
+<p>全域 <code>app</code> 輔助函數和 <code>Container::getInstance()</code> 方法將始終回傳應用程式容器的最新版本。</p>
+<p><a name="request-injection"></a></p>
+<h3>請求注入</h3>
+<p>一般來說，您應該避免將應用程式服務容器或 HTTP 請求實例注入其他物件的構造函數中。例如，以下綁定將整個請求實例注入到一個作為單例綁定的物件中：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Contracts\\Foundation\\Application;
+
+/**
+ * 註冊任何應用程式服務。
+ */
+public function register(): void
+{
+    $this-&gt;app-&gt;singleton(Service::class, function (Application $app) {
+        return new Service($app[&#39;request&#39;]);
+    });
+}
+</code></pre>
+<p>在此範例中，如果 <code>Service</code> 實例在應用程式啟動過程中被解析，HTTP 請求將被注入到服務中，該請求將在後續請求中被 <code>Service</code> 實例持有。因此，所有標頭、輸入和查詢字串資料都將是不正確的，以及其他所有請求資料。</p>
+<p>作為解決方法，您可以停止將綁定註冊為單例，或者您可以將一個請求解析器閉包注入到服務中，該閉包始終解析當前請求實例。或者，最建議的方法是在運行時將您的物件所需的特定請求資訊傳遞給物件的一個方法：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Contracts\\Foundation\\Application;
+
+$this-&gt;app-&gt;bind(Service::class, function (Application $app) {
+    return new Service($app[&#39;request&#39;]);
+});
+
+$this-&gt;app-&gt;singleton(Service::class, function (Application $app) {
+    return new Service(fn () =&gt; $app[&#39;request&#39;]);
+});
+
+// 或者...
+
+$service-&gt;method($request-&gt;input(&#39;name&#39;));
+</code></pre>
+<p>全域 <code>request</code> 輔助函數將始終回傳應用程式當前正在處理的請求，因此可以在您的應用程式中安全使用。</p>
+<blockquote>
+<p>[!WARNING]
+在控制器方法和路由閉包上使用 <code>Illuminate\\Http\\Request</code> 實例的型別提示是可以接受的。</p>
+</blockquote>
+<p><a name="configuration-repository-injection"></a></p>
+<h3>設定庫注入</h3>
+<p>一般來說，您應該避免將設定庫實例注入其他物件的構造函數中。例如，以下綁定將設定庫注入到一個作為單例綁定的物件中：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Contracts\\Foundation\\Application;
+
+/**
+ * 註冊任何應用程式服務。
+ */
+public function register(): void
+{
+    $this-&gt;app-&gt;singleton(Service::class, function (Application $app) {
+        return new Service($app-&gt;make(&#39;config&#39;));
+    });
+}
+</code></pre>
+<p>在此範例中，如果設定值在請求之間發生變更，該服務將無法存取新值，因為它依賴於原始的庫實例。</p>
+<p>作為解決方法，您可以停止將綁定註冊為單例，或者您可以將一個設定庫解析器閉包注入到類別中：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Container\\Container;
+use Illuminate\\Contracts\\Foundation\\Application;
+
+$this-&gt;app-&gt;bind(Service::class, function (Application $app) {
+    return new Service($app-&gt;make(&#39;config&#39;));
+});
+
+$this-&gt;app-&gt;singleton(Service::class, function () {
+    return new Service(fn () =&gt; Container::getInstance()-&gt;make(&#39;config&#39;));
+});
+</code></pre>
+<p>全域 <code>config</code> 將始終回傳設定庫的最新版本，因此可以在您的應用程式中安全使用。</p>
+<p><a name="managing-memory-leaks"></a></p>
+<h3>管理記憶體洩漏</h3>
+<p>請記住，Octane 會在請求之間將您的應用程式保留在記憶體中；因此，將資料新增到靜態維護的陣列中將導致記憶體洩漏。例如，以下控制器存在記憶體洩漏，因為對應用程式的每個請求都會繼續將資料新增到靜態 <code>$data</code> 陣列中：</p>
+<pre><code class="language-php">use App\\Service;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Str;
+
+/**
+ * 處理傳入請求。
+ */
+public function index(Request $request): array
+{
+    Service::$data[] = Str::random(10);
+
+    return [
+        // ...
+    ];
+}
+</code></pre>
+<p>在建構應用程式時，您應該特別注意避免建立這些類型的記憶體洩漏。建議您在本地開發期間監控應用程式的記憶體使用情況，以確保不會將新的記憶體洩漏引入您的應用程式。</p>
+<p><a name="concurrent-tasks"></a></p>
+<h2>並發任務</h2>
+<blockquote>
+<p>[!WARNING]
+此功能需要 <a href="#swoole">Swoole</a>。</p>
+</blockquote>
+<p>使用 Swoole 時，您可以透過輕量級的背景任務並發執行操作。您可以使用 Octane 的 <code>concurrently</code> 方法來實現。您可以將此方法與 PHP 陣列解構結合使用來檢索每個操作的結果：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use App\\Models\\Server;
+use Laravel\\Octane\\Facades\\Octane;
+
+[$users, $servers] = Octane::concurrently([
+    fn () =&gt; User::all(),
+    fn () =&gt; Server::all(),
+]);
+</code></pre>
+<p>由 Octane 處理的並發任務使用 Swoole 的「任務 Worker」，並在與傳入請求完全不同的進程中執行。可用於處理並發任務的 Worker 數量由 <code>octane:start</code> 指令上的 <code>--task-workers</code> 指令決定：</p>
+<pre><code class="language-shell">php artisan octane:start --workers=4 --task-workers=6
+</code></pre>
+<p>呼叫 <code>concurrently</code> 時，由於 Swoole 任務系統的限制，您不應提供超過 1024 個任務。</p>
+<p><a name="ticks-and-intervals"></a></p>
+<h2>Ticks 與 Intervals</h2>
+<blockquote>
+<p>[!WARNING]
+此功能需要 <a href="#swoole">Swoole</a>。</p>
+</blockquote>
+<p>使用 Swoole 時，您可以註冊「tick」操作，這些操作將每指定的秒數執行一次。您可以透過 <code>tick</code> 方法註冊「tick」回呼。傳遞給 <code>tick</code> 方法的第一個參數應該是表示 ticker 名稱的字串。第二個參數應該是一個可呼叫的內容，將在指定的間隔被呼叫。</p>
+<p>在此範例中，我們將註冊一個每 10 秒被呼叫一次的閉包。通常，<code>tick</code> 應在您應用程式的一個服務提供者的 <code>boot</code> 方法中呼叫：</p>
+<pre><code class="language-php">Octane::tick(&#39;simple-ticker&#39;, fn () =&gt; ray(&#39;Ticking...&#39;))
+    -&gt;seconds(10);
+</code></pre>
+<p>使用 <code>immediate</code> 方法，您可以指示 Octane 在 Octane 伺服器初始啟動時立即呼叫 tick 回呼，然後每隔 N 秒呼叫一次：</p>
+<pre><code class="language-php">Octane::tick(&#39;simple-ticker&#39;, fn () =&gt; ray(&#39;Ticking...&#39;))
+    -&gt;seconds(10)
+    -&gt;immediate();
+</code></pre>
+<p><a name="the-octane-cache"></a></p>
+<h2>Octane 快取</h2>
+<blockquote>
+<p>[!WARNING]
+此功能需要 <a href="#swoole">Swoole</a>。</p>
+</blockquote>
+<p>使用 Swoole 時，您可以利用 Octane 快取驅動程式，它提供每秒高達 200 萬次操作的讀寫速度。因此，此快取驅動程式是需要從快取層獲得極致讀寫速度的應用程式的絕佳選擇。</p>
+<p>此快取驅動程式由 <a href="https://www.swoole.co.uk/docs/modules/swoole-table">Swoole 表格</a>提供支援。儲存在快取中的所有資料對伺服器上的所有 Worker 都可用。然而，快取資料將在伺服器重新啟動時被清除：</p>
+<pre><code class="language-php">Cache::store(&#39;octane&#39;)-&gt;put(&#39;framework&#39;, &#39;Laravel&#39;, 30);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+Octane 快取中允許的最大條目數可以在您應用程式的 <code>octane</code> 設定檔中定義。</p>
+</blockquote>
+<p><a name="cache-intervals"></a></p>
+<h3>快取間隔</h3>
+<p>除了 Laravel 快取系統提供的典型方法外，Octane 快取驅動程式還具有基於間隔的快取。這些快取會在指定的間隔自動重新整理，應在您應用程式的一個服務提供者的 <code>boot</code> 方法中註冊。例如，以下快取將每五秒重新整理一次：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+Cache::store(&#39;octane&#39;)-&gt;interval(&#39;random&#39;, function () {
+    return Str::random(10);
+}, seconds: 5);
+</code></pre>
+<p><a name="tables"></a></p>
+<h2>表格</h2>
+<blockquote>
+<p>[!WARNING]
+此功能需要 <a href="#swoole">Swoole</a>。</p>
+</blockquote>
+<p>使用 Swoole 時，您可以定義和互動您自己的任意 <a href="https://www.swoole.co.uk/docs/modules/swoole-table">Swoole 表格</a>。Swoole 表格提供極致的效能吞吐量，這些表格中的資料可以被伺服器上的所有 Worker 存取。然而，它們中的資料將在伺服器重新啟動時丟失。</p>
+<p>表格應在您應用程式的 <code>octane</code> 設定檔的 <code>tables</code> 設定陣列中定義。已經為您設定了一個允許最多 1000 行的範例表格。字元串列的最大大小可以透過在列型別後指定列大小來設定，如下所示：</p>
+<pre><code class="language-php">&#39;tables&#39; =&gt; [
+    &#39;example:1000&#39; =&gt; [
+        &#39;name&#39; =&gt; &#39;string:1000&#39;,
+        &#39;votes&#39; =&gt; &#39;int&#39;,
+    ],
+],
+</code></pre>
+<p>要存取表格，您可以使用 <code>Octane::table</code> 方法：</p>
+<pre><code class="language-php">use Laravel\\Octane\\Facades\\Octane;
+
+Octane::table(&#39;example&#39;)-&gt;set(&#39;uuid&#39;, [
+    &#39;name&#39; =&gt; &#39;Nuno Maduro&#39;,
+    &#39;votes&#39; =&gt; 1000,
+]);
+
+return Octane::table(&#39;example&#39;)-&gt;get(&#39;uuid&#39;);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+Swoole 表格支援的列型別有：<code>string</code>、<code>int</code> 和 <code>float</code>。</p>
+</blockquote>
+`;
+---
+
+<DocsLayout title="Octane" currentPath="octane">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Octane</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Octane</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/octane" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

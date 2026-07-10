@@ -1,0 +1,182 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Cashier（Paddle）</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#upgrading-cashier">升級 Cashier</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#paddle-sandbox">Paddle 沙箱</a></li>
+</ul>
+</li>
+<li><a href="#configuration">配置</a><ul>
+<li><a href="#billable-model">可計費模型</a></li>
+<li><a href="#api-keys">API 金鑰</a></li>
+<li><a href="#paddle-js">Paddle JS</a></li>
+<li><a href="#currency-configuration">貨幣配置</a></li>
+<li><a href="#overriding-default-models">覆寫預設模型</a></li>
+</ul>
+</li>
+<li><a href="#quickstart">快速入門</a><ul>
+<li><a href="#quickstart-selling-products">銷售產品</a></li>
+<li><a href="#quickstart-selling-subscriptions">銷售訂閱</a></li>
+</ul>
+</li>
+<li><a href="#checkout-sessions">結帳工作階段</a><ul>
+<li><a href="#overlay-checkout">覆蓋式結帳</a></li>
+<li><a href="#inline-checkout">內嵌式結帳</a></li>
+<li><a href="#guest-checkouts">訪客結帳</a></li>
+</ul>
+</li>
+<li><a href="#price-previews">價格預覽</a></li>
+<li><a href="#customers">客戶</a></li>
+<li><a href="#subscriptions">訂閱</a><ul>
+<li><a href="#creating-subscriptions">建立訂閱</a></li>
+<li><a href="#checking-subscription-status">檢查訂閱狀態</a></li>
+<li><a href="#changing-plans">更改方案</a></li>
+<li><a href="#subscription-quantity">訂閱數量</a></li>
+<li><a href="#pausing-subscriptions">暫停訂閱</a></li>
+<li><a href="#canceling-subscriptions">取消訂閱</a></li>
+</ul>
+</li>
+<li><a href="#subscription-trials">訂閱試用</a></li>
+<li><a href="#handling-paddle-webhooks">處理 Paddle Webhook</a></li>
+<li><a href="#single-charges">單次扣款</a></li>
+<li><a href="#transactions">交易</a></li>
+<li><a href="#testing">測試</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<blockquote>
+<p>[!WARNING]
+此文件適用於 Cashier Paddle 2.x 與 Paddle Billing 的整合。如果您仍在使用 Paddle Classic，應使用 <a href="https://github.com/laravel/cashier-paddle/tree/1.x">Cashier Paddle 1.x</a>。</p>
+</blockquote>
+<p><a href="https://github.com/laravel/cashier-paddle">Laravel Cashier Paddle</a> 為 <a href="https://paddle.com">Paddle</a> 的訂閱計費服務提供了一個表達力強、流暢的介面。它處理了幾乎所有您不想編寫的樣板訂閱計費代碼。除了基本的訂閱管理之外，Cashier 還可以處理：訂閱方案轉換、訂閱「數量」、訂閱暫停、取消寬限期等。</p>
+<p>在深入了解 Cashier Paddle 之前，我們建議您同時查閱 Paddle 的<a href="https://developer.paddle.com/concepts/overview">概念指南</a>和 <a href="https://developer.paddle.com/api-reference/overview">API 文件</a>。</p>
+<p><a name="upgrading-cashier"></a></p>
+<h2>升級 Cashier</h2>
+<p>升級到新版本的 Cashier 時，務必仔細查閱<a href="https://github.com/laravel/cashier-paddle/blob/master/UPGRADE.md">升級指南</a>。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器安裝 Paddle 的 Cashier 套件：</p>
+<pre><code class="language-shell">composer require laravel/cashier-paddle</code></pre>
+<p>接下來，使用 <code>vendor:publish</code> Artisan 命令發佈 Cashier 的遷移檔案：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag="cashier-migrations"</code></pre>
+<p>然後，執行應用程式的資料庫遷移。Cashier 遷移將建立一個新的 <code>customers</code> 資料表。此外，還會建立新的 <code>subscriptions</code> 和 <code>subscription_items</code> 資料表來儲存所有客戶的訂閱。最後，建立一個新的 <code>transactions</code> 資料表來儲存與客戶關聯的所有 Paddle 交易：</p>
+<pre><code class="language-shell">php artisan migrate</code></pre>
+<blockquote>
+<p>[!WARNING]
+為確保 Cashier 正確處理所有 Paddle 事件，請記得<a href="#handling-paddle-webhooks">設定 Cashier 的 webhook 處理</a>。</p>
+</blockquote>
+<p><a name="paddle-sandbox"></a></p>
+<h3>Paddle 沙箱</h3>
+<p>在本地和開發環境開發期間，您應<a href="https://sandbox-login.paddle.com/signup">註冊一個 Paddle 沙箱帳戶</a>。此帳戶將為您提供一個沙箱環境來測試和開發應用程式，而無需進行實際付款。您可以使用 Paddle 的<a href="https://developer.paddle.com/concepts/payment-methods/credit-debit-card#test-payment-method">測試卡號</a>來模擬各種付款場景。</p>
+<p>使用 Paddle 沙箱環境時，您應在應用程式的 <code>.env</code> 檔案中將 <code>PADDLE_SANDBOX</code> 環境變數設定為 <code>true</code>：</p>
+<pre><code class="language-ini">PADDLE_SANDBOX=true</code></pre>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p><a name="billable-model"></a></p>
+<h3>可計費模型</h3>
+<p>將 <code>Billable</code> trait 新增到您的使用者模型：</p>
+<pre><code class="language-php">use Laravel\\Paddle\\Billable;
+
+class User extends Authenticatable
+{
+    use Billable;
+}
+</code></pre>
+<p><a name="api-keys"></a></p>
+<h3>API 金鑰</h3>
+<p>在 <code>.env</code> 中配置您的 Paddle API 金鑰：</p>
+<pre><code class="language-env">PADDLE_CLIENT_ID=...
+PADDLE_CLIENT_SECRET=...
+PADDLE_WEBHOOK_SECRET=...</code></pre>
+<p><a name="quickstart"></a></p>
+<h2>快速入門</h2>
+<p><a name="quickstart-selling-products"></a></p>
+<h3>銷售產品</h3>
+<p>使用 <code>checkout</code> 方法建立結帳工作階段，將使用者重導向到 Paddle 託管的結帳頁面：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get('/product/{product}/checkout', function (Request $request, string $product) {
+    $checkout = $request->user()->checkout($product);
+
+    return $checkout->redirect();
+});</code></pre>
+<p><a name="quickstart-selling-subscriptions"></a></p>
+<h3>銷售訂閱</h3>
+<p>使用 <code>newSubscription</code> 方法建立訂閱：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::post('/subscribe', function (Request $request) {
+    $subscription = $request->user()->newSubscription('default', 'pri_monthly')
+        ->create();
+
+    return redirect('/home');
+});</code></pre>
+<p><a name="checkout-sessions"></a></p>
+<h2>結帳工作階段</h2>
+<p>Cashier Paddle 支援覆蓋式結帳（Overlay Checkout）和內嵌式結帳（Inline Checkout）。覆蓋式結帳會打開一個 Paddle 託管的模式視窗，而內嵌式結帳則將結帳表單嵌入到您的頁面中。</p>
+<p><a name="customers"></a></p>
+<h2>客戶</h2>
+<p>使用 <code>createAsCustomer</code> 方法在 Paddle 中建立客戶記錄。使用 <code>customer</code> 方法檢索客戶資訊。</p>
+<p><a name="subscriptions"></a></p>
+<h2>訂閱</h2>
+<p><a name="creating-subscriptions"></a></p>
+<h3>建立訂閱</h3>
+<p>使用 <code>newSubscription</code> 方法建立新訂閱。第一個參數是訂閱的名稱，第二個參數是 Paddle 中的價格 ID：</p>
+<pre><code class="language-php">$user->newSubscription('default', 'pri_monthly')->create();</code></pre>
+<p><a name="checking-subscription-status"></a></p>
+<h3>檢查訂閱狀態</h3>
+<p>使用 <code>subscribed</code>、<code>onTrial</code>、<code>paused</code>、<code>cancelled</code>、<code>onGracePeriod</code> 等方法檢查訂閱狀態。</p>
+<p><a name="changing-plans"></a></p>
+<h3>更改方案</h3>
+<p>使用 <code>swap</code> 方法將訂閱轉換到新價格：</p>
+<pre><code class="language-php">$user->subscription('default')->swap('pri_yearly');</code></pre>
+<p><a name="pausing-subscriptions"></a></p>
+<h3>暫停訂閱</h3>
+<p>使用 <code>pause</code> 方法暫停訂閱：</p>
+<pre><code class="language-php">$user->subscription('default')->pause();</code></pre>
+<p><a name="canceling-subscriptions"></a></p>
+<h3>取消訂閱</h3>
+<p>使用 <code>cancel</code> 方法取消訂閱：</p>
+<pre><code class="language-php">$user->subscription('default')->cancel();</code></pre>
+<p><a name="subscription-trials"></a></p>
+<h2>訂閱試用</h2>
+<p>Cashier Paddle 支援試用期。使用 <code>trialDays</code> 設定試用天數，或使用 <code>trialUntil</code> 設定特定的結束日期。</p>
+<p><a name="handling-paddle-webhooks"></a></p>
+<h2>處理 Paddle Webhook</h2>
+<p>Cashier 自動處理 Paddle webhook。發佈 webhook 路由：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag="cashier-webhooks"</code></pre>
+<p>然後在 Paddle 儀表板中配置 webhook URL。Cashier 處理諸如 <code>subscription.created</code>、<code>subscription.updated</code>、<code>transaction.completed</code> 等事件。</p>
+<p><a name="single-charges"></a></p>
+<h2>單次扣款</h2>
+<p>使用 <code>charge</code> 方法對客戶進行單次扣款。使用 Paddle 的產品價格 ID 來建立一次性付款。</p>
+<p><a name="transactions"></a></p>
+<h2>交易</h2>
+<p>使用 <code>transactions</code> 方法檢索客戶的交易記錄。使用 <code>downloadInvoice</code> 方法下載發票。</p>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>測試時，Cashier Paddle 提供了一個模擬實作。您可以通過設定相應的環境變數來使用 Paddle 的沙箱環境進行測試。</p>
+`;
+---
+
+<DocsLayout title="Laravel Cashier（Paddle）" currentPath="cashier-paddle">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Cashier（Paddle）</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">Laravel Cashier（Paddle）</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/cashier-paddle" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

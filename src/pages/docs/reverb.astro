@@ -1,0 +1,272 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Reverb</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#configuration">設定</a><ul>
+<li><a href="#application-credentials">應用程式憑證</a></li>
+<li><a href="#allowed-origins">允許的來源</a></li>
+<li><a href="#additional-applications">額外應用程式</a></li>
+<li><a href="#ssl">SSL</a></li>
+</ul>
+</li>
+<li><a href="#running-server">啟動伺服器</a><ul>
+<li><a href="#debugging">除錯</a></li>
+<li><a href="#restarting">重啟</a></li>
+</ul>
+</li>
+<li><a href="#monitoring">監控</a></li>
+<li><a href="#production">在生產環境中運行 Reverb</a><ul>
+<li><a href="#open-files">開啟檔案</a></li>
+<li><a href="#event-loop">事件迴圈</a></li>
+<li><a href="#web-server">Web 伺服器</a></li>
+<li><a href="#ports">連接埠</a></li>
+<li><a href="#process-management">處理程序管理</a></li>
+<li><a href="#scaling">擴展</a></li>
+</ul>
+</li>
+<li><a href="#events">事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/reverb">Laravel Reverb</a> 將高速、可擴展的即時 WebSocket 通訊直接帶入您的 Laravel 應用程式，並與 Laravel 現有的<a href="/docs/broadcasting">事件廣播工具</a>套件無縫整合。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>您可以使用 <code>install:broadcasting</code> Artisan 命令安裝 Reverb：</p>
+<pre><code class="language-shell">php artisan install:broadcasting
+</code></pre>
+<p><a name="configuration"></a></p>
+<h2>設定</h2>
+<p>在底層，<code>install:broadcasting</code> Artisan 命令將執行 <code>reverb:install</code> 命令，該命令將使用一組合理的預設配置選項安裝 Reverb。如果您想進行任何配置變更，可以透過更新 Reverb 的環境變數或更新 <code>config/reverb.php</code> 配置檔來實現。</p>
+<p><a name="application-credentials"></a></p>
+<h3>應用程式憑證</h3>
+<p>為了建立與 Reverb 的連線，必須在客戶端和伺服器之間交換一組 Reverb「應用程式」憑證。這些憑證在伺服器上配置，用於驗證來自客戶端的請求。您可以使用以下環境變數來定義這些憑證：</p>
+<pre><code class="language-ini">REVERB_APP_ID=my-app-id
+REVERB_APP_KEY=my-app-key
+REVERB_APP_SECRET=my-app-secret
+</code></pre>
+<p><a name="allowed-origins"></a></p>
+<h3>允許的來源</h3>
+<p>您也可以透過更新 <code>config/reverb.php</code> 配置檔中 <code>apps</code> 部分的 <code>allowed_origins</code> 配置值來定義允許的客戶端請求來源。來自未在允許的來源中列出的來源的任何請求都將被拒絕。您可以使用 <code>*</code> 允許所有來源：</p>
+<pre><code class="language-php">'apps' => [
+    [
+        'app_id' => 'my-app-id',
+        'allowed_origins' => ['laravel.com'],
+        // ...
+    ]
+]
+</code></pre>
+<p><a name="additional-applications"></a></p>
+<h3>額外應用程式</h3>
+<p>通常，Reverb 為安裝它的應用程式提供 WebSocket 伺服器。但是，可以使用單一 Reverb 安裝來服務多個應用程式。</p>
+<p>例如，您可能希望維護一個 Laravel 應用程式，透過 Reverb 為多個應用程式提供 WebSocket 連線。這可以透過在應用程式的 <code>config/reverb.php</code> 配置檔中定義多個 <code>apps</code> 來實現：</p>
+<pre><code class="language-php">'apps' => [
+    [
+        'app_id' => 'my-app-one',
+        // ...
+    ],
+    [
+        'app_id' => 'my-app-two',
+        // ...
+    ],
+],
+</code></pre>
+<p><a name="ssl"></a></p>
+<h3>SSL</h3>
+<p>在大多數情況下，安全的 WebSocket 連線由上游 Web 伺服器（Nginx 等）在請求被代理到 Reverb 伺服器之前處理。</p>
+<p>但是，有時 Reverb 伺服器直接處理安全連線會很有用，例如在本機開發期間。如果您正在使用 <a href="https://herd.laravel.com">Laravel Herd</a> 的安全站點功能，或者您正在使用 <a href="/docs/valet">Laravel Valet</a> 並已對您的應用程式執行了<a href="/docs/valet#securing-sites">安全命令</a>，您可以使用為您的站點生成的 Herd / Valet 證書來保護您的 Reverb 連線。為此，將 <code>REVERB_HOST</code> 環境變數設為您站點的主機名稱，或者在啟動 Reverb 伺服器時明確傳遞主機名稱選項：</p>
+<pre><code class="language-shell">php artisan reverb:start --host="0.0.0.0" --port=8080 --hostname="laravel.test"
+</code></pre>
+<p>由於 Herd 和 Valet 網域解析到 <code>localhost</code>，執行上述命令將使您的 Reverb 伺服器可透過安全 WebSocket 協議（<code>wss</code>）在 <code>wss://laravel.test:8080</code> 存取。</p>
+<p>您也可以透過在應用程式的 <code>config/reverb.php</code> 配置檔中定義 <code>tls</code> 選項來手動選擇證書。在 <code>tls</code> 選項陣列中，您可以提供 <a href="https://www.php.net/manual/en/context.ssl.php">PHP 的 SSL 上下文選項</a>支援的任何選項：</p>
+<pre><code class="language-php">'options' => [
+    'tls' => [
+        'local_cert' => '/path/to/cert.pem'
+    ],
+],
+</code></pre>
+<p><a name="running-server"></a></p>
+<h2>啟動伺服器</h2>
+<p>Reverb 伺服器可以使用 <code>reverb:start</code> Artisan 命令啟動：</p>
+<pre><code class="language-shell">php artisan reverb:start
+</code></pre>
+<p>預設情況下，Reverb 伺服器將在 <code>0.0.0.0:8080</code> 啟動，使其可從所有網路介面存取。</p>
+<p>如果您需要指定自訂主機或連接埠，可以在啟動伺服器時透過 <code>--host</code> 和 <code>--port</code> 選項來實現：</p>
+<pre><code class="language-shell">php artisan reverb:start --host=127.0.0.1 --port=9000
+</code></pre>
+<p>或者，您可以在應用程式的 <code>.env</code> 配置檔中定義 <code>REVERB_SERVER_HOST</code> 和 <code>REVERB_SERVER_PORT</code> 環境變數。</p>
+<p><code>REVERB_SERVER_HOST</code> 和 <code>REVERB_SERVER_PORT</code> 環境變數不應與 <code>REVERB_HOST</code> 和 <code>REVERB_PORT</code> 混淆。前者指定運行 Reverb 伺服器本身的主機和連接埠，而後者指示 Laravel 將廣播訊息發送到哪裡。例如，在生產環境中，您可以將請求從公共 Reverb 主機名稱上的連接埠 <code>443</code> 路由到在 <code>0.0.0.0:8080</code> 上運行的 Reverb 伺服器。在此場景中，您的環境變數應定義如下：</p>
+<pre><code class="language-ini">REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+
+REVERB_HOST=ws.laravel.com
+REVERB_PORT=443
+</code></pre>
+<p><a name="debugging"></a></p>
+<h3>除錯</h3>
+<p>為了提高效能，Reverb 預設不輸出任何除錯資訊。如果您想查看透過 Reverb 伺服器的資料流，可以向 <code>reverb:start</code> 命令提供 <code>--debug</code> 選項：</p>
+<pre><code class="language-shell">php artisan reverb:start --debug
+</code></pre>
+<p><a name="restarting"></a></p>
+<h3>重啟</h3>
+<p>由於 Reverb 是一個長期運行的處理程序，如果不透過 <code>reverb:restart</code> Artisan 命令重啟伺服器，程式碼變更將不會反映。</p>
+<p><code>reverb:restart</code> 命令確保在停止伺服器之前優雅地終止所有連線。如果您使用 Supervisor 等處理程序管理器運行 Reverb，伺服器將在所有連線終止後被處理程序管理器自動重啟：</p>
+<pre><code class="language-shell">php artisan reverb:restart
+</code></pre>
+<p><a name="monitoring"></a></p>
+<h2>監控</h2>
+<p>Reverb 可以透過與 <a href="/docs/pulse">Laravel Pulse</a> 的整合來進行監控。透過啟用 Reverb 的 Pulse 整合，您可以追蹤伺服器處理的連線和訊息數量。</p>
+<p>要啟用整合，您首先應確保已<a href="/docs/pulse#installation">安裝 Pulse</a>。然後，將 Reverb 的任何記錄器新增到應用程式的 <code>config/pulse.php</code> 配置檔中：</p>
+<pre><code class="language-php">use Laravel\\Reverb\\Pulse\\Recorders\\ReverbConnections;
+use Laravel\\Reverb\\Pulse\\Recorders\\ReverbMessages;
+
+'recorders' => [
+    ReverbConnections::class => [
+        'sample_rate' => 1,
+    ],
+
+    ReverbMessages::class => [
+        'sample_rate' => 1,
+    ],
+
+    // ...
+],
+</code></pre>
+<p>接下來，將每個記錄器的 Pulse 卡片新增到您的 <a href="/docs/pulse#dashboard-customization">Pulse 儀表板</a>：</p>
+<pre><code class="language-blade">&lt;x-pulse&gt;
+    &lt;livewire:reverb.connections cols="full" /&gt;
+    &lt;livewire:reverb.messages cols="full" /&gt;
+    ...
+&lt;/x-pulse&gt;
+</code></pre>
+<p>連線活動透過定期輪詢新更新來記錄。為了確保此資訊在 Pulse 儀表板上正確渲染，您必須在 Reverb 伺服器上執行 <code>pulse:check</code> 守護程序。如果您正在<a href="#scaling">水平擴展</a>配置中運行 Reverb，則應僅在其中一台伺服器上運行此守護程序。</p>
+<p><a name="production"></a></p>
+<h2>在生產環境中運行 Reverb</h2>
+<p>由於 WebSocket 伺服器的長期運行特性，您可能需要對伺服器和託管環境進行一些優化，以確保 Reverb 伺服器能夠有效處理伺服器上可用資源的最佳連線數量。</p>
+<blockquote>
+<p>[!NOTE]
+<a href="https://cloud.laravel.com">Laravel Cloud</a> 提供由 Laravel Reverb 叢集驅動的完全託管 WebSocket 基礎設施，讓您無需管理基礎設施即可擴展和部署啟用 Reverb 的應用程式。</p>
+</blockquote>
+<p><a name="open-files"></a></p>
+<h3>開啟檔案</h3>
+<p>每個 WebSocket 連線都保持在記憶體中，直到客戶端或伺服器斷開連線。在 Unix 和類 Unix 環境中，每個連線由一個檔案表示。但是，作業系統和應用程式層級通常對允許的開啟檔案數量有限制。</p>
+<p><a name="operating-system"></a></p>
+<h4>作業系統</h4>
+<p>在基於 Unix 的作業系統上，您可以使用 <code>ulimit</code> 命令來判斷允許的開啟檔案數量：</p>
+<pre><code class="language-shell">ulimit -n
+</code></pre>
+<p>此命令將顯示不同用戶允許的開啟檔案限制。您可以透過編輯 <code>/etc/security/limits.conf</code> 檔案來更新這些值。例如，將 <code>forge</code> 用戶的最大開啟檔案數更新為 10,000 如下所示：</p>
+<pre><code class="language-ini"># /etc/security/limits.conf
+forge        soft  nofile  10000
+forge        hard  nofile  10000
+</code></pre>
+<p><a name="event-loop"></a></p>
+<h3>事件迴圈</h3>
+<p>在底層，Reverb 使用 ReactPHP 事件迴圈來管理伺服器上的 WebSocket 連線。預設情況下，此事件迴圈由 <code>stream_select</code> 驅動，不需要任何額外的擴充功能。但是，<code>stream_select</code> 通常限制為 1,024 個開啟檔案。因此，如果您計劃處理超過 1,000 個並發連線，則需要使用不受相同限制約束的替代事件迴圈。</p>
+<p>當可用時，Reverb 將自動切換到由 <code>ext-uv</code> 驅動的迴圈。此 PHP 擴充功能可透過 PECL 安裝：</p>
+<pre><code class="language-shell">pecl install uv
+</code></pre>
+<p><a name="web-server"></a></p>
+<h3>Web 伺服器</h3>
+<p>在大多數情況下，Reverb 在伺服器上的非公開連接埠上運行。因此，為了將流量路由到 Reverb，您應該配置一個反向代理。假設 Reverb 在主機 <code>0.0.0.0</code> 和連接埠 <code>8080</code> 上運行，並且您的伺服器使用 Nginx Web 伺服器，可以使用以下 Nginx 站點配置為 Reverb 伺服器定義反向代理：</p>
+<pre><code class="language-nginx">server {
+    ...
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header Scheme $scheme;
+        proxy_set_header SERVER_PORT $server_port;
+        proxy_set_header REMOTE_ADDR $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+
+        proxy_pass http://0.0.0.0:8080;
+    }
+
+    ...
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+Reverb 在 <code>/app</code> 監聽 WebSocket 連線，並在 <code>/apps</code> 處理 API 請求。您應該確保處理 Reverb 請求的 Web 伺服器可以服務這兩個 URI。如果您正在使用 <a href="https://forge.laravel.com">Laravel Forge</a> 來管理伺服器，您的 Reverb 伺服器預設將被正確配置。</p>
+</blockquote>
+<p>通常，Web 伺服器被配置為限制允許的連線數量，以防止伺服器過載。要將 Nginx Web 伺服器上的允許連線數增加到 10,000，應更新 <code>nginx.conf</code> 檔案的 <code>worker_rlimit_nofile</code> 和 <code>worker_connections</code> 值：</p>
+<pre><code class="language-nginx">user forge;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+worker_rlimit_nofile 10000;
+
+events {
+  worker_connections 10000;
+  multi_accept on;
+}
+</code></pre>
+<p>上述配置將允許每個處理程序生成最多 10,000 個 Nginx 工作者。此外，此配置將 Nginx 的開啟檔案限制設為 10,000。</p>
+<p><a name="ports"></a></p>
+<h3>連接埠</h3>
+<p>基於 Unix 的作業系統通常限制伺服器上可以開啟的連接埠數量。您可以透過以下命令查看當前允許的範圍：</p>
+<pre><code class="language-shell">cat /proc/sys/net/ipv4/ip_local_port_range
+# 32768	60999
+</code></pre>
+<p>上述輸出顯示伺服器最多可以處理 28,231（60,999 - 32,768）個連線，因為每個連線都需要一個可用連接埠。雖然我們建議<a href="#scaling">水平擴展</a>來增加允許的連線數量，但您可以透過更新伺服器的 <code>/etc/sysctl.conf</code> 配置檔中的允許連接埠範圍來增加可用開啟連接埠的數量。</p>
+<p><a name="process-management"></a></p>
+<h3>處理程序管理</h3>
+<p>在大多數情況下，您應該使用 Supervisor 等處理程序管理器來確保 Reverb 伺服器持續運行。如果您正在使用 Supervisor 運行 Reverb，應更新伺服器的 <code>supervisor.conf</code> 檔案的 <code>minfds</code> 設定，以確保 Supervisor 能夠開啟處理與 Reverb 伺服器連線所需的檔案：</p>
+<pre><code class="language-ini">[supervisord]
+...
+minfds=10000
+</code></pre>
+<p><a name="scaling"></a></p>
+<h3>擴展</h3>
+<p>如果您需要處理的連線數量超過單一伺服器允許的數量，可以水平擴展 Reverb 伺服器。利用 Redis 的發佈 / 訂閱功能，Reverb 能夠跨多台伺服器管理連線。當其中一台 Reverb 伺服器收到訊息時，該伺服器將使用 Redis 將傳入的訊息發佈到所有其他伺服器。</p>
+<p>要啟用水平擴展，應在應用程式的 <code>.env</code> 配置檔中將 <code>REVERB_SCALING_ENABLED</code> 環境變數設為 <code>true</code>：</p>
+<pre><code class="language-ini">REVERB_SCALING_ENABLED=true
+</code></pre>
+<p>接下來，您應該有一個專用的中央 Redis 伺服器，所有 Reverb 伺服器都將與之通訊。Reverb 將使用<a href="/docs/redis#configuration">為應用程式配置的預設 Redis 連線</a>來向所有 Reverb 伺服器發佈訊息。</p>
+<p>啟用 Reverb 的擴展選項並配置 Redis 伺服器後，您只需在能夠與 Redis 伺服器通訊的多台伺服器上呼叫 <code>reverb:start</code> 命令即可。這些 Reverb 伺服器應放在負載平衡器後面，負載平衡器將傳入的請求均勻分配到各伺服器。</p>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Reverb 在連線和訊息處理的生命週期中派發內部事件。您可以<a href="/docs/events">監聽這些事件</a>，以便在管理連線或交換訊息時執行操作。</p>
+<p>Reverb 派發以下事件：</p>
+<h4><code>Laravel\\Reverb\\Events\\ChannelCreated</code></h4>
+<p>當頻道被建立時派發。這通常發生在第一個連線訂閱特定頻道時。事件接收 <code>Laravel\\Reverb\\Protocols\\Pusher\\Channel</code> 實例。</p>
+<h4><code>Laravel\\Reverb\\Events\\ChannelRemoved</code></h4>
+<p>當頻道被移除時派發。這通常發生在最後一個連線取消訂閱頻道時。事件接收 <code>Laravel\\Reverb\\Protocols\\Pusher\\Channel</code> 實例。</p>
+<h4><code>Laravel\\Reverb\\Events\\ConnectionPruned</code></h4>
+<p>當過時的連線被伺服器修剪時派發。事件接收 <code>Laravel\\Reverb\\Contracts\\Connection</code> 實例。</p>
+<h4><code>Laravel\\Reverb\\Events\\MessageReceived</code></h4>
+<p>當從客戶端連線收到訊息時派發。事件接收 <code>Laravel\\Reverb\\Contracts\\Connection</code> 實例和原始字串 <code>$message</code>。</p>
+<h4><code>Laravel\\Reverb\\Events\\MessageSent</code></h4>
+<p>當訊息被發送到客戶端連線時派發。事件接收 <code>Laravel\\Reverb\\Contracts\\Connection</code> 實例和原始字串 <code>$message</code>。</p>
+`;
+---
+
+<DocsLayout title="Laravel Reverb" currentPath="reverb">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Reverb</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Reverb</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/reverb" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

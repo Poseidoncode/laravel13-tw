@@ -1,0 +1,187 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>版本說明</h1>
+<ul>
+<li><a href="#versioning-scheme">版本控制方案</a></li>
+<li><a href="#support-policy">支援政策</a></li>
+<li><a href="#laravel-13">Laravel 13</a></li>
+</ul>
+<p><a name="versioning-scheme"></a></p>
+<h2>版本控制方案</h2>
+<p>Laravel 及其其他一方套件遵循<a href="https://semver.org">語義化版本控制</a>。主要框架版本每年發布一次（約 Q1），而次要和補丁版本可能每週發布一次。次要和補丁版本<strong>不應</strong>包含破壞性變更。</p>
+<p>從您的應用程式或套件引用 Laravel 框架或其組件時，您應始終使用版本約束（如 <code>^13.0</code>），因為 Laravel 的主要版本確實包含破壞性變更。但是，我們努力始終確保您可以在一天或更短時間內更新到新的主要版本。</p>
+<p><a name="named-arguments"></a></p>
+<h4>命名參數</h4>
+<p><a href="https://www.php.net/manual/en/functions.arguments.php#functions.named-arguments">命名參數</a>不在 Laravel 的向後相容性指南範圍內。為了改善 Laravel 程式碼庫，我們可能會在必要時重新命名函數參數。因此，在呼叫 Laravel 方法時使用命名參數應謹慎進行，並了解參數名稱可能會在未來發生變化。</p>
+<p><a name="support-policy"></a></p>
+<h2>支援政策</h2>
+<p>對於所有 Laravel 版本，錯誤修復提供 18 個月，安全性修復提供 2 年。對於所有額外函式庫，只有最新的主要版本接收錯誤修復。此外，請查看 <a href="/docs/database#introduction">Laravel 支援的資料庫版本</a>。</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>版本</th>
+<th>PHP (*)</th>
+<th>發布日期</th>
+<th>錯誤修復截止</th>
+<th>安全性修復截止</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10</td>
+<td>8.1 - 8.3</td>
+<td>2023 年 2 月 14 日</td>
+<td>2024 年 8 月 6 日</td>
+<td>2025 年 2 月 4 日</td>
+</tr>
+<tr>
+<td>11</td>
+<td>8.2 - 8.4</td>
+<td>2024 年 3 月 12 日</td>
+<td>2025 年 9 月 3 日</td>
+<td>2026 年 3 月 12 日</td>
+</tr>
+<tr>
+<td>12</td>
+<td>8.2 - 8.5</td>
+<td>2025 年 2 月 24 日</td>
+<td>2026 年 8 月 13 日</td>
+<td>2027 年 2 月 24 日</td>
+</tr>
+<tr>
+<td>13</td>
+<td>8.3 - 8.5</td>
+<td>2026 年 3 月 17 日</td>
+<td>2027 年 Q3</td>
+<td>2028 年 3 月 17 日</td>
+</tr>
+</tbody></table>
+</div><div class="version-colors">
+    <div class="end-of-life">
+        <div class="color-box"></div>
+        <div>生命週期結束</div>
+    </div>
+    <div class="security-fixes">
+        <div class="color-box"></div>
+        <div>僅安全性修復</div>
+    </div>
+</div><p>(*) 支援的 PHP 版本</p>
+<p><a name="laravel-13"></a></p>
+<h2>Laravel 13</h2>
+<p>Laravel 13 延續了 Laravel 的年度發布節奏，專注於 AI 原生工作流程、更強的預設值和更具表達力的開發者 API。此版本包含一方 AI 原語、JSON:API 資源、語義/向量搜尋功能，以及佇列、快取和安全性的增量改進。</p>
+<p><a name="minimal-breaking-changes"></a></p>
+<h3>最小化破壞性變更</h3>
+<p>在此發布週期中，我們的大部分專注點是最小化破壞性變更。相反，我們致力於在全年發布不破壞現有應用程式的持續生活品質改進。</p>
+<p>因此，Laravel 13 版本在工作量方面是一個相對較小的升級，同時仍然提供了大量的新功能。鑑於此，大多數 Laravel 應用程式可以在不更改太多應用程式程式碼的情況下升級到 Laravel 13。</p>
+<p><a name="php-8"></a></p>
+<h3>PHP 8.3</h3>
+<p>Laravel 13.x 要求最低 PHP 版本為 8.3。</p>
+<p><a name="ai-sdk"></a></p>
+<h3>Laravel AI SDK</h3>
+<p>Laravel 13 引入了一方 <a href="https://laravel.com/ai">Laravel AI SDK</a>，為文字生成、工具呼叫代理、嵌入、音訊、圖片和向量儲存整合提供了統一的 API。</p>
+<p>使用 AI SDK，您可以構建與供應商無關的 AI 功能，同時保持一致的、Laravel 原生的開發者體驗。</p>
+<p>例如，一個基本的代理可以透過單次呼叫進行提示：</p>
+<pre><code class="language-php">use App\\Ai\\Agents\\SalesCoach;
+
+$response = SalesCoach::make()-&gt;prompt(&#39;分析此銷售記錄...&#39;);
+
+return (string) $response;
+</code></pre>
+<p>Laravel AI SDK 還可以生成圖片、音訊和嵌入：</p>
+<p>對於視覺生成用例，SDK 提供了一個簡潔的 API，用於從自然語言提示創建圖片：</p>
+<pre><code class="language-php">use Laravel\\Ai\\Image;
+
+$image = Image::of(&#39;一個放在廚房櫃檯上的甜甜圈&#39;)-&gt;generate();
+
+$rawContent = (string) $image;
+</code></pre>
+<p>對於語音體驗，您可以從文字合成自然語音的音訊，用於助理、旁白和無障礙功能：</p>
+<pre><code class="language-php">use Laravel\\Ai\\Audio;
+
+$audio = Audio::of(&#39;我喜歡使用 Laravel 編寫程式碼。&#39;)-&gt;generate();
+
+$rawContent = (string) $audio;
+</code></pre>
+<p>對於語義搜尋和檢索工作流程，您可以直接從字串生成嵌入：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$embeddings = Str::of(&#39;納帕谷有很棒的葡萄酒。&#39;)-&gt;toEmbeddings();
+</code></pre>
+<p><a name="json-api"></a></p>
+<h3>JSON:API 資源</h3>
+<p>Laravel 現在包含一方 <a href="/docs/eloquent-resources#jsonapi-resources">JSON:API 資源</a>，使得返回符合 JSON:API 規範的響應變得簡單。</p>
+<p>JSON:API 資源處理資源物件序列化、關聯包含、稀疏字段集、連結和符合 JSON:API 的響應標頭。</p>
+<p><a name="request-forgery-protection"></a></p>
+<h3>請求偽造保護</h3>
+<p>為了安全性，Laravel 的<a href="/docs/csrf#preventing-csrf-requests">請求偽造保護</a>中間件已增強並正式化為 <code>PreventRequestForgery</code>，在保持與基於令牌的 CSRF 保護相容性的同時，添加了來源感知的請求驗證。</p>
+<p><a name="queue-routing"></a></p>
+<h3>佇列路由</h3>
+<p>Laravel 13 透過 <code>Queue::route(...)</code> 添加了<a href="/docs/queues#queue-routing">按類別進行佇列路由</a>的功能，允許您在中心位置為特定任務定義預設佇列/連接路由規則：</p>
+<pre><code class="language-php">Queue::route(ProcessPodcast::class, connection: &#39;redis&#39;, queue: &#39;podcasts&#39;);
+</code></pre>
+<p><a name="php-attributes"></a></p>
+<h3>擴展的 PHP 屬性</h3>
+<p>Laravel 13 繼續在整個框架中擴展一方 PHP 屬性支援，使常見的配置和行為關注點更加聲明式，並與您的類別和方法共置。</p>
+<p>值得注意的添加包括控制器和授權屬性，如 <a href="/docs/controllers#controller-middleware"><code>#[Middleware]</code></a> 和 <a href="/docs/controllers#authorization-attributes"><code>#[Authorize]</code></a>，以及面向佇列的任務控制，如 <a href="/docs/queues#max-job-attempts-and-timeout"><code>#[Tries]</code></a>、<a href="/docs/queues#dealing-with-failed-jobs"><code>#[Backoff]</code></a>、<a href="/docs/queues#max-job-attempts-and-timeout"><code>#[Timeout]</code></a> 和 <a href="/docs/queues#failing-on-timeout"><code>#[FailOnTimeout]</code></a>。</p>
+<p>例如，控制器中間件和策略檢查現在可以直接在類別和方法上聲明：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\Comment;
+use App\\Models\\Post;
+use Illuminate\\Routing\\Attributes\\Controllers\\Authorize;
+use Illuminate\\Routing\\Attributes\\Controllers\\Middleware;
+
+#[Middleware(&#39;auth&#39;)]
+class CommentController
+{
+    #[Middleware(&#39;subscribed&#39;)]
+    #[Authorize(&#39;create&#39;, [Comment::class, &#39;post&#39;])]
+    public function store(Post $post)
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>在 Eloquent、事件、通知、驗證、測試和資源序列化 API 中也引入了額外的屬性，為您在框架的更多區域提供了一致的屬性優先選項。</p>
+<p><a name="cache-touch"></a></p>
+<h3>快取 TTL 延長</h3>
+<p>Laravel 現在包含 <a href="/docs/cache"><code>Cache::touch(...)</code></a>，它允許您在不檢索和重新儲存其值的情況下延長現有快取項目的 TTL。</p>
+<p><a name="semantic-search"></a></p>
+<h3>語義/向量搜尋</h3>
+<p>Laravel 13 透過原生向量查詢支援、嵌入工作流程以及在 <a href="/docs/search#semantic-vector-search">搜尋</a>、<a href="/docs/queries#vector-similarity-clauses">查詢</a>和 <a href="/docs/ai-sdk#embeddings">AI SDK</a> 中記錄的相關 API，深化了其語義搜尋故事。</p>
+<p>這些功能使得使用 PostgreSQL + <code>pgvector</code> 構建 AI 驅動的搜尋體驗變得簡單，包括對直接從字串生成的嵌入進行相似性搜尋。</p>
+<p>例如，您可以直接從查詢建構器運行語義相似性搜尋：</p>
+<pre><code class="language-php">$documents = DB::table(&#39;documents&#39;)
+    -&gt;whereVectorSimilarTo(&#39;embedding&#39;, &#39;納帕谷最好的酒莊&#39;)
+    -&gt;limit(10)
+    -&gt;get();
+</code></pre>
+`;
+---
+
+<DocsLayout title="版本說明" currentPath="releases">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>版本說明</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">版本說明</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/releases" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

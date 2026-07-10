@@ -1,0 +1,35 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<p>MIT 授權條款 (MIT)</p>
+<p>版權所有 (c) Taylor Otwell</p>
+<p>特此免費授予任何取得本軟體及相关文件副本（以下簡稱「本軟體」）之人不受限制地使用本軟體之權力，包括但不限於使用、複製、修改、合併、發行、分發、再授權和/或出售本軟體副本之權力，以及允許本軟體之被提供者如此為之，但須符合以下條件：</p>
+<p>上述版權聲明和本許可聲明應包含於本軟體之所有副本或實質部分中。</p>
+<p>本軟體按「現狀」提供，不附帶任何明示或默示之保證，包括但不限於適銷性、特定用途適用性和非侵權之保證。在任何情況下，作者或版權持有人均不對任何索賠、損害或其他責任承擔責任，無論是基於合約、侵權或其他原因，由本軟體或使用本軟體或其他交易引起或與之相關。</p>
+`;
+---
+
+<DocsLayout title="授權條款" currentPath="license">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>授權條款</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">授權條款</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/license" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

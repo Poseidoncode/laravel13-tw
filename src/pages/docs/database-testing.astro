@@ -1,0 +1,261 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>資料庫測試</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#resetting-the-database-after-each-test">每次測試後重設資料庫</a></li>
+</ul>
+</li>
+<li><a href="#model-factories">模型工廠</a></li>
+<li><a href="#running-seeders">運行種子填充器</a></li>
+<li><a href="#available-assertions">可用斷言</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 提供了多種有用的工具和斷言，使測試您的資料庫驅動應用程式變得更加容易。此外，Laravel 模型工廠和種子填充器使使用應用程式的 Eloquent 模型和關聯來創建測試資料庫記錄變得毫不費力。我們將在以下文檔中討論這些強大的功能。</p>
+<p><a name="resetting-the-database-after-each-test"></a></p>
+<h3>每次測試後重設資料庫</h3>
+<p>在繼續之前，讓我們討論如何在每次測試後重設資料庫，以便先前測試的資料不會干擾後續測試。Laravel 附帶的 <code>Illuminate\\Foundation\\Testing\\RefreshDatabase</code> trait 將為您處理這一切。只需在測試類別上使用該 trait：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+
+pest()->use(RefreshDatabase::class);
+
+test('basic example', function () {
+    $response = $this->get('/');
+
+    // ...
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * A basic functional test example.
+     */
+    public function test_basic_example(): void
+    {
+        $response = $this->get('/');
+
+        // ...
+    }
+}
+</code></pre>
+<p><code>Illuminate\\Foundation\\Testing\\RefreshDatabase</code> trait 在您的架構是最新的情況下不會遷移資料庫。相反，它只會在資料庫交易內行執行測試。因此，不使用此 trait 的測試案例添加到資料庫的任何記錄可能仍然存在於資料庫中。</p>
+<p>如果您希望完全重設資料庫，可以改用 <code>Illuminate\\Foundation\\Testing\\DatabaseMigrations</code> 或 <code>Illuminate\\Foundation\\Testing\\DatabaseTruncation</code> trait。但是，這兩個選項都比 <code>RefreshDatabase</code> trait 慢得多。</p>
+<p><a name="model-factories"></a></p>
+<h2>模型工廠</h2>
+<p>測試時，您可能需要在執行測試之前向資料庫中插入一些記錄。與其在創建此測試資料時手動指定每個欄位的值，Laravel 允許您使用<a href="/docs/eloquent-factories">模型工廠</a>為每個<a href="/docs/eloquent"> Eloquent 模型</a>定義一組預設屬性。</p>
+<p>有關創建和利用模型工廠來創建模型的更多資訊，請查閱完整的<a href="/docs/eloquent-factories">模型工廠文檔</a>。定義好模型工廠後，您可以在測試中利用工廠來創建模型：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+test('models can be instantiated', function () {
+    $user = User::factory()->create();
+
+    // ...
+});
+</code></pre>
+<pre><code class="language-php">use App\\Models\\User;
+
+public function test_models_can_be_instantiated(): void
+{
+    $user = User::factory()->create();
+
+    // ...
+}
+</code></pre>
+<p><a name="running-seeders"></a></p>
+<h2>運行種子填充器</h2>
+<p>如果您希望使用<a href="/docs/seeding">資料庫種子填充器</a>在功能測試期間填充資料庫，可以呼叫 <code>seed</code> 方法。預設情況下，<code>seed</code> 方法將執行 <code>DatabaseSeeder</code>，它應該執行您所有的其他種子填充器。或者，您可以向 <code>seed</code> 方法傳遞一個特定的種子填充器類別名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+use Database\\Seeders\\OrderStatusSeeder;
+use Database\\Seeders\\TransactionStatusSeeder;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+
+pest()->use(RefreshDatabase::class);
+
+test('orders can be created', function () {
+    // 運行 DatabaseSeeder...
+    $this->seed();
+
+    // 運行特定的種子填充器...
+    $this->seed(OrderStatusSeeder::class);
+
+    // ...
+
+    // 運行一組特定的種子填充器...
+    $this->seed([
+        OrderStatusSeeder::class,
+        TransactionStatusSeeder::class,
+        // ...
+    ]);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Database\\Seeders\\OrderStatusSeeder;
+use Database\\Seeders\\TransactionStatusSeeder;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * 測試創建一個新的訂單。
+     */
+    public function test_orders_can_be_created(): void
+    {
+        // 運行 DatabaseSeeder...
+        $this->seed();
+
+        // 運行特定的種子填充器...
+        $this->seed(OrderStatusSeeder::class);
+
+        // ...
+
+        // 運行一組特定的種子填充器...
+        $this->seed([
+            OrderStatusSeeder::class,
+            TransactionStatusSeeder::class,
+            // ...
+        ]);
+    }
+}
+</code></pre>
+<p>或者，您可以指示 Laravel 在每次使用 <code>RefreshDatabase</code> trait 的測試之前自動填充資料庫。您可以透過向基礎測試類別添加 <code>Seed</code> 屬性來實現這一點：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests;
+
+use Illuminate\\Foundation\\Testing\\Attributes\\Seed;
+use Illuminate\\Foundation\\Testing\\TestCase as BaseTestCase;
+
+#[Seed]
+abstract class TestCase extends BaseTestCase
+{
+}
+</code></pre>
+<p>當存在 <code>Seed</code> 屬性時，測試將在每次使用 <code>RefreshDatabase</code> trait 的測試之前運行 <code>Database\\Seeders\\DatabaseSeeder</code> 類別。但是，您可以透過在測試類別上使用 <code>Seeder</code> 屬性來指定應執行的特定種子填充器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Database\\Seeders\\OrderStatusSeeder;
+use Illuminate\\Foundation\\Testing\\Attributes\\Seeder;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
+
+#[Seeder(OrderStatusSeeder::class)]
+class OrderTest extends TestCase
+{
+    use RefreshDatabase;
+
+    // ...
+}
+</code></pre>
+<p><a name="available-assertions"></a></p>
+<h2>可用斷言</h2>
+<p>Laravel 為您的 <a href="https://pestphp.com">Pest</a> 或 <a href="https://phpunit.de">PHPUnit</a> 功能測試提供了幾種資料庫斷言。我們將在下面討論這些斷言中的每一個。</p>
+<p><a name="assert-database-count"></a></p>
+<h4>assertDatabaseCount</h4>
+<p>斷言資料庫中的表包含給定數量的記錄：</p>
+<pre><code class="language-php">$this->assertDatabaseCount('users', 5);
+</code></pre>
+<p><a name="assert-database-empty"></a></p>
+<h4>assertDatabaseEmpty</h4>
+<p>斷言資料庫中的表不包含任何記錄：</p>
+<pre><code class="language-php">$this->assertDatabaseEmpty('users');
+</code></pre>
+<p><a name="assert-database-has"></a></p>
+<h4>assertDatabaseHas</h4>
+<p>斷言資料庫中的表包含與給定鍵/值查詢約束匹配的記錄：</p>
+<pre><code class="language-php">$this->assertDatabaseHas('users', [
+    'email' => 'sally@example.com',
+]);
+</code></pre>
+<p><a name="assert-database-missing"></a></p>
+<h4>assertDatabaseMissing</h4>
+<p>斷言資料庫中的表不包含與給定鍵/值查詢約束匹配的記錄：</p>
+<pre><code class="language-php">$this->assertDatabaseMissing('users', [
+    'email' => 'sally@example.com',
+]);
+</code></pre>
+<p><a name="assert-deleted"></a></p>
+<h4>assertSoftDeleted</h4>
+<p><code>assertSoftDeleted</code> 方法可用於斷言給定的 Eloquent 模型已被「軟刪除」：</p>
+<pre><code class="language-php">$this->assertSoftDeleted($user);
+</code></pre>
+<p><a name="assert-not-deleted"></a></p>
+<h4>assertNotSoftDeleted</h4>
+<p><code>assertNotSoftDeleted</code> 方法可用於斷言給定的 Eloquent 模型未被「軟刪除」：</p>
+<pre><code class="language-php">$this->assertNotSoftDeleted($user);
+</code></pre>
+<p><a name="assert-model-exists"></a></p>
+<h4>assertModelExists</h4>
+<p>斷言給定的模型或模型集合存在於資料庫中：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::factory()->create();
+
+$this->assertModelExists($user);
+</code></pre>
+<p><a name="assert-model-missing"></a></p>
+<h4>assertModelMissing</h4>
+<p>斷言給定的模型或模型集合不存在於資料庫中：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::factory()->create();
+
+$user->delete();
+
+$this->assertModelMissing($user);
+</code></pre>
+<p><a name="expects-database-query-count"></a></p>
+<h4>expectsDatabaseQueryCount</h4>
+<p><code>expectsDatabaseQueryCount</code> 方法可在測試開始時被呼叫，以指定您預期在測試期間運行的資料庫查詢總數。如果實際執行的查詢數量不完全符合此預期，則測試將失敗：</p>
+<pre><code class="language-php">$this->expectsDatabaseQueryCount(5);
+
+// 測試...
+</code></pre>
+`;
+---
+
+<DocsLayout title="資料庫測試" currentPath="database-testing">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>資料庫測試</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">資料庫測試</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/database-testing" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,1495 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>HTTP 測試</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#making-requests">發出請求</a><ul>
+<li><a href="#customizing-request-headers">自訂請求頁頭</a></li>
+<li><a href="#cookies">Cookies</a></li>
+<li><a href="#session-and-authentication">會話/認證</a></li>
+<li><a href="#debugging-responses">調試回應</a></li>
+<li><a href="#exception-handling">異常處理</a></li>
+</ul>
+</li>
+<li><a href="#testing-json-apis">測試 JSON API</a><ul>
+<li><a href="#fluent-json-testing">流暢 JSON 測試</a></li>
+</ul>
+</li>
+<li><a href="#testing-file-uploads">測試檔案上傳</a></li>
+<li><a href="#testing-views">測試視圖</a><ul>
+<li><a href="#rendering-blade-and-components">渲染 Blade 和元件</a></li>
+</ul>
+</li>
+<li><a href="#caching-routes">快取路由</a></li>
+<li><a href="#available-assertions">可用斷言</a><ul>
+<li><a href="#response-assertions">回應斷言</a></li>
+<li><a href="#authentication-assertions">認證斷言</a></li>
+<li><a href="#validation-assertions">驗證斷言</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 提供了一個非常流暢的 API 用於向您的應用程式發出 HTTP 請求並檢查回應。例如，看看下面定義的功能測試：</p>
+<pre><code class="language-php">&lt;?php
+
+test('the application returns a successful response', function () {
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic test example.
+     */
+    public function test_the_application_returns_a_successful_response(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+    }
+}
+</code></pre>
+<p><code>get</code> 方法向應用程式發出一個 <code>GET</code> 請求，而 <code>assertStatus</code> 方法斷言返回的回應應具有給定的 HTTP 狀態碼。除了這個簡單的斷言外，Laravel 還包含多種用於檢查回應頁頭、內容、JSON 結構等的斷言。</p>
+<p><a name="making-requests"></a></p>
+<h2>發出請求</h2>
+<p>要向應用程式發出請求，您可以在測試中呼叫 <code>get</code>、<code>post</code>、<code>put</code>、<code>patch</code> 或 <code>delete</code> 方法。這些方法不會實際向應用程式發出「真正的」HTTP 請求。相反，整個網路請求是在內部模擬的。</p>
+<p>與其返回一個 <code>Illuminate\\Http\\Response</code> 實例，測試請求方法返回一個 <code>Illuminate\\Testing\\TestResponse</code> 實例，該實例提供了<a href="#available-assertions">多種有用的斷言</a>，允許您檢查應用程式的回應：</p>
+<pre><code class="language-php">&lt;?php
+
+test('basic request', function () {
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic test example.
+     */
+    public function test_a_basic_request(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+    }
+}
+</code></pre>
+<p>一般來說，您的每個測試只應向應用程式發出一個請求。如果在單個測試方法中執行多個請求，可能會發生意外的行為。</p>
+<blockquote>
+<p>[!NOTE]
+為了方便，在運行測試時會自動禁用 CSRF 中介層。</p>
+</blockquote>
+<p><a name="customizing-request-headers"></a></p>
+<h3>自訂請求頁頭</h3>
+<p>您可以使用 <code>withHeaders</code> 方法在將請求發送到應用程式之前自訂請求的頁頭。此方法允許您向請求添加任何您想要的自訂頁頭：</p>
+<pre><code class="language-php">&lt;?php
+
+test('interacting with headers', function () {
+    $response = $this->withHeaders([
+        'X-Header' => 'Value',
+    ])->post('/user', ['name' => 'Sally']);
+
+    $response->assertStatus(201);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic functional test example.
+     */
+    public function test_interacting_with_headers(): void
+    {
+        $response = $this->withHeaders([
+            'X-Header' => 'Value',
+        ])->post('/user', ['name' => 'Sally']);
+
+        $response->assertStatus(201);
+    }
+}
+</code></pre>
+<p><a name="cookies"></a></p>
+<h3>Cookies</h3>
+<p>您可以使用 <code>withCookie</code> 或 <code>withCookies</code> 方法在發出請求之前設定 Cookie 值。<code>withCookie</code> 方法接受一個 Cookie 名稱和值作為其兩個參數，而 <code>withCookies</code> 方法接受一個名稱/值對的陣列：</p>
+<pre><code class="language-php">&lt;?php
+
+test('interacting with cookies', function () {
+    $response = $this->withCookie('color', 'blue')->get('/');
+
+    $response = $this->withCookies([
+        'color' => 'blue',
+        'name' => 'Taylor',
+    ])->get('/');
+
+    //
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_interacting_with_cookies(): void
+    {
+        $response = $this->withCookie('color', 'blue')->get('/');
+
+        $response = $this->withCookies([
+            'color' => 'blue',
+            'name' => 'Taylor',
+        ])->get('/');
+
+        //
+    }
+}
+</code></pre>
+<p><a name="session-and-authentication"></a></p>
+<h3>會話/認證</h3>
+<p>Laravel 提供了多種在 HTTP 測試期間與會話互動的輔助函數。首先，您可以使用 <code>withSession</code> 方法將會話資料設定為給定的陣列。這對於在向應用程式發出請求之前用資料填充會話很有用：</p>
+<pre><code class="language-php">&lt;?php
+
+test('interacting with the session', function () {
+    $response = $this->withSession(['banned' => false])->get('/');
+
+    //
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_interacting_with_the_session(): void
+    {
+        $response = $this->withSession(['banned' => false])->get('/');
+
+        //
+    }
+}
+</code></pre>
+<p>Laravel 的會話通常用於維護當前已認證使用者的狀態。因此，<code>actingAs</code> 輔助方法提供了一種簡單的方式來將給定使用者認證為當前使用者。例如，我們可以使用<a href="/docs/eloquent-factories">模型工廠</a>來生成和認證使用者：</p>
+<pre><code class="language-php">&lt;?php
+
+use App\\Models\\User;
+
+test('an action that requires authentication', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->withSession(['banned' => false])
+        ->get('/');
+
+    //
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use App\\Models\\User;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_an_action_that_requires_authentication(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->withSession(['banned' => false])
+            ->get('/');
+
+        //
+    }
+}
+</code></pre>
+<p>您還可以透過將守衛名稱作為第二個參數傳遞給 <code>actingAs</code> 方法來指定應使用哪個守衛來認證給定使用者。提供給 <code>actingAs</code> 方法的守衛也將成為測試期間的預設守衛：</p>
+<pre><code class="language-php">$this->actingAs($user, 'web');
+</code></pre>
+<p>如果您希望確保請求是未認證的，可以使用 <code>actingAsGuest</code> 方法：</p>
+<pre><code class="language-php">$this->actingAsGuest();
+</code></pre>
+<p><a name="debugging-responses"></a></p>
+<h3>調試回應</h3>
+<p>向應用程式發出測試請求後，<code>dump</code>、<code>dumpHeaders</code> 和 <code>dumpSession</code> 方法可用於檢查和調試回應內容：</p>
+<pre><code class="language-php">&lt;?php
+
+test('basic test', function () {
+    $response = $this->get('/');
+
+    $response->dump();
+    $response->dumpHeaders();
+    $response->dumpSession();
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic test example.
+     */
+    public function test_basic_test(): void
+    {
+        $response = $this->get('/');
+
+        $response->dump();
+        $response->dumpHeaders();
+        $response->dumpSession();
+    }
+}
+</code></pre>
+<p>或者，您可以使用 <code>dd</code>、<code>ddHeaders</code>、<code>ddBody</code>、<code>ddJson</code> 和 <code>ddSession</code> 方法來傾印有關回應的資訊，然後停止執行：</p>
+<pre><code class="language-php">&lt;?php
+
+test('basic test', function () {
+    $response = $this->get('/');
+
+    $response->dd();
+    $response->ddHeaders();
+    $response->ddBody();
+    $response->ddJson();
+    $response->ddSession();
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic test example.
+     */
+    public function test_basic_test(): void
+    {
+        $response = $this->get('/');
+
+        $response->dd();
+        $response->ddHeaders();
+        $response->ddBody();
+        $response->ddJson();
+        $response->ddSession();
+    }
+}
+</code></pre>
+<p><a name="exception-handling"></a></p>
+<h3>異常處理</h3>
+<p>有時您可能需要測試您的應用程式是否拋出了特定的異常。為此，您可以透過 <code>Exceptions</code> 外觀來「偽造」異常處理器。異常處理器被偽造後，您可以利用 <code>assertReported</code> 和 <code>assertNotReported</code> 方法來對請求期間拋出的異常進行斷言：</p>
+<pre><code class="language-php">&lt;?php
+
+use App\\Exceptions\\InvalidOrderException;
+use Illuminate\\Support\\Facades\\Exceptions;
+
+test('exception is thrown', function () {
+    Exceptions::fake();
+
+    $response = $this->get('/order/1');
+
+    // 斷言已拋出異常...
+    Exceptions::assertReported(InvalidOrderException::class);
+
+    // 對異常進行斷言...
+    Exceptions::assertReported(function (InvalidOrderException $e) {
+        return $e->getMessage() === 'The order was invalid.';
+    });
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use App\\Exceptions\\InvalidOrderException;
+use Illuminate\\Support\\Facades\\Exceptions;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic test example.
+     */
+    public function test_exception_is_thrown(): void
+    {
+        Exceptions::fake();
+
+        $response = $this->get('/');
+
+        // 斷言已拋出異常...
+        Exceptions::assertReported(InvalidOrderException::class);
+
+        // 對異常進行斷言...
+        Exceptions::assertReported(function (InvalidOrderException $e) {
+            return $e->getMessage() === 'The order was invalid.';
+        });
+    }
+}
+</code></pre>
+<p><code>assertNotReported</code> 和 <code>assertNothingReported</code> 方法可用於斷言在請求期間未拋出給定異常或未拋出任何異常：</p>
+<pre><code class="language-php">Exceptions::assertNotReported(InvalidOrderException::class);
+
+Exceptions::assertNothingReported();
+</code></pre>
+<p>您可以透過在發出請求之前呼叫 <code>withoutExceptionHandling</code> 方法來完全禁用給定請求的異常處理：</p>
+<pre><code class="language-php">$response = $this->withoutExceptionHandling()->get('/');
+</code></pre>
+<p>此外，如果您希望確保您的應用程式未使用已被 PHP 語言或您應用程式使用的函式庫棄用的功能，可以在發出請求之前呼叫 <code>withoutDeprecationHandling</code> 方法。禁用棄用處理時，棄用警告將被轉換為異常，從而導致您的測試失敗：</p>
+<pre><code class="language-php">$response = $this->withoutDeprecationHandling()->get('/');
+</code></pre>
+<p><code>assertThrows</code> 方法可用於斷言給定閉包中的代碼拋出了指定類型的異常：</p>
+<pre><code class="language-php">$this->assertThrows(
+    fn () => (new ProcessOrder)->execute(),
+    OrderInvalid::class
+);
+</code></pre>
+<p>如果您希望檢查並對拋出的異常進行斷言，可以將一個閉包作為第二個參數傳遞給 <code>assertThrows</code> 方法：</p>
+<pre><code class="language-php">$this->assertThrows(
+    fn () => (new ProcessOrder)->execute(),
+    fn (OrderInvalid $e) => $e->orderId() === 123;
+);
+</code></pre>
+<p><code>assertDoesntThrow</code> 方法可用於斷言給定閉包中的代碼未拋出任何異常：</p>
+<pre><code class="language-php">$this->assertDoesntThrow(fn () => (new ProcessOrder)->execute());
+</code></pre>
+<p><a name="testing-json-apis"></a></p>
+<h2>測試 JSON API</h2>
+<p>Laravel 還提供了多種用於測試 JSON API 及其回應的輔助函數。例如，<code>json</code>、<code>getJson</code>、<code>postJson</code>、<code>putJson</code>、<code>patchJson</code>、<code>deleteJson</code> 和 <code>optionsJson</code> 方法可用於使用各種 HTTP 動詞發出 JSON 請求。您還可以輕鬆地向這些方法傳遞資料和頁頭。首先，讓我們編寫一個測試來向 <code>/api/user</code> 發出 <code>POST</code> 請求，並斷言返回了預期的 JSON 資料：</p>
+<pre><code class="language-php">&lt;?php
+
+test('making an api request', function () {
+    $response = $this->postJson('/api/user', ['name' => 'Sally']);
+
+    $response
+        ->assertStatus(201)
+        ->assertJson([
+            'created' => true,
+        ]);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic functional test example.
+     */
+    public function test_making_an_api_request(): void
+    {
+        $response = $this->postJson('/api/user', ['name' => 'Sally']);
+
+        $response
+            ->assertStatus(201)
+            ->assertJson([
+                'created' => true,
+            ]);
+    }
+}
+</code></pre>
+<p>此外，JSON 回應資料可以作為陣列變數存取在回應上，這使得檢查 JSON 回應中返回的各個值變得非常方便：</p>
+<pre><code class="language-php">expect($response['created'])->toBeTrue();
+</code></pre>
+<pre><code class="language-php">$this->assertTrue($response['created']);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+<code>assertJson</code> 方法將回應轉換為陣列以驗證給定的陣列是否存在於應用程式返回的 JSON 回應中。因此，如果 JSON 回應中還有其他屬性，只要給定的片段存在，此測試仍將通過。</p>
+</blockquote>
+<p><a name="verifying-exact-match"></a></p>
+<h4>斷言精確 JSON 匹配</h4>
+<p>如前所述，<code>assertJson</code> 方法可用於斷言 JSON 回應中存在一個 JSON 片段。如果您希望驗證給定的陣列<strong>精確匹配</strong>應用程式返回的 JSON，應使用 <code>assertExactJson</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+test('asserting an exact json match', function () {
+    $response = $this->postJson('/user', ['name' => 'Sally']);
+
+    $response
+        ->assertStatus(201)
+        ->assertExactJson([
+            'created' => true,
+        ]);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic functional test example.
+     */
+    public function test_asserting_an_exact_json_match(): void
+    {
+        $response = $this->postJson('/user', ['name' => 'Sally']);
+
+        $response
+            ->assertStatus(201)
+            ->assertExactJson([
+                'created' => true,
+            ]);
+    }
+}
+</code></pre>
+<p><a name="verifying-json-paths"></a></p>
+<h4>在 JSON 路徑上斷言</h4>
+<p>如果您希望驗證 JSON 回應在指定路徑包含給定資料，應使用 <code>assertJsonPath</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+test('asserting a json path value', function () {
+    $response = $this->postJson('/user', ['name' => 'Sally']);
+
+    $response
+        ->assertStatus(201)
+        ->assertJsonPath('team.owner.name', 'Darian');
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    /**
+     * A basic functional test example.
+     */
+    public function test_asserting_a_json_paths_value(): void
+    {
+        $response = $this->postJson('/user', ['name' => 'Sally']);
+
+        $response
+            ->assertStatus(201)
+            ->assertJsonPath('team.owner.name', 'Darian');
+    }
+}
+</code></pre>
+<p><code>assertJsonPath</code> 方法還接受一個閉包，可用於動態判斷斷言是否應通過：</p>
+<pre><code class="language-php">$response->assertJsonPath('team.owner.name', fn (string $name) => strlen($name) >= 3);
+</code></pre>
+<p>如果您需要一次斷言多個 JSON 路徑，可以使用 <code>assertJsonPaths</code> 方法。每個路徑的預期值也可以是一個閉包：</p>
+<pre><code class="language-php">$response->assertJsonPaths([
+    'team.owner.name' => 'Darian',
+    'team.owner.email' => fn (string $email) => str($email)->is('*@laravel.com'),
+    'team.members.0.name' => 'Sally',
+]);
+</code></pre>
+<p>您可以使用 <code>assertJsonMissingPaths</code> 方法來斷言回應中缺少多個 JSON 路徑：</p>
+<pre><code class="language-php">$response->assertJsonMissingPaths([
+    'team.owner.password',
+    'team.members.0.api_token',
+]);
+</code></pre>
+<p><a name="fluent-json-testing"></a></p>
+<h3>流暢 JSON 測試</h3>
+<p>Laravel 還提供了一種漂亮的方式來流暢地測試應用程式的 JSON 回應。首先，向 <code>assertJson</code> 方法傳遞一個閉包。此閉包將被呼叫並接收一個 <code>Illuminate\\Testing\\Fluent\\AssertableJson</code> 實例，該實例可用於對應用程式返回的 JSON 進行斷言。<code>where</code> 方法可用於對 JSON 的特定屬性進行斷言，而 <code>missing</code> 方法可用於斷言 JSON 中缺少特定屬性：</p>
+<pre><code class="language-php">use Illuminate\\Testing\\Fluent\\AssertableJson;
+
+test('fluent json', function () {
+    $response = $this->getJson('/users/1');
+
+    $response
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->where('id', 1)
+                ->where('name', 'Victoria Faith')
+                ->where('email', fn (string $email) => str($email)->is('victoria@gmail.com'))
+                ->whereNot('status', 'pending')
+                ->missing('password')
+                ->etc()
+        );
+});
+</code></pre>
+<pre><code class="language-php">use Illuminate\\Testing\\Fluent\\AssertableJson;
+
+/**
+ * A basic functional test example.
+ */
+public function test_fluent_json(): void
+{
+    $response = $this->getJson('/users/1');
+
+    $response
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->where('id', 1)
+                ->where('name', 'Victoria Faith')
+                ->where('email', fn (string $email) => str($email)->is('victoria@gmail.com'))
+                ->whereNot('status', 'pending')
+                ->missing('password')
+                ->etc()
+        );
+}
+</code></pre>
+<h4>了解 <code>etc</code> 方法</h4>
+<p>在上面的範例中，您可能已經注意到我們在斷言鏈的末尾呼叫了 <code>etc</code> 方法。此方法通知 Laravel JSON 物件上可能還有其他屬性。如果未使用 <code>etc</code> 方法，則如果 JSON 物件上存在您未進行斷言的其他屬性，測試將失敗。</p>
+<p>此行為背後的意圖是透過強制您明確地對屬性進行斷言或透過 <code>etc</code> 方法明確允許其他屬性，來保護您免於在 JSON 回應中無意間暴露敏感資訊。</p>
+<p>但是，您應該知道，在斷言鏈中不包含 <code>etc</code> 方法並不能確保不會將其他屬性添加到 JSON 物件中嵌套的陣列中。<code>etc</code> 方法僅確保在呼叫 <code>etc</code> 方法的嵌套級別不存在其他屬性。</p>
+<p><a name="asserting-json-attribute-presence-and-absence"></a></p>
+<h4>斷言屬性存在/缺失</h4>
+<p>要斷言屬性存在或缺失，您可以使用 <code>has</code> 和 <code>missing</code> 方法：</p>
+<pre><code class="language-php">$response->assertJson(fn (AssertableJson $json) =>
+    $json->has('data')
+        ->missing('message')
+);
+</code></pre>
+<p>此外，<code>hasAll</code> 和 <code>missingAll</code> 方法允許同時斷言多個屬性的存在或缺失：</p>
+<pre><code class="language-php">$response->assertJson(fn (AssertableJson $json) =>
+    $json->hasAll(['status', 'data'])
+        ->missingAll(['message', 'code'])
+);
+</code></pre>
+<p>您可以使用 <code>hasAny</code> 方法來判斷給定屬性列表中是否至少存在一個屬性：</p>
+<pre><code class="language-php">$response->assertJson(fn (AssertableJson $json) =>
+    $json->has('status')
+        ->hasAny('data', 'message', 'code')
+);
+</code></pre>
+<p><a name="asserting-against-json-collections"></a></p>
+<h4>對 JSON 集合進行斷言</h4>
+<p>通常，您的路由將返回一個包含多個項目的 JSON 回應，例如多個使用者：</p>
+<pre><code class="language-php">Route::get('/users', function () {
+    return User::all();
+});
+</code></pre>
+<p>在這些情況下，我們可以使用流暢 JSON 物件的 <code>has</code> 方法來對回應中包含的使用者進行斷言。例如，讓我們斷言 JSON 回應包含三個使用者。接下來，我們將使用 <code>first</code> 方法對集合中的第一個使用者進行一些斷言。<code>first</code> 方法接受一個閉包，該閉包接收另一個可斷言的 JSON 字串，我們可以用它來對 JSON 集合中的第一個物件進行斷言：</p>
+<pre><code class="language-php">$response
+    ->assertJson(fn (AssertableJson $json) =>
+        $json->has(3)
+            ->first(fn (AssertableJson $json) =>
+                $json->where('id', 1)
+                    ->where('name', 'Victoria Faith')
+                    ->where('email', fn (string $email) => str($email)->is('victoria@gmail.com'))
+                    ->missing('password')
+                    ->etc()
+            )
+    );
+</code></pre>
+<p>如果您希望對 JSON 集合中的每個項目進行相同的斷言，可以使用 <code>each</code> 方法：</p>
+<pre><code class="language-php">$response
+  ->assertJson(fn (AssertableJson $json) =>
+      $json->has(3)
+          ->each(fn (AssertableJson $json) =>
+              $json->whereType('id', 'integer')
+                  ->whereType('name', 'string')
+                  ->whereType('email', 'string')
+                  ->missing('password')
+                  ->etc()
+          )
+  );
+</code></pre>
+<p><a name="scoping-json-collection-assertions"></a></p>
+<h4>範圍化 JSON 集合斷言</h4>
+<p>有時，您應用程式的路由將返回被分配了命名鍵的 JSON 集合：</p>
+<pre><code class="language-php">Route::get('/users', function () {
+    return [
+        'meta' => [...],
+        'users' => User::all(),
+    ];
+})
+</code></pre>
+<p>測試這些路由時，您可以使用 <code>has</code> 方法來斷言集合中的項目數量。此外，您可以使用 <code>has</code> 方法來範圍化一鏈斷言：</p>
+<pre><code class="language-php">$response
+    ->assertJson(fn (AssertableJson $json) =>
+        $json->has('meta')
+            ->has('users', 3)
+            ->has('users.0', fn (AssertableJson $json) =>
+                $json->where('id', 1)
+                    ->where('name', 'Victoria Faith')
+                    ->where('email', fn (string $email) => str($email)->is('victoria@gmail.com'))
+                    ->missing('password')
+                    ->etc()
+            )
+    );
+</code></pre>
+<p>但是，與其兩次單獨呼叫 <code>has</code> 方法來對 <code>users</code> 集合進行斷言，您可以進行一次單獨呼叫，該呼叫提供一個閉包作為其第三個參數。這樣做時，閉包將自動被呼叫並範圍化到集合中的第一個項目：</p>
+<pre><code class="language-php">$response
+    ->assertJson(fn (AssertableJson $json) =>
+        $json->has('meta')
+            ->has('users', 3, fn (AssertableJson $json) =>
+                $json->where('id', 1)
+                    ->where('name', 'Victoria Faith')
+                    ->where('email', fn (string $email) => str($email)->is('victoria@gmail.com'))
+                    ->missing('password')
+                    ->etc()
+            )
+    );
+</code></pre>
+<p><a name="asserting-json-types"></a></p>
+<h4>斷言 JSON 類型</h4>
+<p>您可能只想斷言 JSON 回應中的屬性是某種類型。<code>Illuminate\\Testing\\Fluent\\AssertableJson</code> 類別提供了 <code>whereType</code> 和 <code>whereAllType</code> 方法來做到這一點：</p>
+<pre><code class="language-php">$response->assertJson(fn (AssertableJson $json) =>
+    $json->whereType('id', 'integer')
+        ->whereAllType([
+            'users.0.name' => 'string',
+            'meta' => 'array'
+        ])
+);
+</code></pre>
+<p>您可以使用 <code>|</code> 字元指定多種類型，或者將類型陣列作為第二個參數傳遞給 <code>whereType</code> 方法。如果回應值是列出的任何類型之一，則斷言將成功：</p>
+<pre><code class="language-php">$response->assertJson(fn (AssertableJson $json) =>
+    $json->whereType('name', 'string|null')
+        ->whereType('id', ['string', 'integer'])
+);
+</code></pre>
+<p><code>whereType</code> 和 <code>whereAllType</code> 方法識別以下類型：<code>string</code>、<code>integer</code>、<code>double</code>、<code>boolean</code>、<code>array</code> 和 <code>null</code>。</p>
+<p><a name="testing-file-uploads"></a></p>
+<h2>測試檔案上傳</h2>
+<p><code>Illuminate\\Http\\UploadedFile</code> 類別提供了一個 <code>fake</code> 方法，可用於為測試生成虛擬檔案或圖像。這與 <code>Storage</code> 外觀的 <code>fake</code> 方法結合使用，大大簡化了檔案上傳的測試。例如，您可以結合這兩個功能來輕鬆測試頭像上傳表單：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Http\\UploadedFile;
+use Illuminate\\Support\\Facades\\Storage;
+
+test('avatars can be uploaded', function () {
+    Storage::fake('avatars');
+
+    $file = UploadedFile::fake()->image('avatar.jpg');
+
+    $response = $this->post('/avatar', [
+        'avatar' => $file,
+    ]);
+
+    Storage::disk('avatars')->assertExists($file->hashName());
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Http\\UploadedFile;
+use Illuminate\\Support\\Facades\\Storage;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_avatars_can_be_uploaded(): void
+    {
+        Storage::fake('avatars');
+
+        $file = UploadedFile::fake()->image('avatar.jpg');
+
+        $response = $this->post('/avatar', [
+            'avatar' => $file,
+        ]);
+
+        Storage::disk('avatars')->assertExists($file->hashName());
+    }
+}
+</code></pre>
+<p>如果您希望斷言給定的檔案不存在，可以使用 <code>Storage</code> 外觀提供的 <code>assertMissing</code> 方法：</p>
+<pre><code class="language-php">Storage::fake('avatars');
+
+// ...
+
+Storage::disk('avatars')->assertMissing('missing.jpg');
+</code></pre>
+<p><a name="fake-file-customization"></a></p>
+<h4>虛擬檔案自訂</h4>
+<p>使用 <code>UploadedFile</code> 類別提供的 <code>fake</code> 方法創建檔案時，您可以指定圖像的寬度、高度和大小（以千位元組為單位），以更好地測試應用程式的驗證規則：</p>
+<pre><code class="language-php">UploadedFile::fake()->image('avatar.jpg', $width, $height)->size(100);
+</code></pre>
+<p>除了創建圖像外，您還可以使用 <code>create</code> 方法創建任何其他類型的檔案：</p>
+<pre><code class="language-php">UploadedFile::fake()->create('document.pdf', $sizeInKilobytes);
+</code></pre>
+<p>如果需要，您可以向該方法傳遞一個 <code>$mimeType</code> 參數來明確定義檔案應返回的 MIME 類型：</p>
+<pre><code class="language-php">UploadedFile::fake()->create(
+    'document.pdf', $sizeInKilobytes, 'application/pdf'
+);
+</code></pre>
+<p><a name="testing-views"></a></p>
+<h2>測試視圖</h2>
+<p>Laravel 還允許您在不對應用程式發出模擬 HTTP 請求的情況下渲染視圖。為此，您可以在測試中呼叫 <code>view</code> 方法。<code>view</code> 方法接受視圖名稱和一個可選的資料陣列。該方法返回一個 <code>Illuminate\\Testing\\TestView</code> 的實例，它提供了多種方法來方便地對視圖的內容進行斷言：</p>
+<pre><code class="language-php">&lt;?php
+
+test('a welcome view can be rendered', function () {
+    $view = $this->view('welcome', ['name' => 'Taylor']);
+
+    $view->assertSee('Taylor');
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_a_welcome_view_can_be_rendered(): void
+    {
+        $view = $this->view('welcome', ['name' => 'Taylor']);
+
+        $view->assertSee('Taylor');
+    }
+}
+</code></pre>
+<p><code>TestView</code> 類別提供了以下斷言方法：<code>assertSee</code>、<code>assertSeeInOrder</code>、<code>assertSeeText</code>、<code>assertSeeTextInOrder</code>、<code>assertDontSee</code> 和 <code>assertDontSeeText</code>。</p>
+<p>如果需要，您可以透過將 <code>TestView</code> 實例轉換為字串來獲取原始、已渲染的視圖內容：</p>
+<pre><code class="language-php">$contents = (string) $this->view('welcome');
+</code></pre>
+<p><a name="sharing-errors"></a></p>
+<h4>共享錯誤</h4>
+<p>某些視圖可能依賴於<a href="/docs/validation#quick-displaying-the-validation-errors">Laravel 提供的全域錯誤袋</a>中共享的錯誤。要用錯誤訊息填充錯誤袋，可以使用 <code>withViewErrors</code> 方法：</p>
+<pre><code class="language-php">$view = $this->withViewErrors([
+    'name' => ['Please provide a valid name.']
+])->view('form');
+
+$view->assertSee('Please provide a valid name.');
+</code></pre>
+<p><a name="rendering-blade-and-components"></a></p>
+<h3>渲染 Blade 和元件</h3>
+<p>如果需要，您可以使用 <code>blade</code> 方法來評估和渲染原始 <a href="/docs/blade">Blade</a> 字串。像 <code>view</code> 方法一樣，<code>blade</code> 方法返回一個 <code>Illuminate\\Testing\\TestView</code> 的實例：</p>
+<pre><code class="language-php">$view = $this->blade(
+    '<x-component :name="$name" />',
+    ['name' => 'Taylor']
+);
+
+$view->assertSee('Taylor');
+</code></pre>
+<p>您可以使用 <code>component</code> 方法來評估和渲染 <a href="/docs/blade#components">Blade 元件</a>。<code>component</code> 方法返回一個 <code>Illuminate\\Testing\\TestComponent</code> 的實例：</p>
+<pre><code class="language-php">$view = $this->component(Profile::class, ['name' => 'Taylor']);
+
+$view->assertSee('Taylor');
+</code></pre>
+<p><a name="caching-routes"></a></p>
+<h2>快取路由</h2>
+<p>在測試運行之前，Laravel 會啟動一個應用程式的新實例，包括收集所有已定義的路由。如果您的應用程式有很多路由檔案，您可能希望將 <code>Illuminate\\Foundation\\Testing\\WithCachedRoutes</code> trait 添加到您的測試案例中。在使用此 trait 的測試中，路由只會被構建一次並存儲在記憶體中，這意味著路由收集過程只會在您的測試套件中的所有測試中運行一次：</p>
+<pre><code class="language-php">&lt;?php
+
+use App\\Http\\Controllers\\UserController;
+use Illuminate\\Foundation\\Testing\\WithCachedRoutes;
+
+pest()->use(WithCachedRoutes::class);
+
+test('basic example', function () {
+    $this->get(action([UserController::class, 'index']));
+
+    // ...
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use App\\Http\\Controllers\\UserController;
+use Illuminate\\Foundation\\Testing\\WithCachedRoutes;
+use Tests\\TestCase;
+
+class BasicTest extends TestCase
+{
+    use WithCachedRoutes;
+
+    /**
+     * A basic functional test example.
+     */
+    public function test_basic_example(): void
+    {
+        $response = $this->get(action([UserController::class, 'index']));
+
+        // ...
+    }
+}
+</code></pre>
+<p><a name="available-assertions"></a></p>
+<h2>可用斷言</h2>
+<p><a name="response-assertions"></a></p>
+<h3>回應斷言</h3>
+<p>Laravel 的 <code>Illuminate\\Testing\\TestResponse</code> 類別提供了多種自訂斷言方法，您可以在測試應用程式時使用它們。這些斷言可以在 <code>json</code>、<code>get</code>、<code>post</code>、<code>put</code> 和 <code>delete</code> 測試方法返回的回應上存取：</p>
+<style>
+    .collection-method-list > p {
+        columns: 14.4em 2; -moz-columns: 14.4em 2; -webkit-columns: 14.4em 2;
+    }
+
+    .collection-method-list a {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style><div class="collection-method-list" markdown="1"><p><a href="#assert-accepted">assertAccepted</a>
+<a href="#assert-bad-request">assertBadRequest</a>
+<a href="#assert-client-error">assertClientError</a>
+<a href="#assert-conflict">assertConflict</a>
+<a href="#assert-cookie">assertCookie</a>
+<a href="#assert-cookie-expired">assertCookieExpired</a>
+<a href="#assert-cookie-not-expired">assertCookieNotExpired</a>
+<a href="#assert-cookie-missing">assertCookieMissing</a>
+<a href="#assert-created">assertCreated</a>
+<a href="#assert-dont-see">assertDontSee</a>
+<a href="#assert-dont-see-text">assertDontSeeText</a>
+<a href="#assert-download">assertDownload</a>
+<a href="#assert-exact-json">assertExactJson</a>
+<a href="#assert-exact-json-structure">assertExactJsonStructure</a>
+<a href="#assert-failed-dependency">assertFailedDependency</a>
+<a href="#assert-forbidden">assertForbidden</a>
+<a href="#assert-found">assertFound</a>
+<a href="#assert-gone">assertGone</a>
+<a href="#assert-header">assertHeader</a>
+<a href="#assert-header-contains">assertHeaderContains</a>
+<a href="#assert-header-missing">assertHeaderMissing</a>
+<a href="#assert-internal-server-error">assertInternalServerError</a>
+<a href="#assert-json">assertJson</a>
+<a href="#assert-json-count">assertJsonCount</a>
+<a href="#assert-json-fragment">assertJsonFragment</a>
+<a href="#assert-json-is-array">assertJsonIsArray</a>
+<a href="#assert-json-is-object">assertJsonIsObject</a>
+<a href="#assert-json-missing">assertJsonMissing</a>
+<a href="#assert-json-missing-exact">assertJsonMissingExact</a>
+<a href="#assert-json-missing-validation-errors">assertJsonMissingValidationErrors</a>
+<a href="#assert-json-path">assertJsonPath</a>
+<a href="#assert-json-paths">assertJsonPaths</a>
+<a href="#assert-json-missing-path">assertJsonMissingPath</a>
+<a href="#assert-json-missing-paths">assertJsonMissingPaths</a>
+<a href="#assert-json-structure">assertJsonStructure</a>
+<a href="#assert-json-validation-errors">assertJsonValidationErrors</a>
+<a href="#assert-json-validation-error-for">assertJsonValidationErrorFor</a>
+<a href="#assert-location">assertLocation</a>
+<a href="#assert-method-not-allowed">assertMethodNotAllowed</a>
+<a href="#assert-moved-permanently">assertMovedPermanently</a>
+<a href="#assert-content">assertContent</a>
+<a href="#assert-no-content">assertNoContent</a>
+<a href="#assert-streamed">assertStreamed</a>
+<a href="#assert-streamed-content">assertStreamedContent</a>
+<a href="#assert-not-found">assertNotFound</a>
+<a href="#assert-ok">assertOk</a>
+<a href="#assert-payment-required">assertPaymentRequired</a>
+<a href="#assert-plain-cookie">assertPlainCookie</a>
+<a href="#assert-redirect">assertRedirect</a>
+<a href="#assert-redirect-back">assertRedirectBack</a>
+<a href="#assert-redirect-back-with-errors">assertRedirectBackWithErrors</a>
+<a href="#assert-redirect-back-without-errors">assertRedirectBackWithoutErrors</a>
+<a href="#assert-redirect-contains">assertRedirectContains</a>
+<a href="#assert-redirect-to-route">assertRedirectToRoute</a>
+<a href="#assert-redirect-to-signed-route">assertRedirectToSignedRoute</a>
+<a href="#assert-request-timeout">assertRequestTimeout</a>
+<a href="#assert-see">assertSee</a>
+<a href="#assert-see-in-order">assertSeeInOrder</a>
+<a href="#assert-see-text">assertSeeText</a>
+<a href="#assert-see-text-in-order">assertSeeTextInOrder</a>
+<a href="#assert-server-error">assertServerError</a>
+<a href="#assert-service-unavailable">assertServiceUnavailable</a>
+<a href="#assert-session-has">assertSessionHas</a>
+<a href="#assert-session-has-input">assertSessionHasInput</a>
+<a href="#assert-session-has-all">assertSessionHasAll</a>
+<a href="#assert-session-has-errors">assertSessionHasErrors</a>
+<a href="#assert-session-has-errors-in">assertSessionHasErrorsIn</a>
+<a href="#assert-session-has-no-errors">assertSessionHasNoErrors</a>
+<a href="#assert-session-doesnt-have-errors">assertSessionDoesntHaveErrors</a>
+<a href="#assert-session-missing">assertSessionMissing</a>
+<a href="#assert-session-missing-input">assertSessionMissingInput</a>
+<a href="#assert-status">assertStatus</a>
+<a href="#assert-successful">assertSuccessful</a>
+<a href="#assert-too-many-requests">assertTooManyRequests</a>
+<a href="#assert-unauthorized">assertUnauthorized</a>
+<a href="#assert-unprocessable">assertUnprocessable</a>
+<a href="#assert-unsupported-media-type">assertUnsupportedMediaType</a>
+<a href="#assert-valid">assertValid</a>
+<a href="#assert-invalid">assertInvalid</a>
+<a href="#assert-view-has">assertViewHas</a>
+<a href="#assert-view-has-all">assertViewHasAll</a>
+<a href="#assert-view-is">assertViewIs</a>
+<a href="#assert-view-missing">assertViewMissing</a></p>
+</div><p><a name="assert-accepted"></a></p>
+<h4>assertAccepted</h4>
+<p>斷言回應具有 accepted (202) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertAccepted();
+</code></pre>
+<p><a name="assert-bad-request"></a></p>
+<h4>assertBadRequest</h4>
+<p>斷言回應具有 bad request (400) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertBadRequest();
+</code></pre>
+<p><a name="assert-client-error"></a></p>
+<h4>assertClientError</h4>
+<p>斷言回應具有 client error (>= 400, < 500) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertClientError();
+</code></pre>
+<p><a name="assert-conflict"></a></p>
+<h4>assertConflict</h4>
+<p>斷言回應具有 conflict (409) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertConflict();
+</code></pre>
+<p><a name="assert-cookie"></a></p>
+<h4>assertCookie</h4>
+<p>斷言回應包含給定的 cookie：</p>
+<pre><code class="language-php">$response->assertCookie($cookieName, $value = null);
+</code></pre>
+<p><a name="assert-cookie-expired"></a></p>
+<h4>assertCookieExpired</h4>
+<p>斷言回應包含給定的 cookie 且已過期：</p>
+<pre><code class="language-php">$response->assertCookieExpired($cookieName);
+</code></pre>
+<p><a name="assert-cookie-not-expired"></a></p>
+<h4>assertCookieNotExpired</h4>
+<p>斷言回應包含給定的 cookie 且未過期：</p>
+<pre><code class="language-php">$response->assertCookieNotExpired($cookieName);
+</code></pre>
+<p><a name="assert-cookie-missing"></a></p>
+<h4>assertCookieMissing</h4>
+<p>斷言回應不包含給定的 cookie：</p>
+<pre><code class="language-php">$response->assertCookieMissing($cookieName);
+</code></pre>
+<p><a name="assert-created"></a></p>
+<h4>assertCreated</h4>
+<p>斷言回應具有 201 HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertCreated();
+</code></pre>
+<p><a name="assert-dont-see"></a></p>
+<h4>assertDontSee</h4>
+<p>斷言給定的字串不包含在應用程式返回的回應中。除非您傳遞第二個參數 <code>false</code>，否則此斷言將自動轉義給定的字串：</p>
+<pre><code class="language-php">$response->assertDontSee($value, $escape = true);
+</code></pre>
+<p><a name="assert-dont-see-text"></a></p>
+<h4>assertDontSeeText</h4>
+<p>斷言給定的字串不包含在回應文字中。除非您傳遞第二個參數 <code>false</code>，否則此斷言將自動轉義給定的字串。在進行斷言之前，回應內容將被傳遞給 <code>strip_tags</code> PHP 函數：</p>
+<pre><code class="language-php">$response->assertDontSeeText($value, $escape = true);
+</code></pre>
+<p><a name="assert-download"></a></p>
+<h4>assertDownload</h4>
+<p>斷言回應是「下載」。通常，這意味著返回回應的調用路由返回了 <code>Response::download</code> 回應、<code>BinaryFileResponse</code> 或 <code>Storage::download</code> 回應：</p>
+<pre><code class="language-php">$response->assertDownload();
+</code></pre>
+<p>如果您願意，您可以斷言可下載的檔案被分配了一個給定的檔名：</p>
+<pre><code class="language-php">$response->assertDownload('image.jpg');
+</code></pre>
+<p><a name="assert-exact-json"></a></p>
+<h4>assertExactJson</h4>
+<p>斷言回應包含給定 JSON 資料的精確匹配：</p>
+<pre><code class="language-php">$response->assertExactJson(array $data);
+</code></pre>
+<p><a name="assert-exact-json-structure"></a></p>
+<h4>assertExactJsonStructure</h4>
+<p>斷言回應包含給定 JSON 結構的精確匹配：</p>
+<pre><code class="language-php">$response->assertExactJsonStructure(array $data);
+</code></pre>
+<p>此方法是 <a href="#assert-json-structure">assertJsonStructure</a> 的更嚴格變體。與 <code>assertJsonStructure</code> 相比，如果回應包含未明確包含在預期 JSON 結構中的任何鍵，則此方法將失敗。</p>
+<p><a name="assert-failed-dependency"></a></p>
+<h4>assertFailedDependency</h4>
+<p>斷言回應具有 failed dependency (424) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertFailedDependency();
+</code></pre>
+<p><a name="assert-forbidden"></a></p>
+<h4>assertForbidden</h4>
+<p>斷言回應具有 forbidden (403) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertForbidden();
+</code></pre>
+<p><a name="assert-found"></a></p>
+<h4>assertFound</h4>
+<p>斷言回應具有 found (302) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertFound();
+</code></pre>
+<p><a name="assert-gone"></a></p>
+<h4>assertGone</h4>
+<p>斷言回應具有 gone (410) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertGone();
+</code></pre>
+<p><a name="assert-header"></a></p>
+<h4>assertHeader</h4>
+<p>斷言回應上存在給定的頁頭和值：</p>
+<pre><code class="language-php">$response->assertHeader($headerName, $value = null);
+</code></pre>
+<p><a name="assert-header-contains"></a></p>
+<h4>assertHeaderContains</h4>
+<p>斷言給定的頁頭包含給定的子字串值：</p>
+<pre><code class="language-php">$response->assertHeaderContains($headerName, $value);
+</code></pre>
+<p><a name="assert-header-missing"></a></p>
+<h4>assertHeaderMissing</h4>
+<p>斷言回應上不存在給定的頁頭：</p>
+<pre><code class="language-php">$response->assertHeaderMissing($headerName);
+</code></pre>
+<p><a name="assert-internal-server-error"></a></p>
+<h4>assertInternalServerError</h4>
+<p>斷言回應具有「Internal Server Error」(500) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertInternalServerError();
+</code></pre>
+<p><a name="assert-json"></a></p>
+<h4>assertJson</h4>
+<p>斷言回應包含給定的 JSON 資料：</p>
+<pre><code class="language-php">$response->assertJson(array $data, $strict = false);
+</code></pre>
+<p><code>assertJson</code> 方法將回應轉換為陣列以驗證給定的陣列是否存在於應用程式返回的 JSON 回應中。因此，如果 JSON 回應中還有其他屬性，只要給定的片段存在，此測試仍將通過。</p>
+<p><a name="assert-json-count"></a></p>
+<h4>assertJsonCount</h4>
+<p>斷言回應 JSON 在給定鍵處有一個具有預期項目數的陣列：</p>
+<pre><code class="language-php">$response->assertJsonCount($count, $key = null);
+</code></pre>
+<p><a name="assert-json-fragment"></a></p>
+<h4>assertJsonFragment</h4>
+<p>斷言回應在回應中的任何位置包含給定的 JSON 資料：</p>
+<pre><code class="language-php">Route::get('/users', function () {
+    return [
+        'users' => [
+            [
+                'name' => 'Taylor Otwell',
+            ],
+        ],
+    ];
+});
+
+$response->assertJsonFragment(['name' => 'Taylor Otwell']);
+</code></pre>
+<p><a name="assert-json-is-array"></a></p>
+<h4>assertJsonIsArray</h4>
+<p>斷言回應 JSON 是一個陣列：</p>
+<pre><code class="language-php">$response->assertJsonIsArray();
+</code></pre>
+<p><a name="assert-json-is-object"></a></p>
+<h4>assertJsonIsObject</h4>
+<p>斷言回應 JSON 是一個物件：</p>
+<pre><code class="language-php">$response->assertJsonIsObject();
+</code></pre>
+<p><a name="assert-json-missing"></a></p>
+<h4>assertJsonMissing</h4>
+<p>斷言回應不包含給定的 JSON 資料：</p>
+<pre><code class="language-php">$response->assertJsonMissing(array $data);
+</code></pre>
+<p><a name="assert-json-missing-exact"></a></p>
+<h4>assertJsonMissingExact</h4>
+<p>斷言回應不包含精確的 JSON 資料：</p>
+<pre><code class="language-php">$response->assertJsonMissingExact(array $data);
+</code></pre>
+<p><a name="assert-json-missing-validation-errors"></a></p>
+<h4>assertJsonMissingValidationErrors</h4>
+<p>斷言回應沒有給定鍵的 JSON 驗證錯誤：</p>
+<pre><code class="language-php">$response->assertJsonMissingValidationErrors($keys);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+更通用的 <a href="#assert-valid">assertValid</a> 方法可用於斷言回應沒有作為 JSON 返回的驗證錯誤<strong>並且</strong>沒有錯誤被閃現到會話儲存中。</p>
+</blockquote>
+<p><a name="assert-json-path"></a></p>
+<h4>assertJsonPath</h4>
+<p>斷言回應在指定路徑包含給定資料：</p>
+<pre><code class="language-php">$response->assertJsonPath($path, $expectedValue);
+</code></pre>
+<p>例如，如果您的應用程式返回以下 JSON 回應：</p>
+<pre><code class="language-json">{
+    "user": {
+        "name": "Steve Schoger"
+    }
+}
+</code></pre>
+<p>您可以斷言 <code>user</code> 物件的 <code>name</code> 屬性與給定值匹配，像這樣：</p>
+<pre><code class="language-php">$response->assertJsonPath('user.name', 'Steve Schoger');
+</code></pre>
+<p><a name="assert-json-paths"></a></p>
+<h4>assertJsonPaths</h4>
+<p>斷言回應在指定路徑包含給定資料：</p>
+<pre><code class="language-php">$response->assertJsonPaths(array $paths);
+</code></pre>
+<p>例如，您可以一次斷言回應中的多個值：</p>
+<pre><code class="language-php">$response->assertJsonPaths([
+    'user.name' => 'Steve Schoger',
+    'user.email' => fn (string $email) => str($email)->endsWith('@laravel.com'),
+]);
+</code></pre>
+<p><a name="assert-json-missing-path"></a></p>
+<h4>assertJsonMissingPath</h4>
+<p>斷言回應不包含給定的路徑：</p>
+<pre><code class="language-php">$response->assertJsonMissingPath($path);
+</code></pre>
+<p>例如，如果您的應用程式返回以下 JSON 回應：</p>
+<pre><code class="language-json">{
+    "user": {
+        "name": "Steve Schoger"
+    }
+}
+</code></pre>
+<p>您可以斷言它不包含 <code>user</code> 物件的 <code>email</code> 屬性：</p>
+<pre><code class="language-php">$response->assertJsonMissingPath('user.email');
+</code></pre>
+<p><a name="assert-json-missing-paths"></a></p>
+<h4>assertJsonMissingPaths</h4>
+<p>斷言回應不包含給定的路徑：</p>
+<pre><code class="language-php">$response->assertJsonMissingPaths($paths);
+</code></pre>
+<p>例如，您可以斷言回應中缺少多個路徑：</p>
+<pre><code class="language-php">$response->assertJsonMissingPaths([
+    'user.email',
+    'user.password',
+]);
+</code></pre>
+<p><a name="assert-json-structure"></a></p>
+<h4>assertJsonStructure</h4>
+<p>斷言回應具有給定的 JSON 結構：</p>
+<pre><code class="language-php">$response->assertJsonStructure(array $structure);
+</code></pre>
+<p>例如，如果您的應用程式返回的 JSON 回應包含以下資料：</p>
+<pre><code class="language-json">{
+    "user": {
+        "name": "Steve Schoger"
+    }
+}
+</code></pre>
+<p>您可以斷言 JSON 結構符合您的期望，像這樣：</p>
+<pre><code class="language-php">$response->assertJsonStructure([
+    'user' => [
+        'name',
+    ]
+]);
+</code></pre>
+<p>有時，您的應用程式返回的 JSON 回應可能包含物件陣列：</p>
+<pre><code class="language-json">{
+    "user": [
+        {
+            "name": "Steve Schoger",
+            "age": 55,
+            "location": "Earth"
+        },
+        {
+            "name": "Mary Schoger",
+            "age": 60,
+            "location": "Earth"
+        }
+    ]
+}
+</code></pre>
+<p>在這種情況下，您可以使用 <code>*</code> 字元來斷言陣列中所有物件的結構：</p>
+<pre><code class="language-php">$response->assertJsonStructure([
+
+    'user' => [
+        '*' => [
+             'name',
+             'age',
+             'location'
+        ]
+    ]
+]);
+</code></pre>
+<p><a name="assert-json-validation-errors"></a></p>
+<h4>assertJsonValidationErrors</h4>
+<p>斷言回應具有給定鍵的給定 JSON 驗證錯誤。當對驗證錯誤作為 JSON 結構返回而不是閃現到會話的回應進行斷言時，應使用此方法：</p>
+<pre><code class="language-php">$response->assertJsonValidationErrors(array $data, $responseKey = 'errors');
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+更通用的 <a href="#assert-invalid">assertInvalid</a> 方法可用於斷言回應具有作為 JSON 返回的驗證錯誤<strong>或</strong>錯誤已閃現到會話儲存。</p>
+</blockquote>
+<p><a name="assert-json-validation-error-for"></a></p>
+<h4>assertJsonValidationErrorFor</h4>
+<p>斷言回應具有給定鍵的任何 JSON 驗證錯誤：</p>
+<pre><code class="language-php">$response->assertJsonValidationErrorFor(string $key, $responseKey = 'errors');
+</code></pre>
+<p><a name="assert-method-not-allowed"></a></p>
+<h4>assertMethodNotAllowed</h4>
+<p>斷言回應具有 method not allowed (405) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertMethodNotAllowed();
+</code></pre>
+<p><a name="assert-moved-permanently"></a></p>
+<h4>assertMovedPermanently</h4>
+<p>斷言回應具有 moved permanently (301) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertMovedPermanently();
+</code></pre>
+<p><a name="assert-location"></a></p>
+<h4>assertLocation</h4>
+<p>斷言回應在 <code>Location</code> 頁頭中具有給定的 URI 值：</p>
+<pre><code class="language-php">$response->assertLocation($uri);
+</code></pre>
+<p><a name="assert-content"></a></p>
+<h4>assertContent</h4>
+<p>斷言給定的字串與回應內容匹配：</p>
+<pre><code class="language-php">$response->assertContent($value);
+</code></pre>
+<p><a name="assert-no-content"></a></p>
+<h4>assertNoContent</h4>
+<p>斷言回應具有給定的 HTTP 狀態碼且無內容：</p>
+<pre><code class="language-php">$response->assertNoContent($status = 204);
+</code></pre>
+<p><a name="assert-streamed"></a></p>
+<h4>assertStreamed</h4>
+<p>斷言回應是一個串流回應：</p>
+<pre><code>$response->assertStreamed();
+</code></pre>
+<p><a name="assert-streamed-content"></a></p>
+<h4>assertStreamedContent</h4>
+<p>斷言給定的字串與串流回應內容匹配：</p>
+<pre><code class="language-php">$response->assertStreamedContent($value);
+</code></pre>
+<p><a name="assert-not-found"></a></p>
+<h4>assertNotFound</h4>
+<p>斷言回應具有 not found (404) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertNotFound();
+</code></pre>
+<p><a name="assert-ok"></a></p>
+<h4>assertOk</h4>
+<p>斷言回應具有 200 HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertOk();
+</code></pre>
+<p><a name="assert-payment-required"></a></p>
+<h4>assertPaymentRequired</h4>
+<p>斷言回應具有 payment required (402) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertPaymentRequired();
+</code></pre>
+<p><a name="assert-plain-cookie"></a></p>
+<h4>assertPlainCookie</h4>
+<p>斷言回應包含給定的未加密 cookie：</p>
+<pre><code class="language-php">$response->assertPlainCookie($cookieName, $value = null);
+</code></pre>
+<p><a name="assert-redirect"></a></p>
+<h4>assertRedirect</h4>
+<p>斷言回應重定向到給定的 URI：</p>
+<pre><code class="language-php">$response->assertRedirect($uri = null);
+</code></pre>
+<p><a name="assert-redirect-back"></a></p>
+<h4>assertRedirectBack</h4>
+<p>斷言回應是否重定向回上一頁：</p>
+<pre><code class="language-php">$response->assertRedirectBack();
+</code></pre>
+<p><a name="assert-redirect-back-with-errors"></a></p>
+<h4>assertRedirectBackWithErrors</h4>
+<p>斷言回應是否重定向回上一頁且<a href="#assert-session-has-errors">會話具有給定的錯誤</a>：</p>
+<pre><code class="language-php">$response->assertRedirectBackWithErrors(
+    array $keys = [], $format = null, $errorBag = 'default'
+);
+</code></pre>
+<p><a name="assert-redirect-back-without-errors"></a></p>
+<h4>assertRedirectBackWithoutErrors</h4>
+<p>斷言回應是否重定向回上一頁且會話不包含任何錯誤訊息：</p>
+<pre><code class="language-php">$response->assertRedirectBackWithoutErrors();
+</code></pre>
+<p><a name="assert-redirect-contains"></a></p>
+<h4>assertRedirectContains</h4>
+<p>斷言回應是否重定向到包含給定字串的 URI：</p>
+<pre><code class="language-php">$response->assertRedirectContains($string);
+</code></pre>
+<p><a name="assert-redirect-to-route"></a></p>
+<h4>assertRedirectToRoute</h4>
+<p>斷言回應重定向到給定的<a href="/docs/routing#named-routes">命名路由</a>：</p>
+<pre><code class="language-php">$response->assertRedirectToRoute($name, $parameters = []);
+</code></pre>
+<p><a name="assert-redirect-to-signed-route"></a></p>
+<h4>assertRedirectToSignedRoute</h4>
+<p>斷言回應重定向到給定的<a href="/docs/urls#signed-urls">簽名路由</a>：</p>
+<pre><code class="language-php">$response->assertRedirectToSignedRoute($name = null, $parameters = []);
+</code></pre>
+<p><a name="assert-request-timeout"></a></p>
+<h4>assertRequestTimeout</h4>
+<p>斷言回應具有 request timeout (408) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertRequestTimeout();
+</code></pre>
+<p><a name="assert-see"></a></p>
+<h4>assertSee</h4>
+<p>斷言給定的字串包含在回應中。除非您傳遞第二個參數 <code>false</code>，否則此斷言將自動轉義給定的字串：</p>
+<pre><code class="language-php">$response->assertSee($value, $escape = true);
+</code></pre>
+<p><a name="assert-see-in-order"></a></p>
+<h4>assertSeeInOrder</h4>
+<p>斷言給定的字串按順序包含在回應中。除非您傳遞第二個參數 <code>false</code>，否則此斷言將自動轉義給定的字串：</p>
+<pre><code class="language-php">$response->assertSeeInOrder(array $values, $escape = true);
+</code></pre>
+<p><a name="assert-see-text"></a></p>
+<h4>assertSeeText</h4>
+<p>斷言給定的字串包含在回應文字中。除非您傳遞第二個參數 <code>false</code>，否則此斷言將自動轉義給定的字串。在進行斷言之前，回應內容將被傳遞給 <code>strip_tags</code> PHP 函數：</p>
+<pre><code class="language-php">$response->assertSeeText($value, $escape = true);
+</code></pre>
+<p><a name="assert-see-text-in-order"></a></p>
+<h4>assertSeeTextInOrder</h4>
+<p>斷言給定的字串按順序包含在回應文字中。除非您傳遞第二個參數 <code>false</code>，否則此斷言將自動轉義給定的字串。在進行斷言之前，回應內容將被傳遞給 <code>strip_tags</code> PHP 函數：</p>
+<pre><code class="language-php">$response->assertSeeTextInOrder(array $values, $escape = true);
+</code></pre>
+<p><a name="assert-server-error"></a></p>
+<h4>assertServerError</h4>
+<p>斷言回應具有 server error (>= 500 , < 600) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertServerError();
+</code></pre>
+<p><a name="assert-service-unavailable"></a></p>
+<h4>assertServiceUnavailable</h4>
+<p>斷言回應具有「Service Unavailable」(503) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertServiceUnavailable();
+</code></pre>
+<p><a name="assert-session-has"></a></p>
+<h4>assertSessionHas</h4>
+<p>斷言會話包含給定的資料：</p>
+<pre><code class="language-php">$response->assertSessionHas($key, $value = null);
+</code></pre>
+<p>如果需要，可以將一個閉包作為第二個參數傳遞給 <code>assertSessionHas</code> 方法。如果閉包返回 <code>true</code>，則斷言將通過：</p>
+<pre><code class="language-php">$response->assertSessionHas($key, function (User $value) {
+    return $value->name === 'Taylor Otwell';
+});
+</code></pre>
+<p><a name="assert-session-has-input"></a></p>
+<h4>assertSessionHasInput</h4>
+<p>斷言會話在<a href="/docs/responses#redirecting-with-flashed-session-data">閃現輸入陣列</a>中具有給定值：</p>
+<pre><code class="language-php">$response->assertSessionHasInput($key, $value = null);
+</code></pre>
+<p>如果需要，可以將一個閉包作為第二個參數傳遞給 <code>assertSessionHasInput</code> 方法。如果閉包返回 <code>true</code>，則斷言將通過：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Crypt;
+
+$response->assertSessionHasInput($key, function (string $value) {
+    return Crypt::decryptString($value) === 'secret';
+});
+</code></pre>
+<p><a name="assert-session-has-all"></a></p>
+<h4>assertSessionHasAll</h4>
+<p>斷言會話包含給定的鍵/值對陣列：</p>
+<pre><code class="language-php">$response->assertSessionHasAll(array $data);
+</code></pre>
+<p>例如，如果您的應用程式會話包含 <code>name</code> 和 <code>status</code> 鍵，您可以斷言兩者都存在且具有指定的值，像這樣：</p>
+<pre><code class="language-php">$response->assertSessionHasAll([
+    'name' => 'Taylor Otwell',
+    'status' => 'active',
+]);
+</code></pre>
+<p><a name="assert-session-has-errors"></a></p>
+<h4>assertSessionHasErrors</h4>
+<p>斷言會話包含給定 <code>$keys</code> 的錯誤。如果 <code>$keys</code> 是一個關聯陣列，則斷言會話包含每個欄位（鍵）的特定錯誤訊息（值）。當測試將驗證錯誤閃現到會話而不是作為 JSON 結構返回的路由時，應使用此方法：</p>
+<pre><code class="language-php">$response->assertSessionHasErrors(
+    array $keys = [], $format = null, $errorBag = 'default'
+);
+</code></pre>
+<p>例如，要斷言 <code>name</code> 和 <code>email</code> 欄位具有已閃現到會話的驗證錯誤訊息，您可以像這樣呼叫 <code>assertSessionHasErrors</code> 方法：</p>
+<pre><code class="language-php">$response->assertSessionHasErrors(['name', 'email']);
+</code></pre>
+<p>或者，您可以斷言給定欄位具有特定的驗證錯誤訊息：</p>
+<pre><code class="language-php">$response->assertSessionHasErrors([
+    'name' => 'The given name was invalid.'
+]);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+更通用的 <a href="#assert-invalid">assertInvalid</a> 方法可用於斷言回應具有作為 JSON 返回的驗證錯誤<strong>或</strong>錯誤已閃現到會話儲存。</p>
+</blockquote>
+<p><a name="assert-session-has-errors-in"></a></p>
+<h4>assertSessionHasErrorsIn</h4>
+<p>斷言會話在特定<a href="/docs/validation#named-error-bags">錯誤袋</a>中包含給定 <code>$keys</code> 的錯誤。如果 <code>$keys</code> 是一個關聯陣列，則斷言會話在錯誤袋中包含每個欄位（鍵）的特定錯誤訊息（值）：</p>
+<pre><code class="language-php">$response->assertSessionHasErrorsIn($errorBag, $keys = [], $format = null);
+</code></pre>
+<p><a name="assert-session-has-no-errors"></a></p>
+<h4>assertSessionHasNoErrors</h4>
+<p>斷言會話沒有驗證錯誤：</p>
+<pre><code class="language-php">$response->assertSessionHasNoErrors();
+</code></pre>
+<p><a name="assert-session-doesnt-have-errors"></a></p>
+<h4>assertSessionDoesntHaveErrors</h4>
+<p>斷言會話沒有給定鍵的驗證錯誤：</p>
+<pre><code class="language-php">$response->assertSessionDoesntHaveErrors($keys = [], $format = null, $errorBag = 'default');
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+更通用的 <a href="#assert-valid">assertValid</a> 方法可用於斷言回應沒有作為 JSON 返回的驗證錯誤<strong>並且</strong>沒有錯誤被閃現到會話儲存。</p>
+</blockquote>
+<p><a name="assert-session-missing"></a></p>
+<h4>assertSessionMissing</h4>
+<p>斷言會話不包含給定的鍵：</p>
+<pre><code class="language-php">$response->assertSessionMissing($key);
+</code></pre>
+<p><a name="assert-session-missing-input"></a></p>
+<h4>assertSessionMissingInput</h4>
+<p>斷言會話在閃現輸入陣列中缺少給定的輸入鍵：</p>
+<pre><code class="language-php">$response->assertSessionMissingInput($key);
+</code></pre>
+<p><a name="assert-status"></a></p>
+<h4>assertStatus</h4>
+<p>斷言回應具有給定的 HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertStatus($code);
+</code></pre>
+<p><a name="assert-successful"></a></p>
+<h4>assertSuccessful</h4>
+<p>斷言回應具有 successful (>= 200 且 < 300) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertSuccessful();
+</code></pre>
+<p><a name="assert-too-many-requests"></a></p>
+<h4>assertTooManyRequests</h4>
+<p>斷言回應具有 too many requests (429) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertTooManyRequests();
+</code></pre>
+<p><a name="assert-unauthorized"></a></p>
+<h4>assertUnauthorized</h4>
+<p>斷言回應具有 unauthorized (401) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertUnauthorized();
+</code></pre>
+<p><a name="assert-unprocessable"></a></p>
+<h4>assertUnprocessable</h4>
+<p>斷言回應具有 unprocessable entity (422) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertUnprocessable();
+</code></pre>
+<p><a name="assert-unsupported-media-type"></a></p>
+<h4>assertUnsupportedMediaType</h4>
+<p>斷言回應具有 unsupported media type (415) HTTP 狀態碼：</p>
+<pre><code class="language-php">$response->assertUnsupportedMediaType();
+</code></pre>
+<p><a name="assert-valid"></a></p>
+<h4>assertValid</h4>
+<p>斷言回應沒有給定鍵的驗證錯誤。此方法可用於對驗證錯誤作為 JSON 結構返回或驗證錯誤已閃現到會話的回應進行斷言：</p>
+<pre><code class="language-php">// 斷言不存在驗證錯誤...
+$response->assertValid();
+
+// 斷言給定的鍵沒有驗證錯誤...
+$response->assertValid(['name', 'email']);
+</code></pre>
+<p><a name="assert-invalid"></a></p>
+<h4>assertInvalid</h4>
+<p>斷言回應具有給定鍵的驗證錯誤。此方法可用於對驗證錯誤作為 JSON 結構返回或驗證錯誤已閃現到會話的回應進行斷言：</p>
+<pre><code class="language-php">$response->assertInvalid(['name', 'email']);
+</code></pre>
+<p>您還可以斷言給定的鍵具有特定的驗證錯誤訊息。這樣做時，您可以提供完整的訊息或只提供訊息的一小部分：</p>
+<pre><code class="language-php">$response->assertInvalid([
+    'name' => 'The name field is required.',
+    'email' => 'valid email address',
+]);
+</code></pre>
+`;
+---
+
+<DocsLayout title="HTTP 測試" currentPath="http-tests">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>HTTP 測試</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">HTTP 測試</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/http-tests" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

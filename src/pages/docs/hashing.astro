@@ -1,0 +1,122 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>雜湊</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#configuration">設定</a></li>
+<li><a href="#basic-usage">基本用法</a><ul>
+<li><a href="#hashing-passwords">雜湊密碼</a></li>
+<li><a href="#verifying-that-a-password-matches-a-hash">驗證密碼是否匹配雜湊值</a></li>
+<li><a href="#determining-if-a-password-needs-to-be-rehashed">判斷密碼是否需要重新雜湊</a></li>
+</ul>
+</li>
+<li><a href="#hash-algorithm-verification">雜湊演算法驗證</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 的 <code>Hash</code> <a href="/docs/facades">facade</a> 提供了安全的 Bcrypt 和 Argon2 雜湊功能，用於儲存用戶密碼。如果您使用 Laravel <a href="/docs/starter-kits">應用程式入門套件</a>之一，預設將使用 Bcrypt 進行註冊和認證。</p>
+<p>Bcrypt 是雜湊密碼的絕佳選擇，因為其「工作因子」是可調整的，這意味著隨著硬體效能的提升，生成雜湊所需的時間可以增加。雜湊密碼時，慢是好的。演算法雜湊密碼所需的時間越長，惡意用戶生成用於暴力攻擊的「彩虹表」所需的時間就越長。</p>
+<p><a name="configuration"></a></p>
+<h2>設定</h2>
+<p>預設情況下，Laravel 在雜湊資料時使用 <code>bcrypt</code> 雜湊驅動程式。但是，還支援其他幾種雜湊驅動程式，包括 <a href="https://en.wikipedia.org/wiki/Argon2">argon</a> 和 <a href="https://en.wikipedia.org/wiki/Argon2">argon2id</a>。</p>
+<p>您可以使用 <code>HASH_DRIVER</code> 環境變數指定應用程式的雜湊驅動程式。但是，如果您想自訂所有 Laravel 雜湊驅動程式選項，應該使用 <code>config:publish</code> Artisan 命令發佈完整的 <code>hashing</code> 設定檔：</p>
+<pre><code class="language-shell">php artisan config:publish hashing
+</code></pre>
+<p><a name="basic-usage"></a></p>
+<h2>基本用法</h2>
+<p><a name="hashing-passwords"></a></p>
+<h3>雜湊密碼</h3>
+<p>您可以透過呼叫 <code>Hash</code> facade 上的 <code>make</code> 方法來雜湊密碼：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Hash;
+
+class PasswordController extends Controller
+{
+    /**
+     * Update the password for the user.
+     */
+    public function update(Request $request): RedirectResponse
+    {
+        // Validate the new password length...
+
+        $request->user()->fill([
+            'password' => Hash::make($request->newPassword)
+        ])->save();
+
+        return redirect('/profile');
+    }
+}
+</code></pre>
+<p><a name="adjusting-the-bcrypt-work-factor"></a></p>
+<h4>調整 Bcrypt 工作因子</h4>
+<p>如果您使用发 bcrypt 演算法，<code>make</code> 方法允許您使用 <code>rounds</code> 選項管理演算法的工作因子；但是，Laravel 管理的預設工作因子對大多數應用程式來說是可接受的：</p>
+<pre><code class="language-php">$hashed = Hash::make('password', [
+    'rounds' => 12,
+]);
+</code></pre>
+<p><a name="adjusting-the-argon2-work-factor"></a></p>
+<h4>調整 Argon2 工作因子</h4>
+<p>如果您使用 Argon2 演算法，<code>make</code> 方法允許您使用 <code>memory</code>、<code>time</code> 和 <code>threads</code> 選項管理演算法的工作因子；但是，Laravel 管理的預設值對大多數應用程式來說是可接受的：</p>
+<pre><code class="language-php">$hashed = Hash::make('password', [
+    'memory' => 1024,
+    'time' => 2,
+    'threads' => 2,
+]);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要了解更多關於這些選項的資訊，請參閱<a href="https://secure.php.net/manual/en/function.password-hash.php">關於 Argon 雜湊的官方 PHP 文件</a>。</p>
+</blockquote>
+<p><a name="verifying-that-a-password-matches-a-hash"></a></p>
+<h3>驗證密碼是否匹配雜湊值</h3>
+<p><code>Hash</code> facade 提供的 <code>check</code> 方法允許您驗證給定的純文字字串是否對應於給定的雜湊值：</p>
+<pre><code class="language-php">if (Hash::check('plain-text', $hashedPassword)) {
+    // 密碼匹配...
+}
+</code></pre>
+<p><a name="determining-if-a-password-needs-to-be-rehashed"></a></p>
+<h3>判斷密碼是否需要重新雜湊</h3>
+<p><code>Hash</code> facade 提供的 <code>needsRehash</code> 方法允許您判斷自密碼雜湊以來雜湊器使用的工作因子是否已變更。某些應用程式選擇在認證過程中執行此檢查：</p>
+<pre><code class="language-php">if (Hash::needsRehash($hashed)) {
+    $hashed = Hash::make('plain-text');
+}
+</code></pre>
+<p><a name="hash-algorithm-verification"></a></p>
+<h2>雜湊演算法驗證</h2>
+<p>為了防止雜湊演算法被篡改，Laravel 的 <code>Hash::check</code> 方法將先驗證給定的雜湊值是否使用應用程式選定的雜湊演算法生成。如果演算法不同，將拋出 <code>RuntimeException</code> 異常。</p>
+<p>這是大多數應用程式的預期行為，其中雜湊演算法預期不會變更，不同的演算法可能是惡意攻擊的跡象。但是，如果您需要在應用程式中支援多種雜湊演算法（例如從一種演算法遷移到另一種），可以透過將 <code>HASH_VERIFY</code> 環境變數設為 <code>false</code> 來停用雜湊演算法驗證：</p>
+<pre><code class="language-ini">HASH_VERIFY=false
+</code></pre>
+`;
+---
+
+<DocsLayout title="雜湊" currentPath="hashing">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>雜湊</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">雜湊</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/hashing" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,547 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Eloquent：工廠</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#defining-model-factories">定義模型工廠</a><ul>
+<li><a href="#generating-factories">生成工廠</a></li>
+<li><a href="#factory-states">工廠狀態</a></li>
+<li><a href="#factory-callbacks">工廠回呼</a></li>
+</ul>
+</li>
+<li><a href="#creating-models-using-factories">使用工廠創建模型</a><ul>
+<li><a href="#instantiating-models">實例化模型</a></li>
+<li><a href="#persisting-models">持久化模型</a></li>
+<li><a href="#sequences">序列</a></li>
+</ul>
+</li>
+<li><a href="#factory-relationships">工廠關聯</a><ul>
+<li><a href="#has-many-relationships">一對多關聯</a></li>
+<li><a href="#belongs-to-relationships">多對一關聯</a></li>
+<li><a href="#many-to-many-relationships">多對多關聯</a></li>
+<li><a href="#polymorphic-relationships">多態關聯</a></li>
+<li><a href="#defining-relationships-within-factories">在工廠中定義關聯</a></li>
+<li><a href="#recycling-an-existing-model-for-relationships">回收現有模型用於關聯</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>在測試應用程式或填充資料庫時，您可能需要向資料庫中插入一些記錄。Laravel 允許您使用模型工廠為每個<a href="/docs/eloquent"> Eloquent 模型</a>定義一組預設屬性，而不是手動指定每個欄位的值。</p>
+<p>要查看如何編寫工廠的範例，請查看應用程式中的 <code>database/factories/UserFactory.php</code> 檔案。此工廠包含在所有新的 Laravel 應用程式中，並包含以下工廠定義：</p>
+<pre><code class="language-php">namespace Database\\Factories;
+
+use Illuminate\\Database\\Eloquent\\Factories\\Factory;
+use Illuminate\\Support\\Facades\\Hash;
+use Illuminate\\Support\\Str;
+
+/**
+ * @extends \\Illuminate\\Database\\Eloquent\\Factories\\Factory<\\App\\Models\\User>
+ */
+class UserFactory extends Factory
+{
+    /**
+     * 工廠使用的當前密碼。
+     */
+    protected static ?string $password;
+
+    /**
+     * 定義模型的預設狀態。
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
+        ];
+    }
+
+    /**
+     * 指示模型的電子郵件地址應為未驗證狀態。
+     */
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
+    }
+}
+</code></pre>
+<p>如您所見，在最基本的形式中，工廠是擴展 Laravel 基礎工廠類別並定義 <code>definition</code> 方法的類別。<code>definition</code> 方法返回使用工廠創建模型時應應用的預設屬性值集。</p>
+<p>透過 <code>fake</code> 輔助函數，工廠可以存取 <a href="https://github.com/FakerPHP/Faker">Faker</a> PHP 函式庫，該函式庫允許您方便地生成各種類型的隨機資料用於測試和填充。</p>
+<blockquote>
+<p>[!NOTE]
+您可以透過更新 <code>config/app.php</code> 配置檔案中的 <code>faker_locale</code> 選項來更改應用程式的 Faker 語言環境。</p>
+</blockquote>
+<p><a name="defining-model-factories"></a></p>
+<h2>定義模型工廠</h2>
+<p><a name="generating-factories"></a></p>
+<h3>生成工廠</h3>
+<p>要創建一個工廠，請執行 <code>make:factory</code> <a href="/docs/artisan">Artisan 命令</a>：</p>
+<pre><code class="language-shell">php artisan make:factory PostFactory
+</code></pre>
+<p>新的工廠類別將放置在您的 <code>database/factories</code> 目錄中。</p>
+<p><a name="factory-and-model-discovery-conventions"></a></p>
+<h4>模型和工廠發現慣例</h4>
+<p>定義好工廠後，您可以使用 <code>Illuminate\\Database\\Eloquent\\Factories\\HasFactory</code> trait 提供給模型的靜態 <code>factory</code> 方法來為該模型實例化工廠。</p>
+<p><code>HasFactory</code> trait 的 <code>factory</code> 方法將使用慣例來確定分配給該 trait 的模型的正確工廠。具體來說，該方法將在 <code>Database\\Factories</code> 命名空間中尋找一個類別名與模型名匹配且以 <code>Factory</code> 為後綴的工廠。如果這些慣例不適用於您的特定應用程式或工廠，您可以向模型添加 <code>UseFactory</code> 屬性來手動指定模型的工廠：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Attributes\\UseFactory;
+use Database\\Factories\\Administration\\FlightFactory;
+
+#[UseFactory(FlightFactory::class)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>或者，您可以覆蓋模型上的 <code>newFactory</code> 方法來直接返回模型相應工廠的實例：</p>
+<pre><code class="language-php">use Database\\Factories\\Administration\\FlightFactory;
+
+/**
+ * 為模型創建一個新的工廠實例。
+ */
+protected static function newFactory()
+{
+    return FlightFactory::new();
+}
+</code></pre>
+<p>然後，使用相應工廠上的 <code>UseModel</code> 屬性來指定模型：</p>
+<pre><code class="language-php">use App\\Administration\\Flight;
+use Illuminate\\Database\\Eloquent\\Factories\\Attributes\\UseModel;
+use Illuminate\\Database\\Eloquent\\Factories\\Factory;
+
+#[UseModel(Flight::class)]
+class FlightFactory extends Factory
+{
+    // ...
+}
+</code></pre>
+<p><a name="factory-states"></a></p>
+<h3>工廠狀態</h3>
+<p>狀態操作方法允許您定義可以以任何組合應用於模型工廠的離散修改。例如，您的 <code>Database\\Factories\\UserFactory</code> 工廠可能包含一個 <code>suspended</code> 狀態方法，該方法修改其預設屬性值之一。</p>
+<p>狀態轉換方法通常呼叫 Laravel 基礎工廠類別提供的 <code>state</code> 方法。<code>state</code> 方法接受一個閉包，該閉包將接收為工廠定義的原始屬性陣列，並應返回一個要修改的屬性陣列：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Factories\\Factory;
+
+/**
+ * 指示使用者已被暫停。
+ */
+public function suspended(): Factory
+{
+    return $this->state(function (array $attributes) {
+        return [
+            'account_status' => 'suspended',
+        ];
+    });
+}
+</code></pre>
+<p><a name="trashed-state"></a></p>
+<h4>「已刪除」狀態</h4>
+<p>如果您的 Eloquent 模型可以<a href="/docs/eloquent#soft-deleting">被軟刪除</a>，您可以呼叫內建的 <code>trashed</code> 狀態方法來指示創建的模型應該已經「被軟刪除」。您不需要手動定義 <code>trashed</code> 狀態，因為它對所有工廠都自動可用：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::factory()->trashed()->create();
+</code></pre>
+<p><a name="factory-callbacks"></a></p>
+<h3>工廠回呼</h3>
+<p>工廠回呼使用 <code>afterMaking</code> 和 <code>afterCreating</code> 方法註冊，允許您在創建或創建模型後執行額外的任務。您應該透過在工廠類別上定義 <code>configure</code> 方法來註冊這些回呼。當工廠被實例化時，Laravel 將自動呼叫此方法：</p>
+<pre><code class="language-php">namespace Database\\Factories;
+
+use App\\Models\\User;
+use Illuminate\\Database\\Eloquent\\Factories\\Factory;
+
+class UserFactory extends Factory
+{
+    /**
+     * 配置模型工廠。
+     */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (User $user) {
+            // ...
+        })->afterCreating(function (User $user) {
+            // ...
+        });
+    }
+
+    // ...
+}
+</code></pre>
+<p>您還可以在狀態方法中註冊工廠回呼，以執行特定於給定狀態的額外任務：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Database\\Eloquent\\Factories\\Factory;
+
+/**
+ * 指示使用者已被暫停。
+ */
+public function suspended(): Factory
+{
+    return $this->state(function (array $attributes) {
+        return [
+            'account_status' => 'suspended',
+        ];
+    })->afterMaking(function (User $user) {
+        // ...
+    })->afterCreating(function (User $user) {
+        // ...
+    });
+}
+</code></pre>
+<p><a name="creating-models-using-factories"></a></p>
+<h2>使用工廠創建模型</h2>
+<p><a name="instantiating-models"></a></p>
+<h3>實例化模型</h3>
+<p>定義好工廠後，您可以使用 <code>Illuminate\\Database\\Eloquent\\Factories\\HasFactory</code> trait 提供給模型的靜態 <code>factory</code> 方法來為該模型實例化工廠。讓我們看幾個創建模型的範例。首先，我們將使用 <code>make</code> 方法來創建不持久化到資料庫的模型：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::factory()->make();
+</code></pre>
+<p>您可以使用 <code>count</code> 方法來創建多個模型的集合：</p>
+<pre><code class="language-php">$users = User::factory()->count(3)->make();
+</code></pre>
+<p><a name="applying-states"></a></p>
+<h4>應用狀態</h4>
+<p>您還可以將任何<a href="#factory-states">狀態</span>應用於模型。如果您希望對模型應用多個狀態轉換，可以直接呼叫狀態轉換方法：</p>
+<pre><code class="language-php">$users = User::factory()->count(5)->suspended()->make();
+</code></pre>
+<p><a name="overriding-attributes"></a></p>
+<h4>覆蓋屬性</h4>
+<p>如果您希望覆蓋模型的一些預設值，可以向 <code>make</code> 方法傳遞一個值陣列。只有指定的屬性將被替換，而其餘屬性將保持為工廠指定的預設值：</p>
+<pre><code class="language-php">$user = User::factory()->make([
+    'name' => 'Abigail Otwell',
+]);
+</code></pre>
+<p>或者，可以直接在工廠實例上呼叫 <code>state</code> 方法來執行行內狀態轉換：</p>
+<pre><code class="language-php">$user = User::factory()->state([
+    'name' => 'Abigail Otwell',
+])->make();
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+使用工廠創建模型時，<a href="/docs/eloquent#mass-assignment">批量賦值保護</a>會自動禁用。</p>
+</blockquote>
+<p><a name="persisting-models"></a></p>
+<h3>持久化模型</h3>
+<p><code>create</code> 方法實例化模型實例並使用 Eloquent 的 <code>save</code> 方法將它們持久化到資料庫中：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+// 創建一個 App\\Models\\User 實例...
+$user = User::factory()->create();
+
+// 創建三個 App\\Models\\User 實例...
+$users = User::factory()->count(3)->create();
+</code></pre>
+<p>您可以向 <code>create</code> 方法傳遞一個屬性陣列來覆蓋工廠的預設模型屬性：</p>
+<pre><code class="language-php">$user = User::factory()->create([
+    'name' => 'Abigail',
+]);
+</code></pre>
+<p><a name="sequences"></a></p>
+<h3>序列</h3>
+<p>有時您可能希望為每個創建的模型修改給定模型屬性的值。您可以透過將狀態轉換定義為序列來實現這一點。例如，您可能希望為每個創建的使用者在 <code>Y</code> 和 <code>N</code> 之間交替修改 <code>admin</code> 欄位的值：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Database\\Eloquent\\Factories\\Sequence;
+
+$users = User::factory()
+    ->count(10)
+    ->state(new Sequence(
+        ['admin' => 'Y'],
+        ['admin' => 'N'],
+    ))
+    ->create();
+</code></pre>
+<p>在此範例中，五個使用者將以 <code>admin</code> 值 <code>Y</code> 創建，五個使用者將以 <code>admin</code> 值 <code>N</code> 創建。</p>
+<p>如果需要，您可以包含一個閉包作為序列值。每次序列需要一個新值時都會呼叫該閉包：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Factories\\Sequence;
+
+$users = User::factory()
+    ->count(10)
+    ->state(new Sequence(
+        fn (Sequence $sequence) => ['role' => UserRoles::all()->random()],
+    ))
+    ->create();
+</code></pre>
+<p>在序列閉包中，您可以存取注入到閉包中的序列實例上的 <code>$index</code> 屬性。<code>$index</code> 屬性包含到目前為止序列發生的迭代次數：</p>
+<pre><code class="language-php">$users = User::factory()
+    ->count(10)
+    ->state(new Sequence(
+        fn (Sequence $sequence) => ['name' => 'Name '.$sequence->index],
+    ))
+    ->create();
+</code></pre>
+<p>為了方便，序列還可以使用 <code>sequence</code> 方法來應用，該方法只是在內部呼叫 <code>state</code> 方法。<code>sequence</code> 方法接受一個閉包或序列化的屬性陣列：</p>
+<pre><code class="language-php">$users = User::factory()
+    ->count(2)
+    ->sequence(
+        ['name' => 'First User'],
+        ['name' => 'Second User'],
+    )
+    ->create();
+</code></pre>
+<p><a name="factory-relationships"></a></p>
+<h2>工廠關聯</h2>
+<p><a name="has-many-relationships"></a></p>
+<h3>一對多關聯</h3>
+<p>接下來，讓我們探討如何使用 Laravel 的流式工廠方法來構建 Eloquent 模型關聯。首先，讓我們假設我們的應用程式有一個 <code>App\\Models\\User</code> 模型和一個 <code>App\\Models\\Post</code> 模型。此外，讓我們假設 <code>User</code> 模型定義了一個與 <code>Post</code> 的 <code>hasMany</code> 關聯。我們可以使用 Laravel 工廠提供的 <code>has</code> 方法來創建一個擁有三篇文章的使用者。<code>has</code> 方法接受一個工廠實例：</p>
+<pre><code class="language-php">use App\\Models\\Post;
+use App\\Models\\User;
+
+$user = User::factory()
+    ->has(Post::factory()->count(3))
+    ->create();
+</code></pre>
+<p>按照慣例，將 <code>Post</code> 模型傳遞給 <code>has</code> 方法時，Laravel 將假設 <code>User</code> 模型必須有一個定義關聯的 <code>posts</code> 方法。如果需要，您可以明確指定您希望操作的關聯名稱：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->has(Post::factory()->count(3), 'posts')
+    ->create();
+</code></pre>
+<p>當然，您可以對相關模型執行狀態操作。此外，如果您的狀態更改需要存取父模型，您可以傳遞一個基於閉包的狀態轉換：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->has(
+        Post::factory()
+            ->count(3)
+            ->state(function (array $attributes, User $user) {
+                return ['user_type' => $user->type];
+            })
+    )
+    ->create();
+</code></pre>
+<p><a name="has-many-relationships-using-magic-methods"></a></p>
+<h4>使用魔法方法</h4>
+<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來構建關聯。例如，以下範例將使用慣例來確定相關模型應透過 <code>User</code> 模型上的 <code>posts</code> 關聯方法來創建：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasPosts(3)
+    ->create();
+</code></pre>
+<p>使用魔法方法創建工廠關聯時，您可以傳遞一個屬性陣列來覆蓋相關模型：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasPosts(3, [
+        'published' => false,
+    ])
+    ->create();
+</code></pre>
+<p>您還可以傳遞多個屬性陣列來創建具有逐模型狀態的相關模型。Laravel 將按順序應用每個陣列：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasPosts(
+        ['title' => 'First Post'],
+        ['title' => 'Second Post'],
+        ['title' => 'Third Post'],
+    )
+    ->create();
+</code></pre>
+<p>如果您的狀態更改需要存取父模型，您可以提供一個基於閉包的狀態轉換：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasPosts(3, function (array $attributes, User $user) {
+        return ['user_type' => $user->type];
+    })
+    ->create();
+</code></pre>
+<p><a name="belongs-to-relationships"></a></p>
+<h3>多對一關聯</h3>
+<p>現在我們已經探討了如何使用工廠構建「一對多」關聯，讓我們探索關聯的反面。<code>for</code> 方法可用於定義工廠創建的模型所屬的父模型。例如，我們可以創建三個屬於單個使用者的 <code>App\\Models\\Post</code> 模型實例：</p>
+<pre><code class="language-php">use App\\Models\\Post;
+use App\\Models\\User;
+
+$posts = Post::factory()
+    ->count(3)
+    ->for(User::factory()->state([
+        'name' => 'Jessica Archer',
+    ]))
+    ->create();
+</code></pre>
+<p>如果您已經有一個應該與您正在創建的模型關聯的父模型實例，您可以將模型實例傳遞給 <code>for</code> 方法：</p>
+<pre><code class="language-php">$user = User::factory()->create();
+
+$posts = Post::factory()
+    ->count(3)
+    ->for($user)
+    ->create();
+</code></pre>
+<p><a name="belongs-to-relationships-using-magic-methods"></a></p>
+<h4>使用魔法方法</h4>
+<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來定義「多對一」關聯。例如，以下範例將使用慣例來確定這三篇文章應屬於 <code>Post</code> 模型上的 <code>user</code> 關聯：</p>
+<pre><code class="language-php">$posts = Post::factory()
+    ->count(3)
+    ->forUser([
+        'name' => 'Jessica Archer',
+    ])
+    ->create();
+</code></pre>
+<p><a name="many-to-many-relationships"></a></p>
+<h3>多對多關聯</h3>
+<p>像<a href="#has-many-relationships">一對多關聯</a>一樣，「多對多」關聯可以使用 <code>has</code> 方法來創建：</p>
+<pre><code class="language-php">use App\\Models\\Role;
+use App\\Models\\User;
+
+$user = User::factory()
+    ->has(Role::factory()->count(3))
+    ->create();
+</code></pre>
+<p><a name="pivot-table-attributes"></a></p>
+<h4>中間表屬性</h4>
+<p>如果您需要定義應在連結模型的樞紐/中間表上設定的屬性，可以使用 <code>hasAttached</code> 方法。此方法接受一個中間表屬性名稱和值的陣列作為其第二個參數：</p>
+<pre><code class="language-php">use App\\Models\\Role;
+use App\\Models\\User;
+
+$user = User::factory()
+    ->hasAttached(
+        Role::factory()->count(3),
+        ['active' => true]
+    )
+    ->create();
+</code></pre>
+<p>如果您的狀態更改需要存取相關模型，您可以提供一個基於閉包的狀態轉換：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasAttached(
+        Role::factory()
+            ->count(3)
+            ->state(function (array $attributes, User $user) {
+                return ['name' => $user->name.' Role'];
+            }),
+        ['active' => true]
+    )
+    ->create();
+</code></pre>
+<p>您還可以傳遞一個中間表陣列陣列來為每個相關模型提供唯一的中間表資料：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasAttached(
+        Role::factory(),
+        [
+            ['active' => true],
+            ['active' => false],
+        ]
+    )
+    ->create();
+</code></pre>
+<p>如果您已經有您希望附加到您正在創建的模型的模型實例，您可以將模型實例傳遞給 <code>hasAttached</code> 方法。在此範例中，相同的三個角色將附加到所有三個使用者：</p>
+<pre><code class="language-php">$roles = Role::factory()->count(3)->create();
+
+$users = User::factory()
+    ->count(3)
+    ->hasAttached($roles, ['active' => true])
+    ->create();
+</code></pre>
+<p><a name="many-to-many-relationships-using-magic-methods"></a></p>
+<h4>使用魔法方法</h4>
+<p>為了方便，您可以使用 Laravel 的魔法工廠關聯方法來定義多對多關聯。例如，以下範例將使用慣例來確定相關模型應透過 <code>User</code> 模型上的 <code>roles</code> 關聯方法來創建：</p>
+<pre><code class="language-php">$user = User::factory()
+    ->hasRoles(1, [
+        'name' => 'Editor'
+    ])
+    ->create();
+</code></pre>
+<p><a name="polymorphic-relationships"></a></p>
+<h3>多態關聯</h3>
+<p><a href="/docs/eloquent-relationships#polymorphic-relationships">多態關聯</a>也可以使用工廠來創建。多態「多態多」關聯的創建方式與典型的「一對多」關聯相同。例如，如果 <code>App\\Models\\Post</code> 模型與 <code>App\\Models\\Comment</code> 模型有一個 <code>morphMany</code> 關聯：</p>
+<pre><code class="language-php">use App\\Models\\Post;
+
+$post = Post::factory()->hasComments(3)->create();
+</code></pre>
+<p><a name="morph-to-relationships"></a></p>
+<h4>多態多對一關聯</h4>
+<p>不能使用魔法方法來創建 <code>morphTo</code> 關聯。相反，必須直接使用 <code>for</code> 方法，並且必須明確提供關聯的名稱。例如，想像 <code>Comment</code> 模型有一個定義 <code>morphTo</code> 關聯的 <code>commentable</code> 方法。在這種情況下，我們可以直接使用 <code>for</code> 方法來創建屬於單個帖子的三個評論：</p>
+<pre><code class="language-php">$comments = Comment::factory()->count(3)->for(
+    Post::factory(), 'commentable'
+)->create();
+</code></pre>
+<p><a name="polymorphic-many-to-many-relationships"></a></p>
+<h4>多態多對多關聯</h4>
+<p>多態「多對多」（<code>morphToMany</code> / <code>morphedByMany</code>）關聯的創建方式與非多態「多對多」關聯相同：</p>
+<pre><code class="language-php">use App\\Models\\Tag;
+use App\\Models\\Video;
+
+$video = Video::factory()
+    ->hasAttached(
+        Tag::factory()->count(3),
+        ['public' => true]
+    )
+    ->create();
+</code></pre>
+<p>當然，魔法 <code>has</code> 方法也可以用於創建多態「多對多」關聯：</p>
+<pre><code class="language-php">$video = Video::factory()
+    ->hasTags(3, ['public' => true])
+    ->create();
+</code></pre>
+<p><a name="defining-relationships-within-factories"></a></p>
+<h3>在工廠中定義關聯</h3>
+<p>要在模型工廠中定義關聯，通常會將一個新的工廠實例分配給關聯的外鍵。這通常用於「反向」關聯（如 <code>belongsTo</code> 和 <code>morphTo</code> 關聯）。例如，如果您希望在創建帖子時創建一個新的使用者，您可以執行以下操作：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+/**
+ * 定義模型的預設狀態。
+ *
+ * @return array<string, mixed>
+ */
+public function definition(): array
+{
+    return [
+        'user_id' => User::factory(),
+        'title' => fake()->title(),
+        'content' => fake()->paragraph(),
+    ];
+}
+</code></pre>
+<p>如果關聯的欄位依賴於定義它的工廠，您可以將一個閉包分配給一個屬性。該閉包將接收工廠的評估屬性陣列：</p>
+<pre><code class="language-php">/**
+ * 定義模型的預設狀態。
+ *
+ * @return array<string, mixed>
+ */
+public function definition(): array
+{
+    return [
+        'user_id' => User::factory(),
+        'user_type' => function (array $attributes) {
+            return User::find($attributes['user_id'])->type;
+        },
+        'title' => fake()->title(),
+        'content' => fake()->paragraph(),
+    ];
+}
+</code></pre>
+<p><a name="recycling-an-existing-model-for-relationships"></a></p>
+<h3>回收現有模型用於關聯</h3>
+<p>如果您有與另一個模型共享共同關聯的模型，可以使用 <code>recycle</code> 方法來確保為工廠創建的所有關聯回收單個相關模型實例。</p>
+<p>例如，想像您有 <code>Airline</code>、<code>Flight</code> 和 <code>Ticket</code> 模型，其中票屬於航空公司和航班，航班也屬於航空公司。創建票時，您可能希望票和航班使用相同的航空公司，因此您可以將航空公司實例傳遞給 <code>recycle</code> 方法：</p>
+<pre><code class="language-php">Ticket::factory()
+    ->recycle(Airline::factory()->create())
+    ->create();
+</code></pre>
+<p>如果您有屬於共同使用者或團隊的模型，您會發現 <code>recycle</code> 方法特別有用。</p>
+<p><code>recycle</code> 方法還接受現有模型的集合。當向 <code>recycle</code> 方法提供集合時，當工廠需要該類型的模型時，將從集合中隨機選擇一個模型：</p>
+<pre><code class="language-php">Ticket::factory()
+    ->recycle($airlines)
+    ->create();
+</code></pre>
+`;
+---
+
+<DocsLayout title="Eloquent 工廠" currentPath="eloquent-factories">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Eloquent 工廠</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Eloquent 工廠</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/eloquent-factories" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

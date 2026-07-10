@@ -1,0 +1,281 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>模擬</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#mocking-objects">模擬物件</a></li>
+<li><a href="#mocking-facades">模擬外觀</a><ul>
+<li><a href="#facade-spies">外觀間諜</a></li>
+</ul>
+</li>
+<li><a href="#interacting-with-time">與時間互動</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>測試 Laravel 應用程式時，您可能希望「模擬」應用程式的某些方面，以便它們在給定的測試期間不會實際執行。例如，在測試派發事件的控制器時，您可能希望模擬事件監聽器，以便它們在測試期間不會實際執行。這使您能夠只測試控制器的 HTTP 回應，而無需擔心事件監聽器的執行，因為事件監聽器可以在自己的測試案例中進行測試。</p>
+<p>Laravel 開箱即用提供了用於模擬事件、作業和其他外觀的有用方法。這些輔助函數主要在 Mockery 之上提供了一個便利層，因此您不必手動進行複雜的 Mockery 方法呼叫。</p>
+<p><a name="mocking-objects"></a></p>
+<h2>模擬物件</h2>
+<p>當模擬將透過 Laravel 的<a href="/docs/container">服務容器</a>注入到應用程式中的物件時，您需要將模擬的實例作為 <code>instance</code> 綁定綁定到容器中。這將指示容器使用您的模擬物件實例而不是構建物件本身：</p>
+<pre><code class="language-php">use App\\Service;
+use Mockery;
+use Mockery\\MockInterface;
+
+test('something can be mocked', function () {
+    $this->instance(
+        Service::class,
+        Mockery::mock(Service::class, function (MockInterface $mock) {
+            $mock->expects('process');
+        })
+    );
+});
+</code></pre>
+<pre><code class="language-php">use App\\Service;
+use Mockery;
+use Mockery\\MockInterface;
+
+public function test_something_can_be_mocked(): void
+{
+    $this->instance(
+        Service::class,
+        Mockery::mock(Service::class, function (MockInterface $mock) {
+            $mock->expects('process');
+        })
+    );
+}
+</code></pre>
+<p>為了使這更方便，您可以使用 Laravel 的基礎測試案例類別提供的 <code>mock</code> 方法。例如，以下範例與上面的範例等效：</p>
+<pre><code class="language-php">use App\\Service;
+use Mockery\\MockInterface;
+
+$mock = $this->mock(Service::class, function (MockInterface $mock) {
+    $mock->expects('process');
+});
+</code></pre>
+<p>當您只需要模擬物件的幾個方法時，可以使用 <code>partialMock</code> 方法。未被模擬的方法在被呼叫時將正常執行：</p>
+<pre><code class="language-php">use App\\Service;
+use Mockery\\MockInterface;
+
+$mock = $this->partialMock(Service::class, function (MockInterface $mock) {
+    $mock->expects('process');
+});
+</code></pre>
+<p>同樣地，如果您想<a href="http://docs.mockery.io/en/latest/reference/spies.html">間諜</a>一個物件，Laravel 的基礎測試案例類別提供了一個 <code>spy</code> 方法作為 <code>Mockery::spy</code> 方法的便利包裝器。間諜與模擬類似；但是，間諜會記錄間諜和正在測試的代碼之間的任何互動，允許您在代碼執行後進行斷言：</p>
+<pre><code class="language-php">use App\\Service;
+
+$spy = $this->spy(Service::class);
+
+// ...
+
+$spy->shouldHaveReceived('process');
+</code></pre>
+<p><a name="mocking-facades"></a></p>
+<h2>模擬外觀</h2>
+<p>與傳統靜態方法呼叫不同，<a href="/docs/facades">外觀</a>（包括<a href="/docs/facades#real-time-facades">即時外觀</a>）可以被模擬。這比傳統靜態方法提供了巨大的優勢，並為您提供了與使用傳統依賴注入時相同的可測試性。在測試時，您可能經常希望模擬在控制器中發生的對 Laravel 外觀的呼叫。例如，考慮以下控制器動作：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Support\\Facades\\Cache;
+
+class UserController extends Controller
+{
+    /**
+     * 檢索應用程式所有使用者的列表。
+     */
+    public function index(): array
+    {
+        $value = Cache::get('key');
+
+        return [
+            // ...
+        ];
+    }
+}
+</code></pre>
+<p>我們可以透過使用 <code>expects</code> 方法來模擬對 <code>Cache</code> 外觀的呼叫，該方法將返回一個 <a href="https://github.com/padraic/mockery">Mockery</a> 模擬的實例。由於外觀實際上是由 Laravel <a href="/docs/container">服務容器</a>解析和管理的，因此它們比典型的靜態類別具有更多的可測試性。例如，讓我們模擬對 <code>Cache</code> 外觀的 <code>get</code> 方法的呼叫：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Support\\Facades\\Cache;
+
+test('get index', function () {
+    Cache::expects('get')
+        ->with('key')
+        ->andReturn('value');
+
+    $response = $this->get('/users');
+
+    // ...
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Support\\Facades\\Cache;
+use Tests\\TestCase;
+
+class UserControllerTest extends TestCase
+{
+    public function test_get_index(): void
+    {
+        Cache::expects('get')
+            ->with('key')
+            ->andReturn('value');
+
+        $response = $this->get('/users');
+
+        // ...
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+您不應模擬 <code>Request</code> 外觀。相反，在運行測試時，請將您想要的輸入傳遞到 <a href="/docs/http-tests">HTTP 測試方法</a>（如 <code>get</code> 和 <code>post</code>）中。同樣，與其模擬 <code>Config</code> 外觀，不如在測試中呼叫 <code>Config::set</code> 方法。</p>
+</blockquote>
+<p><a name="facade-spies"></a></p>
+<h3>外觀間諜</h3>
+<p>如果您希望<a href="http://docs.mockery.io/en/latest/reference/spies.html">間諜</a>一個外觀，可以在相應的外觀上呼叫 <code>spy</code> 方法。間諜與模擬類似；但是，間諜會記錄間諜和正在測試的代碼之間的任何互動，允許您在代碼執行後進行斷言：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Support\\Facades\\Cache;
+
+test('values are stored in cache', function () {
+    Cache::spy();
+
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+
+    Cache::shouldHaveReceived('put')->with('name', 'Taylor', 10);
+});
+</code></pre>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+public function test_values_are_stored_in_cache(): void
+{
+    Cache::spy();
+
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+
+    Cache::shouldHaveReceived('put')->with('name', 'Taylor', 10);
+}
+</code></pre>
+<p><a name="interacting-with-time"></a></p>
+<h2>與時間互動</h2>
+<p>在測試期間，您可能偶爾需要修改輔助函數（如 <code>now</code> 或 <code>Illuminate\\Support\\Carbon::now()</code>）返回的時間。幸運的是，Laravel 的基礎功能測試類別包含允許您操作當前時間的輔助函數：</p>
+<pre><code class="language-php">test('time can be manipulated', function () {
+    // 旅行到未來...
+    $this->travel(5)->milliseconds();
+    $this->travel(5)->seconds();
+    $this->travel(5)->minutes();
+    $this->travel(5)->hours();
+    $this->travel(5)->days();
+    $this->travel(5)->weeks();
+    $this->travel(5)->years();
+
+    // 旅行到過去...
+    $this->travel(-5)->hours();
+
+    // 旅行到明確的時間...
+    $this->travelTo(now()->minus(hours: 6));
+
+    // 返回到當前時間...
+    $this->travelBack();
+});
+</code></pre>
+<pre><code class="language-php">public function test_time_can_be_manipulated(): void
+{
+    // 旅行到未來...
+    $this->travel(5)->milliseconds();
+    $this->travel(5)->seconds();
+    $this->travel(5)->minutes();
+    $this->travel(5)->hours();
+    $this->travel(5)->days();
+    $this->travel(5)->weeks();
+    $this->travel(5)->years();
+
+    // 旅行到過去...
+    $this->travel(-5)->hours();
+
+    // 旅行到明確的時間...
+    $this->travelTo(now()->minus(hours: 6));
+
+    // 返回到當前時間...
+    $this->travelBack();
+}
+</code></pre>
+<p>您還可以向各種時間旅行方法傳遞一個閉包。閉包將在時間凍結在指定時間的情況下被呼叫。一旦閉包執行完畢，時間將恢復正常：</p>
+<pre><code class="language-php">$this->travel(5)->days(function () {
+    // 測試五天後的一些事情...
+});
+
+$this->travelTo(now()->mins(days: 10), function () {
+    // 在給定時刻測試一些事情...
+});
+</code></pre>
+<p><code>freezeTime</code> 方法可用於凍結當前時間。同樣地，<code>freezeSecond</code> 方法將凍結當前時間，但在當前秒的開始：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Carbon;
+
+// 凍結時間並在執行閉包後恢復正常時間...
+$this->freezeTime(function (Carbon $time) {
+    // ...
+});
+
+// 在當前秒凍結時間並在執行閉包後恢復正常時間...
+$this->freezeSecond(function (Carbon $time) {
+    // ...
+})
+</code></pre>
+<p>正如您所預期的那樣，上面討論的所有方法主要用於測試時間敏感的應用程式行為，例如鎖定討論論壇上的非活動帖子：</p>
+<pre><code class="language-php">use App\\Models\\Thread;
+
+test('forum threads lock after one week of inactivity', function () {
+    $thread = Thread::factory()->create();
+
+    $this->travel(1)->week();
+
+    expect($thread->isLockedByInactivity())->toBeTrue();
+});
+</code></pre>
+<pre><code class="language-php">use App\\Models\\Thread;
+
+public function test_forum_threads_lock_after_one_week_of_inactivity()
+{
+    $thread = Thread::factory()->create();
+
+    $this->travel(1)->week();
+
+    $this->assertTrue($thread->isLockedByInactivity());
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="模擬" currentPath="mocking">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>模擬</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">模擬</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/mocking" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

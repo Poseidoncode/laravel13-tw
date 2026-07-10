@@ -1,0 +1,133 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>契約</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#contracts-vs-facades">契約 vs. Facades</a></li>
+</ul>
+</li>
+<li><a href="#when-to-use-contracts">何時使用契約</a></li>
+<li><a href="#how-to-use-contracts">如何使用契約</a></li>
+<li><a href="#contract-reference">契約參考</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 的「契約」是一組定義框架核心服務的介面。例如，<code>Illuminate\\Contracts\\Queue\\Queue</code> 契約定義了佇列任務所需的方法，而 <code>Illuminate\\Contracts\\Mail\\Mailer</code> 契約定義了發送電子郵件所需的方法。</p>
+<p>每個契約都有框架提供的對應實作。例如，Laravel 提供了一個具有多種驅動程式的佇列實作，以及一個由 <a href="https://symfony.com/doc/current/mailer.html">Symfony Mailer</a> 驅動的郵件程式實作。</p>
+<p>所有 Laravel 契約都存放在<a href="https://github.com/illuminate/contracts">它們自己的 GitHub 儲存庫</a>中。這為所有可用的契約提供了一個快速參考點，以及在建構與 Laravel 服務互動的套件時可以使用的一個獨立的、解耦的套件。</p>
+<p><a name="contracts-vs-facades"></a></p>
+<h3>契約 vs. Facades</h3>
+<p>Laravel 的 <a href="/docs/facades">facades</a> 和輔助函數提供了一種簡單的方式來使用 Laravel 的服務，而無需類型提示和從服務容器解析契約。在大多數情況下，每個 facade 都有一個對應的契約。</p>
+<p>與不需要在類別的建構函數中引入它們的 facades 不同，契約允許您為類別定義明確的依賴項。有些開發者偏好以這種方式明確定義依賴項，因此更喜歡使用契約，而其他開發者則喜歡 facades 的便利性。<strong>一般來說，大多數應用程式在開發期間可以毫無問題地使用 facades。</strong></p>
+<p><a name="when-to-use-contracts"></a></p>
+<h2>何時使用契約</h2>
+<p>使用契約還是 facades 的決定將取決於個人喜好和開發團隊的偏好。契約和 facades 都可以用來建立健壯的、經過良好測試的 Laravel 應用程式。契約和 facades 並非互斥的。應用程式的某些部分可能使用 facades，而其他部分則依賴契約。只要您保持類別的職責明確，您會發現使用契約和 facades 之間幾乎沒有實際差異。</p>
+<p>一般來說，大多數應用程式在開發期間可以毫無問題地使用 facades。如果您正在建構一個與多個 PHP 框架整合的套件，您可能希望使用 <code>illuminate/contracts</code> 套件來定義與 Laravel 服務的整合，而無需在套件的 <code>composer.json</code> 檔案中要求 Laravel 的具體實作。</p>
+<p><a name="how-to-use-contracts"></a></p>
+<h2>如何使用契約</h2>
+<p>那麼，如何獲得契約的實作呢？實際上非常簡單。</p>
+<p>Laravel 中的許多類別類型都是通過<a href="/docs/container">服務容器</a>解析的，包括控制器、事件監聽器、中介層、佇列任務，甚至路由閉包。因此，要獲得契約的實作，您只需在被解析的類別的建構函數中「類型提示」該介面即可。</p>
+<p>例如，來看看這個事件監聽器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Listeners;
+
+use App\\Events\\OrderWasPlaced;
+use App\\Models\\User;
+use Illuminate\\Contracts\\Redis\\Factory;
+
+class CacheOrderInformation
+{
+    /**
+     * Create the event listener.
+     */
+    public function __construct(
+        protected Factory $redis,
+    ) {}
+
+    /**
+     * Handle the event.
+     */
+    public function handle(OrderWasPlaced $event): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>當解析事件監聽器時，服務容器將讀取類別建構函數上的類型提示，並注入適當的值。要了解更多關於在服務容器中註冊的資訊，請查看<a href="/docs/container">其文件</a>。</p>
+<p><a name="contract-reference"></a></p>
+<h2>契約參考</h2>
+<p>下表提供了所有 Laravel 契約及其對應 facades 的快速參考：</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>契約</th><th>參考 Facade</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/Access/Authorizable.php">Illuminate\\Contracts\\Auth\\Access\\Authorizable</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/Access/Gate.php">Illuminate\\Contracts\\Auth\\Access\\Gate</a></td><td><code>Gate</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/Authenticatable.php">Illuminate\\Contracts\\Auth\\Authenticatable</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/CanResetPassword.php">Illuminate\\Contracts\\Auth\\CanResetPassword</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/Factory.php">Illuminate\\Contracts\\Auth\\Factory</a></td><td><code>Auth</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/Guard.php">Illuminate\\Contracts\\Auth\\Guard</a></td><td><code>Auth::guard()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/PasswordBroker.php">Illuminate\\Contracts\\Auth\\PasswordBroker</a></td><td><code>Password::broker()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/PasswordBrokerFactory.php">Illuminate\\Contracts\\Auth\\PasswordBrokerFactory</a></td><td><code>Password</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/StatefulGuard.php">Illuminate\\Contracts\\Auth\\StatefulGuard</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/SupportsBasicAuth.php">Illuminate\\Contracts\\Auth\\SupportsBasicAuth</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Auth/UserProvider.php">Illuminate\\Contracts\\Auth\\UserProvider</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Broadcasting/Broadcaster.php">Illuminate\\Contracts\\Broadcasting\\Broadcaster</a></td><td><code>Broadcast::connection()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Broadcasting/Factory.php">Illuminate\\Contracts\\Broadcasting\\Factory</a></td><td><code>Broadcast</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Broadcasting/ShouldBroadcast.php">Illuminate\\Contracts\\Broadcasting\\ShouldBroadcast</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Bus/Dispatcher.php">Illuminate\\Contracts\\Bus\\Dispatcher</a></td><td><code>Bus</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Cache/Factory.php">Illuminate\\Contracts\\Cache\\Factory</a></td><td><code>Cache</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Cache/Repository.php">Illuminate\\Contracts\\Cache\\Repository</a></td><td><code>Cache::driver()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Config/Repository.php">Illuminate\\Contracts\\Config\\Repository</a></td><td><code>Config</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Console/Kernel.php">Illuminate\\Contracts\\Console\\Kernel</a></td><td><code>Artisan</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Container/Container.php">Illuminate\\Contracts\\Container\\Container</a></td><td><code>App</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Cookie/Factory.php">Illuminate\\Contracts\\Cookie\\Factory</a></td><td><code>Cookie</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Encryption/Encrypter.php">Illuminate\\Contracts\\Encryption\\Encrypter</a></td><td><code>Crypt</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Events/Dispatcher.php">Illuminate\\Contracts\\Events\\Dispatcher</a></td><td><code>Event</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Filesystem/Cloud.php">Illuminate\\Contracts\\Filesystem\\Cloud</a></td><td><code>Storage::cloud()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Filesystem/Factory.php">Illuminate\\Contracts\\Filesystem\\Factory</a></td><td><code>Storage</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Filesystem/Filesystem.php">Illuminate\\Contracts\\Filesystem\\Filesystem</a></td><td><code>Storage::disk()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Foundation/Application.php">Illuminate\\Contracts\\Foundation\\Application</a></td><td><code>App</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Hashing/Hasher.php">Illuminate\\Contracts\\Hashing\\Hasher</a></td><td><code>Hash</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Mail/Mailer.php">Illuminate\\Contracts\\Mail\\Mailer</a></td><td><code>Mail</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Notifications/Dispatcher.php">Illuminate\\Contracts\\Notifications\\Dispatcher</a></td><td><code>Notification</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Pagination/LengthAwarePaginator.php">Illuminate\\Contracts\\Pagination\\LengthAwarePaginator</a></td><td></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Pipeline/Pipeline.php">Illuminate\\Contracts\\Pipeline\\Pipeline</a></td><td><code>Pipeline</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Queue/Factory.php">Illuminate\\Contracts\\Queue\\Factory</a></td><td><code>Queue</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Queue/Queue.php">Illuminate\\Contracts\\Queue\\Queue</a></td><td><code>Queue::connection()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Redis/Factory.php">Illuminate\\Contracts\\Redis\\Factory</a></td><td><code>Redis</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Routing/Registrar.php">Illuminate\\Contracts\\Routing\\Registrar</a></td><td><code>Route</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Routing/ResponseFactory.php">Illuminate\\Contracts\\Routing\\ResponseFactory</a></td><td><code>Response</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Routing/UrlGenerator.php">Illuminate\\Contracts\\Routing\\UrlGenerator</a></td><td><code>URL</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Session/Session.php">Illuminate\\Contracts\\Session\\Session</a></td><td><code>Session::driver()</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Translation/Translator.php">Illuminate\\Contracts\\Translation\\Translator</a></td><td><code>Lang</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/Validation/Factory.php">Illuminate\\Contracts\\Validation\\Factory</a></td><td><code>Validator</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/View/Factory.php">Illuminate\\Contracts\\View\\Factory</a></td><td><code>View</code></td></tr>
+<tr><td><a href="https://github.com/illuminate/contracts/blob/13.x/View/View.php">Illuminate\\Contracts\\View\\View</a></td><td><code>View::make()</code></td></tr>
+</tbody>
+</table>
+</div>
+`;
+---
+
+<DocsLayout title="契約" currentPath="contracts">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>契約</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">契約</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/contracts" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

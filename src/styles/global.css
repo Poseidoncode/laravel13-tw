@@ -1,0 +1,315 @@
+/* ─── Fonts (must precede @import "tailwindcss") ─── */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,200;0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@import "tailwindcss";
+
+/* ─── Design Tokens (reference CSS custom properties for dynamic theming) ─── */
+@theme {
+    --color-bg-primary: var(--clr-bg-primary);
+    --color-bg-secondary: var(--clr-bg-secondary);
+    --color-bg-tertiary: var(--clr-bg-tertiary);
+    --color-bg-elevated: var(--clr-bg-elevated);
+
+    --color-text-primary: var(--clr-text-primary);
+    --color-text-secondary: var(--clr-text-secondary);
+    --color-text-tertiary: var(--clr-text-tertiary);
+
+    --color-accent: var(--clr-accent);
+    --color-accent-light: var(--clr-accent-light);
+    --color-accent-dark: var(--clr-accent-dark);
+
+    --color-emphasis: var(--clr-emphasis);
+    --color-emphasis-light: var(--clr-emphasis-light);
+
+    --color-border: var(--clr-border);
+    --color-border-light: var(--clr-border-light);
+
+    --color-code-bg: var(--clr-code-bg);
+    --color-code-border: var(--clr-code-border);
+
+    --color-surface: var(--clr-surface);
+
+    --color-success: #059669;
+    --color-warning: #d97706;
+    --color-error: #dc2626;
+    --color-info: #2563eb;
+
+    --font-sans: "Noto Sans TC", system-ui, -apple-system, sans-serif;
+    --font-serif: "Source Serif 4", Georgia, "Noto Sans TC", serif;
+    --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ─── Light Theme (default) ─── */
+:root {
+    --clr-bg-primary: #ffffff;
+    --clr-bg-secondary: #f8f9fa;
+    --clr-bg-tertiary: #f1f3f5;
+    --clr-bg-elevated: #ffffff;
+    --clr-surface: #ffffff;
+
+    --clr-text-primary: #1a1a2e;
+    --clr-text-secondary: #495057;
+    --clr-text-tertiary: #868e96;
+
+    --clr-accent: #1e3a5f;
+    --clr-accent-light: #e8edf5;
+    --clr-accent-dark: #152d47;
+
+    --clr-emphasis: #d97706;
+    --clr-emphasis-light: #fef3c7;
+
+    --clr-border: #dee2e6;
+    --clr-border-light: #e9ecef;
+
+    --clr-code-bg: #f8f9fa;
+    --clr-code-border: #1e3a5f;
+}
+
+/* ─── Dark Theme ─── */
+[data-theme="dark"] {
+    --clr-bg-primary: #051c2c;
+    --clr-bg-secondary: #19252e;
+    --clr-bg-tertiary: #223039;
+    --clr-bg-elevated: #313f49;
+    --clr-surface: #2a3741;
+
+    --clr-text-primary: #e8ecf1;
+    --clr-text-secondary: #9ca3af;
+    --clr-text-tertiary: #6b7280;
+
+    --clr-accent: #7ba7d9;
+    --clr-accent-light: #1a2740;
+    --clr-accent-dark: #a8c8ee;
+
+    --clr-emphasis: #fbbf24;
+    --clr-emphasis-light: #2d2410;
+
+    --clr-border: #2c343a;
+    --clr-border-light: #262e33;
+
+    --clr-code-bg: #181f24;
+    --clr-code-border: #7ba7d9;
+}
+
+/* ─── Theme transition (opt-in, only during theme switches) ─── */
+html.theme-transitioning * {
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.theme-transitioning * {
+        transition-duration: 0s;
+    }
+}
+
+/* ─── Skip to content link ─── */
+.skip-to-content {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background: var(--clr-accent);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0 0 0.5rem 0;
+    transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+    top: 0;
+    outline: none;
+}
+
+/* ─── Base Styles ─── */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        @apply bg-bg-primary text-text-primary font-sans;
+        line-height: 1.6;
+        text-rendering: optimizeLegibility;
+        font-feature-settings:
+            "kern" 1,
+            "liga" 1;
+    }
+
+    /* ── Typography Scale ── */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-bold tracking-tight text-text-primary;
+    }
+
+    h1 {
+        @apply text-4xl mb-6 leading-tight;
+        font-family: var(--font-serif);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+    }
+
+    h2 {
+        @apply text-2xl mb-4 mt-10 leading-snug;
+        font-family: var(--font-serif);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    h3 {
+        @apply text-xl mb-3 mt-8 leading-snug;
+    }
+
+    h4 {
+        @apply text-lg mb-2 mt-6 leading-snug;
+    }
+
+    h5 {
+        @apply text-base font-semibold mb-2 mt-4;
+    }
+
+    h6 {
+        @apply text-sm font-semibold mb-2 mt-4 uppercase tracking-wider;
+    }
+
+    /* ── Body Text ── */
+    p {
+        @apply text-text-secondary leading-relaxed mb-4;
+    }
+
+    strong,
+    b {
+        @apply font-semibold text-text-primary;
+    }
+
+    /* ── Links ── */
+    a {
+        @apply text-accent no-underline hover:underline decoration-1 underline-offset-2 transition-colors duration-200;
+    }
+
+    /* ── Inline Code ── */
+    code:not(pre code) {
+        @apply bg-bg-tertiary px-1.5 py-0.5 rounded text-sm font-mono text-text-primary;
+        font-size: 0.8125em;
+    }
+
+    /* ── Code Blocks ── */
+    pre {
+        @apply overflow-x-auto mb-6 rounded-lg;
+        background: var(--clr-code-bg);
+        border: 1px solid var(--clr-border);
+        border-left: 3px solid var(--clr-code-border);
+        padding: 1.25rem 1rem;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    pre code {
+        @apply bg-transparent p-0 border-0;
+        font-family: var(--font-mono);
+        color: var(--clr-text-primary);
+    }
+
+    /* ── Lists ── */
+    ul,
+    ol {
+        @apply text-text-secondary mb-4 pl-6;
+    }
+
+    li {
+        @apply mb-1.5 leading-relaxed;
+    }
+
+    ul li {
+        @apply list-disc;
+    }
+
+    ul li::marker {
+        @apply text-accent;
+    }
+
+    ol li {
+        @apply list-decimal;
+    }
+
+    /* ── Blockquotes ── */
+    blockquote {
+        border-left: 3px solid var(--clr-accent);
+        background: var(--clr-accent-light);
+        @apply px-5 py-4 my-6 rounded-r-lg;
+    }
+
+    blockquote p {
+        @apply mb-0 text-text-primary;
+    }
+
+    /* ── Tables ── */
+    table {
+        @apply w-full border-collapse mb-6 text-sm;
+    }
+
+    thead th {
+        @apply text-left p-3 font-semibold text-text-primary;
+        border-bottom: 2px solid var(--clr-accent);
+        background: var(--clr-bg-secondary);
+    }
+
+    tbody td {
+        @apply p-3;
+        border-bottom: 1px solid var(--clr-border-light);
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr:hover {
+        background: var(--clr-bg-secondary);
+    }
+
+    /* ── Horizontal Rule ── */
+    hr {
+        @apply border-border my-10;
+    }
+
+    /* ── Selection ── */
+    ::selection {
+        background: var(--clr-accent-light);
+        color: var(--clr-accent-dark);
+    }
+
+    /* ── Scrollbar (Webkit) ── */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-border rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-text-tertiary;
+    }
+
+    /* ── Focus ── */
+    *:focus-visible {
+        @apply outline-2 outline-offset-2 outline-accent;
+    }
+}

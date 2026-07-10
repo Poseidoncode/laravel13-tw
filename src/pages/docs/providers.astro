@@ -1,0 +1,211 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>服務提供者</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#writing-service-providers">編寫服務提供者</a><ul>
+<li><a href="#the-register-method">Register 方法</a></li>
+<li><a href="#the-boot-method">Boot 方法</a></li>
+</ul>
+</li>
+<li><a href="#registering-providers">註冊提供者</a></li>
+<li><a href="#deferred-providers">延遲提供者</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>服務提供者是所有 Laravel 應用程式引導的中心位置。您自己的應用程式以及所有 Laravel 核心服務都是透過服務提供者引導的。</p>
+<p>但是，「引導」是什麼意思呢？一般來說，我們指的是**註冊**事物，包括註冊服務容器綁定、事件監聽器、中介層，甚至路由。服務提供者是設定應用程式的中心位置。</p>
+<p>Laravel 在內部使用數十個服務提供者來引導其核心服務，如郵件器、佇列、快取等。其中許多提供者是「延遲」提供者，這意味著它們不會在每個請求上載入，而僅在實際需要其提供的服務時才載入。</p>
+<p>所有使用者定義的服務提供者都在 <code>bootstrap/providers.php</code> 檔案中註冊。在以下文件中，您將學習如何編寫自己的服務提供者並將其註冊到 Laravel 應用程式中。</p>
+<blockquote>
+<p>[!NOTE]
+如果您想了解更多關於 Laravel 如何處理請求和內部運作的資訊，請查看我們關於 Laravel <a href="/docs/lifecycle">請求生命週期</a>的文件。</p>
+</blockquote>
+<p><a name="writing-service-providers"></a></p>
+<h2>編寫服務提供者</h2>
+<p>所有服務提供者都繼承 <code>Illuminate\\Support\\ServiceProvider</code> 類別。大多數服務提供者包含 <code>register</code> 和 <code>boot</code> 方法。在 <code>register</code> 方法中，您應該<strong>僅將事物綁定到<a href="/docs/container">服務容器</a></strong>中。您不應嘗試在 <code>register</code> 方法中註冊任何事件監聽器、路由或任何其他功能。</p>
+<p>Artisan CLI 可以透過 <code>make:provider</code> 命令生成新的提供者。Laravel 將自動在應用程式的 <code>bootstrap/providers.php</code> 檔案中註冊您的新提供者：</p>
+<pre><code class="language-shell">php artisan make:provider RiakServiceProvider
+</code></pre>
+<p><a name="the-register-method"></a></p>
+<h3>Register 方法</h3>
+<p>如前所述，在 <code>register</code> 方法中，您應該僅將事物綁定到<a href="/docs/container">服務容器</a>中。您不應嘗試在 <code>register</code> 方法中註冊任何事件監聽器、路由或任何其他功能。否則，您可能會意外使用由尚未載入的服務提供者提供的服務。</p>
+<p>讓我們看看一個基本的服務提供者。在服務提供者的任何方法中，您始終可以存取 <code>$app</code> 屬性，該屬性提供對服務容器的存取：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Services\\Riak\\Connection;
+use Illuminate\\Contracts\\Foundation\\Application;
+use Illuminate\\Support\\ServiceProvider;
+
+class RiakServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        $this->app->singleton(Connection::class, function (Application $app) {
+            return new Connection(config('riak'));
+        });
+    }
+}
+</code></pre>
+<p>此服務提供者僅定義了一個 <code>register</code> 方法，並使用該方法在服務容器中定義 <code>App\\Services\\Riak\\Connection</code> 的實作。如果您還不熟悉 Laravel 的服務容器，請查看<a href="/docs/container">其文件</a>。</p>
+<p><a name="the-bindings-and-singletons-properties"></a></p>
+<h4><code>bindings</code> 和 <code>singletons</code> 屬性</h4>
+<p>如果您的服務提供者註冊了許多簡單的綁定，您可能希望使用 <code>bindings</code> 和 <code>singletons</code> 屬性，而不是手動註冊每個容器綁定。當框架載入服務提供者時，它會自動檢查這些屬性並註冊其綁定：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Contracts\\DowntimeNotifier;
+use App\\Contracts\\ServerProvider;
+use App\\Services\\DigitalOceanServerProvider;
+use App\\Services\\PingdomDowntimeNotifier;
+use App\\Services\\ServerToolsProvider;
+use Illuminate\\Support\\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * All of the container bindings that should be registered.
+     *
+     * @var array
+     */
+    public $bindings = [
+        ServerProvider::class => DigitalOceanServerProvider::class,
+    ];
+
+    /**
+     * All of the container singletons that should be registered.
+     *
+     * @var array
+     */
+    public $singletons = [
+        DowntimeNotifier::class => PingdomDowntimeNotifier::class,
+        ServerProvider::class => ServerToolsProvider::class,
+    ];
+}
+</code></pre>
+<p><a name="the-boot-method"></a></p>
+<h3>Boot 方法</h3>
+<p>那麼，如果我們需要在服務提供者中註冊<a href="/docs/views#view-composers">視圖合成器</a>呢？這應該在 <code>boot</code> 方法中完成。<strong>此方法在所有其他服務提供者註冊後被呼叫</strong>，這意味著您可以存取框架已註冊的所有其他服務：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\Facades\\View;
+use Illuminate\\Support\\ServiceProvider;
+
+class ComposerServiceProvider extends ServiceProvider
+{
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        View::composer('view', function () {
+            // ...
+        });
+    }
+}
+</code></pre>
+<p><a name="boot-method-dependency-injection"></a></p>
+<h4>Boot 方法依賴注入</h4>
+<p>您可以對服務提供者的 <code>boot</code> 方法進行依賴項類型提示。<a href="/docs/container">服務容器</a>將自動注入您需要的任何依賴項：</p>
+<pre><code class="language-php">use Illuminate\\Contracts\\Routing\\ResponseFactory;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(ResponseFactory $response): void
+{
+    $response->macro('serialized', function (mixed $value) {
+        // ...
+    });
+}
+</code></pre>
+<p><a name="registering-providers"></a></p>
+<h2>註冊提供者</h2>
+<p>所有服務提供者都在 <code>bootstrap/providers.php</code> 設定檔中註冊。此檔案返回一個陣列，其中包含應用程式服務提供者的類別名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+return [
+    App\\Providers\\AppServiceProvider::class,
+];
+</code></pre>
+<p>當您呼叫 <code>make:provider</code> Artisan 命令時，Laravel 將自動將生成的提供者新增到 <code>bootstrap/providers.php</code> 檔案中。但是，如果您手動建立了提供者類別，應該手動將提供者類別新增到陣列中：</p>
+<pre><code class="language-php">&lt;?php
+
+return [
+    App\\Providers\\AppServiceProvider::class,
+    App\\Providers\\ComposerServiceProvider::class, // [tl! add]
+];
+</code></pre>
+<p><a name="deferred-providers"></a></p>
+<h2>延遲提供者</h2>
+<p>如果您的提供者**僅**在<a href="/docs/container">服務容器</a>中註冊綁定，您可以選擇將其註冊延遲到實際需要其中一個已註冊綁定時才進行。延遲載入此類提供者將提高應用程式的效能，因為它不會在每個請求上都從檔案系統載入。</p>
+<p>Laravel 編譯並儲存延遲服務提供者提供的所有服務的清單，以及其服務提供者類別的名稱。然後，只有當您嘗試解析其中一個服務時，Laravel 才會載入服務提供者。</p>
+<p>要延遲提供者的載入，請實作 <code>\\Illuminate\\Contracts\\Support\\DeferrableProvider</code> 介面並定義 <code>provides</code> 方法。<code>provides</code> 方法應返回提供者註冊的服務容器綁定：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Services\\Riak\\Connection;
+use Illuminate\\Contracts\\Foundation\\Application;
+use Illuminate\\Contracts\\Support\\DeferrableProvider;
+use Illuminate\\Support\\ServiceProvider;
+
+class RiakServiceProvider extends ServiceProvider implements DeferrableProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        $this->app->singleton(Connection::class, function (Application $app) {
+            return new Connection($app['config']['riak']);
+        });
+    }
+
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array<int, string>
+     */
+    public function provides(): array
+    {
+        return [Connection::class];
+    }
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="服務提供者" currentPath="providers">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>服務提供者</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">服務提供者</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/providers" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

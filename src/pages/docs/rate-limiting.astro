@@ -1,0 +1,153 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>速率限制</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#cache-configuration">快取設定</a></li>
+</ul>
+</li>
+<li><a href="#basic-usage">基本用法</a><ul>
+<li><a href="#manually-incrementing-attempts">手動遞增嘗試次數</a></li>
+<li><a href="#clearing-attempts">清除嘗試次數</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 包含一個易於使用的速率限制抽象層，與應用程式的<a href="cache">快取</a>結合使用，提供了一種在指定時間窗口內限制任何操作的簡單方法。</p>
+<blockquote>
+<p>[!NOTE]
+如果您有興趣限制傳入的 HTTP 請求，請參閱<a href="/docs/routing#rate-limiting">速率限制器中介層文件</a>。</p>
+</blockquote>
+<p><a name="cache-configuration"></a></p>
+<h3>快取設定</h3>
+<p>通常，速率限制器使用預設的應用程式快取，由應用程式 <code>cache</code> 設定檔中的 <code>default</code> 鍵定義。但是，您可以透過在應用程式 <code>cache</code> 設定檔中定義 <code>limiter</code> 鍵來指定速率限制器應使用的快取驅動程式：</p>
+<pre><code class="language-php">'default' => env('CACHE_STORE', 'database'),
+
+'limiter' => 'redis', // [tl! add]
+</code></pre>
+<p><a name="basic-usage"></a></p>
+<h2>基本用法</h2>
+<p><code>Illuminate\\Support\\Facades\\RateLimiter</code> facade 可用於與速率限制器互動。速率限制器提供的最簡單方法是 <code>attempt</code> 方法，它在給定的秒數內對給定的回呼進行速率限制。</p>
+<p>當回呼沒有剩餘嘗試次數時，<code>attempt</code> 方法返回 <code>false</code>；否則，<code>attempt</code> 方法將返回回呼的結果或 <code>true</code>。第一個參數是速率限制器「索引鍵」，可以是您選擇的任何字串，代表正在被速率限制的操作：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\RateLimiter;
+
+$executed = RateLimiter::attempt(
+    'send-message:'.$user->id,
+    $perMinute = 5,
+    function() {
+        // Send message...
+    }
+);
+
+if (! $executed) {
+    return 'Too many messages sent!';
+}
+</code></pre>
+<p>如有需要，您可以向 <code>attempt</code> 方法提供第四個參數，即「衰減率」，或可用嘗試次數重置之前的秒數。例如，我們可以修改上面的範例以允許每兩分鐘五次嘗試：</p>
+<pre><code class="language-php">$executed = RateLimiter::attempt(
+    'send-message:'.$user->id,
+    $perTwoMinutes = 5,
+    function() {
+        // Send message...
+    },
+    $decayRate = 120,
+);
+</code></pre>
+<p><a name="manually-incrementing-attempts"></a></p>
+<h3>手動遞增嘗試次數</h3>
+<p>如果您想手動與速率限制器互動，還有各種其他方法可用。例如，您可以呼叫 <code>tooManyAttempts</code> 方法來判斷給定的速率限制器索引鍵是否已超過其每分鐘允許的最大嘗試次數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\RateLimiter;
+
+if (RateLimiter::tooManyAttempts('send-message:'.$user->id, $perMinute = 5)) {
+    return 'Too many attempts!';
+}
+
+RateLimiter::increment('send-message:'.$user->id);
+
+// Send message...
+</code></pre>
+<p>在限制可能同時收到許多請求的端點時，您可能希望檢查 <code>increment</code> 方法返回的值，而不是將 <code>tooManyAttempts</code> 和 <code>increment</code> 作為單獨的操作使用。使用 <code>redis</code>、<code>memcached</code> 或 <code>database</code> 快取儲存時，此值會以原子方式遞增，確保每個並發請求都收到唯一的計數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\RateLimiter;
+
+$perMinute = 5;
+
+if (RateLimiter::increment('send-message:'.$user->id) > $perMinute) {
+    return 'Too many attempts!';
+}
+
+// Send message...
+</code></pre>
+<p>或者，您可以使用 <code>remaining</code> 方法來檢索給定索引鍵的剩餘嘗試次數。如果給定的索引鍵有重試次數剩餘，您可以呼叫 <code>increment</code> 方法來遞增總嘗試次數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\RateLimiter;
+
+if (RateLimiter::remaining('send-message:'.$user->id, $perMinute = 5)) {
+    RateLimiter::increment('send-message:'.$user->id);
+
+    // Send message...
+}
+</code></pre>
+<p>如果您想將給定速率限制器索引鍵的值遞增超過一，可以向 <code>increment</code> 方法提供所需的金額：</p>
+<pre><code class="language-php">RateLimiter::increment('send-message:'.$user->id, amount: 5);
+</code></pre>
+<p><a name="determining-limiter-availability"></a></p>
+<h4>判斷限制器可用性</h4>
+<p>當索引鍵沒有更多剩餘嘗試次數時，<code>availableIn</code> 方法返回直到更多嘗試次數可用的剩餘秒數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\RateLimiter;
+
+if (RateLimiter::tooManyAttempts('send-message:'.$user->id, $perMinute = 5)) {
+    $seconds = RateLimiter::availableIn('send-message:'.$user->id);
+
+    return 'You may try again in '.$seconds.' seconds.';
+}
+
+RateLimiter::increment('send-message:'.$user->id);
+
+// Send message...
+</code></pre>
+<p><a name="clearing-attempts"></a></p>
+<h3>清除嘗試次數</h3>
+<p>您可以使用 <code>clear</code> 方法重設給定速率限制器索引鍵的嘗試次數。例如，當接收者讀取給定訊息時，您可以重設嘗試次數：</p>
+<pre><code class="language-php">use App\\Models\\Message;
+use Illuminate\\Support\\Facades\\RateLimiter;
+
+/**
+ * Mark the message as read.
+ */
+public function read(Message $message): Message
+{
+    $message->markAsRead();
+
+    RateLimiter::clear('send-message:'.$message->user_id);
+
+    return $message;
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="速率限制" currentPath="rate-limiting">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>速率限制</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">速率限制</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/rate-limiting" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

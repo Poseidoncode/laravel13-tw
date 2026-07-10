@@ -1,0 +1,444 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Scout</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#queueing">佇列</a></li>
+</ul>
+</li>
+<li><a href="#driver-prerequisites">驅動程式先決條件</a></li>
+<li><a href="#configuration">配置</a><ul>
+<li><a href="#configuring-searchable-data">配置可搜尋資料</a></li>
+</ul>
+</li>
+<li><a href="#database-and-collection-engines">資料庫／集合引擎</a><ul>
+<li><a href="#database-engine">資料庫引擎</a></li>
+<li><a href="#collection-engine">集合引擎</a></li>
+</ul>
+</li>
+<li><a href="#third-party-engine-configuration">第三方引擎配置</a><ul>
+<li><a href="#configuring-model-indexes">配置模型索引</a></li>
+<li><a href="#algolia-configuration">Algolia</a></li>
+<li><a href="#meilisearch-configuration">Meilisearch</a></li>
+<li><a href="#typesense-configuration">Typesense</a></li>
+</ul>
+</li>
+<li><a href="#indexing">第三方引擎索引</a><ul>
+<li><a href="#batch-import">批次匯入</a></li>
+<li><a href="#adding-records">新增記錄</a></li>
+<li><a href="#updating-records">更新記錄</a></li>
+<li><a href="#removing-records">刪除記錄</a></li>
+<li><a href="#pausing-indexing">暫停索引</a></li>
+<li><a href="#conditionally-searchable-model-instances">條件式可搜尋模型實例</a></li>
+</ul>
+</li>
+<li><a href="#searching">搜尋</a><ul>
+<li><a href="#where-clauses">Where 子句</a></li>
+<li><a href="#pagination">分頁</a></li>
+<li><a href="#soft-deleting">軟刪除</a></li>
+<li><a href="#customizing-engine-searches">自訂引擎搜尋</a></li>
+</ul>
+</li>
+<li><a href="#custom-engines">自訂引擎</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/scout">Laravel Scout</a> 提供了一個簡單的、基於驅動程式的解決方案，用於為您的 <a href="/docs/eloquent">Eloquent 模型</a>新增全文搜尋功能。使用模型觀察器，Scout 將自動使您的搜尋索引與 Eloquent 記錄保持同步。</p>
+<p>Scout 附帶了一個內建的 <code>database</code> 引擎，該引擎使用 MySQL/PostgreSQL 全文索引和 <code>LIKE</code> 子句來搜尋您現有的資料庫 — 無需外部服務。對於大多數應用程式來說，這就是您所需要的。要了解 Laravel 中所有可用的搜尋選項，請查閱<a href="/docs/search">搜尋文件</a>。</p>
+<p>當您需要容錯、分面過濾或大規模地理搜尋等功能時，Scout 還包含了用於 <a href="https://www.algolia.com/">Algolia</a>、<a href="https://www.meilisearch.com">Meilisearch</a> 和 <a href="https://typesense.org">Typesense</a> 的驅動程式。還有一個用於本地開發的「集合」驅動程式，您也可以自由編寫<a href="#custom-engines">自訂引擎</a>。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，通過 Composer 套件管理器安裝 Scout：</p>
+<pre><code class="language-shell">composer require laravel/scout</code></pre>
+<p>安裝 Scout 後，您應使用 <code>vendor:publish</code> Artisan 命令發佈 Scout 配置檔。此命令將把 <code>scout.php</code> 配置檔發佈到應用程式的 <code>config</code> 目錄：</p>
+<pre><code class="language-shell">php artisan vendor:publish --provider="Laravel\\Scout\\ScoutServiceProvider"</code></pre>
+<p>最後，將 <code>Laravel\\Scout\\Searchable</code> trait 新增到您希望使其可搜尋的模型中。此 trait 將註冊一個模型觀察器，自動使模型與您的搜尋驅動程式保持同步：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Scout\\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+}
+</code></pre>
+<p><a name="queueing"></a></p>
+<h3>佇列</h3>
+<p>使用非 <code>database</code> 或 <code>collection</code> 引擎時，強烈建議在使用該函式庫之前配置一個<a href="/docs/queues">佇列驅動程式</a>。執行佇列工作程式將允許 Scout 將所有同步模型資訊到搜尋索引的操作排入佇列，從而為應用程式的 Web 界面提供更好的回應時間。</p>
+<p>一旦您配置了佇列驅動程式，將 <code>config/scout.php</code> 配置檔中的 <code>queue</code> 選項值設定為 <code>true</code>：</p>
+<pre><code class="language-php">'queue' => true,</code></pre>
+<p>即使 <code>queue</code> 選項設定為 <code>false</code>，重要的是要記住某些 Scout 驅動程式（如 Algolia 和 Meilisearch）始終非同步索引記錄。換句話說，即使在您的 Laravel 應用程式中索引操作已完成，搜尋引擎本身可能不會立即反映新的和更新的記錄。</p>
+<p>要指定 Scout 任務使用的連線和佇列，您可以將 <code>queue</code> 配置選項定義為一個陣列：</p>
+<pre><code class="language-php">'queue' => [
+    'connection' => 'redis',
+    'queue' => 'scout'
+],</code></pre>
+<p>當然，如果您自訂了 Scout 任務使用的連線和佇列，您應執行一個佇列工作程式來處理該連線和佇列上的任務：</p>
+<pre><code class="language-shell">php artisan queue:work redis --queue=scout</code></pre>
+<p><a name="unique-jobs"></a></p>
+<h4>唯一任務</h4>
+<p>在寫入密集型應用程式中，您可能希望防止 Scout 為相同的模型記錄排隊重複的任務。您可以通過註冊 <code>MakeSearchableUniquely</code> 和 <code>RemoveFromSearchUniquely</code> 任務類別來選擇唯一索引任務，通常在服務提供者的 <code>boot</code> 方法中進行：</p>
+<pre><code class="language-php">use Laravel\\Scout\\Jobs\\MakeSearchableUniquely;
+use Laravel\\Scout\\Jobs\\RemoveFromSearchUniquely;
+use Laravel\\Scout\\Scout;
+
+Scout::makeSearchableUsing(MakeSearchableUniquely::class);
+Scout::removeFromSearchUsing(RemoveFromSearchUniquely::class);
+</code></pre>
+<p>這些任務使用 Laravel 的<a href="/docs/queues#unique-jobs">唯一任務鎖定</a>來避免在已存在匹配的可搜尋模型記錄的排隊索引操作時分發重複的索引操作。</p>
+<p><a name="driver-prerequisites"></a></p>
+<h2>驅動程式先決條件</h2>
+<p><a name="algolia"></a></p>
+<h3>Algolia</h3>
+<p>使用 Algolia 驅動程式時，您應在 <code>config/scout.php</code> 配置檔中配置您的 Algolia <code>id</code> 和 <code>secret</code> 憑證。配置好憑證後，您還需要通過 Composer 套件管理器安裝 Algolia PHP SDK：</p>
+<pre><code class="language-shell">composer require algolia/algoliasearch-client-php</code></pre>
+<p><a name="meilisearch"></a></p>
+<h3>Meilisearch</h3>
+<p><a href="https://www.meilisearch.com">Meilisearch</a> 是一個快速、開源的搜尋引擎。如果您不確定如何在本地機器上安裝 Meilisearch，可以使用 <a href="/docs/sail#meilisearch">Laravel Sail</a>，這是 Laravel 官方支援的 Docker 開發環境。</p>
+<p>使用 Meilisearch 驅動程式時，您需要通過 Composer 套件管理器安裝 Meilisearch PHP SDK：</p>
+<pre><code class="language-shell">composer require meilisearch/meilisearch-php http-interop/http-factory-guzzle</code></pre>
+<p>然後，在應用程式的 <code>.env</code> 檔案中設定 <code>SCOUT_DRIVER</code> 環境變數以及您的 Meilisearch <code>host</code> 和 <code>key</code> 憑證：</p>
+<pre><code class="language-ini">SCOUT_DRIVER=meilisearch
+MEILISEARCH_HOST=http://127.0.0.1:7700
+MEILISEARCH_KEY=masterKey</code></pre>
+<p>有關 Meilisearch 的更多資訊，請查閱 <a href="https://docs.meilisearch.com/learn/getting_started/quick_start.html">Meilisearch 文件</a>。</p>
+<p>此外，您應通過查閱 <a href="https://github.com/meilisearch/meilisearch-php#-compatibility-with-meilisearch">Meilisearch 關於二進位相容性的文件</a>，確保安裝的 <code>meilisearch/meilisearch-php</code> 版本與您的 Meilisearch 二進位版本相容。</p>
+<blockquote>
+<p>[!WARNING]
+在使用 Meilisearch 的應用程式上升級 Scout 時，您應始終查閱 Meilisearch 服務本身的<a href="https://github.com/meilisearch/Meilisearch/releases">任何其他重大變更</a>。</p>
+</blockquote>
+<p><a name="typesense"></a></p>
+<h3>Typesense</h3>
+<p><a href="https://typesense.org">Typesense</a> 是一個閃電般快速的開源搜尋引擎，支援關鍵字搜尋、語意搜尋、地理搜尋和向量搜尋。</p>
+<p>您可以<a href="https://typesense.org/docs/guide/install-typesense.html#option-2-local-machine-self-hosting">自託管</a> Typesense 或使用 <a href="https://cloud.typesense.org">Typesense Cloud</a>。</p>
+<p>要開始在 Scout 中使用 Typesense，請通過 Composer 套件管理器安裝 Typesense PHP SDK：</p>
+<pre><code class="language-shell">composer require typesense/typesense-php</code></pre>
+<p>然後，在應用程式的 <code>.env</code> 檔案中設定 <code>SCOUT_DRIVER</code> 環境變數以及您的 Typesense 主機和 API 金鑰憑證：</p>
+<pre><code class="language-ini">SCOUT_DRIVER=typesense
+TYPESENSE_API_KEY=masterKey
+TYPESENSE_HOST=localhost</code></pre>
+<p>如果您正在使用 <a href="/docs/sail">Laravel Sail</a>，可能需要調整 <code>TYPESENSE_HOST</code> 環境變數以匹配 Docker 容器名稱。您還可以選擇指定安裝的連接埠、路徑和協定：</p>
+<pre><code class="language-ini">TYPESENSE_PORT=8108
+TYPESENSE_PATH=
+TYPESENSE_PROTOCOL=http</code></pre>
+<p>Typesense 集合的其他設定和綱要定義可以在應用程式的 <code>config/scout.php</code> 配置檔中找到。有關 Typesense 的更多資訊，請查閱 <a href="https://typesense.org/docs/guide/#quick-start">Typesense 文件</a>。</p>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p><a name="configuring-searchable-data"></a></p>
+<h3>配置可搜尋資料</h3>
+<p>預設情況下，給定模型的整個 <code>toArray</code> 形式將持久化到其搜尋索引中。如果您想自訂同步到搜尋索引的資料，可以覆寫模型上的 <code>toSearchableArray</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Scout\\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+
+    public function toSearchableArray(): array
+    {
+        return [
+            'title' => $this->title,
+            'content' => $this->content,
+        ];
+    }
+}
+</code></pre>
+<p>要配置搜尋索引中儲存的內容，您還可能需要使用 <code>unsearchable</code> 或 <code>searchableAfter</code> 方法。有關詳細資訊，請查閱<a href="#conditionally-searchable-model-instances">條件式可搜尋模型實例</a>部分。此外，您還可能想要自訂模型 ID 並定義標註。</p>
+<p><a name="configuring-the-model-id"></a></p>
+<h4>配置模型 ID</h4>
+<p>預設情況下，Scout 將使用模型的主鍵作為儲存在搜尋索引中的模型唯一 ID。如果需要，您可以覆寫 <code>getScoutKey</code> 方法來自訂模型 ID：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Scout\\Searchable;
+
+class User extends Model
+{
+    use Searchable;
+
+    public function getScoutKey(): mixed
+    {
+        return $this->email;
+    }
+}
+</code></pre>
+<p><a name="configuring-model-indexes"></a></p>
+<h4>配置模型索引</h4>
+<p>每個可搜尋模型都與一個搜尋索引相關聯，該索引包含所有可搜尋記錄。Scout 將根據模型的「表格」名稱（通常是模型的「使用者」名稱）自動推斷索引名稱。您可以通過覆寫模型上的 <code>searchableAs</code> 方法來自訂索引名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Scout\\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+
+    public function searchableAs(): string
+    {
+        return 'posts_index';
+    }
+}
+</code></pre>
+<p><a name="database-and-collection-engines"></a></p>
+<h2>資料庫／集合引擎</h2>
+<p><a name="database-engine"></a></p>
+<h3>資料庫引擎</h3>
+<p><code>database</code> 引擎使用 MySQL 和 PostgreSQL 的全文索引功能以及 <code>LIKE</code> 子句來搜尋您的現有資料庫。當使用 <code>database</code> 引擎時，所有搜尋索引操作會立即執行，因此 Searc hable 模型的任何變更都會立即在搜尋結果中反映。此引擎不需要外部服務或依賴項，並且對於大多數應用程式來說應該足夠。</p>
+<p>要使用 <code>database</code> 引擎，只需在應用程式的 <code>.env</code> 檔案中將 <code>SCOUT_DRIVER</code> 環境變數的值設定為 <code>database</code>：</p>
+<pre><code class="language-ini">SCOUT_DRIVER=database</code></pre>
+<p><a name="collection-engine"></a></p>
+<h3>集合引擎</h3>
+<p><code>collection</code> 引擎主要用於本地開發和或不需要外部搜尋引擎的簡單搜尋操作。此引擎將在記憶體中過濾所有模型記錄的集合。它不支援除搜尋之外的其他 Scout 功能（如 <code>simplePaginate</code>）。使用 <code>collection</code> 引擎時，不需要外部依賴項。</p>
+<p>要使用 <code>collection</code> 引擎，只需將應用程式 <code>.env</code> 檔案中的 <code>SCOUT_DRIVER</code> 環境變數值設定為 <code>collection</code>：</p>
+<pre><code class="language-ini">SCOUT_DRIVER=collection</code></pre>
+<p><a name="third-party-engine-configuration"></a></p>
+<h2>第三方引擎配置</h2>
+<p><a name="configuring-model-indexes"></a></p>
+<h3>配置模型索引</h3>
+<p>每個可搜尋模型都與一個搜尋索引相關聯，該索引包含所有可搜尋記錄。您可以通過覆寫模型上的 <code>searchableAs</code> 方法來自訂索引名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Laravel\\Scout\\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+
+    public function searchableAs(): string
+    {
+        return 'posts_index';
+    }
+}
+</code></pre>
+<p><a name="algolia-configuration"></a></p>
+<h3>Algolia 配置</h3>
+<p>使用 Algolia 驅動程式時，應在 <code>config/scout.php</code> 中配置您的 <code>id</code> 和 <code>secret</code> 憑證。配置好憑證後，還需要安裝 Algolia PHP SDK：</p>
+<pre><code class="language-shell">composer require algolia/algoliasearch-client-php</code></pre>
+<p><a name="meilisearch-configuration"></a></p>
+<h3>Meilisearch 配置</h3>
+<p>使用 Meilisearch 驅動程式時，應安裝 Meilisearch PHP SDK：</p>
+<pre><code class="language-shell">composer require meilisearch/meilisearch-php http-interop/http-factory-guzzle</code></pre>
+<p>然後在 <code>.env</code> 中設定 <code>SCOUT_DRIVER</code> 以及 Meilisearch 的 <code>host</code> 和 <code>key</code>：</p>
+<pre><code class="language-ini">SCOUT_DRIVER=meilisearch
+MEILISEARCH_HOST=http://127.0.0.1:7700
+MEILISEARCH_KEY=masterKey</code></pre>
+<p><a name="typesense-configuration"></a></p>
+<h3>Typesense 配置</h3>
+<p>使用 Typesense 驅動程式時，應安裝 Typesense PHP SDK：</p>
+<pre><code class="language-shell">composer require typesense/typesense-php</code></pre>
+<p>然後在 <code>.env</code> 中設定環境變數：</p>
+<pre><code class="language-ini">SCOUT_DRIVER=typesense
+TYPESENSE_API_KEY=masterKey
+TYPESENSE_HOST=localhost</code></pre>
+<p>Typesense 集合的其他設定可以在 <code>config/scout.php</code> 中找到。</p>
+<p><a name="indexing"></a></p>
+<h2>第三方引擎索引</h2>
+<p><a name="batch-import"></a></p>
+<h3>批次匯入</h3>
+<p>如果您要將 Scout 安裝到現有專案上，您可能已經有了需要匯入到搜尋引擎的模型記錄。Scout 提供了一個 <code>scout:import</code> Artisan 命令，用於將現有記錄匯入到您的搜尋索引中：</p>
+<pre><code class="language-shell">php artisan scout:import App\\Models\\Post</code></pre>
+<p><code>scout:flush</code> 命令可用於從搜尋索引中移除模型的所有記錄：</p>
+<pre><code class="language-shell">php artisan scout:flush App\\Models\\Post</code></pre>
+<p><a name="adding-records"></a></p>
+<h3>新增記錄</h3>
+<p>一旦您在模型上添加了 <code>Laravel\\Scout\\Searchable</code> trait，您只需要 <code>save</code> 一個模型實例，它就會自動新增到您的搜尋索引中。如果您配置了佇列，此操作將在您的佇列工作者處理時由背景排程：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+$order = new Order(...);
+
+$order->save();
+</code></pre>
+<p><a name="adding-records-via-query"></a></p>
+<h4>通過查詢新增記錄</h4>
+<p>如果您想通過 Eloquent 查詢將模型集合新增到搜尋索引，您可以在 Eloquent 查詢建構器上鏈式呼叫 <code>searchable</code> 方法。如果您<a href="#batch-import">批次匯入</a>現有記錄，這會很有用：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+Order::where('price', '>', 100)->searchable();
+</code></pre>
+<p><a name="updating-records"></a></p>
+<h3>更新記錄</h3>
+<p>要更新搜尋索引中的記錄，您只需更新模型實例的屬性並 <code>save</code> 到資料庫。Scout 將自動將變更持久化到您的搜尋索引中：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+$order = Order::find(1);
+
+$order->price = 200;
+
+$order->save();
+</code></pre>
+<p>您也可以在 Eloquent 查詢建構器上使用 <code>searchable</code> 方法來更新模型集合。如果您需要重新索引模型集合，這會很有用。例如，您可以使用 <code>searchable</code> 方法在月度銷售報告上更新價格：</p>
+<pre><code class="language-php">Order::where('created_at', '<', now()->subMonth())->searchable();
+</code></pre>
+<p><a name="removing-records"></a></p>
+<h3>刪除記錄</h3>
+<p>要從資料庫中刪除記錄，只需使用 Eloquent 的 <code>delete</code> 方法。記錄將自動從您的搜尋索引中移除。如果您使用<a href="#queueing">佇列</a>來處理搜尋更新，它將在背景處理：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+$order = Order::find(1);
+
+$order->delete();
+</code></pre>
+<p>如果您想跳過從搜尋索引中刪除記錄，可以使用模型的 <code>unsearchable</code> 方法：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+Order::where('price', '<', 100)->unsearchable();
+</code></pre>
+<p><a name="pausing-indexing"></a></p>
+<h3>暫停索引</h3>
+<p>有時您可能需要在不影響搜尋索引的情況下對模型執行一批 Eloquent 操作。您可以使用 <code>withoutSyncingToSearch</code> 方法在給定的回呼中暫停索引，並防止模型資料同步到您的搜尋索引：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+Order::withoutSyncingToSearch(function () {
+    Order::factory()->count(10)->create();
+});
+</code></pre>
+<p><a name="conditionally-searchable-model-instances"></a></p>
+<h3>條件式可搜尋模型實例</h3>
+<p>有時您可能只想使某些模型可搜尋。例如，假設您的 <code>App\\Models\\Post</code> 模型有「draft」和「published」兩種狀態。您可能只想允許搜尋「published」的文章。要實現此目的，您可以在模型上定義一個 <code>shouldBeSearchable</code> 方法：</p>
+<pre><code class="language-php">public function shouldBeSearchable(): bool
+{
+    return $this->isPublished();
+}
+</code></pre>
+<p><code>shouldBeSearchable</code> 方法在通過 <code>makeAllSearchable</code> 或通過建立/儲存/save 操作建立搜尋記錄時應用。但是，在通過查詢或關聯直接新增或更新記錄時，將不考慮此方法。如下一章所述，您可以通過使用 <code>searchableAfter</code> 方法或 <code>unsearchable</code> 方法來覆寫此行為。</p>
+<p><a name="searchable-after"></a></p>
+<h4>搜尋後方法</h4>
+<p>即使 <code>shouldBeSearchable</code> 返回 <code>false</code>，您可能仍然希望能夠使模型可搜尋。例如，將文章狀態從「draft」更改為「published」時。為此，您可以定義一個 <code>searchableAfter</code> 方法。當該方法返回 <code>true</code> 時，模型將被新增到搜尋索引中：</p>
+<pre><code class="language-php">public function shouldBeSearchable(): bool
+{
+    return $this->isPublished;
+}
+
+public function searchableAfter(): bool
+{
+    return $this->isDirty('status') && $this->isPublished;
+}
+</code></pre>
+<p><a name="searching"></a></p>
+<h2>搜尋</h2>
+<p>您可以使用 <code>search</code> 方法開始搜尋模型。search 方法接受一個將用於搜尋您的模型的單一字串。然後，您可以將搜尋條件鏈式呼叫到查詢建構器上：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+$orders = Order::search('Star Trek')->get();
+</code></pre>
+<p>由於 Scout 搜尋返回 Eloquent 模型的集合，您可以直接從路由或控制器返回結果，Laravel 將自動將其轉換為 JSON 回應：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+Route::get('/search', function () {
+    return Order::search(request('search'))->get();
+});
+</code></pre>
+<p><a name="where-clauses"></a></p>
+<h3>Where 子句</h3>
+<p>Scout 允許您向搜尋查詢新增簡單的「where」子句。目前，這些 where 子句僅支援基本數值相等檢查，主要用於按擁有者的 ID 範圍限定搜尋查詢。由於搜尋引擎不是關聯式資料庫，目前不支援更高階的「where」子句：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+$orders = Order::search('Star Trek')->where('user_id', 1)->get();
+</code></pre>
+<p><a name="pagination"></a></p>
+<h3>分頁</h3>
+<p>除了檢索模型集合之外，您還可以使用 <code>paginate</code> 方法對搜尋結果進行分頁。此方法將返回一個類似於<a href="/docs/pagination">傳統 Eloquent 查詢分頁</a>的 <code>Illuminate\\Contracts\\Pagination\\LengthAwarePaginator</code> 實例：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+
+$orders = Order::search('Star Trek')->paginate();
+
+$orders = Order::search('Star Trek')->simplePaginate();
+</code></pre>
+<p>您可以通過將數量作為第一個參數傳遞給 <code>paginate</code> 方法來指定每頁顯示多少個模型：</p>
+<pre><code class="language-php">$orders = Order::search('Star Trek')->paginate(15);
+</code></pre>
+<p>檢索結果後，您可以像使用傳統 Laravel 分頁一樣顯示結果並使用 Blade 渲染分頁連結：</p>
+<pre><code class="language-blade">&lt;div class="container"&gt;
+    @foreach ($orders as $order)
+        {{ $order->price }}
+    @endforeach
+&lt;/div&gt;
+
+{{ $orders->links() }}</code></pre>
+<p><a name="soft-deleting"></a></p>
+<h3>軟刪除</h3>
+<p>如果您的可搜尋模型正在使用<a href="/docs/eloquent#soft-deleting">軟刪除</a>，並且您需要從搜尋索引中隱藏軟刪除的模型，則應在應用程式的 <code>AppServiceProvider</code> 或另一個服務提供者的 <code>boot</code> 方法中呼叫 <code>SoftDeletes</code> trait：</p>
+<pre><code class="language-php">use App\\Models\\Order;
+use Illuminate\\Database\\Eloquent\\SoftDeletes;
+
+public function boot(): void
+{
+    Order::SoftDeletes();
+}
+</code></pre>
+<p><a name="customizing-engine-searches"></a></p>
+<h3>自訂引擎搜尋</h3>
+<p>如果您需要對引擎的搜尋行為進行進階自訂，可以將一個閉包作為第二個參數傳遞給 <code>search</code> 方法。例如，使用此回呼，您可以將搜尋資料傳遞給 Algolia 搜尋之前新增地理位置資料：</p>
+<pre><code class="language-php">use Algolia\\AlgoliaSearch\\SearchIndex;
+use App\\Models\\Order;
+
+Order::search(
+    'Star Trek',
+    function (SearchIndex $algolia, string $query, array $options) {
+        $options['aroundLatLng'] = 'lat,lng';
+
+        return $algolia->search($query, $options);
+    }
+)->get();
+</code></pre>
+<p><a name="custom-engines"></a></p>
+<h2>自訂引擎</h2>
+<p>如果內建的 Scout 搜尋引擎都不滿足您的需求，您可以編寫自訂引擎並在 Scout 中註冊它。要開始，請為您的引擎定義一個類別。您的類別應實作 <code>Laravel\\Scout\\Engine</code> 契約。此契約包含八個方法：</p>
+<pre><code class="language-php">use Laravel\\Scout\\Builder;
+use Laravel\\Scout\\Engine;
+
+class MyEngine implements Engine
+{
+    // ...
+}
+</code></pre>
+<p>一旦您實作了自訂引擎，您可以在應用程式的服務提供者中註冊它，例如 <code>AppServiceProvider</code> 的 <code>boot</code> 方法：</p>
+<pre><code class="language-php">use Laravel\\Scout\\EngineManager;
+
+public function boot(): void
+{
+    resolve(EngineManager::class)->extend('my-engine', function () {
+        return new MyEngine;
+    });
+}
+</code></pre>
+<p>註冊引擎後，您可以將應用程式的 <code>.env</code> 檔案中的 <code>SCOUT_DRIVER</code> 環境變數更新為 <code>my-engine</code>。</p>
+`;
+---
+
+<DocsLayout title="Laravel Scout" currentPath="scout">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Scout</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">Laravel Scout</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/scout" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

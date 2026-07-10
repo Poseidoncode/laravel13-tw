@@ -1,0 +1,109 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>AI 輔助開發</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#why-laravel-for-ai-development">為什麼選擇 Laravel 進行 AI 開發？</a></li>
+</ul>
+</li>
+<li><a href="#laravel-boost">Laravel Boost</a><ul>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#available-tools">可用工具</a></li>
+<li><a href="#ai-guidelines">AI 準則</a></li>
+<li><a href="#agent-skills">代理技能</a></li>
+<li><a href="#documentation-search">文檔搜尋</a></li>
+<li><a href="#agents-integration">代理整合</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 獨特地定位為 AI 輔助和代理式開發的最佳框架。隨著 <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a>、<a href="https://opencode.ai">OpenCode</a>、<a href="https://cursor.com">Cursor</a> 和 <a href="https://github.com/features/copilot">GitHub Copilot</a> 等 AI 編碼代理的崛起，開發者編寫程式碼的方式已經發生了根本性的改變。這些工具可以以前所未有的速度生成完整功能、調試複雜問題和重構程式碼——但它們的有效性很大程度上取決於它們對您程式碼庫的理解程度。</p>
+<p><a name="why-laravel-for-ai-development"></a></p>
+<h3>為什麼選擇 Laravel 進行 AI 開發？</h3>
+<p>Laravel 的約定式規範和明確的結構使其成為 AI 輔助開發的理想框架。當您要求 AI 代理添加一個控制器時，它確切地知道該將其放置何處。當您需要新的遷移時，命名規範和檔案位置都是可預測的。這種一致性消除了在更靈活的框架中經常困擾 AI 工具的猜測工作。</p>
+<p>除了檔案組織之外，Laravel 的表達式語法和全面的文檔為 AI 代理提供了生成準確、慣用程式碼所需的上下文。像 Eloquent 關聯、表單請求和中介層等功能遵循代理可以可靠理解和複製的模式。結果是 AI 生成的程式碼看起來像是由經驗豐富的 Laravel 開發者編寫的，而不是從通用 PHP 程式碼片段拼湊而成。</p>
+<p><a name="laravel-boost"></a></p>
+<h2>Laravel Boost</h2>
+<p><a href="https://github.com/laravel/boost">Laravel Boost</a> 填補了 AI 編碼代理與您的 Laravel 應用程式之間的差距。Boost 是一個配備了超過 15 個專門工具的 MCP（模型上下文協議）伺服器，為 AI 代理提供對您應用程式結構、資料庫、路由等的深入了解。當您安裝 Boost 時，您的 AI 代理將從通用程式碼助手轉變為了解您特定應用程式的 Laravel 專家。</p>
+<p>Boost 提供三大功能：一套用於檢查和與您的應用程式互動的 MCP 工具、專為 Laravel 生態系統精心設計的可組合 AI 準則，以及一個包含超過 17,000 條 Laravel 相關知識的強大文檔 API。</p>
+<p><a name="installation"></a></p>
+<h3>安裝</h3>
+<p>Boost 可以安裝在運行 PHP 8.1 或更高版本的 Laravel 10、11、12 和 13 應用程式中。首先，將 Boost 安裝為開發依賴項：</p>
+<pre><code class="language-shell">composer require laravel/boost --dev
+</code></pre>
+<p>安裝完成後，執行互動式安裝程式：</p>
+<pre><code class="language-shell">php artisan boost:install
+</code></pre>
+<p>安裝程式將自動偵測您的 IDE 和 AI 代理，允許您選擇適合您專案的整合方式。Boost 將生成必要的配置檔案，例如用於 MCP 相容編輯器的 <code>.mcp.json</code> 和用於 AI 上下文的準則檔案。</p>
+<blockquote>
+<p>[!NOTE]
+生成的配置檔案（如 <code>.mcp.json</code>、<code>CLAUDE.md</code> 和 <code>boost.json</code>）可以安全地添加到您的 <code>.gitignore</code> 中，如果您希望每位開發者配置自己的環境。</p>
+</blockquote>
+<p><a name="available-tools"></a></p>
+<h3>可用工具</h3>
+<p>Boost 透過模型上下文協議向 AI 代理暴露了一套全面的工具。這些工具允許代理深入了解和與您的 Laravel 應用程式互動：</p>
+<div class="content-list" markdown="1"><ul>
+<li><strong>應用程式自省</strong> - 查詢您的 PHP 和 Laravel 版本、列出已安裝的套件，並檢查您的應用程式配置和環境變數。</li>
+<li><strong>資料庫工具</strong> - 檢查您的資料庫結構、執行唯讀查詢，並無需離開對話即可了解您的資料結構。</li>
+<li><strong>路由檢查</strong> - 列出所有已註冊的路由及其中介層、控制器和參數。</li>
+<li><strong>Artisan 命令</strong> - 發現可用的 Artisan 命令及其參數，使代理能夠為您的任務建議和執行正確的命令。</li>
+<li><strong>日誌分析</strong> - 讀取和分析您的應用程式日誌檔案以幫助調試問題。</li>
+<li><strong>瀏覽器日誌</strong> - 在使用 Laravel 前端工具開發時存取瀏覽器控制台日誌和錯誤。</li>
+<li><strong>Tinker 整合</strong> - 透過 Laravel Tinker 在您的應用程式上下文中執行 PHP 程式碼，允許代理測試假設和驗證行為。</li>
+<li><strong>文檔搜尋</strong> - 搜尋 Laravel 生態系統文檔，結果根據您安裝的套件版本進行客製化。</li>
+</ul>
+</div><p><a name="ai-guidelines"></a></p>
+<h3>AI 準則</h3>
+<p>Boost 包含一套專為 Laravel 生態系統精心設計的全面 AI 準則。這些準則教導 AI 代理如何編寫慣用的 Laravel 程式碼、遵循框架規範並避免常見陷阱。準則是可組合且版本感知的，這意味著代理會收到適合您確切套件版本的指令。</p>
+<p>準則可用於 Laravel 本身和 Laravel 生態系統中的 16 多個套件，包括：</p>
+<div class="content-list" markdown="1"><ul>
+<li>Livewire（2.x、3.x 和 4.x）</li>
+<li>Inertia.js（React、Svelte 和 Vue 變體）</li>
+<li>Tailwind CSS（3.x 和 4.x）</li>
+<li>Filament（3.x 和 4.x）</li>
+<li>PHPUnit</li>
+<li>Pest PHP</li>
+<li>Laravel Pint</li>
+<li>以及更多</li>
+</ul>
+</div><p>當您執行 <code>boost:install</code> 時，Boost 會自動偵測您的應用程式使用了哪些套件，並將相關準則組合到您專案的 AI 上下文檔案中。</p>
+<p><a name="agent-skills"></a></p>
+<h3>代理技能</h3>
+<p><a href="https://agentskills.io/home">代理技能</a>是輕量級、針對性的知識模組，代理可以在處理特定領域時按需啟用。與預先載入的準則不同，技能允許僅在相關時載入詳細的模式和最佳實踐，減少上下文膨脹並提高 AI 生成程式碼的相關性。</p>
+<p>技能可用於像 Livewire、Inertia、Tailwind CSS、Pest 等流行的 Laravel 套件。當您執行 <code>boost:install</code> 並選擇技能作為功能時，技能會根據 <code>composer.json</code> 中偵測到的套件自動安裝。</p>
+<p><a name="documentation-search"></a></p>
+<h3>文檔搜尋</h3>
+<p>Boost 包含一個強大的文檔 API，為 AI 代理提供對超過 17,000 條 Laravel 生態系統文檔的存取。與通用網路搜尋不同，這些文檔經過索引、向量化和過濾，以匹配您確切的套件版本。</p>
+<p>當代理需要了解某個功能如何運作時，它可以搜尋 Boost 的文檔 API 並接收準確、特定版本的資訊。這消除了 AI 代理建議已棄用方法或來自舊框架版本語法的常見問題。</p>
+<p><a name="agents-integration"></a></p>
+<h3>代理整合</h3>
+<p>Boost 與支援模型上下文協議的流行 IDE 和 AI 工具整合。有關 Cursor、Claude Code、Codex、Gemini CLI、GitHub Copilot 和 Junie 的詳細設定說明，請參閱 Boost 文檔的 <a href="/docs/boost#set-up-your-agents">設定您的代理</a>部分。</p>
+`;
+---
+
+<DocsLayout title="AI 開發" currentPath="ai">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>AI 開發</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">AI 開發</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/ai" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

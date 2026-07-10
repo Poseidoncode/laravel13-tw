@@ -1,0 +1,1557 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Eloquent：開始使用</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#generating-model-classes">生成模型類別</a></li>
+<li><a href="#eloquent-model-conventions">Eloquent 模型規範</a><ul>
+<li><a href="#table-names">資料表名稱</a></li>
+<li><a href="#primary-keys">主鍵</a></li>
+<li><a href="#uuid-and-ulid-keys">UUID 和 ULID 金鑰</a></li>
+<li><a href="#timestamps">時間戳</a></li>
+<li><a href="#database-connections">資料庫連接</a></li>
+<li><a href="#default-attribute-values">預設屬性值</a></li>
+<li><a href="#configuring-eloquent-strictness">配置 Eloquent 嚴格性</a></li>
+</ul>
+</li>
+<li><a href="#retrieving-models">檢索模型</a><ul>
+<li><a href="#collections">集合</a></li>
+<li><a href="#chunking-results">分塊結果</a></li>
+<li><a href="#chunking-using-lazy-collections">使用延遲集合進行分塊</a></li>
+<li><a href="#cursors">遊標</a></li>
+<li><a href="#advanced-subqueries">進階子查詢</a></li>
+</ul>
+</li>
+<li><a href="#retrieving-single-models">檢索單個模型/聚合</a><ul>
+<li><a href="#retrieving-or-creating-models">檢索或創建模型</a></li>
+<li><a href="#retrieving-aggregates">檢索聚合</a></li>
+</ul>
+</li>
+<li><a href="#inserting-and-updating-models">插入和更新模型</a><ul>
+<li><a href="#inserts">插入</a></li>
+<li><a href="#updates">更新</a></li>
+<li><a href="#mass-assignment">批量賦值</a></li>
+<li><a href="#upserts">Upserts</a></li>
+</ul>
+</li>
+<li><a href="#deleting-models">刪除模型</a><ul>
+<li><a href="#soft-deleting">軟刪除</a></li>
+<li><a href="#querying-soft-deleted-models">查詢已軟刪除的模型</a></li>
+</ul>
+</li>
+<li><a href="#pruning-models">修剪模型</a></li>
+<li><a href="#replicating-models">複製模型</a></li>
+<li><a href="#query-scopes">查詢作用域</a><ul>
+<li><a href="#global-scopes">全域作用域</a></li>
+<li><a href="#local-scopes">區域作用域</a></li>
+<li><a href="#pending-attributes">待定屬性</a></li>
+</ul>
+</li>
+<li><a href="#comparing-models">比較模型</a></li>
+<li><a href="#events">事件</a><ul>
+<li><a href="#events-using-closures">使用閉包</a></li>
+<li><a href="#observers">觀察者</a></li>
+<li><a href="#muting-events">靜音事件</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 包含 Eloquent，一個物件關聯映射器（ORM），使與資料庫的互動變得愉快。使用 Eloquent 時，每個資料庫表都有一個對應的「模型」，用於與該表互動。除了從資料庫表中檢索記錄外，Eloquent 模型還允許您插入、更新和刪除表中的記錄。</p>
+<blockquote>
+<p>[!NOTE]
+開始之前，請確保在應用程式的 <code>config/database.php</code> 配置檔案中配置了資料庫連接。有關配置資料庫的更多資訊，請查看<a href="/docs/database#configuration">資料庫配置文檔</a>。</p>
+</blockquote>
+<p><a name="generating-model-classes"></a></p>
+<h2>生成模型類別</h2>
+<p>首先，讓我們創建一個 Eloquent 模型。模型通常位於 <code>app\\Models</code> 目錄中，並繼承 <code>Illuminate\\Database\\Eloquent\\Model</code> 類別。您可以使用 <code>make:model</code> <a href="/docs/artisan">Artisan 命令</a>來生成新模型：</p>
+<pre><code class="language-shell">php artisan make:model Flight
+</code></pre>
+<p>如果您想在生成模型時生成<a href="/docs/migrations">資料庫遷移</a>，可以使用 <code>--migration</code> 或 <code>-m</code> 選項：</p>
+<pre><code class="language-shell">php artisan make:model Flight --migration
+</code></pre>
+<p>您可以在生成模型時生成各種其他類型的類別，例如工廠、seeders、策略、控制器和表單請求。此外，這些選項可以組合以一次創建多個類別：</p>
+<pre><code class="language-shell"># 生成模型和 FlightFactory 類別...
+php artisan make:model Flight --factory
+php artisan make:model Flight -f
+
+# 生成模型和 FlightSeeder 類別...
+php artisan make:model Flight --seed
+php artisan make:model Flight -s
+
+# 生成模型和 FlightController 類別...
+php artisan make:model Flight --controller
+php artisan make:model Flight -c
+
+# 生成模型、FlightController 資源類別和表單請求類別...
+php artisan make:model Flight --controller --resource --requests
+php artisan make:model Flight -crR
+
+# 生成模型和 FlightPolicy 類別...
+php artisan make:model Flight --policy
+
+# 生成模型、遷移、工廠、seeder 和控制器...
+php artisan make:model Flight -mfsc
+
+# 快捷方式：生成模型、遷移、工廠、seeder、策略、控制器和表單請求...
+php artisan make:model Flight --all
+php artisan make:model Flight -a
+
+# 生成樞紐模型...
+php artisan make:model Member --pivot
+php artisan make:model Member -p
+</code></pre>
+<p><a name="inspecting-models"></a></p>
+<h4>檢查模型</h4>
+<p>有時僅透過瀏覽程式碼可能很難確定模型的所有可用屬性和關聯。相反，嘗試使用 <code>model:show</code> Artisan 命令，它提供了模型所有屬性和關聯的便利概述：</p>
+<pre><code class="language-shell">php artisan model:show Flight
+</code></pre>
+<p><a name="eloquent-model-conventions"></a></p>
+<h2>Eloquent 模型規範</h2>
+<p>由 <code>make:model</code> 命令生成的模型將放置在 <code>app/Models</code> 目錄中。讓我們檢查一個基本模型類別並討論 Eloquent 的一些關鍵規範：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="table-names"></a></p>
+<h3>資料表名稱</h3>
+<p>查看上面的範例後，您可能已經注意到我們沒有告訴 Eloquent 哪個資料庫表對應我們的 <code>Flight</code> 模型。按照慣例，除非明確指定其他名稱，否則類別的「蛇形命名法」複數名稱將用作資料表名稱。因此，在這種情況下，Eloquent 將假定 <code>Flight</code> 模型將記錄儲存在 <code>flights</code> 表中，而 <code>AirTrafficController</code> 模型將記錄儲存在 <code>air_traffic_controllers</code> 表中。</p>
+<p>如果模型對應的資料庫表不符合此慣例，您可以使用 <code>Table</code> 屬性手動指定模型的資料表名稱：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Table;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Table(&#39;my_flights&#39;)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="primary-keys"></a></p>
+<h3>主鍵</h3>
+<p>Eloquent 還假定每個模型對應的資料庫表都有一個名為 <code>id</code> 的主鍵列。如有必要，您可以使用 <code>Table</code> 屬性上的 <code>key</code> 參數指定用作模型主鍵的其他列：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Table;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Table(key: &#39;flight_id&#39;)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>此外，Eloquent 假定主鍵是一個遞增的整數值，這意味著 Eloquent 會自動將主鍵轉換為整數。如果您希望使用非遞增或非數字主鍵，您應該在 <code>Table</code> 屬性上指定 <code>keyType</code> 和 <code>incrementing</code> 參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Table;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Table(key: &#39;uuid&#39;, keyType: &#39;string&#39;, incrementing: false)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>如果您只需要禁用自動遞增 ID，可以使用 <code>WithoutIncrementing</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\WithoutIncrementing;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[WithoutIncrementing]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="composite-primary-keys"></a></p>
+<h4>「複合」主鍵</h4>
+<p>Eloquent 要求每個模型都有一個可以用作其主鍵的唯一識別「ID」。Eloquent 模型不支援「複合」主鍵。但是，您可以自由地向資料庫表添加額外的多列唯一索引，除了表的唯一識別主鍵之外。</p>
+<p><a name="uuid-and-ulid-keys"></a></p>
+<h3>UUID 和 ULID 金鑰</h3>
+<p>您可以選擇使用 UUID 代替自動遞增整數作為 Eloquent 模型的主鍵。UUID 是長度為 36 個字元的通用唯一字母數字標識符。</p>
+<p>如果您希望模型使用 UUID 金鑰而不是自動遞增整數金鑰，您可以在模型上使用 <code>Illuminate\\Database\\Eloquent\\Concerns\\HasUuids</code> trait。當然，您應該確保模型有一個<a href="/docs/migrations#column-method-uuid"> UUID 等效主鍵列</a>：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Concerns\\HasUuids;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Article extends Model
+{
+    use HasUuids;
+
+    // ...
+}
+
+$article = Article::create([&#39;title&#39; =&gt; &#39;Traveling to Europe&#39;]);
+
+$article-&gt;id; // &quot;018f2b5c-6a7f-7b12-9d6f-2f8a4e0c9c11&quot;
+</code></pre>
+<p>預設情況下，<code>HasUuids</code> trait 將為您的模型生成 <a href="/docs/strings#method-str-uuid7">UUIDv7</a> 標識符。這些 UUID 對於索引資料庫儲存更有效，因為它們可以按字典順序排序。</p>
+<p>您可以透過在模型上定義 <code>newUniqueId</code> 方法來覆蓋給定模型的 UUID 生成過程。此外，您可以透過在模型上定義 <code>uniqueIds</code> 方法來指定哪些列應接收 UUID：</p>
+<pre><code class="language-php">use Ramsey\\Uuid\\Uuid;
+
+/**
+ * 為模型生成新的 UUID。
+ */
+public function newUniqueId(): string
+{
+    return (string) Uuid::uuid4();
+}
+
+/**
+ * 獲取應接收唯一標識符的列。
+ *
+ * @return array&lt;int, string&gt;
+ */
+public function uniqueIds(): array
+{
+    return [&#39;id&#39;, &#39;discount_code&#39;];
+}
+</code></pre>
+<p>如果您願意，您可以選擇使用「ULID」代替 UUID。ULID 與 UUID 類似；但是，它們只有 26 個字元長。像有序 UUID 一樣，ULID 按字典順序可排序，用於高效的資料庫索引。要使用 ULID，您應該在模型上使用 <code>Illuminate\\Database\\Eloquent\\Concerns\\HasUlids</code> trait。您還應該確保模型有一個<a href="/docs/migrations#column-method-ulid"> ULID 等效主鍵列</a>：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Concerns\\HasUlids;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Article extends Model
+{
+    use HasUlids;
+
+    // ...
+}
+
+$article = Article::create([&#39;title&#39; =&gt; &#39;Traveling to Asia&#39;]);
+
+$article-&gt;id; // &quot;01gd4d3tgrrfqeda94gdbtdk5c&quot;
+</code></pre>
+<p><a name="timestamps"></a></p>
+<h3>時間戳</h3>
+<p>預設情況下，Eloquent 期望模型對應的資料庫表上存在 <code>created_at</code> 和 <code>updated_at</code> 列。當模型被創建或更新時，Eloquent 會自動設定這些列的值。如果您不希望這些列由 Eloquent 自動管理，可以在模型的 <code>Table</code> 屬性上設定 <code>timestamps</code> 為 <code>false</code>：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Table;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Table(timestamps: false)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>如果您只需要禁用時間戳，可以使用 <code>WithoutTimestamps</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\WithoutTimestamps;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[WithoutTimestamps]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>如果您需要自訂模型時間戳的格式，可以使用 <code>Table</code> 屬性上的 <code>dateFormat</code> 參數。這決定了日期屬性在資料庫中的儲存方式以及模型序列化為數組或 JSON 時的格式：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Table;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Table(dateFormat: &#39;U&#39;)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>如果您只需要定義日期格式，可以使用 <code>DateFormat</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\DateFormat;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[DateFormat(&#39;U&#39;)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>如果您需要自訂用於儲存時間戳的列名，可以在模型上定義 <code>CREATED_AT</code> 和 <code>UPDATED_AT</code> 常數：</p>
+<pre><code class="language-php">&lt;?php
+
+class Flight extends Model
+{
+    /**
+     * 「創建時間」列的名稱。
+     *
+     * @var string|null
+     */
+    public const CREATED_AT = &#39;creation_date&#39;;
+
+    /**
+     * 「更新時間」列的名稱。
+     *
+     * @var string|null
+     */
+    public const UPDATED_AT = &#39;updated_date&#39;;
+}
+</code></pre>
+<p>如果您希望在不修改模型 <code>updated_at</code> 時間戳的情況下執行模型操作，您可以在傳遞給 <code>withoutTimestamps</code> 方法的閉包內操作模型：</p>
+<pre><code class="language-php">Model::withoutTimestamps(fn () =&gt; $post-&gt;increment(&#39;reads&#39;));
+</code></pre>
+<p><a name="database-connections"></a></p>
+<h3>資料庫連接</h3>
+<p>預設情況下，所有 Eloquent 模型將使用為應用程式配置的預設資料庫連接。如果您想指定與特定模型互動時應使用的不同連接，可以使用 <code>Connection</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Connection;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Connection(&#39;mysql&#39;)]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="default-attribute-values"></a></p>
+<h3>預設屬性值</h3>
+<p>預設情況下，新實例化的模型實例將不包含任何屬性值。如果您想為模型的一些屬性定義預設值，可以在模型上定義 <code>$attributes</code> 屬性。放在 <code>$attributes</code> 數組中的屬性值應採用其原始的「可儲存」格式，就像剛從資料庫中讀取一樣：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Flight extends Model
+{
+    /**
+     * 模型屬性的預設值。
+     *
+     * @var array&lt;string, mixed&gt;
+     */
+    protected $attributes = [
+        &#39;options&#39; =&gt; &#39;[]&#39;,
+        &#39;delayed&#39; =&gt; false,
+    ];
+}
+</code></pre>
+<p><a name="configuring-eloquent-strictness"></a></p>
+<h3>配置 Eloquent 嚴格性</h3>
+<p>Laravel 提供了多種方法，允許您在各種情況下配置 Eloquent 的行為和「嚴格性」。</p>
+<p>首先，<code>preventLazyLoading</code> 方法接受一個可選的布林參數，表示是否應防止延遲載入。例如，您可能只想在非生產環境中禁用延遲載入，以便即使生產程式碼中意外存在延遲載入的關聯，生產環境仍能正常運行。通常，此方法應在應用程式的 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中調用：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Model;
+
+/**
+ * 引導任何應用程式服務。
+ */
+public function boot(): void
+{
+    Model::preventLazyLoading(! $this-&gt;app-&gt;isProduction());
+}
+</code></pre>
+<p>此外，您可以透過調用 <code>preventSilentlyDiscardingAttributes</code> 方法來指示 Laravel 在嘗試填充不可填充的屬性時拋出異常。這有助於在本機開發期間防止嘗試設定未添加到模型 <code>fillable</code> 數組中的屬性時發生意外錯誤：</p>
+<pre><code class="language-php">Model::preventSilentlyDiscardingAttributes(! $this-&gt;app-&gt;isProduction());
+</code></pre>
+<p><a name="retrieving-models"></a></p>
+<h2>檢索模型</h2>
+<p>創建模型和<a href="/docs/migrations#generating-migrations">其關聯的資料庫表</a>後，您就可以開始從資料庫中檢索資料了。您可以將每個 Eloquent 模型視為一個強大的<a href="/docs/queries">查詢建構器</a>，允許您流暢地查詢與模型關聯的資料庫表。模型的 <code>all</code> 方法將從模型關聯的資料庫表中檢索所有記錄：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+foreach (Flight::all() as $flight) {
+    echo $flight-&gt;name;
+}
+</code></pre>
+<p><a name="building-queries"></a></p>
+<h4>構建查詢</h4>
+<p>Eloquent 的 <code>all</code> 方法將返回模型表中的所有結果。但是，由於每個 Eloquent 模型都作為<a href="/docs/queries">查詢建構器</a>，您可以向查詢添加額外的條件，然後調用 <code>get</code> 方法來檢索結果：</p>
+<pre><code class="language-php">$flights = Flight::where(&#39;active&#39;, 1)
+    -&gt;orderBy(&#39;name&#39;)
+    -&gt;limit(10)
+    -&gt;get();
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+由於 Eloquent 模型是查詢建構器，您應該查看 Laravel <a href="/docs/queries">查詢建構器</a>提供的所有方法。編寫 Eloquent 查詢時可以使用這些方法中的任何一個。</p>
+</blockquote>
+<p><a name="refreshing-models"></a></p>
+<h4>刷新模型</h4>
+<p>如果您已經有一個從資料庫中檢索到的 Eloquent 模型實例，您可以使用 <code>fresh</code> 和 <code>refresh</code> 方法「刷新」模型。<code>fresh</code> 方法將從資料庫重新檢索模型。現有模型實例將不受影響：</p>
+<pre><code class="language-php">$flight = Flight::where(&#39;number&#39;, &#39;FR 900&#39;)-&gt;first();
+
+$freshFlight = $flight-&gt;fresh();
+</code></pre>
+<p><code>refresh</code> 方法將使用資料庫中的新資料重新填充現有模型。此外，其所有已載入的關聯也將被刷新：</p>
+<pre><code class="language-php">$flight = Flight::where(&#39;number&#39;, &#39;FR 900&#39;)-&gt;first();
+
+$flight-&gt;number = &#39;FR 456&#39;;
+
+$flight-&gt;refresh();
+
+$flight-&gt;number; // &quot;FR 900&quot;
+</code></pre>
+<p><a name="collections"></a></p>
+<h3>集合</h3>
+<p>正如我們所看到的，像 <code>all</code> 和 <code>get</code> 這樣的 Eloquent 方法從資料庫中檢索多條記錄。但是，這些方法不返回普通的 PHP 數組。相反，它們返回 <code>Illuminate\\Database\\Eloquent\\Collection</code> 的實例。</p>
+<p>Eloquent 的 <code>Collection</code> 類別繼承了 Laravel 的基礎 <code>Illuminate\\Support\\Collection</code> 類別，後者提供了<a href="/docs/collections#available-methods">多種有用的輔助方法</a>來與資料集合互動。例如，<code>reject</code> 方法可用於根據調用的閉包的結果從集合中移除模型：</p>
+<pre><code class="language-php">$flights = Flight::where(&#39;destination&#39;, &#39;Paris&#39;)-&gt;get();
+
+$flights = $flights-&gt;reject(function (Flight $flight) {
+    return $flight-&gt;cancelled;
+});
+</code></pre>
+<p>除了 Laravel 基礎集合類別提供的方法外，Eloquent 集合類別還提供了<a href="/docs/eloquent-collections#available-methods">一些額外的方法</a>，這些方法專門用於與 Eloquent 模型集合互動。</p>
+<p>由於 Laravel 的所有集合都實現了 PHP 的可迭代介面，您可以像迭代數組一樣迭代集合：</p>
+<pre><code class="language-php">foreach ($flights as $flight) {
+    echo $flight-&gt;name;
+}
+</code></pre>
+<p><a name="chunking-results"></a></p>
+<h3>分塊結果</h3>
+<p>如果您嘗試透過 <code>all</code> 或 <code>get</code> 方法載入數萬條 Eloquent 記錄，您的應用程式可能會耗盡記憶體。您可以使用 <code>chunk</code> 方法代替這些方法來更有效地處理大量模型。</p>
+<p><code>chunk</code> 方法將檢索 Eloquent 模型的子集，將它們傳遞給閉包進行處理。由於一次只檢索當前區塊的 Eloquent 模型，<code>chunk</code> 方法在處理大量模型時將顯著減少記憶體使用量：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+use Illuminate\\Database\\Eloquent\\Collection;
+
+Flight::chunk(200, function (Collection $flights) {
+    foreach ($flights as $flight) {
+        // ...
+    }
+});
+</code></pre>
+<p>傳遞給 <code>chunk</code> 方法的第一個參數是您希望每個「區塊」接收的記錄數量。作為第二個參數傳遞的閉包將在從資料庫檢索的每個區塊時調用。將執行資料庫查詢以檢索傳遞給閉包的每個區塊的記錄。</p>
+<p>如果您根據也會在迭代結果時更新的列來過濾 <code>chunk</code> 方法的結果，您應該使用 <code>chunkById</code> 方法。在這些場景中使用 <code>chunk</code> 方法可能導致意外和不一致的結果。在內部，<code>chunkById</code> 方法將始終檢索 <code>id</code> 列大於上一個區塊中最後一個模型的模型：</p>
+<pre><code class="language-php">Flight::where(&#39;departed&#39;, true)
+    -&gt;chunkById(200, function (Collection $flights) {
+        $flights-&gt;each-&gt;update([&#39;departed&#39; =&gt; false]);
+    }, column: &#39;id&#39;);
+</code></pre>
+<p>由於 <code>chunkById</code> 和 <code>lazyById</code> 方法向正在執行的查詢添加了自己的「where」條件，您通常應該在閉包內<a href="/docs/queries#logical-grouping">邏輯分組</a>自己的條件：</p>
+<pre><code class="language-php">Flight::where(function ($query) {
+    $query-&gt;where(&#39;delayed&#39;, true)-&gt;orWhere(&#39;cancelled&#39;, true);
+})-&gt;chunkById(200, function (Collection $flights) {
+    $flights-&gt;each-&gt;update([
+        &#39;departed&#39; =&gt; false,
+        &#39;cancelled&#39; =&gt; true
+    ]);
+}, column: &#39;id&#39;);
+</code></pre>
+<p><a name="chunking-using-lazy-collections"></a></p>
+<h3>使用延遲集合進行分塊</h3>
+<p><code>lazy</code> 方法的工作方式與<a href="#chunking-results"><code>chunk</code> 方法</a>類似，因為它在底層以區塊形式執行查詢。但是，<code>lazy</code> 方法不是將每個區塊直接傳遞給回調，而是返回一個扁平化的 Eloquent 模型 <a href="/docs/collections#lazy-collections">LazyCollection</a>，讓您可以將結果作為單個流進行互動：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+foreach (Flight::lazy() as $flight) {
+    // ...
+}
+</code></pre>
+<p>如果您根據也會在迭代結果時更新的列來過濾 <code>lazy</code> 方法的結果，您應該使用 <code>lazyById</code> 方法。在內部，<code>lazyById</code> 方法將始終檢索 <code>id</code> 列大於上一個區塊中最後一個模型的模型：</p>
+<pre><code class="language-php">Flight::where(&#39;departed&#39;, true)
+    -&gt;lazyById(200, column: &#39;id&#39;)
+    -&gt;each-&gt;update([&#39;departed&#39; =&gt; false]);
+</code></pre>
+<p>您可以使用 <code>lazyByIdDesc</code> 方法根據 <code>id</code> 的降序過濾結果。</p>
+<p><a name="cursors"></a></p>
+<h3>遊標</h3>
+<p>與 <code>lazy</code> 類似，<code>cursor</code> 方法可用於在迭代數萬條 Eloquent 模型記錄時顯著減少應用程式的記憶體消耗。</p>
+<p><code>cursor</code> 方法只會執行一個資料庫查詢；但是，單個 Eloquent 模型直到實際迭代時才會被填充。因此，在迭代遊標時，任何給定時間只有一個 Eloquent 模型保存在記憶體中。</p>
+<blockquote>
+<p>[!WARNING]
+由於 <code>cursor</code> 方法一次只在記憶體中保存一個 Eloquent 模型，它無法預先載入關聯。如果您需要預先載入關聯，請考慮改用<a href="#chunking-using-lazy-collections"><code>lazy</code> 方法</a>。</p>
+</blockquote>
+<p>在內部，<code>cursor</code> 方法使用 PHP <a href="https://www.php.net/manual/en/language.generators.overview.php">生成器</a>來實現此功能：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+foreach (Flight::where(&#39;destination&#39;, &#39;Zurich&#39;)-&gt;cursor() as $flight) {
+    // ...
+}
+</code></pre>
+<p><code>cursor</code> 返回一個 <code>Illuminate\\Support\\LazyCollection</code> 實例。<a href="/docs/collections#lazy-collections">延遲集合</a>允許您使用典型 Laravel 集合上可用的許多集合方法，同時一次只將一個模型載入記憶體：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = User::cursor()-&gt;filter(function (User $user) {
+    return $user-&gt;id &gt; 500;
+});
+
+foreach ($users as $user) {
+    echo $user-&gt;id;
+}
+</code></pre>
+<p>儘管 <code>cursor</code> 方法比常規查詢使用更少的記憶體（因為一次只保存一個 Eloquent 模型），但它最終仍會耗盡記憶體。這是因為 PHP 的 PDO 驅動程式在內部將所有原始查詢結果快取在其緩衝區中。如果您正在處理大量的 Eloquent 記錄，請考慮改用<a href="#chunking-using-lazy-collections"><code>lazy</code> 方法</a>。</p>
+<p><a name="advanced-subqueries"></a></p>
+<h3>進階子查詢</h3>
+<p><a name="subquery-selects"></a></p>
+<h4>子查詢選擇</h4>
+<p>Eloquent 還提供進階子查詢支援，允許您在單個查詢中從關聯表中提取資訊。例如，讓我們假設我們有一個航班 <code>destinations</code> 表和一個飛往目的地的 <code>flights</code> 表。<code>flights</code> 表包含一個 <code>arrived_at</code> 列，表示航班何時到達目的地。</p>
+<p>使用查詢建構器的 <code>select</code> 和 <code>addSelect</code> 方法可用的子查詢功能，我們可以使用單個查詢選擇所有 <code>destinations</code> 和最近到達該目的地的航班名稱：</p>
+<pre><code class="language-php">use App\\Models\\Destination;
+use App\\Models\\Flight;
+
+return Destination::addSelect([&#39;last_flight&#39; =&gt; Flight::select(&#39;name&#39;)
+    -&gt;whereColumn(&#39;destination_id&#39;, &#39;destinations.id&#39;)
+    -&gt;orderByDesc(&#39;arrived_at&#39;)
+    -&gt;limit(1)
+])-&gt;get();
+</code></pre>
+<p><a name="subquery-ordering"></a></p>
+<h4>子查詢排序</h4>
+<p>此外，查詢建構器的 <code>orderBy</code> 函數支援子查詢。繼續使用我們的航班範例，我們可以使用此功能根據最後一個航班到達該目的地的時間對所有目的地進行排序。同樣，這可以在執行單個資料庫查詢時完成：</p>
+<pre><code class="language-php">return Destination::orderByDesc(
+    Flight::select(&#39;arrived_at&#39;)
+        -&gt;whereColumn(&#39;destination_id&#39;, &#39;destinations.id&#39;)
+        -&gt;orderByDesc(&#39;arrived_at&#39;)
+        -&gt;limit(1)
+)-&gt;get();
+</code></pre>
+<p><a name="retrieving-single-models"></a></p>
+<h2>檢索單個模型/聚合</h2>
+<p>除了檢索與給定查詢匹配的所有記錄外，您還可以使用 <code>find</code>、<code>first</code> 或 <code>firstWhere</code> 方法檢索單個記錄。這些方法返回一個單一的模型實例，而不是模型集合：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+// 透過主鍵檢索模型...
+$flight = Flight::find(1);
+
+// 檢索符合查詢條件的第一個模型...
+$flight = Flight::where(&#39;active&#39;, 1)-&gt;first();
+
+// 檢索符合查詢條件的第一個模型的替代方法...
+$flight = Flight::firstWhere(&#39;active&#39;, 1);
+</code></pre>
+<p>有時您可能希望在未找到結果時執行一些其他操作。<code>findOr</code> 和 <code>firstOr</code> 方法將返回一個單一的模型實例，或者如果未找到結果，則執行給定的閉包。閉包返回的值將被視為方法的結果：</p>
+<pre><code class="language-php">$flight = Flight::findOr(1, function () {
+    // ...
+});
+
+$flight = Flight::where(&#39;legs&#39;, &#39;&gt;&#39;, 3)-&gt;firstOr(function () {
+    // ...
+});
+</code></pre>
+<p><a name="not-found-exceptions"></a></p>
+<h4>未找到異常</h4>
+<p>有時您可能希望在未找到模型時拋出異常。這在路由或控制器中特別有用。<code>findOrFail</code> 和 <code>firstOrFail</code> 方法將檢索查詢的第一個結果；但是，如果未找到結果，將拋出 <code>Illuminate\\Database\\Eloquent\\ModelNotFoundException</code>：</p>
+<pre><code class="language-php">$flight = Flight::findOrFail(1);
+
+$flight = Flight::where(&#39;legs&#39;, &#39;&gt;&#39;, 3)-&gt;firstOrFail();
+</code></pre>
+<p>如果未捕獲 <code>ModelNotFoundException</code>，將自動向客戶端發送 404 HTTP 響應：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+Route::get(&#39;/api/flights/{id}&#39;, function (string $id) {
+    return Flight::findOrFail($id);
+});
+</code></pre>
+<p><a name="retrieving-or-creating-models"></a></p>
+<h3>檢索或創建模型</h3>
+<p><code>firstOrCreate</code> 方法將嘗試使用給定的列/值對來定位資料庫記錄。如果在資料庫中找不到該模型，則將插入一條記錄，其屬性由第一個數組參數與可選的第二個數組參數合併的結果組成。</p>
+<p><code>firstOrNew</code> 方法與 <code>firstOrCreate</code> 類似，將嘗試在資料庫中定位與給定屬性匹配的記錄。但是，如果找不到模型，則返回一個新的模型實例。請注意，<code>firstOrNew</code> 返回的模型尚未持久化到資料庫。您需要手動調用 <code>save</code> 方法來持久化它：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+// 透過名稱檢索航班，如果不存在則創建它...
+$flight = Flight::firstOrCreate([
+    &#39;name&#39; =&gt; &#39;London to Paris&#39;
+]);
+
+// 透過名稱檢索航班，或使用名稱、delayed 和 arrival_time 屬性創建它...
+$flight = Flight::firstOrCreate(
+    [&#39;name&#39; =&gt; &#39;London to Paris&#39;],
+    [&#39;delayed&#39; =&gt; 1, &#39;arrival_time&#39; =&gt; &#39;11:30&#39;]
+);
+
+// 透過名稱檢索航班，或實例化一個新的 Flight 實例...
+$flight = Flight::firstOrNew([
+    &#39;name&#39; =&gt; &#39;London to Paris&#39;
+]);
+
+// 透過名稱檢索航班，或使用名稱、delayed 和 arrival_time 屬性實例化...
+$flight = Flight::firstOrNew(
+    [&#39;name&#39; =&gt; &#39;Tokyo to Sydney&#39;],
+    [&#39;delayed&#39; =&gt; 1, &#39;arrival_time&#39; =&gt; &#39;11:30&#39;]
+);
+</code></pre>
+<p><a name="retrieving-aggregates"></a></p>
+<h3>檢索聚合</h3>
+<p>與 Eloquent 模型互動時，您還可以使用 Laravel <a href="/docs/queries">查詢建構器</a>提供的 <code>count</code>、<code>sum</code>、<code>max</code> 和其他<a href="/docs/queries#aggregates">聚合方法</a>。正如您所預期的，這些方法返回一個標量值而不是 Eloquent 模型實例：</p>
+<pre><code class="language-php">$count = Flight::where(&#39;active&#39;, 1)-&gt;count();
+
+$max = Flight::where(&#39;active&#39;, 1)-&gt;max(&#39;price&#39;);
+</code></pre>
+<p><a name="inserting-and-updating-models"></a></p>
+<h2>插入和更新模型</h2>
+<p><a name="inserts"></a></p>
+<h3>插入</h3>
+<p>當然，使用 Eloquent 時，我們不僅需要從資料庫中檢索模型。我們還需要插入新記錄。幸運的是，Eloquent 使這變得簡單。要向資料庫中插入新記錄，您應該實例化一個新的模型實例並在模型上設定屬性。然後，在模型實例上調用 <code>save</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\Flight;
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+
+class FlightController extends Controller
+{
+    /**
+     * 在資料庫中儲存新的航班。
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        // 驗證請求...
+
+        $flight = new Flight;
+
+        $flight-&gt;name = $request-&gt;name;
+
+        $flight-&gt;save();
+
+        return redirect(&#39;/flights&#39;);
+    }
+}
+</code></pre>
+<p>在此範例中，我們將傳入 HTTP 請求中的 <code>name</code> 欄位賦值給 <code>App\\Models\\Flight</code> 模型實例的 <code>name</code> 屬性。當我們調用 <code>save</code> 方法時，將向資料庫插入一條記錄。模型的 <code>created_at</code> 和 <code>updated_at</code> 時間戳將在調用 <code>save</code> 方法時自動設定，因此無需手動設定它們。</p>
+<p>如果您想在資料庫事務中儲存模型，可以使用 <code>saveOrFail</code> 方法。如果在儲存期間拋出異常，事務將自動回滾：</p>
+<pre><code class="language-php">$flight-&gt;saveOrFail();
+</code></pre>
+<p>或者，您可以使用 <code>create</code> 方法透過單個 PHP 語句「儲存」新模型。<code>create</code> 方法將返回插入的模型實例：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+$flight = Flight::create([
+    &#39;name&#39; =&gt; &#39;London to Paris&#39;,
+]);
+</code></pre>
+<p>但是，在使用 <code>create</code> 方法之前，您需要在模型類別上指定 <code>Fillable</code> 或 <code>Guarded</code> 屬性。這些屬性是必需的，因為所有 Eloquent 模型預設都受到批量賦值漏洞的保護。要了解更多關於批量賦值的資訊，請查閱<a href="#mass-assignment">批量賦值文檔</a>。</p>
+<p><a name="updates"></a></p>
+<h3>更新</h3>
+<p><code>save</code> 方法也可用於更新資料庫中已存在的模型。要更新模型，您應該檢索它並設定您要更新的任何屬性。然後，您應該調用模型的 <code>save</code> 方法。同樣，<code>updated_at</code> 時間戳將自動更新，因此無需手動設定其值：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+$flight = Flight::find(1);
+
+$flight-&gt;name = &#39;Paris to London&#39;;
+
+$flight-&gt;save();
+</code></pre>
+<p>如果您想在資料庫事務中更新模型，可以使用 <code>updateOrFail</code> 方法。如果在更新期間拋出異常，事務將自動回滾：</p>
+<pre><code class="language-php">$flight-&gt;updateOrFail([&#39;name&#39; =&gt; &#39;Paris to London&#39;]);
+</code></pre>
+<p>有時，您可能需要更新現有模型或在沒有匹配模型時創建新模型。像 <code>firstOrCreate</code> 方法一樣，<code>updateOrCreate</code> 方法會持久化模型，因此無需手動調用 <code>save</code> 方法。</p>
+<p>在下面的範例中，如果存在一個 <code>departure</code> 位置為 <code>Oakland</code> 且 <code>destination</code> 位置為 <code>San Diego</code> 的航班，其 <code>price</code> 和 <code>discounted</code> 列將被更新。如果不存在這樣的航班，則將創建一個新的航班，其屬性由第一個參數陣列與第二個參數陣列合併的結果組成：</p>
+<pre><code class="language-php">$flight = Flight::updateOrCreate(
+    [&#39;departure&#39; =&gt; &#39;Oakland&#39;, &#39;destination&#39; =&gt; &#39;San Diego&#39;],
+    [&#39;price&#39; =&gt; 99, &#39;discounted&#39; =&gt; 1]
+);
+</code></pre>
+<p>使用 <code>firstOrCreate</code> 或 <code>updateOrCreate</code> 等方法時，您可能不知道是創建了新模型還是更新了現有模型。<code>wasRecentlyCreated</code> 屬性指示模型是否在其當前生命週期中被創建：</p>
+<pre><code class="language-php">$flight = Flight::updateOrCreate(
+    // ...
+);
+
+if ($flight-&gt;wasRecentlyCreated) {
+    // 插入了新的航班記錄...
+}
+</code></pre>
+<p><a name="mass-updates"></a></p>
+<h4>批量更新</h4>
+<p>更新也可以針對與給定查詢匹配的模型執行。在此範例中，所有 <code>active</code> 且 <code>destination</code> 為 <code>San Diego</code> 的航班將被標記為延誤：</p>
+<pre><code class="language-php">Flight::where(&#39;active&#39;, 1)
+    -&gt;where(&#39;destination&#39;, &#39;San Diego&#39;)
+    -&gt;update([&#39;delayed&#39; =&gt; 1]);
+</code></pre>
+<p><code>update</code> 方法期望一個表示應更新的列的列和值對的數組。<code>update</code> 方法返回受影響的行數。</p>
+<blockquote>
+<p>[!WARNING]
+透過 Eloquent 發出批量更新時，更新的模型不會觸發 <code>saving</code>、<code>saved</code>、<code>updating</code> 和 <code>updated</code> 模型事件。這是因為在發出批量更新時從未實際檢索模型。</p>
+</blockquote>
+<p><a name="examining-attribute-changes"></a></p>
+<h4>檢查屬性更改</h4>
+<p>Eloquent 提供了 <code>isDirty</code>、<code>isClean</code> 和 <code>wasChanged</code> 方法來檢查模型的內部狀態並確定其屬性自模型最初被檢索以來如何更改。</p>
+<p><code>isDirty</code> 方法判斷模型的任何屬性是否已更改。您可以向 <code>isDirty</code> 方法傳遞特定的屬性名稱或屬性數組來判斷是否有任何屬性是「髒的」。<code>isClean</code> 方法將判斷屬性自模型被檢索以來是否保持不變。此方法也接受一個可選的屬性參數：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::create([
+    &#39;first_name&#39; =&gt; &#39;Taylor&#39;,
+    &#39;last_name&#39; =&gt; &#39;Otwell&#39;,
+    &#39;title&#39; =&gt; &#39;Developer&#39;,
+]);
+
+$user-&gt;title = &#39;Painter&#39;;
+
+$user-&gt;isDirty(); // true
+$user-&gt;isDirty(&#39;title&#39;); // true
+$user-&gt;isDirty(&#39;first_name&#39;); // false
+$user-&gt;isDirty([&#39;first_name&#39;, &#39;title&#39;]); // true
+
+$user-&gt;isClean(); // false
+$user-&gt;isClean(&#39;title&#39;); // false
+$user-&gt;isClean(&#39;first_name&#39;); // true
+$user-&gt;isClean([&#39;first_name&#39;, &#39;title&#39;]); // false
+
+$user-&gt;save();
+
+$user-&gt;isDirty(); // false
+$user-&gt;isClean(); // true
+</code></pre>
+<p><code>wasChanged</code> 方法判斷模型在當前請求週期內最後一次儲存時是否有任何屬性被更改。如有需要，您可以傳遞屬性名稱以查看特定屬性是否被更改：</p>
+<pre><code class="language-php">$user = User::create([
+    &#39;first_name&#39; =&gt; &#39;Taylor&#39;,
+    &#39;last_name&#39; =&gt; &#39;Otwell&#39;,
+    &#39;title&#39; =&gt; &#39;Developer&#39;,
+]);
+
+$user-&gt;title = &#39;Painter&#39;;
+
+$user-&gt;save();
+
+$user-&gt;wasChanged(); // true
+$user-&gt;wasChanged(&#39;title&#39;); // true
+$user-&gt;wasChanged([&#39;title&#39;, &#39;slug&#39;]); // true
+$user-&gt;wasChanged(&#39;first_name&#39;); // false
+$user-&gt;wasChanged([&#39;first_name&#39;, &#39;title&#39;]); // true
+</code></pre>
+<p><code>getOriginal</code> 方法返回一個包含模型原始屬性的數組，無論模型自被檢索以來有何更改。如有需要，您可以傳遞特定的屬性名稱以獲取特定屬性的原始值：</p>
+<pre><code class="language-php">$user = User::find(1);
+
+$user-&gt;name; // John
+$user-&gt;email; // john@example.com
+
+$user-&gt;name = &#39;Jack&#39;;
+$user-&gt;name; // Jack
+
+$user-&gt;getOriginal(&#39;name&#39;); // John
+$user-&gt;getOriginal(); // 原始屬性數組...
+</code></pre>
+<p><code>getChanges</code> 方法返回一個包含模型上次儲存時更改的屬性的數組，而 <code>getPrevious</code> 方法返回一個包含模型上次儲存前的原始屬性值的數組：</p>
+<pre><code class="language-php">$user = User::find(1);
+
+$user-&gt;name; // John
+$user-&gt;email; // john@example.com
+
+$user-&gt;update([
+    &#39;name&#39; =&gt; &#39;Jack&#39;,
+    &#39;email&#39; =&gt; &#39;jack@example.com&#39;,
+]);
+
+$user-&gt;getChanges();
+
+/*
+    [
+        &#39;name&#39; =&gt; &#39;Jack&#39;,
+        &#39;email&#39; =&gt; &#39;jack@example.com&#39;,
+    ]
+*/
+
+$user-&gt;getPrevious();
+
+/*
+    [
+        &#39;name&#39; =&gt; &#39;John&#39;,
+        &#39;email&#39; =&gt; &#39;john@example.com&#39;,
+    ]
+*/
+</code></pre>
+<p><a name="mass-assignment"></a></p>
+<h3>批量賦值</h3>
+<p>您可以使用 <code>create</code> 方法透過單個 PHP 語句「儲存」新模型。方法將返回插入的模型實例：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+$flight = Flight::create([
+    &#39;name&#39; =&gt; &#39;London to Paris&#39;,
+]);
+</code></pre>
+<p>但是，在使用 <code>create</code> 方法之前，您需要在模型類別上指定 <code>Fillable</code> 或 <code>Guarded</code> 屬性。這些屬性是必需的，因為所有 Eloquent 模型預設都受到批量賦值漏洞的保護。</p>
+<p>批量賦值漏洞發生在用戶傳遞意外的 HTTP 請求欄位且該欄位更改了資料庫中您未預期的列時。例如，惡意用戶可能透過 HTTP 請求發送 <code>is_admin</code> 參數，然後將其傳遞給模型的 <code>create</code> 方法，允許用戶將自己提升為管理員。</p>
+<p>因此，首先，您應該定義要使其可批量賦值的模型屬性。您可以使用模型上的 <code>Fillable</code> 屬性來完成此操作。例如，讓我們使 <code>Flight</code> 模型的 <code>name</code> 屬性可批量賦值：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Fillable;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Fillable([&#39;name&#39;])]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p>指定哪些屬性可批量賦值後，您可以使用 <code>create</code> 方法在資料庫中插入新記錄。<code>create</code> 方法返回新創建的模型實例：</p>
+<pre><code class="language-php">$flight = Flight::create([&#39;name&#39; =&gt; &#39;London to Paris&#39;]);
+</code></pre>
+<p>如果您已經有一個模型實例，您可以使用 <code>fill</code> 方法用屬性數組填充它：</p>
+<pre><code class="language-php">$flight-&gt;fill([&#39;name&#39; =&gt; &#39;Amsterdam to Frankfurt&#39;]);
+</code></pre>
+<p><a name="mass-assignment-json-columns"></a></p>
+<h4>批量賦值和 JSON 列</h4>
+<p>賦值 JSON 列時，每個列的可批量賦值金鑰必須在模型的 <code>Fillable</code> 屬性中指定。為了安全性，使用 <code>Guarded</code> 屬性時，Laravel 不支援更新巢狀 JSON 屬性：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Attributes\\Fillable;
+
+#[Fillable([&#39;options-&gt;enabled&#39;])]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="allowing-mass-assignment"></a></p>
+<h4>允許批量賦值</h4>
+<p>如果您想使所有屬性都可批量賦值，可以在模型上使用 <code>Unguarded</code> 屬性。如果您選擇解除模型的保護，您應該特別注意始終手動構建傳遞給 Eloquent 的 <code>fill</code>、<code>create</code> 和 <code>update</code> 方法的數組：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Unguarded;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[Unguarded]
+class Flight extends Model
+{
+    // ...
+}
+</code></pre>
+<p><a name="mass-assignment-exceptions"></a></p>
+<h4>批量賦值異常</h4>
+<p>預設情況下，執行批量賦值操作時，未包含在 <code>Fillable</code> 屬性中的屬性會被靜默丟棄。在生產環境中，這是預期的行為；但是，在本機開發期間，它可能導致對模型更改為何不生效的困惑。</p>
+<p>如果您願意，您可以透過調用 <code>preventSilentlyDiscardingAttributes</code> 方法來指示 Laravel 在嘗試填充不可填充的屬性時拋出異常。通常，此方法應在應用程式的 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法中調用：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Eloquent\\Model;
+
+/**
+ * 引導任何應用程式服務。
+ */
+public function boot(): void
+{
+    Model::preventSilentlyDiscardingAttributes($this-&gt;app-&gt;isLocal());
+}
+</code></pre>
+<p><a name="upserts"></a></p>
+<h3>Upserts</h3>
+<p>Eloquent 的 <code>upsert</code> 方法可用於在單個原子操作中更新或創建記錄。該方法的第一個參數由要插入或更新的值組成，而第二個參數列出了在關聯表中唯一識別記錄的列。該方法的第三個也是最後一個參數是如果資料庫中已存在匹配記錄時應更新的列的數組。如果模型上啟用了時間戳，<code>upsert</code> 方法將自動設定 <code>created_at</code> 和 <code>updated_at</code> 時間戳：</p>
+<pre><code class="language-php">Flight::upsert([
+    [&#39;departure&#39; =&gt; &#39;Oakland&#39;, &#39;destination&#39; =&gt; &#39;San Diego&#39;, &#39;price&#39; =&gt; 99],
+    [&#39;departure&#39; =&gt; &#39;Chicago&#39;, &#39;destination&#39; =&gt; &#39;New York&#39;, &#39;price&#39; =&gt; 150]
+], uniqueBy: [&#39;departure&#39;, &#39;destination&#39;], update: [&#39;price&#39;]);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+除 SQL Server 外的所有資料庫都要求 <code>upsert</code> 方法第二個參數中的列具有「主鍵」或「唯一」索引。此外，MariaDB 和 MySQL 資料庫驅動程式會忽略 <code>upsert</code> 方法的第二個參數，並始終使用表的「主鍵」和「唯一」索引来偵測現有記錄。</p>
+</blockquote>
+<p><a name="deleting-models"></a></p>
+<h2>刪除模型</h2>
+<p>要刪除模型，您可以在模型實例上調用 <code>delete</code> 方法：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+$flight = Flight::find(1);
+
+$flight-&gt;delete();
+</code></pre>
+<p>如果您想在資料庫事務中刪除模型，可以使用 <code>deleteOrFail</code> 方法。如果在刪除期間拋出異常，事務將自動回滾：</p>
+<pre><code class="language-php">$flight-&gt;deleteOrFail();
+</code></pre>
+<p><a name="deleting-an-existing-model-by-its-primary-key"></a></p>
+<h4>透過主鍵刪除現有模型</h4>
+<p>在上面的範例中，我們在調用 <code>delete</code> 方法之前從資料庫中檢索模型。但是，如果您知道模型的主鍵，可以透過調用 <code>destroy</code> 方法來刪除模型，而無需明確檢索它。除了接受單個主鍵外，<code>destroy</code> 方法還將接受多個主鍵、主鍵數組或主鍵<a href="/docs/collections">集合</a>：</p>
+<pre><code class="language-php">Flight::destroy(1);
+
+Flight::destroy(1, 2, 3);
+
+Flight::destroy([1, 2, 3]);
+
+Flight::destroy(collect([1, 2, 3]));
+</code></pre>
+<p>如果您正在使用<a href="#soft-deleting">軟刪除模型</a>，您可以透過 <code>forceDestroy</code> 方法永久刪除模型：</p>
+<pre><code class="language-php">Flight::forceDestroy(1);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+<code>destroy</code> 方法會單獨載入每個模型並調用 <code>delete</code> 方法，以便為每個模型正確派發 <code>deleting</code> 和 <code>deleted</code> 事件。</p>
+</blockquote>
+<p><a name="deleting-models-using-queries"></a></p>
+<h4>使用查詢刪除模型</h4>
+<p>當然，您可以構建一個 Eloquent 查詢來刪除與查詢條件匹配的所有模型。在此範例中，我們將刪除所有標記為非活動的航班。像批量更新一樣，批量刪除不會為刪除的模型派發模型事件：</p>
+<pre><code class="language-php">$deleted = Flight::where(&#39;active&#39;, 0)-&gt;delete();
+</code></pre>
+<p>要刪除表中的所有模型，您應該執行一個不添加任何條件的查詢：</p>
+<pre><code class="language-php">$deleted = Flight::query()-&gt;delete();
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+透過 Eloquent 執行批量刪除語句時，不會為刪除的模型派發 <code>deleting</code> 和 <code>deleted</code> 模型事件。這是因為在執行刪除語句時從未實際檢索模型。</p>
+</blockquote>
+<p><a name="soft-deleting"></a></p>
+<h3>軟刪除</h3>
+<p>除了實際從資料庫中移除記錄外，Eloquent 還可以「軟刪除」模型。當模型被軟刪除時，它們並非實際從資料庫中移除。相反，模型上會設定一個 <code>deleted_at</code> 屬性，指示模型被「刪除」的日期和時間。要為模型啟用軟刪除，請將 <code>Illuminate\\Database\\Eloquent\\SoftDeletes</code> trait 添加到模型中：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\SoftDeletes;
+
+class Flight extends Model
+{
+    use SoftDeletes;
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+<code>SoftDeletes</code> trait 會自動為您將 <code>deleted_at</code> 屬性轉換為 <code>DateTime</code> / <code>Carbon</code> 實例。</p>
+</blockquote>
+<p>您還應該將 <code>deleted_at</code> 列添加到資料庫表中。Laravel 的<a href="/docs/migrations">結構生成器</a>包含一個創建此列的輔助方法：</p>
+<pre><code class="language-php">use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+Schema::table(&#39;flights&#39;, function (Blueprint $table) {
+    $table-&gt;softDeletes();
+});
+
+Schema::table(&#39;flights&#39;, function (Blueprint $table) {
+    $table-&gt;dropSoftDeletes();
+});
+</code></pre>
+<p>現在，當您在模型上調用 <code>delete</code> 方法時，<code>deleted_at</code> 列將被設定為當前日期和時間。但是，模型的資料庫記錄將保留在表中。查詢使用軟刪除的模型時，軟刪除的模型將自動從所有查詢結果中排除。</p>
+<p>要判斷給定的模型實例是否已被軟刪除，您可以使用 <code>trashed</code> 方法：</p>
+<pre><code class="language-php">if ($flight-&gt;trashed()) {
+    // ...
+}
+</code></pre>
+<p><a name="restoring-soft-deleted-models"></a></p>
+<h4>還原軟刪除的模型</h4>
+<p>有時您可能希望「取消刪除」軟刪除的模型。要還原軟刪除的模型，您可以在模型實例上調用 <code>restore</code> 方法。<code>restore</code> 方法將模型的 <code>deleted_at</code> 列設定為 <code>null</code>：</p>
+<pre><code class="language-php">$flight-&gt;restore();
+</code></pre>
+<p>您也可以在查詢中使用 <code>restore</code> 方法來還原多個模型。同樣，與其他「批量」操作一樣，這不會為還原的模型派發任何模型事件：</p>
+<pre><code class="language-php">Flight::withTrashed()
+    -&gt;where(&#39;airline_id&#39;, 1)
+    -&gt;restore();
+</code></pre>
+<p><code>restore</code> 方法也可在構建<a href="/docs/eloquent-relationships">關聯</a>查詢時使用：</p>
+<pre><code class="language-php">$flight-&gt;history()-&gt;restore();
+</code></pre>
+<p><a name="permanently-deleting-models"></a></p>
+<h4>永久刪除模型</h4>
+<p>有時您可能需要真正從資料庫中移除模型。您可以使用 <code>forceDelete</code> 方法從資料庫表中永久移除軟刪除的模型：</p>
+<pre><code class="language-php">$flight-&gt;forceDelete();
+</code></pre>
+<p>您也可以在構建 Eloquent 關聯查詢時使用 <code>forceDelete</code> 方法：</p>
+<pre><code class="language-php">$flight-&gt;history()-&gt;forceDelete();
+</code></pre>
+<p><a name="querying-soft-deleted-models"></a></p>
+<h3>查詢已軟刪除的模型</h3>
+<p><a name="including-soft-deleted-models"></a></p>
+<h4>包含已軟刪除的模型</h4>
+<p>如上所述，軟刪除的模型將自動從查詢結果中排除。但是，您可以透過在查詢上調用 <code>withTrashed</code> 方法來強制將軟刪除的模型包含在查詢結果中：</p>
+<pre><code class="language-php">use App\\Models\\Flight;
+
+$flights = Flight::withTrashed()
+    -&gt;where(&#39;account_id&#39;, 1)
+    -&gt;get();
+</code></pre>
+<p>構建<a href="/docs/eloquent-relationships">關聯</a>查詢時也可以調用 <code>withTrashed</code> 方法：</p>
+<pre><code class="language-php">$flight-&gt;history()-&gt;withTrashed()-&gt;get();
+</code></pre>
+<p><a name="retrieving-only-soft-deleted-models"></a></p>
+<h4>僅檢索已軟刪除的模型</h4>
+<p><code>onlyTrashed</code> 方法將僅檢索<strong>已</strong>軟刪除的模型：</p>
+<pre><code class="language-php">$flights = Flight::onlyTrashed()
+    -&gt;where(&#39;airline_id&#39;, 1)
+    -&gt;get();
+</code></pre>
+<p><a name="pruning-models"></a></p>
+<h2>修剪模型</h2>
+<p>有時您可能想要定期刪除不再需要的模型。為了實現這一點，您可以將 <code>Illuminate\\Database\\Eloquent\\Prunable</code> 或 <code>Illuminate\\Database\\Eloquent\\MassPrunable</code> trait 添加到您希望定期修剪的模型中。將其中一個 trait 添加到模型後，實現一個 <code>prunable</code> 方法，該方法返回一個解析不再需要的模型的 Eloquent 查詢建構器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\Prunable;
+
+class Flight extends Model
+{
+    use Prunable;
+
+    /**
+     * 獲取可修剪的模型查詢。
+     */
+    public function prunable(): Builder
+    {
+        return static::where(&#39;created_at&#39;, &#39;&lt;=&#39;, now()-&gt;minus(months: 1));
+    }
+}
+</code></pre>
+<p>將模型標記為 <code>Prunable</code> 時，您還可以在模型上定義一個 <code>pruning</code> 方法。此方法將在模型被刪除之前調用。此方法在從資料庫中永久移除模型之前刪除與模型關聯的任何其他資源（例如儲存的檔案）時非常有用：</p>
+<pre><code class="language-php">/**
+ * 為修剪準備模型。
+ */
+protected function pruning(): void
+{
+    // ...
+}
+</code></pre>
+<p>配置可修剪模型後，您應該在應用程式的 <code>routes/console.php</code> 檔案中排程 <code>model:prune</code> Artisan 命令。您可以自由選擇運行此命令的適當間隔：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Schedule;
+
+Schedule::command(&#39;model:prune&#39;)-&gt;daily();
+</code></pre>
+<p>在底層，<code>model:prune</code> 命令將自動偵測應用程式 <code>app/Models</code> 目錄中的「可修剪」模型。如果您的模型位於不同的位置，您可以使用 <code>--model</code> 選項來指定模型類別名稱：</p>
+<pre><code class="language-php">Schedule::command(&#39;model:prune&#39;, [
+    &#39;--model&#39; =&gt; [Address::class, Flight::class],
+])-&gt;daily();
+</code></pre>
+<p>如果您希望在修剪所有其他偵測到的模型時排除某些模型，可以使用 <code>--except</code> 選項：</p>
+<pre><code class="language-php">Schedule::command(&#39;model:prune&#39;, [
+    &#39;--except&#39; =&gt; [Address::class, Flight::class],
+])-&gt;daily();
+</code></pre>
+<p>您可以透過使用 <code>--pretend</code> 選項執行 <code>model:prune</code> 命令來測試您的 <code>prunable</code> 查詢。假裝時，<code>model:prune</code> 命令將簡單報告如果命令實際運行將有多少記錄被修剪：</p>
+<pre><code class="language-shell">php artisan model:prune --pretend
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果軟刪除的模型匹配可修剪查詢，則將被永久刪除（<code>forceDelete</code>）。</p>
+</blockquote>
+<p><a name="mass-pruning"></a></p>
+<h4>批量修剪</h4>
+<p>當模型標記有 <code>Illuminate\\Database\\Eloquent\\MassPrunable</code> trait 時，模型使用批量刪除查詢從資料庫中刪除。因此，<code>pruning</code> 方法不會被調用，<code>deleting</code> 和 <code>deleted</code> 模型事件也不會被派發。這是因為在刪除之前從未實際檢索模型，因此使修剪過程更加高效：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\MassPrunable;
+
+class Flight extends Model
+{
+    use MassPrunable;
+
+    /**
+     * 獲取可修剪的模型查詢。
+     */
+    public function prunable(): Builder
+    {
+        return static::where(&#39;created_at&#39;, &#39;&lt;=&#39;, now()-&gt;minus(months: 1));
+    }
+}
+</code></pre>
+<p><a name="replicating-models"></a></p>
+<h2>複製模型</h2>
+<p>您可以使用 <code>replicate</code> 方法創建現有模型實例的未儲存副本。當您的模型實例共享許多相同屬性時，此方法特別有用：</p>
+<pre><code class="language-php">use App\\Models\\Address;
+
+$shipping = Address::create([
+    &#39;type&#39; =&gt; &#39;shipping&#39;,
+    &#39;line_1&#39; =&gt; &#39;123 Example Street&#39;,
+    &#39;city&#39; =&gt; &#39;Victorville&#39;,
+    &#39;state&#39; =&gt; &#39;CA&#39;,
+    &#39;postcode&#39; =&gt; &#39;90001&#39;,
+]);
+
+$billing = $shipping-&gt;replicate()-&gt;fill([
+    &#39;type&#39; =&gt; &#39;billing&#39;
+]);
+
+$billing-&gt;save();
+</code></pre>
+<p>要從複製到新模型中排除一個或多個屬性，您可以向 <code>replicate</code> 方法傳遞一個數組：</p>
+<pre><code class="language-php">$flight = Flight::create([
+    &#39;destination&#39; =&gt; &#39;LAX&#39;,
+    &#39;origin&#39; =&gt; &#39;LHR&#39;,
+    &#39;last_flown&#39; =&gt; &#39;2020-03-04 11:00:00&#39;,
+    &#39;last_pilot_id&#39; =&gt; 747,
+]);
+
+$flight = $flight-&gt;replicate([
+    &#39;last_flown&#39;,
+    &#39;last_pilot_id&#39;
+]);
+</code></pre>
+<p><a name="query-scopes"></a></p>
+<h2>查詢作用域</h2>
+<p><a name="global-scopes"></a></p>
+<h3>全域作用域</h3>
+<p>全域作用域允許您向給定模型的所有查詢添加條件。Laravel 自己的<a href="#soft-deleting">軟刪除</a>功能使用全域作用域僅從資料庫中檢索「未刪除」的模型。編寫自己的全域作用域可以提供一種方便、簡單的方法來確保給定模型的每個查詢都收到某些約束。</p>
+<p><a name="generating-scopes"></a></p>
+<h4>生成作用域</h4>
+<p>要生成新的全域作用域，您可以調用 <code>make:scope</code> Artisan 命令，它將生成的作用域放置在應用程式的 <code>app/Models/Scopes</code> 目錄中：</p>
+<pre><code class="language-shell">php artisan make:scope AncientScope
+</code></pre>
+<p><a name="writing-global-scopes"></a></p>
+<h4>編寫全域作用域</h4>
+<p>編寫全域作用域很簡單。首先，使用 <code>make:scope</code> 命令生成一個實現 <code>Illuminate\\Database\\Eloquent\\Scope</code> 介面的類別。<code>Scope</code> 介面要求您實現一個方法：<code>apply</code>。<code>apply</code> 方法可以根據需要向查詢添加 <code>where</code> 條件或其他類型的子句：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models\\Scopes;
+
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\Scope;
+
+class AncientScope implements Scope
+{
+    /**
+     * 將作用域應用於給定的 Eloquent 查詢建構器。
+     */
+    public function apply(Builder $builder, Model $model): void
+    {
+        $builder-&gt;where(&#39;created_at&#39;, &#39;&lt;&#39;, now()-&gt;minus(years: 2000));
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您的全域作用域正在向查詢的選擇子句添加列，您應該使用 <code>addSelect</code> 方法而不是 <code>select</code>。這將防止意外替換查詢現有的選擇子句。</p>
+</blockquote>
+<p><a name="applying-global-scopes"></a></p>
+<h4>應用全域作用域</h4>
+<p>要向模型分配全域作用域，您只需在模型上放置 <code>ScopedBy</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Models\\Scopes\\AncientScope;
+use Illuminate\\Database\\Eloquent\\Attributes\\ScopedBy;
+
+#[ScopedBy([AncientScope::class])]
+class User extends Model
+{
+    //
+}
+</code></pre>
+<p>或者，您可以透過覆蓋模型的 <code>booted</code> 方法並調用模型的 <code>addGlobalScope</code> 方法來手動註冊全域作用域。<code>addGlobalScope</code> 方法接受您的作用域實例作為其唯一參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Models\\Scopes\\AncientScope;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 模型的「booted」方法。
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new AncientScope);
+    }
+}
+</code></pre>
+<p>將上面範例中的作用域添加到 <code>App\\Models\\User</code> 模型後，調用 <code>User::all()</code> 方法將執行以下 SQL 查詢：</p>
+<pre><code class="language-sql">select * from \`users\` where \`created_at\` &lt; 0021-02-18 00:00:00
+</code></pre>
+<p><a name="anonymous-global-scopes"></a></p>
+<h4>匿名全域作用域</h4>
+<p>Eloquent 還允許您使用閉包定義全域作用域，這對於不需要單獨類別的簡單作用域特別有用。使用閉包定義全域作用域時，您應該提供一個您選擇的作用域名稱作為 <code>addGlobalScope</code> 方法的第一個參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 模型的「booted」方法。
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope(&#39;ancient&#39;, function (Builder $builder) {
+            $builder-&gt;where(&#39;created_at&#39;, &#39;&lt;&#39;, now()-&gt;minus(years: 2000));
+        });
+    }
+}
+</code></pre>
+<p><a name="removing-global-scopes"></a></p>
+<h4>移除全域作用域</h4>
+<p>如果您想移除給定查詢的全域作用域，可以使用 <code>withoutGlobalScope</code> 方法。此方法接受全域作用域的類別名稱作為其唯一參數：</p>
+<pre><code class="language-php">User::withoutGlobalScope(AncientScope::class)-&gt;get();
+</code></pre>
+<p>或者，如果您使用閉包定義了全域作用域，您應該傳遞分配給全域作用域的字串名稱：</p>
+<pre><code class="language-php">User::withoutGlobalScope(&#39;ancient&#39;)-&gt;get();
+</code></pre>
+<p>如果您想移除幾個甚至所有查詢的全域作用域，可以使用 <code>withoutGlobalScopes</code> 和 <code>withoutGlobalScopesExcept</code> 方法：</p>
+<pre><code class="language-php">// 移除所有全域作用域...
+User::withoutGlobalScopes()-&gt;get();
+
+// 移除一些全域作用域...
+User::withoutGlobalScopes([
+    FirstScope::class, SecondScope::class
+])-&gt;get();
+
+// 移除除給定作用域之外的所有全域作用域...
+User::withoutGlobalScopesExcept([
+    SecondScope::class,
+])-&gt;get();
+</code></pre>
+<p><a name="local-scopes"></a></p>
+<h3>區域作用域</h3>
+<p>區域作用域允許您定義可輕鬆在應用程式中重用的常用查詢條件集。例如，您可能需要經常檢索所有被認為是「受歡迎」的用戶。要定義作用域，請向 Eloquent 方法添加 <code>Scope</code> 屬性。</p>
+<p>作用域應始終返回相同的查詢建構器實例或 <code>void</code>：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Scope;
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 作用域查詢以僅包含受歡迎的用戶。
+     */
+    #[Scope]
+    protected function popular(Builder $query): void
+    {
+        $query-&gt;where(&#39;votes&#39;, &#39;&gt;&#39;, 100);
+    }
+
+    /**
+     * 作用域查詢以僅包含活動用戶。
+     */
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query-&gt;where(&#39;active&#39;, 1);
+    }
+}
+</code></pre>
+<p><a name="utilizing-a-local-scope"></a></p>
+<h4>使用區域作用域</h4>
+<p>定義作用域後，您可以在查詢模型時調用作用域方法。您甚至可以鏈接調用各種作用域：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = User::popular()-&gt;active()-&gt;orderBy(&#39;created_at&#39;)-&gt;get();
+</code></pre>
+<p>透過 <code>or</code> 查詢運算符組合多個 Eloquent 模型作用域可能需要使用閉包來實現正確的<a href="/docs/queries#logical-grouping">邏輯分組</a>：</p>
+<pre><code class="language-php">$users = User::popular()-&gt;orWhere(function (Builder $query) {
+    $query-&gt;active();
+})-&gt;get();
+</code></pre>
+<p>但是，由於這可能很繁瑣，Laravel 提供了一個「高階」<code>orWhere</code> 方法，允許您無需使用閉包即可流暢地鏈接作用域：</p>
+<pre><code class="language-php">$users = User::popular()-&gt;orWhere-&gt;active()-&gt;get();
+</code></pre>
+<p><a name="dynamic-scopes"></a></p>
+<h4>動態作用域</h4>
+<p>有時您可能希望定義一個接受參數的作用域。首先，只需將額外的參數添加到作用域方法的簽名中。作用域參數應在 <code>$query</code> 參數之後定義：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Scope;
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 作用域查詢以僅包含給定類型的用戶。
+     */
+    #[Scope]
+    protected function ofType(Builder $query, string $type): void
+    {
+        $query-&gt;where(&#39;type&#39;, $type);
+    }
+}
+</code></pre>
+<p>將預期的參數添加到作用域方法的簽名後，您可以在調用作用域時傳遞參數：</p>
+<pre><code class="language-php">$users = User::ofType(&#39;admin&#39;)-&gt;get();
+</code></pre>
+<p>帶有屬性的作用域方法應為 <code>protected</code>。從模型類別內部調用帶有屬性的作用域時，請透過查詢建構器實例調用作用域，例如 <code>static::query()->ofType('admin')</code>，以確保呼叫被路由到 Eloquent 的作用域處理。</p>
+<p><a name="pending-attributes"></a></p>
+<h3>待定屬性</h3>
+<p>如果您想使用作用域來創建具有與用於約束作用域的屬性相同的模型，您可以在構建作用域查詢時使用 <code>withAttributes</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Attributes\\Scope;
+use Illuminate\\Database\\Eloquent\\Builder;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Post extends Model
+{
+    /**
+     * 作用域查詢以僅包含草稿。
+     */
+    #[Scope]
+    protected function draft(Builder $query): void
+    {
+        $query-&gt;withAttributes([
+            &#39;hidden&#39; =&gt; true,
+        ]);
+    }
+}
+</code></pre>
+<p><code>withAttributes</code> 方法將使用給定的屬性向查詢添加 <code>where</code> 條件，並且還會將給定的屬性添加到透過作用域創建的任何模型中：</p>
+<pre><code class="language-php">$draft = Post::draft()-&gt;create([&#39;title&#39; =&gt; &#39;In Progress&#39;]);
+
+$draft-&gt;hidden; // true
+</code></pre>
+<p>要指示 <code>withAttributes</code> 方法不向查詢添加 <code>where</code> 條件，您可以將 <code>asConditions</code> 參數設定為 <code>false</code>：</p>
+<pre><code class="language-php">$query-&gt;withAttributes([
+    &#39;hidden&#39; =&gt; true,
+], asConditions: false);
+</code></pre>
+<p><a name="comparing-models"></a></p>
+<h2>比較模型</h2>
+<p>有時您可能需要判斷兩個模型是否「相同」。<code>is</code> 和 <code>isNot</code> 方法可用於快速驗證兩個模型是否具有相同的主鍵、表和資料庫連接：</p>
+<pre><code class="language-php">if ($post-&gt;is($anotherPost)) {
+    // ...
+}
+
+if ($post-&gt;isNot($anotherPost)) {
+    // ...
+}
+</code></pre>
+<p><code>is</code> 和 <code>isNot</code> 方法在使用 <code>belongsTo</code>、<code>hasOne</code>、<code>morphTo</code> 和 <code>morphOne</code> <a href="/docs/eloquent-relationships">關聯</a>時也可用。當您想要比較關聯模型而無需發出查詢來檢索該模型時，此方法特別有幫助：</p>
+<pre><code class="language-php">if ($post-&gt;author()-&gt;is($user)) {
+    // ...
+}
+</code></pre>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<blockquote>
+<p>[!NOTE]
+想要將 Eloquent 事件直接廣播到客戶端應用程式？請查看 Laravel 的<a href="/docs/broadcasting#model-broadcasting">模型事件廣播</a>。</p>
+</blockquote>
+<p>Eloquent 模型會派發幾個事件，允許您在模型生命週期中的以下時刻加入：<code>retrieved</code>、<code>creating</code>、<code>created</code>、<code>updating</code>、<code>updated</code>、<code>saving</code>、<code>saved</code>、<code>deleting</code>、<code>deleted</code>、<code>trashed</code>、<code>forceDeleting</code>、<code>forceDeleted</code>、<code>restoring</code>、<code>restored</code> 和 <code>replicating</code>。</p>
+<p><code>retrieved</code> 事件將在從資料庫中檢索現有模型時派發。當新模型第一次被儲存時，<code>creating</code> 和 <code>created</code> 事件將被派發。<code>updating</code> / <code>updated</code> 事件將在修改現有模型並調用 <code>save</code> 方法時派發。<code>saving</code> / <code>saved</code> 事件將在創建或更新模型時派發——即使模型的屬性未被更改。以 <code>-ing</code> 結尾的事件名稱在模型的任何更改被持久化之前派發，而以 <code>-ed</code> 結尾的事件在模型的更改被持久化之後派發。</p>
+<p>要開始監聽模型事件，請在 Eloquent 模型上定義 <code>$dispatchesEvents</code> 屬性。此屬性將 Eloquent 模型生命週期的各個點映射到您自己的<a href="/docs/events">事件類別</a>。每個模型事件類別應期望透過其構造函數接收受影響模型的實例：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Events\\UserDeleted;
+use App\\Events\\UserSaved;
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * 模型的事件映射。
+     *
+     * @var array&lt;string, string&gt;
+     */
+    protected $dispatchesEvents = [
+        &#39;saved&#39; =&gt; UserSaved::class,
+        &#39;deleted&#39; =&gt; UserDeleted::class,
+    ];
+}
+</code></pre>
+<p>定義並映射 Eloquent 事件後，您可以使用<a href="/docs/events#defining-listeners">事件監聽器</a>來處理事件。</p>
+<blockquote>
+<p>[!WARNING]
+透過 Eloquent 發出批量更新或刪除查詢時，受影響的模型不會觸發 <code>saved</code>、<code>updated</code>、<code>deleting</code> 和 <code>deleted</code> 模型事件。這是因為在執行批量更新或刪除時從未實際檢索模型。</p>
+</blockquote>
+<p><a name="events-using-closures"></a></p>
+<h3>使用閉包</h3>
+<p>您可以註冊在派發各種模型事件時執行的閉包，而不是使用自訂事件類別。通常，您應該在模型的 <code>booted</code> 方法中註冊這些閉包：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 模型的「booted」方法。
+     */
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            // ...
+        });
+    }
+}
+</code></pre>
+<p>如有需要，您可以在註冊模型事件時使用<a href="/docs/events#queueable-anonymous-event-listeners">可佇列化的匿名事件監聽器</a>。這將指示 Laravel 使用應用程式的<a href="/docs/queues">佇列</a>在背景中運行模型事件監聽器：</p>
+<pre><code class="language-php">use function Illuminate\\Events\\queueable;
+
+static::created(queueable(function (User $user) {
+    // ...
+}));
+</code></pre>
+<p><a name="observers"></a></p>
+<h3>觀察者</h3>
+<p><a name="defining-observers"></a></p>
+<h4>定義觀察者</h4>
+<p>如果您正在監聽給定模型上的許多事件，您可以使用觀察者將所有監聽器分組到一個類別中。觀察者類別的方法名稱反映了您希望監聽的 Eloquent 事件。這些方法中的每一個都接受受影響的模型作為其唯一參數。<code>make:observer</code> Artisan 命令是創建新觀察者類別的最簡單方法：</p>
+<pre><code class="language-shell">php artisan make:observer UserObserver --model=User
+</code></pre>
+<p>此命令將新觀察者放置在 <code>app/Observers</code> 目錄中。如果此目錄不存在，Artisan 將為您創建它。您的新觀察者如下所示：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Observers;
+
+use App\\Models\\User;
+
+class UserObserver
+{
+    /**
+     * 處理 User「已創建」事件。
+     */
+    public function created(User $user): void
+    {
+        // ...
+    }
+
+    /**
+     * 處理 User「已更新」事件。
+     */
+    public function updated(User $user): void
+    {
+        // ...
+    }
+
+    /**
+     * 處理 User「已刪除」事件。
+     */
+    public function deleted(User $user): void
+    {
+        // ...
+    }
+
+    /**
+     * 處理 User「已還原」事件。
+     */
+    public function restored(User $user): void
+    {
+        // ...
+    }
+
+    /**
+     * 處理 User「已強制刪除」事件。
+     */
+    public function forceDeleted(User $user): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>要註冊觀察者，您可以在相應的模型上放置 <code>ObservedBy</code> 屬性：</p>
+<pre><code class="language-php">use App\\Observers\\UserObserver;
+use Illuminate\\Database\\Eloquent\\Attributes\\ObservedBy;
+
+#[ObservedBy([UserObserver::class])]
+class User extends Authenticatable
+{
+    //
+}
+</code></pre>
+<p>或者，您可以透過調用要觀察的模型上的 <code>observe</code> 方法來手動註冊觀察者。您可以在應用程式的 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法中註冊觀察者：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use App\\Observers\\UserObserver;
+
+/**
+ * 引導任何應用程式服務。
+ */
+public function boot(): void
+{
+    User::observe(UserObserver::class);
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+觀察者還可以監聽其他事件，例如 <code>saving</code> 和 <code>retrieved</code>。這些事件在<a href="#events">事件</a>文檔中描述。</p>
+</blockquote>
+<p><a name="observers-and-database-transactions"></a></p>
+<h4>觀察者和資料庫事務</h4>
+<p>當模型在資料庫事務內被創建時，您可能希望指示觀察者僅在資料庫事務被提交後執行其事件處理器。您可以透過在觀察者上實現 <code>ShouldHandleEventsAfterCommit</code> 介面來實現這一點。如果資料庫事務不在進行中，事件處理器將立即執行：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Observers;
+
+use App\\Models\\User;
+use Illuminate\\Contracts\\Events\\ShouldHandleEventsAfterCommit;
+
+class UserObserver implements ShouldHandleEventsAfterCommit
+{
+    /**
+     * 處理 User「已創建」事件。
+     */
+    public function created(User $user): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p><a name="muting-events"></a></p>
+<h3>靜音事件</h3>
+<p>有時您可能需要暫時「靜音」模型觸發的所有事件。您可以使用 <code>withoutEvents</code> 方法來實現這一點。<code>withoutEvents</code> 方法接受一個閉包作為其唯一參數。在此閉包內執行的任何程式碼都不會派發模型事件，閉包返回的任何值都將由 <code>withoutEvents</code> 方法返回：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$user = User::withoutEvents(function () {
+    User::findOrFail(1)-&gt;delete();
+
+    return User::find(2);
+});
+</code></pre>
+<p><a name="saving-a-single-model-without-events"></a></p>
+<h4>儲存單個模型而不觸發事件</h4>
+<p>有時您可能希望「儲存」給定的模型而不派發任何事件。您可以使用 <code>saveQuietly</code> 方法來實現這一點：</p>
+<pre><code class="language-php">$user = User::findOrFail(1);
+
+$user-&gt;name = &#39;Victoria Faith&#39;;
+
+$user-&gt;saveQuietly();
+</code></pre>
+<p>您還可以在不派發任何事件的情況下「更新」、「刪除」、「軟刪除」、「還原」和「複製」給定的模型：</p>
+<pre><code class="language-php">$user-&gt;deleteQuietly();
+$user-&gt;forceDeleteQuietly();
+$user-&gt;restoreQuietly();
+</code></pre>
+`;
+---
+
+<DocsLayout title="Eloquent 入門" currentPath="eloquent">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Eloquent 入門</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Eloquent 入門</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/eloquent" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

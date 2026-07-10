@@ -1,0 +1,657 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>快取</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#configuration">配置</a><ul>
+<li><a href="#driver-prerequisites">驅動程式先決條件</a></li>
+</ul>
+</li>
+<li><a href="#cache-usage">快取用法</a><ul>
+<li><a href="#obtaining-a-cache-instance">取得快取實例</a></li>
+<li><a href="#retrieving-items-from-the-cache">從快取中檢索項目</a></li>
+<li><a href="#storing-items-in-the-cache">在快取中儲存項目</a></li>
+<li><a href="#extending-item-lifetime">延長項目生命週期</a></li>
+<li><a href="#removing-items-from-the-cache">從快取中移除項目</a></li>
+<li><a href="#cache-memoization">快取記憶化</a></li>
+<li><a href="#the-cache-helper">快取輔助函數</a></li>
+</ul>
+</li>
+<li><a href="#cache-tags">快取標籤</a></li>
+<li><a href="#atomic-locks">原子鎖</a><ul>
+<li><a href="#managing-locks">管理鎖</a></li>
+<li><a href="#managing-locks-across-processes">跨程序管理鎖</a></li>
+<li><a href="#refreshing-locks">刷新鎖</a></li>
+<li><a href="#concurrency-limiting">並發限制</a></li>
+</ul>
+</li>
+<li><a href="#cache-failover">快取故障轉移</a></li>
+<li><a href="#adding-custom-cache-drivers">添加自訂快取驅動程式</a><ul>
+<li><a href="#writing-the-driver">編寫驅動程式</a></li>
+<li><a href="#registering-the-driver">註冊驅動程式</a></li>
+</ul>
+</li>
+<li><a href="#events">事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>您的應用程式執行的一些資料檢索或處理任務可能是 CPU 密集型的，或者需要幾秒鐘才能完成。在這種情況下，通常會快取檢索的資料一段時間，以便在後續對相同資料的請求中可以快速檢索。快取的資料通常存儲在非常快速的資料儲存中，例如 <a href="https://memcached.org">Memcached</a> 或 <a href="https://redis.io">Redis</a>。</p>
+<p>幸運的是，Laravel 為各種快取後端提供了一個富有表達力的統一 API，讓您可以利用它們超快速的資料檢索能力來加速您的 Web 應用程式。</p>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p>您應用程式的快取配置檔案位於 <code>config/cache.php</code>。在此檔案中，您可以指定您希望在應用程式中預設使用哪個快取儲存。Laravel 開箱即用支援流行的快取後端，例如 <a href="https://memcached.org">Memcached</a>、<a href="https://redis.io">Redis</a>、<a href="https://aws.amazon.com/dynamodb">DynamoDB</a>、關聯式資料庫和文件系統磁碟。此外，還提供了一個基於文件的快取驅動程式，而 <code>array</code> 和 <code>null</code> 快取驅動程式為您的自動化測試提供了便利的快取後端。</p>
+<p>快取配置檔案還包含許多其他選項供您查看。預設情況下，Laravel 配置為使用 <code>database</code> 快取驅動程式，它將序列化的快取物件儲存在應用程式的資料庫中。</p>
+<p><a name="driver-prerequisites"></a></p>
+<h3>驅動程式先決條件</h3>
+<p><a name="prerequisites-database"></a></p>
+<h4>資料庫</h4>
+<p>使用 <code>database</code> 快取驅動程式時，您需要一個資料庫表來包含快取資料。通常，這包含在 Laravel 的預設 <code>0001_01_01_000001_create_cache_table.php</code><a href="/docs/migrations">資料庫遷移</a>中；但是，如果您的應用程式不包含此遷移，您可以使用 <code>make:cache-table</code> Artisan 命令來創建它：</p>
+<pre><code class="language-shell">php artisan make:cache-table
+
+php artisan migrate
+</code></pre>
+<p><a name="memcached"></a></p>
+<h4>Memcached</h4>
+<p>使用 Memcached 驅動程式需要安裝 <a href="https://pecl.php.net/package/memcached">Memcached PECL 套件</a>。您可以在 <code>config/cache.php</code> 配置檔案中列出所有 Memcached 伺服器。此檔案已經包含一個 <code>memcached.servers</code> 條目供您開始使用：</p>
+<pre><code class="language-php">'memcached' => [
+    // ...
+
+    'servers' => [
+        [
+            'host' => env('MEMCACHED_HOST', '127.0.0.1'),
+            'port' => env('MEMCACHED_PORT', 11211),
+            'weight' => 100,
+        ],
+    ],
+],
+</code></pre>
+<p>如果需要，您可以將 <code>host</code> 選項設定為 UNIX socket 路徑。如果這樣做，<code>port</code> 選項應設定為 <code>0</code>：</p>
+<pre><code class="language-php">'memcached' => [
+    // ...
+
+    'servers' => [
+        [
+            'host' => '/var/run/memcached/memcached.sock',
+            'port' => 0,
+            'weight' => 100
+        ],
+    ],
+],
+</code></pre>
+<p><a name="redis"></a></p>
+<h4>Redis</h4>
+<p>在使用 Redis 快取與 Laravel 之前，您需要透過 PECL 安裝 PhpRedis PHP 擴展或透過 Composer 安裝 <code>predis/predis</code> 套件（~2.0）。<a href="/docs/sail">Laravel Sail</a> 已經包含此擴展。此外，官方 Laravel 應用程式平台（如 <a href="https://cloud.laravel.com">Laravel Cloud</a> 和 <a href="https://forge.laravel.com">Laravel Forge</a>）預設安裝了 PhpRedis 擴展。</p>
+<p>有關配置 Redis 的更多資訊，請查閱其 <a href="/docs/redis#configuration">Laravel 文檔頁面</a>。</p>
+<p><a name="storage"></a></p>
+<h4>儲存</h4>
+<p><code>storage</code> 快取驅動程式允許您將快取值儲存在應用程式配置的任何<a href="/docs/filesystem">文件系統磁碟</a>上。當您想要使用現有磁碟（例如 S3 磁碟）作為鍵/值快取儲存時，這可能很有用：</p>
+<pre><code class="language-php">'storage' => [
+    'driver' => 'storage',
+    'disk' => env('CACHE_STORAGE_DISK'),
+    'path' => env('CACHE_STORAGE_PATH', 'framework/cache/data'),
+],
+</code></pre>
+<p><a name="dynamodb"></a></p>
+<h4>DynamoDB</h4>
+<p>在使用 <a href="https://aws.amazon.com/dynamodb">DynamoDB</a> 快取驅動程式之前，您必須創建一個 DynamoDB 表來儲存所有快取資料。通常，此表應命名為 <code>cache</code>。但是，您應該根據 <code>cache</code> 配置檔案中的 <code>stores.dynamodb.table</code> 配置值來命名該表。表名也可以透過 <code>DYNAMODB_CACHE_TABLE</code> 環境變數設定。</p>
+<p>此表還應有一個字串分割索引鍵，其名稱對應於應用程式 <code>cache</code> 配置檔案中的 <code>stores.dynamodb.attributes.key</code> 配置項的值。預設情況下，分割索引鍵應命名為 <code>key</code>。</p>
+<p>通常，DynamoDB 不會主動從表中移除過期的項目。因此，您應該在表上<a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html">啟用生存時間（TTL）</a>。配置表的 TTL 設定時，您應將 TTL 屬性名稱設定為 <code>expires_at</code>。</p>
+<p>接下來，安裝 AWS SDK，以便您的 Laravel 應用程式可以與 DynamoDB 通訊：</p>
+<pre><code class="language-shell">composer require aws/aws-sdk-php
+</code></pre>
+<p>此外，您應確保為 DynamoDB 快取儲存配置選項提供了值。通常這些選項（例如 <code>AWS_ACCESS_KEY_ID</code> 和 <code>AWS_SECRET_ACCESS_KEY</code>）應在應用程式的 <code>.env</code> 配置檔案中定義：</p>
+<pre><code class="language-php">'dynamodb' => [
+    'driver' => 'dynamodb',
+    'key' => env('AWS_ACCESS_KEY_ID'),
+    'secret' => env('AWS_SECRET_ACCESS_KEY'),
+    'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    'table' => env('DYNAMODB_CACHE_TABLE', 'cache'),
+    'endpoint' => env('DYNAMODB_ENDPOINT'),
+],
+</code></pre>
+<p><a name="mongodb"></a></p>
+<h4>MongoDB</h4>
+<p>如果您使用 MongoDB，官方 <code>mongodb/laravel-mongodb</code> 套件提供了一個 <code>mongodb</code> 快取驅動程式，可以使用 <code>mongodb</code> 資料庫連接進行配置。MongoDB 支援 TTL 索引，可用於自動清除過期的快取項目。</p>
+<p>有關配置 MongoDB 的更多資訊，請參閱 MongoDB <a href="https://www.mongodb.com/docs/drivers/php/laravel-mongodb/current/cache/">快取和鎖文檔</a>。</p>
+<p><a name="cache-usage"></a></p>
+<h2>快取用法</h2>
+<p><a name="obtaining-a-cache-instance"></a></p>
+<h3>取得快取實例</h3>
+<p>要取得快取儲存實例，您可以使用 <code>Cache</code> 外觀，我們將在整個文檔中使用它。<code>Cache</code> 外觀提供了對 Laravel 快取合約底層實現的便利、簡潔的存取：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Support\\Facades\\Cache;
+
+class UserController extends Controller
+{
+    /**
+     * 顯示應用程式所有使用者的列表。
+     */
+    public function index(): array
+    {
+        $value = Cache::get('key');
+
+        return [
+            // ...
+        ];
+    }
+}
+</code></pre>
+<p><a name="accessing-multiple-cache-stores"></a></p>
+<h4>存取多個快取儲存</h4>
+<p>使用 <code>Cache</code> 外觀，您可以透過 <code>store</code> 方法存取各種快取儲存。傳遞給 <code>store</code> 方法的鍵應對應於 <code>cache</code> 配置檔案的 <code>stores</code> 配置陣列中列出的儲存之一：</p>
+<pre><code class="language-php">$value = Cache::store('file')->get('foo');
+
+Cache::store('redis')->put('bar', 'baz', 600); // 10 分鐘
+</code></pre>
+<p><a name="retrieving-items-from-the-cache"></a></p>
+<h3>從快取中檢索項目</h3>
+<p><code>Cache</code> 外觀的 <code>get</code> 方法用於從快取中檢索項目。如果項目不存在於快取中，將返回 <code>null</code>。如果您願意，您可以向 <code>get</code> 方法傳遞第二個參數，指定如果項目不存在時您希望返回的預設值：</p>
+<pre><code class="language-php">$value = Cache::get('key');
+
+$value = Cache::get('key', 'default');
+</code></pre>
+<p>您甚至可以傳遞一個閉包作為預設值。如果指定的項目不存在於快取中，將返回閉包的結果。傳遞閉包允許您延遲從資料庫或其他外部服務檢索預設值：</p>
+<pre><code class="language-php">$value = Cache::get('key', function () {
+    return DB::table(/* ... */)->get();
+});
+</code></pre>
+<p><a name="determining-item-existence"></a></p>
+<h4>判斷項目是否存在</h4>
+<p><code>has</code> 方法可用於判斷項目是否存在於快取中。如果項目存在但其值為 <code>null</code>，此方法也將返回 <code>false</code>：</p>
+<pre><code class="language-php">if (Cache::has('key')) {
+    // ...
+}
+</code></pre>
+<p><a name="incrementing-decrementing-values"></a></p>
+<h4>遞增/遞减值</h4>
+<p><code>increment</code> 和 <code>decrement</code> 方法可用於調整快取中整數項目的值。這兩個方法都接受一個可選的第二個參數，表示要遞增或遞减項目值的金額：</p>
+<pre><code class="language-php">// 如果值不存在則初始化...
+Cache::add('key', 0, now()->plus(hours: 4));
+
+// 遞增或遞减值...
+Cache::increment('key');
+Cache::increment('key', $amount);
+Cache::decrement('key');
+Cache::decrement('key', $amount);
+</code></pre>
+<p><a name="retrieve-store"></a></p>
+<h4>檢索並儲存</h4>
+<p>有時您可能希望從快取中檢索項目，但如果請求的項目不存在，也存儲預設值。例如，您可能希望從快取中檢索所有使用者，或者如果它們不存在，則從資料庫中檢索它們並將它們添加到快取中。您可以使用 <code>Cache::remember</code> 方法來執行此操作：</p>
+<pre><code class="language-php">$value = Cache::remember('users', $seconds, function () {
+    return DB::table('users')->get();
+});
+</code></pre>
+<p>如果項目不存在於快取中，傳遞給 <code>remember</code> 方法的閉包將被執行，其結果將被放入快取中。</p>
+<p>如果您需要知道該項目是從快取中檢索的還是透過執行給定閉包檢索的，可以使用 <code>rememberWithWarmth</code> 方法。此方法返回一個包含快取值和布林值的陣列，指示該項目是否為「熱」的，意味著它是從快取中檢索的，而不是從閉包中解析的：</p>
+<pre><code class="language-php">[$value, $warm] = Cache::rememberWithWarmth('users', $seconds, function () {
+    return DB::table('users')->get();
+});
+</code></pre>
+<p>您可以使用 <code>rememberForever</code> 方法從快取中檢索項目，或者如果它不存在則永久存儲：</p>
+<pre><code class="language-php">$value = Cache::rememberForever('users', function () {
+    return DB::table('users')->get();
+});
+</code></pre>
+<p><a name="swr"></a></p>
+<h4>過期時重新驗證</h4>
+<p>使用 <code>Cache::remember</code> 方法時，如果快取值已過期，一些使用者可能會遇到回應時間緩慢的情況。對於某些類型的資料，允許提供部分過期的資料同時在後台重新計算快取值，可以防止一些使用者在計算快取值時遇到回應時間緩慢的情況。這通常被稱為「過期時重新驗證」模式，<code>Cache::flexible</code> 方法提供了此模式的實現。</p>
+<p>flexible 方法接受一個陣列，指定快取值被視為「新鮮」的時間長度以及何時變為「過期」。陣列中的第一個值表示快取被視為新鮮的秒數，而第二個值定義在需要重新計算之前可以作為過期資料提供的時間長度。</p>
+<p>如果在新鮮期內（在第一個值之前）發出請求，則立即返回快取而不重新計算。如果在過期期間（在兩個值之間）發出請求，則向使用者提供過期值，並註冊一個<a href="/docs/helpers#deferred-functions">延遲函數</a>，以便在將回應發送給使用者後重新整理快取值。如果在第二個值之後發出請求，則快取被視為已過期，值會立即重新計算，這可能導致使用者的回應時間較慢：</p>
+<pre><code class="language-php">$value = Cache::flexible('users', [5, 10], function () {
+    return DB::table('users')->get();
+});
+</code></pre>
+<p><a name="retrieve-delete"></a></p>
+<h4>檢索並刪除</h4>
+<p>如果您需要從快取中檢索項目然後刪除該項目，可以使用 <code>pull</code> 方法。像 <code>get</code> 方法一樣，如果項目不存在於快取中，將返回 <code>null</code>：</p>
+<pre><code class="language-php">$value = Cache::pull('key');
+
+$value = Cache::pull('key', 'default');
+</code></pre>
+<p><a name="storing-items-in-the-cache"></a></p>
+<h3>在快取中儲存項目</h3>
+<p>您可以使用 <code>Cache</code> 外觀上的 <code>put</code> 方法將項目存儲在快取中：</p>
+<pre><code class="language-php">Cache::put('key', 'value', $seconds = 10);
+</code></pre>
+<p>如果未將儲存時間傳遞給 <code>put</code> 方法，則項目將被無限期存儲：</p>
+<pre><code class="language-php">Cache::put('key', 'value');
+</code></pre>
+<p>與其將秒數作為整數傳遞，您還可以傳遞一個 <code>DateTime</code> 實例，表示快取項目的期望過期時間：</p>
+<pre><code class="language-php">Cache::put('key', 'value', now()->plus(minutes: 10));
+</code></pre>
+<p><a name="store-if-not-present"></a></p>
+<h4>不存在時存儲</h4>
+<p><code>add</code> 方法只會在項目不存在於快取儲存中時將其添加到快取。如果項目實際上被添加到快取，該方法將返回 <code>true</code>。否則，該方法將返回 <code>false</code>。<code>add</code> 方法是一個原子操作：</p>
+<pre><code class="language-php">Cache::add('key', 'value', $seconds);
+</code></pre>
+<p><a name="extending-item-lifetime"></a></p>
+<h3>延長項目生命週期</h3>
+<p><code>touch</code> 方法允許您延長現有快取項目的生命週期（TTL）。如果快取項目存在且其過期時間已成功延長，<code>touch</code> 方法將返回 <code>true</code>。如果項目不存在於快取中，該方法將返回 <code>false</code>：</p>
+<pre><code class="language-php">Cache::touch('key', 3600);
+</code></pre>
+<p>您可以提供 <code>DateTimeInterface</code>、<code>DateInterval</code> 或 <code>Carbon</code> 實例來指定確切的過期時間：</p>
+<pre><code class="language-php">Cache::touch('key', now()->addHours(2));
+</code></pre>
+<p><a name="storing-items-forever"></a></p>
+<h4>永久存儲項目</h4>
+<p><code>forever</code> 方法可用於將項目永久存儲在快取中。由於這些項目不會過期，因此必須使用 <code>forget</code> 方法手動從快取中移除它們：</p>
+<pre><code class="language-php">Cache::forever('key', 'value');
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您正在使用 Memcached 驅動程式，當快取達到其大小限制時，「永久」存儲的項目可能會被移除。</p>
+</blockquote>
+<p><a name="removing-items-from-the-cache"></a></p>
+<h3>從快取中移除項目</h3>
+<p>您可以使用 <code>forget</code> 方法從快取中移除項目：</p>
+<pre><code class="language-php">Cache::forget('key');
+</code></pre>
+<p>您還可以透過提供零或負數的過期秒數來移除項目：</p>
+<pre><code class="language-php">Cache::put('key', 'value', 0);
+
+Cache::put('key', 'value', -5);
+</code></pre>
+<p>您可以使用 <code>flush</code> 方法清除整個快取：</p>
+<pre><code class="language-php">Cache::flush();
+</code></pre>
+<p>您可以使用 <code>flushLocks</code> 方法清除快取中的所有原子鎖：</p>
+<pre><code class="language-php">Cache::flushLocks();
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+刷新快取不會尊重您配置的快取「前綴」，並且會移除快取中的所有條目。清除其他應用程式共享的快取時，請仔細考慮這一點。</p>
+</blockquote>
+<p><a name="cache-memoization"></a></p>
+<h3>快取記憶化</h3>
+<p>Laravel 的 <code>memo</code> 快取驅動程式允許您在單個請求或作業執行期間將解析的快取值暫時存儲在記憶體中。這防止了在同一執行中重複的快取命中，顯著提高了效能。</p>
+<p>要使用記憶化快取，請呼叫 <code>memo</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+$value = Cache::memo()->get('key');
+</code></pre>
+<p><code>memo</code> 方法可選地接受快取儲存的名稱，指定記憶化驅動程式將裝飾的底層快取儲存：</p>
+<pre><code class="language-php">// 使用預設快取儲存...
+$value = Cache::memo()->get('key');
+
+// 使用 Redis 快取儲存...
+$value = Cache::memo('redis')->get('key');
+</code></pre>
+<p>給定金鑰的第一次 <code>get</code> 呼叫從您的快取儲存中檢索值，但同一請求或作業中的後續呼叫將從記憶體中檢索值：</p>
+<pre><code class="language-php">// 命中快取...
+$value = Cache::memo()->get('key');
+
+// 不命中快取，返回記憶化值...
+$value = Cache::memo()->get('key');
+</code></pre>
+<p>當呼叫修改快取值的方法時（例如 <code>put</code>、<code>increment</code>、<code>remember</code> 等），記憶化快取會自動忘記記憶化值，並將變異方法呼叫委託給底層快取儲存：</p>
+<pre><code class="language-php">Cache::memo()->put('name', 'Taylor'); // 寫入底層快取...
+Cache::memo()->get('name');           // 命中底層快取...
+Cache::memo()->get('name');           // 記憶化，不命中快取...
+
+Cache::memo()->put('name', 'Tim');    // 忘記記憶化值，寫入新值...
+Cache::memo()->get('name');           // 再次命中底層快取...
+</code></pre>
+<p><a name="the-cache-helper"></a></p>
+<h3>快取輔助函數</h3>
+<p>除了使用 <code>Cache</code> 外觀外，您還可以使用全域 <code>cache</code> 函數透過快取來檢索和儲存資料。當使用單個字串參數呼叫 <code>cache</code> 函數時，它將返回給定鍵的值：</p>
+<pre><code class="language-php">$value = cache('key');
+</code></pre>
+<p>如果您向函數提供鍵/值對陣列和過期時間，它將在指定的時間內將值存儲在快取中：</p>
+<pre><code class="language-php">cache(['key' => 'value'], $seconds);
+
+cache(['key' => 'value'], now()->plus(minutes: 10));
+</code></pre>
+<p>當不帶任何參數呼叫 <code>cache</code> 函數時，它返回 <code>Illuminate\\Contracts\\Cache\\Factory</code> 實現的實例，允許您呼叫其他快取方法：</p>
+<pre><code class="language-php">cache()->remember('users', $seconds, function () {
+    return DB::table('users')->get();
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+測試對全域 <code>cache</code> 函數的呼叫時，您可以使用 <code>Cache::shouldReceive</code> 方法，就像您正在<a href="/docs/mocking#mocking-facades">測試外觀</a>一樣。</p>
+</blockquote>
+<p><a name="cache-tags"></a></p>
+<h2>快取標籤</h2>
+<blockquote>
+<p>[!WARNING]
+使用 <code>file</code>、<code>dynamodb</code>、<code>database</code> 或 <code>storage</code> 快取驅動程式時不支援快取標籤。</p>
+</blockquote>
+<p><a name="storing-tagged-cache-items"></a></p>
+<h3>儲存標記的快取項目</h3>
+<p>快取標籤允許您標記快取中的相關項目，然後刷新所有已分配給定標籤的快取值。您可以透過傳遞標籤名稱的有序陣列來存取標記的快取。例如，讓我們存取一個標記的快取並將值 <code>put</code> 到快取中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+Cache::tags(['people', 'artists'])->put('John', $john, $seconds);
+Cache::tags(['people', 'authors'])->put('Anne', $anne, $seconds);
+</code></pre>
+<p><a name="accessing-tagged-cache-items"></a></p>
+<h3>存取標記的快取項目</h3>
+<p>透過標籤儲存的項目無法在不提供用於儲存值的標籤的情況下存取。要檢索標記的快取項目，請將相同的標籤有序列表傳遞給 <code>tags</code> 方法，然後使用您希望檢索的鍵呼叫 <code>get</code> 方法：</p>
+<pre><code class="language-php">$john = Cache::tags(['people', 'artists'])->get('John');
+
+$anne = Cache::tags(['people', 'authors'])->get('Anne');
+</code></pre>
+<p><a name="removing-tagged-cache-items"></a></p>
+<h3>移除標記的快取項目</h3>
+<p>您可以刷新所有分配給標籤或標籤列表的項目。例如，以下代碼將移除所有標記為 <code>people</code>、<code>authors</code> 或兩者的快取。因此，<code>Anne</code> 和 <code>John</code> 都將從快取中移除：</p>
+<pre><code class="language-php">Cache::tags(['people', 'authors'])->flush();
+</code></pre>
+<p>相比之下，下面的代碼將只移除標記為 <code>authors</code> 的快取值，因此 <code>Anne</code> 將被移除，但 <code>John</code> 不會：</p>
+<pre><code class="language-php">Cache::tags('authors')->flush();
+</code></pre>
+<p><a name="atomic-locks"></a></p>
+<h2>原子鎖</h2>
+<blockquote>
+<p>[!WARNING]
+要使用此功能，您的應用程式必須使用 <code>memcached</code>、<code>redis</code>、<code>dynamodb</code>、<code>database</code>、<code>file</code> 或 <code>array</code> 快取驅動程式作為應用程式的預設快取驅動程式。此外，所有伺服器必須與同一中央快取伺服器通訊。</p>
+</blockquote>
+<p><a name="managing-locks"></a></p>
+<h3>管理鎖</h3>
+<p>原子鎖允許在不擔心競爭條件的情況下操作分散式鎖。例如，<a href="https://cloud.laravel.com">Laravel Cloud</a> 使用原子鎖來確保一次只有一個遠端任務在伺服器上執行。您可以使用 <code>Cache::lock</code> 方法來創建和管理鎖：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cache;
+
+$lock = Cache::lock('foo', 10);
+
+if ($lock->get()) {
+    // 鎖已獲取 10 秒...
+
+    $lock->release();
+}
+</code></pre>
+<p><code>get</code> 方法還接受一個閉包。閉包執行後，Laravel 將自動釋放鎖：</p>
+<pre><code class="language-php">Cache::lock('foo', 10)->get(function () {
+    // 鎖已獲取 10 秒並自動釋放...
+});
+</code></pre>
+<p>如果您請求時鎖不可用，您可以指示 Laravel 等待指定的秒數。如果在指定的時間限制內無法獲取鎖，將拋出 <code>Illuminate\\Contracts\\Cache\\LockTimeoutException</code>：</p>
+<pre><code class="language-php">use Illuminate\\Contracts\\Cache\\LockTimeoutException;
+
+$lock = Cache::lock('foo', 10);
+
+try {
+    $lock->block(5);
+
+    // 等待最多 5 秒後獲取鎖...
+} catch (LockTimeoutException $e) {
+    // 無法獲取鎖...
+} finally {
+    $lock->release();
+}
+</code></pre>
+<p>透過將閉包傳遞給 <code>block</code> 方法，可以簡化上面的範例。當閉包傳遞給此方法時，Laravel 將嘗試在指定的秒數內獲取鎖，並在閉包執行後自動釋放鎖：</p>
+<pre><code class="language-php">Cache::lock('foo', 10)->block(5, function () {
+    // 等待最多 5 秒後獲取鎖 10 秒...
+});
+</code></pre>
+<p><a name="managing-locks-across-processes"></a></p>
+<h3>跨程序管理鎖</h3>
+<p>有時，您可能希望在一個程序中獲取鎖，並在另一個程序中釋放它。例如，您可能在 Web 請求期間獲取一個鎖，並希望在該請求觸發的佇列作業結束時釋放該鎖。在這種情況下，您應該將鎖的範圍「所有者令牌」傳遞給佇列作業，以便作業可以使用給定的令牌重新實例化該鎖。</p>
+<p>在下面的範例中，如果成功獲取鎖，我們將派發一個佇列作業。此外，我們將透過鎖的 <code>owner</code> 方法將鎖的所有者令牌傳遞給佇列作業：</p>
+<pre><code class="language-php">$podcast = Podcast::find($id);
+
+$lock = Cache::lock('processing', 120);
+
+if ($lock->get()) {
+    ProcessPodcast::dispatch($podcast, $lock->owner());
+}
+</code></pre>
+<p>在我們應用程式的 <code>ProcessPodcast</code> 作業中，我們可以使用所有者令牌恢復和釋放鎖：</p>
+<pre><code class="language-php">Cache::restoreLock('processing', $this->owner)->release();
+</code></pre>
+<p>如果您希望在不尊重其當前所有者的情況下釋放鎖，可以使用 <code>forceRelease</code> 方法：</p>
+<pre><code class="language-php">Cache::lock('processing')->forceRelease();
+</code></pre>
+<p><a name="refreshing-locks"></a></p>
+<h3>刷新鎖</h3>
+<p>如果您需要延長您當前擁有的鎖的過期時間，可以使用 <code>refresh</code> 方法。如果未提供秒數，則使用鎖的原始持續時間。對於長時間運行的操作很有用，在這些操作中您更喜歡獲取一個短鎖並定期延長它，而不是獲取一個具有非常長過期時間的鎖：</p>
+<pre><code class="language-php">$lock = Cache::lock('generate-reports', 60);
+
+if ($lock->get()) {
+    foreach ($reports as $report) {
+        $report->generate();
+
+        // 將鎖延長另外 60 秒...
+        $lock->refresh();
+    }
+
+    $lock->release();
+}
+</code></pre>
+<p><a name="concurrency-limiting"></a></p>
+<h3>並發限制</h3>
+<p>Laravel 的原子鎖功能還提供了幾種限制閉包並發執行的方法。當您想要只允許基礎設施中有一個運行實例時，使用 <code>withoutOverlapping</code>：</p>
+<pre><code class="language-php">Cache::withoutOverlapping('foo', function () {
+    // 等待最多 10 秒後獲取鎖...
+});
+</code></pre>
+<p>預設情況下，鎖會一直持有直到閉包執行完成，並且該方法最多等待 10 秒來獲取鎖。您可以使用額外的參數來自訂這些值：</p>
+<pre><code class="language-php">Cache::withoutOverlapping('foo', function () {
+    // 等待最多 5 秒後獲取鎖 120 秒...
+}, lockFor: 120, waitFor: 5);
+</code></pre>
+<p>如果在指定的等待時間內無法獲取鎖，將拋出 <code>Illuminate\\Contracts\\Cache\\LockTimeoutException</code>。</p>
+<p>如果您想要受控的並行性，請使用 <code>funnel</code> 方法來設定最大並發執行數。<code>funnel</code> 方法適用於任何支援鎖的快取驅動程式：</p>
+<pre><code class="language-php">Cache::funnel('foo')
+    ->limit(3)
+    ->releaseAfter(60)
+    ->block(10)
+    ->then(function () {
+        // 並發鎖已獲取...
+    }, function () {
+        // 無法獲取並發鎖...
+    });
+</code></pre>
+<p><code>funnel</code> 鍵標識正在被限制的資源。<code>limit</code> 方法定義最大並發執行數。<code>releaseAfter</code> 方法設定一個安全逾時（秒），在該時間後自動釋放已獲取的插槽。<code>block</code> 方法設定等待可用插槽的秒數。</p>
+<p>如果您更喜歡透過異常來處理逾時，而不是提供失敗閉包，可以省略第二個閉包。如果在指定的等待時間內無法獲取鎖，將拋出 <code>Illuminate\\Cache\\Limiters\\LimiterTimeoutException</code>：</p>
+<pre><code class="language-php">use Illuminate\\Cache\\Limiters\\LimiterTimeoutException;
+
+try {
+    Cache::funnel('foo')
+        ->limit(3)
+        ->releaseAfter(60)
+        ->block(10)
+        ->then(function () {
+            // 並發鎖已獲取...
+        });
+} catch (LimiterTimeoutException $e) {
+    // 無法獲取並發鎖...
+}
+</code></pre>
+<p>如果您希望為並發限制器使用特定的快取儲存，可以在所需的儲存上呼叫 <code>funnel</code> 方法：</p>
+<pre><code class="language-php">Cache::store('redis')->funnel('foo')
+    ->limit(3)
+    ->block(10)
+    ->then(function () {
+        // 使用 "redis" 儲存獲取並發鎖...
+    });
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+<code>funnel</code> 方法要求快取儲存實現 <code>Illuminate\\Contracts\\Cache\\LockProvider</code> 介面。如果您嘗試在不支援鎖的快取儲存上使用 <code>funnel</code>，將拋出 <code>BadMethodCallException</code>。</p>
+</blockquote>
+<p><a name="cache-failover"></a></p>
+<h2>快取故障轉移</h2>
+<p><code>failover</code> 快取驅動程式在與快取互動時提供自動故障轉移功能。如果 <code>failover</code> 儲存的主要快取儲存因任何原因失敗，Laravel 將自動嘗試使用清單中配置的下一個儲存。對於確保快取可靠性至關重要的生產環境中的高可用性，這特別有用。</p>
+<p>要配置故障轉移快取儲存，請指定 <code>failover</code> 驅動程式並提供一個按順序嘗試的儲存名稱陣列。預設情況下，Laravel 在應用程式的 <code>config/cache.php</code> 配置檔案中包含一個範例故障轉移配置：</p>
+<pre><code class="language-php">'failover' => [
+    'driver' => 'failover',
+    'stores' => [
+        'database',
+        'array',
+    ],
+],
+</code></pre>
+<p>配置使用 <code>failover</code> 驅動程式的儲存後，您需要在應用程式的 <code>.env</code> 檔案中將故障轉移儲存設定為預設快取儲存，以使用故障轉移功能：</p>
+<pre><code class="language-ini">CACHE_STORE=failover
+</code></pre>
+<p>當快取儲存操作失敗並啟用故障轉移時，Laravel 將派發 <code>Illuminate\\Cache\\Events\\CacheFailedOver</code> 事件，允許您檢舉或記錄快取儲存已失敗。</p>
+<p><a name="adding-custom-cache-drivers"></a></p>
+<h2>添加自訂快取驅動程式</h2>
+<p><a name="writing-the-driver"></a></p>
+<h3>編寫驅動程式</h3>
+<p>要創建我們的自訂快取驅動程式，我們首先需要實現 <code>Illuminate\\Contracts\\Cache\\Store</code><a href="/docs/contracts">合約</a>。因此，MongoDB 快取實現可能看起來像這樣：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Extensions;
+
+use Illuminate\\Contracts\\Cache\\Store;
+
+class MongoStore implements Store
+{
+    public function get($key) {}
+    public function many(array $keys) {}
+    public function put($key, $value, $seconds) {}
+    public function putMany(array $values, $seconds) {}
+    public function increment($key, $value = 1) {}
+    public function decrement($key, $value = 1) {}
+    public function forever($key, $value) {}
+    public function forget($key) {}
+    public function flush() {}
+    public function getPrefix() {}
+}
+</code></pre>
+<p>我們只需要使用 MongoDB 連接來實現這些方法。有關如何實現這些方法的範例，請查看 <a href="https://github.com/laravel/framework">Laravel 框架原始碼</a>中的 <code>Illuminate\\Cache\\MemcachedStore</code>。一旦我們的實現完成，我們可以透過呼叫 <code>Cache</code> 外觀的 <code>extend</code> 方法來完成自訂驅動程式的註冊：</p>
+<pre><code class="language-php">Cache::extend('mongo', function (Application $app) {
+    return Cache::repository(new MongoStore);
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您想知道將自訂快取驅動程式代碼放在哪裡，可以在 <code>app</code> 目錄中創建一個 <code>Namespaces</code> 命名空間。但是，請記住 Laravel 沒有嚴格的應用程式結構，您可以根據自己的偏好來組織應用程式。</p>
+</blockquote>
+<p><a name="registering-the-driver"></a></p>
+<h3>註冊驅動程式</h3>
+<p>要向 Laravel 註冊自訂快取驅動程式，我們將使用 <code>Cache</code> 外觀上的 <code>extend</code> 方法。由於其他服務提供者可能嘗試在其 <code>boot</code> 方法中讀取快取值，我們將在 <code>booting</code> 回呼中註冊我們的自訂驅動程式。透過使用 <code>booting</code> 回呼，我們可以確保自訂驅動程式在我們應用程式服務提供者的 <code>boot</code> 方法被呼叫之前、但在所有服務提供者的 <code>register</code> 方法被呼叫之後被註冊。我們將在應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>register</code> 方法中註冊我們的 <code>booting</code> 回呼：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\Extensions\\MongoStore;
+use Illuminate\\Contracts\\Foundation\\Application;
+use Illuminate\\Support\\Facades\\Cache;
+use Illuminate\\Support\\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 註冊任何應用程式服務。
+     */
+    public function register(): void
+    {
+        $this->app->booting(function () {
+             Cache::extend('mongo', function (Application $app) {
+                 return Cache::repository(new MongoStore);
+             });
+         });
+    }
+
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>傳遞給 <code>extend</code> 方法的第一個參數是驅動程式的名稱。這將對應於 <code>config/cache.php</code> 配置檔案中的 <code>driver</code> 選項。第二個參數是一個閉包，應返回 <code>Illuminate\\Cache\\Repository</code> 實例。閉包將接收一個 <code>$app</code> 實例，它是<a href="/docs/container">服務容器</a>的實例。</p>
+<p>註冊擴展後，將 <code>CACHE_STORE</code> 環境變數或 <code>config/cache.php</code> 配置檔案中的 <code>default</code> 選項更新為擴展的名稱。</p>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>要在每個快取操作上執行代碼，您可以監聽快取派發的各種<a href="/docs/events">事件</a>：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>事件名稱</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Illuminate\\Cache\\Events\\CacheFlushed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheFlushing</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheFlushFailed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheLocksFlushed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheLocksFlushing</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheLocksFlushFailed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheHit</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\CacheMissed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\ForgettingKey</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\KeyForgetFailed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\KeyForgotten</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\KeyWriteFailed</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\KeyWritten</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\RetrievingKey</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\RetrievingManyKeys</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\WritingKey</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cache\\Events\\WritingManyKeys</code></td>
+</tr>
+</tbody></table>
+</div><p>為了提高效能，您可以透過在應用程式的 <code>config/cache.php</code> 配置檔案中將給定快取儲存的 <code>events</code> 配置選項設定為 <code>false</code> 來禁用快取事件：</p>
+<pre><code class="language-php">'database' => [
+    'driver' => 'database',
+    // ...
+    'events' => false,
+],
+</code></pre>
+`;
+---
+
+<DocsLayout title="快取" currentPath="cache">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>快取</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">快取</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/cache" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

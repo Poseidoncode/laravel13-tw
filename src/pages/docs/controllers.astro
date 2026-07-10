@@ -1,0 +1,588 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>控制器</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#writing-controllers">撰寫控制器</a><ul>
+<li><a href="#basic-controllers">基本控制器</a></li>
+<li><a href="#single-action-controllers">單一動作控制器</a></li>
+</ul>
+</li>
+<li><a href="#controller-middleware">控制器中介層</a><ul>
+<li><a href="#middleware-attributes">中介層屬性</a></li>
+<li><a href="#authorization-attributes">授權屬性</a></li>
+</ul>
+</li>
+<li><a href="#resource-controllers">資源控制器</a><ul>
+<li><a href="#restful-partial-resource-routes">部分資源路由</a></li>
+<li><a href="#restful-nested-resources">巢狀資源</a></li>
+<li><a href="#restful-naming-resource-routes">命名資源路由</a></li>
+<li><a href="#restful-naming-resource-route-parameters">命名資源路由參數</a></li>
+<li><a href="#restful-scoping-resource-routes">限制資源路由範圍</a></li>
+<li><a href="#restful-localizing-resource-uris">本地化資源 URI</a></li>
+<li><a href="#restful-supplementing-resource-controllers">補充資源控制器</a></li>
+<li><a href="#singleton-resource-controllers">單例資源控制器</a></li>
+<li><a href="#middleware-and-resource-controllers">中介層與資源控制器</a></li>
+</ul>
+</li>
+<li><a href="#dependency-injection-and-controllers">依賴注入與控制器</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>與其將所有請求處理邏輯定義為路由檔案中的閉包，您可能希望使用「控制器」類別來組織此行為。控制器可以將相關的請求處理邏輯分組到單一類別中。例如，<code>UserController</code> 類別可能處理所有與使用者相關的傳入請求，包括顯示、建立、更新和刪除使用者。預設情況下，控制器儲存在 <code>app/Http/Controllers</code> 目錄中。</p>
+<p><a name="writing-controllers"></a></p>
+<h2>撰寫控制器</h2>
+<p><a name="basic-controllers"></a></p>
+<h3>基本控制器</h3>
+<p>要快速產生新控制器，您可以執行 <code>make:controller</code> Artisan 命令。預設情況下，應用程式的所有控制器都儲存在 <code>app/Http/Controllers</code> 目錄中：</p>
+<pre><code class="language-shell">php artisan make:controller UserController</code></pre>
+<p>讓我們來看一個基本控制器的範例。控制器可以有任意數量的公開方法，這些方法將回應傳入的 HTTP 請求：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\User;
+use Illuminate\\View\\View;
+
+class UserController extends Controller
+{
+    /**
+     * Show the profile for a given user.
+     */
+    public function show(string $id): View
+    {
+        return view('user.profile', [
+            'user' => User::findOrFail($id)
+        ]);
+    }
+}
+</code></pre>
+<p>編寫完控制器類別和方法後，您可以像這樣定義指向控制器方法的路由：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+
+Route::get('/user/{id}', [UserController::class, 'show']);
+</code></pre>
+<p>當傳入請求匹配指定的路由 URI 時，將呼叫 <code>App\\Http\\Controllers\\UserController</code> 類別上的 <code>show</code> 方法，並將路由參數傳遞給該方法。</p>
+<blockquote>
+<p>[!NOTE]
+控制器並<strong>不需要</strong>擴展基礎類別。但是，有時擴展一個包含應在所有控制器之間共享的方法的基礎控制器類別會很方便。</p>
+</blockquote>
+<p><a name="single-action-controllers"></a></p>
+<h3>單一動作控制器</h3>
+<p>如果控制器動作特別複雜，您可能會發現將整個控制器類別專門用於該單一動作會很方便。為此，您可以在控制器中定義一個單一的 <code>__invoke</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+class ProvisionServer extends Controller
+{
+    /**
+     * Provision a new web server.
+     */
+    public function __invoke()
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>為單一動作控制器註冊路由時，您不需要指定控制器方法。相反，您只需將控制器名稱傳遞給路由器：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\ProvisionServer;
+
+Route::post('/server', ProvisionServer::class);
+</code></pre>
+<p>您可以使用 <code>make:controller</code> Artisan 命令的 <code>--invokable</code> 選項來產生可呼叫的控制器：</p>
+<pre><code class="language-shell">php artisan make:controller ProvisionServer --invokable</code></pre>
+<blockquote>
+<p>[!NOTE]
+控制器模板可以透過<a href="/docs/artisan#stub-customization">模板發佈</a>來自訂。</p>
+</blockquote>
+<p><a name="controller-middleware"></a></p>
+<h2>控制器中介層</h2>
+<p><a href="/docs/middleware">中介層</a>可以在路由檔案中分配給控制器的路由：</p>
+<pre><code class="language-php">Route::get('/profile', [UserController::class, 'show'])-&gt;middleware('auth');</code></pre>
+<p>或者，您可能會發現在控制器類別中指定中介層更方便。為此，您的控制器應實作 <code>HasMiddleware</code> 介面，該介面規定控制器應有一個靜態的 <code>middleware</code> 方法。透過此方法，您可以返回一個應應用於控制器動作的中介層陣列：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Routing\\Controllers\\HasMiddleware;
+use Illuminate\\Routing\\Controllers\\Middleware;
+
+class UserController implements HasMiddleware
+{
+    /**
+     * Get the middleware that should be assigned to the controller.
+     */
+    public static function middleware(): array
+    {
+        return [
+            'auth',
+            new Middleware('log', only: ['index']),
+            new Middleware('subscribed', except: ['store']),
+        ];
+    }
+
+    // ...
+}
+</code></pre>
+<p>您也可以將控制器中介層定義為閉包，這提供了一種在不需要編寫完整中介層類別的情況下定義內聯中介層的便捷方式：</p>
+<pre><code class="language-php">use Closure;
+use Illuminate\\Http\\Request;
+
+/**
+ * Get the middleware that should be assigned to the controller.
+ */
+public static function middleware(): array
+{
+    return [
+        function (Request $request, Closure $next) {
+            return $next($request);
+        },
+    ];
+}
+</code></pre>
+<p><a name="middleware-attributes"></a></p>
+<h3>中介層屬性</h3>
+<p>您也可以使用 PHP 屬性將中介層分配給控制器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Routing\\Attributes\\Controllers\\Middleware;
+
+#[Middleware('auth')]
+#[Middleware('log', only: ['index'])]
+#[Middleware('subscribed', except: ['store'])]
+class UserController
+{
+    // ...
+}
+</code></pre>
+<p>您也可以將中介層屬性放置在個別的控制器方法上。分配給方法的中介層將與在類別層級分配的中介層合併：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Illuminate\\Routing\\Attributes\\Controllers\\Middleware;
+
+#[Middleware('auth')]
+class UserController
+{
+    #[Middleware('log')]
+    #[Middleware('subscribed')]
+    public function index()
+    {
+        // ...
+    }
+
+    #[Middleware(static function (Request $request, Closure $next) {
+        // ...
+
+        return $next($request);
+    })]
+    public function store()
+    {
+        // ...
+    }
+}
+</code></pre>
+<p><a name="authorization-attributes"></a></p>
+<h3>授權屬性</h3>
+<p>如果您透過政策授權控制器動作，可以使用 <code>Authorize</code> 屬性作為 <code>can</code> 中介層的便捷快捷方式：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\Comment;
+use App\\Models\\Post;
+use Illuminate\\Routing\\Attributes\\Controllers\\Authorize;
+
+class CommentController
+{
+    #[Authorize('create', [Comment::class, 'post'])]
+    public function store(Post $post)
+    {
+        // ...
+    }
+
+    #[Authorize('delete', 'comment')]
+    public function destroy(Comment $comment)
+    {
+        // ...
+    }
+}
+</code></pre>
+<p>第一個參數是您要授權的能力。第二個參數是應傳遞給政策的模型類別、路由參數或參數。</p>
+<p><a name="resource-controllers"></a></p>
+<h2>資源控制器</h2>
+<p>如果您將應用程式中的每個 Eloquent 模型視為一個「資源」，那麼通常會對應用程式中的每個資源執行相同的操作集。例如，假設您的應用程式包含一個 <code>Photo</code> 模型和一個 <code>Movie</code> 模型。使用者很可能可以建立、讀取、更新或刪除這些資源。</p>
+<p>基於這種常見用法，Laravel 資源路由可以透過一行程式碼將典型的建立、讀取、更新和刪除（「CRUD」）路由分配給控制器。首先，我們可以使用 <code>make:controller</code> Artisan 命令的 <code>--resource</code> 選項來快速建立一個控制器來處理這些動作：</p>
+<pre><code class="language-shell">php artisan make:controller PhotoController --resource</code></pre>
+<p>此命令將在 <code>app/Http/Controllers/PhotoController.php</code> 產生一個控制器。該控制器將為每個可用的資源操作包含一個方法。接下來，您可以註冊一個指向控制器的資源路由：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+
+Route::resource('photos', PhotoController::class);</code></pre>
+<p>這個單一路由宣告建立了多個路由來處理資源上的各種動作。產生的控制器已經為每個這些動作預先建立了方法。請記住，您可以隨時透過執行 <code>route:list</code> Artisan 命令來快速查看應用程式的路由概覽。</p>
+<p>您甚至可以透過向 <code>resources</code> 方法傳遞一個陣列來一次註冊多個資源控制器：</p>
+<pre><code class="language-php">Route::resources([
+    'photos' => PhotoController::class,
+    'posts' => PostController::class,
+]);</code></pre>
+<p><code>softDeletableResources</code> 方法註冊多個資源控制器，這些控制器都使用了 <code>withTrashed</code> 方法：</p>
+<pre><code class="language-php">Route::softDeletableResources([
+    'photos' => PhotoController::class,
+    'posts' => PostController::class,
+]);</code></pre>
+<p><a name="actions-handled-by-resource-controllers"></a></p>
+<h4>資源控制器處理的動作</h4>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>動詞</th><th>URI</th><th>動作</th><th>路由名稱</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/photos</code></td><td>index</td><td>photos.index</td></tr>
+<tr><td>GET</td><td><code>/photos/create</code></td><td>create</td><td>photos.create</td></tr>
+<tr><td>POST</td><td><code>/photos</code></td><td>store</td><td>photos.store</td></tr>
+<tr><td>GET</td><td><code>/photos/{photo}</code></td><td>show</td><td>photos.show</td></tr>
+<tr><td>GET</td><td><code>/photos/{photo}/edit</code></td><td>edit</td><td>photos.edit</td></tr>
+<tr><td>PUT/PATCH</td><td><code>/photos/{photo}</code></td><td>update</td><td>photos.update</td></tr>
+<tr><td>DELETE</td><td><code>/photos/{photo}</code></td><td>destroy</td><td>photos.destroy</td></tr>
+</tbody>
+</table>
+</div>
+<p><a name="customizing-missing-model-behavior"></a></p>
+<h4>自訂缺失模型行為</h4>
+<p>通常，如果找不到隱式綁定的資源模型，將會產生 404 HTTP 回應。但是，您可以透過在定義資源路由時呼叫 <code>missing</code> 方法來自訂此行為。<code>missing</code> 方法接受一個閉包，當任何資源路由無法找到隱式綁定的模型時，將呼叫該閉包：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Redirect;
+
+Route::resource('photos', PhotoController::class)
+    -&gt;missing(function (Request $request) {
+        return Redirect::route('photos.index');
+    });</code></pre>
+<p><a name="soft-deleted-models"></a></p>
+<h4>軟刪除模型</h4>
+<p>通常，隱式模型綁定不會檢索已<a href="/docs/eloquent#soft-deleting">軟刪除</a>的模型，而是返回 404 HTTP 回應。但是，您可以透過在定義資源路由時呼叫 <code>withTrashed</code> 方法來指示框架允許軟刪除的模型：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+
+Route::resource('photos', PhotoController::class)-&gt;withTrashed();</code></pre>
+<p>不帶參數呼叫 <code>withTrashed</code> 將允許軟刪除的模型用於 <code>show</code>、<code>edit</code> 和 <code>update</code> 資源路由。您可以透過向 <code>withTrashed</code> 方法傳遞一個陣列來指定這些路由的子集：</p>
+<pre><code class="language-php">Route::resource('photos', PhotoController::class)-&gt;withTrashed(['show']);</code></pre>
+<p><a name="specifying-the-resource-model"></a></p>
+<h4>指定資源模型</h4>
+<p>如果您正在使用<a href="/docs/routing#route-model-binding">路由模型綁定</a>，並且希望資源控制器的方法類型提示一個模型實例，可以在產生控制器時使用 <code>--model</code> 選項：</p>
+<pre><code class="language-shell">php artisan make:controller PhotoController --model=Photo --resource</code></pre>
+<p><a name="generating-form-requests"></a></p>
+<h4>產生表單請求</h4>
+<p>您可以在產生資源控制器時提供 <code>--requests</code> 選項，以指示 Artisan 為控制器的儲存和更新方法產生<a href="/docs/validation#form-request-validation">表單請求類別</a>：</p>
+<pre><code class="language-shell">php artisan make:controller PhotoController --model=Photo --resource --requests</code></pre>
+<p><a name="restful-partial-resource-routes"></a></p>
+<h3>部分資源路由</h3>
+<p>宣告資源路由時，您可以指定控制器應處理的動作子集，而不是完整的預設動作集：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+
+Route::resource('photos', PhotoController::class)-&gt;only([
+    'index', 'show'
+]);
+
+Route::resource('photos', PhotoController::class)-&gt;except([
+    'create', 'store', 'update', 'destroy'
+]);</code></pre>
+<p><a name="api-resource-routes"></a></p>
+<h4>API 資源路由</h4>
+<p>宣告將由 API 使用的資源路由時，通常會想要排除呈現 HTML 模板的路由，例如 <code>create</code> 和 <code>edit</code>。為方便起見，您可以使用 <code>apiResource</code> 方法自動排除這兩個路由：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+
+Route::apiResource('photos', PhotoController::class);</code></pre>
+<p>您可以透過向 <code>apiResources</code> 方法傳遞一個陣列來一次註冊多個 API 資源控制器：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+use App\\Http\\Controllers\\PostController;
+
+Route::apiResources([
+    'photos' => PhotoController::class,
+    'posts' => PostController::class,
+]);</code></pre>
+<p>要快速產生不包含 <code>create</code> 或 <code>edit</code> 方法的 API 資源控制器，請在執行 <code>make:controller</code> 命令時使用 <code>--api</code> 開關：</p>
+<pre><code class="language-shell">php artisan make:controller PhotoController --api</code></pre>
+<p><a name="restful-nested-resources"></a></p>
+<h3>巢狀資源</h3>
+<p>有時您可能需要定義通往巢狀資源的路由。例如，一個照片資源可能有多個可以附加到照片的評論。要巢狀資源控制器，您可以在路由宣告中使用「點」符號：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoCommentController;
+
+Route::resource('photos.comments', PhotoCommentController::class);</code></pre>
+<p>這條路由將註冊一個巢狀資源，可以透過像這樣的 URI 存取：</p>
+<pre><code class="language-text">/photos/{photo}/comments/{comment}</code></pre>
+<p><a name="scoping-nested-resources"></a></p>
+<h4>限制巢狀資源範圍</h4>
+<p>Laravel 的<a href="/docs/routing#implicit-model-binding-scoping">隱式模型綁定</a>功能可以自動限制巢狀綁定的範圍，確保解析的子模型屬於父模型。透過在定義巢狀資源時使用 <code>scoped</code> 方法，您可以啟用自動範圍限制，並指示 Laravel 應透過哪個欄位來檢索子資源。有關如何實現此目的的更多資訊，請參閱關於<a href="#restful-scoping-resource-routes">限制資源路由範圍</a>的文件。</p>
+<p><a name="shallow-nesting"></a></p>
+<h4>淺巢狀</h4>
+<p>通常，在 URI 中同時具有父級和子級 ID 並不是完全必要的，因為子級 ID 已經是唯一識別碼。在使用自動遞增主鍵等唯一識別碼來在 URI 區段中識別模型時，您可以選擇使用「淺巢狀」：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\CommentController;
+
+Route::resource('photos.comments', CommentController::class)-&gt;shallow();</code></pre>
+<p>此路由定義將定義以下路由：</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>動詞</th><th>URI</th><th>動作</th><th>路由名稱</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/photos/{photo}/comments</code></td><td>index</td><td>photos.comments.index</td></tr>
+<tr><td>GET</td><td><code>/photos/{photo}/comments/create</code></td><td>create</td><td>photos.comments.create</td></tr>
+<tr><td>POST</td><td><code>/photos/{photo}/comments</code></td><td>store</td><td>photos.comments.store</td></tr>
+<tr><td>GET</td><td><code>/comments/{comment}</code></td><td>show</td><td>comments.show</td></tr>
+<tr><td>GET</td><td><code>/comments/{comment}/edit</code></td><td>edit</td><td>comments.edit</td></tr>
+<tr><td>PUT/PATCH</td><td><code>/comments/{comment}</code></td><td>update</td><td>comments.update</td></tr>
+<tr><td>DELETE</td><td><code>/comments/{comment}</code></td><td>destroy</td><td>comments.destroy</td></tr>
+</tbody>
+</table>
+</div>
+<p><a name="restful-naming-resource-routes"></a></p>
+<h3>命名資源路由</h3>
+<p>預設情況下，所有資源控制器動作都有一個路由名稱；但是，您可以透過傳遞一個包含所需路由名稱的 <code>names</code> 陣列來覆寫這些名稱：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoController;
+
+Route::resource('photos', PhotoController::class)-&gt;names([
+    'create' => 'photos.build'
+]);</code></pre>
+<p><a name="restful-naming-resource-route-parameters"></a></p>
+<h3>命名資源路由參數</h3>
+<p>預設情況下，<code>Route::resource</code> 將根據資源名稱的「單數化」版本來建立資源路由的路由參數。您可以使用 <code>parameters</code> 方法輕鬆地在每個資源的基礎上覆寫此設定。傳遞給 <code>parameters</code> 方法的陣列應該是資源名稱和參數名稱的關聯陣列：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\AdminUserController;
+
+Route::resource('users', AdminUserController::class)-&gt;parameters([
+    'users' => 'admin_user'
+]);</code></pre>
+<p>上述範例為資源的 <code>show</code> 路由產生以下 URI：</p>
+<pre><code class="language-text">/users/{admin_user}</code></pre>
+<p><a name="restful-scoping-resource-routes"></a></p>
+<h3>限制資源路由範圍</h3>
+<p>Laravel 的<a href="/docs/routing#implicit-model-binding-scoping">限制範圍的隱式模型綁定</a>功能可以自動限制巢狀綁定的範圍，確保解析的子模型屬於父模型。透過在定義巢狀資源時使用 <code>scoped</code> 方法，您可以啟用自動範圍限制，並指示 Laravel 應透過哪個欄位來檢索子資源：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\PhotoCommentController;
+
+Route::resource('photos.comments', PhotoCommentController::class)-&gt;scoped([
+    'comment' => 'slug',
+]);</code></pre>
+<p>此路由將註冊一個限制範圍的巢狀資源，可以透過像這樣的 URI 存取：</p>
+<pre><code class="language-text">/photos/{photo}/comments/{comment:slug}</code></pre>
+<p>使用自訂鍵的隱式綁定作為巢狀路由參數時，Laravel 將自動限制查詢範圍，使用慣例來猜測父模型上的關聯名稱，以檢索巢狀模型。在這種情況下，它將假設 <code>Photo</code> 模型有一個名為 <code>comments</code>（路由參數名稱的複數形式）的關聯，可用於檢索 <code>Comment</code> 模型。</p>
+<p><a name="restful-localizing-resource-uris"></a></p>
+<h3>本地化資源 URI</h3>
+<p>預設情況下，<code>Route::resource</code> 將使用英文動詞和複數規則建立資源 URI。如果您需要本地化 <code>create</code> 和 <code>edit</code> 動作動詞，可以使用 <code>Route::resourceVerbs</code> 方法。這可以在應用程式 <code>App\\Providers\\AppServiceProvider</code> 的 <code>boot</code> 方法開頭完成：</p>
+<pre><code class="language-php">/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Route::resourceVerbs([
+        'create' => 'crear',
+        'edit' => 'editar',
+    ]);
+}
+</code></pre>
+<p>Laravel 的複數化功能支援<a href="/docs/localization#pluralization-language">多種可以根據需要配置的語言</a>。自訂動詞和複數化語言後，資源路由註冊（例如 <code>Route::resource('publicacion', PublicacionController::class)</code>）將產生以下 URI：</p>
+<pre><code class="language-text">/publicacion/crear
+
+/publicacion/{publicaciones}/editar</code></pre>
+<p><a name="restful-supplementing-resource-controllers"></a></p>
+<h3>補充資源控制器</h3>
+<p>如果您需要為資源控制器新增超出預設資源路由集之外的額外路由，應在呼叫 <code>Route::resource</code> 方法之前定義這些路由；否則，<code>resource</code> 方法定義的路由可能會意外地優先於您的補充路由：</p>
+<pre><code class="language-php">use App\\Http\\Controller\\PhotoController;
+
+Route::get('/photos/popular', [PhotoController::class, 'popular']);
+Route::resource('photos', PhotoController::class);</code></pre>
+<blockquote>
+<p>[!NOTE]
+請記住保持控制器重點明確。如果您發現自己經常需要超出典型資源動作集之外的方法，請考慮將控制器拆分為兩個較小的控制器。</p>
+</blockquote>
+<p><a name="singleton-resource-controllers"></a></p>
+<h3>單例資源控制器</h3>
+<p>有時，您的應用程式可能只有單一實例的資源。例如，使用者的「個人資料」可以被編輯或更新，但使用者不能有多個「個人資料」。同樣地，圖片可能只有一個「縮圖」。這些資源被稱為「單例資源」，意味著該資源只能有一個實例。在這些情況下，您可以註冊一個「單例」資源控制器：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\ProfileController;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::singleton('profile', ProfileController::class);</code></pre>
+<p>上面的單例資源定義將註冊以下路由。如您所見，單例資源不會註冊「建立」路由，而且註冊的路由不接受識別碼，因為該資源只能有一個實例：</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>動詞</th><th>URI</th><th>動作</th><th>路由名稱</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/profile</code></td><td>show</td><td>profile.show</td></tr>
+<tr><td>GET</td><td><code>/profile/edit</code></td><td>edit</td><td>profile.edit</td></tr>
+<tr><td>PUT/PATCH</td><td><code>/profile</code></td><td>update</td><td>profile.update</td></tr>
+</tbody>
+</table>
+</div>
+<p>單例資源也可以巢狀在標準資源內：</p>
+<pre><code class="language-php">Route::singleton('photos.thumbnail', ThumbnailController::class);</code></pre>
+<p>在此範例中，<code>photos</code> 資源將接收所有<a href="#actions-handled-by-resource-controllers">標準資源路由</a>；但是，<code>thumbnail</code> 資源將是具有以下路由的單例資源：</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>動詞</th><th>URI</th><th>動作</th><th>路由名稱</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/photos/{photo}/thumbnail</code></td><td>show</td><td>photos.thumbnail.show</td></tr>
+<tr><td>GET</td><td><code>/photos/{photo}/thumbnail/edit</code></td><td>edit</td><td>photos.thumbnail.edit</td></tr>
+<tr><td>PUT/PATCH</td><td><code>/photos/{photo}/thumbnail</code></td><td>update</td><td>photos.thumbnail.update</td></tr>
+</tbody>
+</table>
+</div>
+<p><a name="creatable-singleton-resources"></a></p>
+<h4>可建立的單例資源</h4>
+<p>有時，您可能想為單例資源定義建立和儲存路由。為此，您可以在註冊單例資源路由時呼叫 <code>creatable</code> 方法：</p>
+<pre><code class="language-php">Route::singleton('photos.thumbnail', ThumbnailController::class)-&gt;creatable();</code></pre>
+<p>在此範例中，將註冊以下路由。如您所見，對於可建立的單例資源，還會註冊一個 <code>DELETE</code> 路由：</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>動詞</th><th>URI</th><th>動作</th><th>路由名稱</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/photos/{photo}/thumbnail/create</code></td><td>create</td><td>photos.thumbnail.create</td></tr>
+<tr><td>POST</td><td><code>/photos/{photo}/thumbnail</code></td><td>store</td><td>photos.thumbnail.store</td></tr>
+<tr><td>GET</td><td><code>/photos/{photo}/thumbnail</code></td><td>show</td><td>photos.thumbnail.show</td></tr>
+<tr><td>GET</td><td><code>/photos/{photo}/thumbnail/edit</code></td><td>edit</td><td>photos.thumbnail.edit</td></tr>
+<tr><td>PUT/PATCH</td><td><code>/photos/{photo}/thumbnail</code></td><td>update</td><td>photos.thumbnail.update</td></tr>
+<tr><td>DELETE</td><td><code>/photos/{photo}/thumbnail</code></td><td>destroy</td><td>photos.thumbnail.destroy</td></tr>
+</tbody>
+</table>
+</div>
+<p>如果您希望 Laravel 為單例資源註冊 <code>DELETE</code> 路由，但不註冊建立或儲存路由，可以使用 <code>destroyable</code> 方法：</p>
+<pre><code class="language-php">Route::singleton(...)-&gt;destroyable();</code></pre>
+<p><a name="api-singleton-resources"></a></p>
+<h4>API 單例資源</h4>
+<p><code>apiSingleton</code> 方法可用於註冊一個將透過 API 操作的單例資源，因此不需要 <code>create</code> 和 <code>edit</code> 路由：</p>
+<pre><code class="language-php">Route::apiSingleton('profile', ProfileController::class);</code></pre>
+<p>當然，API 單例資源也可以是 <code>creatable</code>，這將為資源註冊 <code>store</code> 和 <code>destroy</code> 路由：</p>
+<pre><code class="language-php">Route::apiSingleton('photos.thumbnail', ProfileController::class)-&gt;creatable();</code></pre>
+<p><a name="middleware-and-resource-controllers"></a></p>
+<h3>中介層與資源控制器</h3>
+<p>Laravel 允許您使用 <code>middleware</code>、<code>middlewareFor</code> 和 <code>withoutMiddlewareFor</code> 方法將中介層分配給資源路由的所有方法或僅特定方法。這些方法提供了對哪些中介層應用於每個資源動作的精細控制。</p>
+<h4>將中介層應用於所有方法</h4>
+<p>您可以使用 <code>middleware</code> 方法將中介層分配給資源或單例資源路由產生的所有路由：</p>
+<pre><code class="language-php">Route::resource('users', UserController::class)
+    -&gt;middleware(['auth', 'verified']);
+
+Route::singleton('profile', ProfileController::class)
+    -&gt;middleware('auth');</code></pre>
+<h4>將中介層應用於特定方法</h4>
+<p>您可以使用 <code>middlewareFor</code> 方法將中介層分配給給定資源控制器的一個或多個特定方法：</p>
+<pre><code class="language-php">Route::resource('users', UserController::class)
+    -&gt;middlewareFor('show', 'auth');
+
+Route::apiResource('users', UserController::class)
+    -&gt;middlewareFor(['show', 'update'], 'auth');
+
+Route::resource('users', UserController::class)
+    -&gt;middlewareFor('show', 'auth')
+    -&gt;middlewareFor('update', 'auth');
+
+Route::apiResource('users', UserController::class)
+    -&gt;middlewareFor(['show', 'update'], ['auth', 'verified']);</code></pre>
+<p><code>middlewareFor</code> 方法也可以與單例和 API 單例資源控制器結合使用：</p>
+<pre><code class="language-php">Route::singleton('profile', ProfileController::class)
+    -&gt;middlewareFor('show', 'auth');
+
+Route::apiSingleton('profile', ProfileController::class)
+    -&gt;middlewareFor(['show', 'update'], 'auth');</code></pre>
+<h4>從特定方法排除中介層</h4>
+<p>您可以使用 <code>withoutMiddlewareFor</code> 方法從資源控制器的特定方法中排除中介層：</p>
+<pre><code class="language-php">Route::middleware(['auth', 'verified', 'subscribed'])-&gt;group(function () {
+    Route::resource('users', UserController::class)
+        -&gt;withoutMiddlewareFor('index', ['auth', 'verified'])
+        -&gt;withoutMiddlewareFor(['create', 'store'], 'verified')
+        -&gt;withoutMiddlewareFor('destroy', 'subscribed');
+});</code></pre>
+<p><a name="dependency-injection-and-controllers"></a></p>
+<h2>依賴注入與控制器</h2>
+<p><a name="constructor-injection"></a></p>
+<h4>建構函數注入</h4>
+<p>Laravel <a href="/docs/container">服務容器</a>用於解析所有 Laravel 控制器。因此，您可以在控制器的建構函數中類型提示控制器可能需要的任何依賴項。宣告的依賴項將自動解析並注入到控制器實例中：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Repositories\\UserRepository;
+
+class UserController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(
+        protected UserRepository $users,
+    ) {}
+}
+</code></pre>
+<p><a name="method-injection"></a></p>
+<h4>方法注入</h4>
+<p>除了建構函數注入之外，您還可以在控制器的方法上類型提示依賴項。方法注入的一個常見用例是將 <code>Illuminate\\Http\\Request</code> 實例注入到您的控制器方法中：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+
+class UserController extends Controller
+{
+    /**
+     * Store a new user.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $name = $request->name;
+
+        // Store the user...
+
+        return redirect('/users');
+    }
+}
+</code></pre>
+<p>如果您的控制器方法也期望從路由參數獲取輸入，請在其他依賴項之後列出您的路由參數。例如，如果您的路由定義如下：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+
+Route::put('/user/{id}', [UserController::class, 'update']);
+</code></pre>
+<p>您仍然可以類型提示 <code>Illuminate\\Http\\Request</code> 並透過以下方式定義控制器方法來存取您的 <code>id</code> 參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+
+class UserController extends Controller
+{
+    /**
+     * Update the given user.
+     */
+    public function update(Request $request, string $id): RedirectResponse
+    {
+        // Update the user...
+
+        return redirect('/users');
+    }
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="控制器" currentPath="controllers">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>控制器</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">控制器</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/controllers" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

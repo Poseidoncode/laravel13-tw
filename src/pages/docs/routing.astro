@@ -1,0 +1,822 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>路由</h1>
+<ul>
+<li><a href="#basic-routing">基本路由</a><ul>
+<li><a href="#the-default-route-files">預設路由檔案</a></li>
+<li><a href="#redirect-routes">重定向路由</a></li>
+<li><a href="#view-routes">視圖路由</a></li>
+<li><a href="#listing-your-routes">列出您的路由</a></li>
+<li><a href="#routing-customization">路由自訂</a></li>
+</ul>
+</li>
+<li><a href="#route-parameters">路由參數</a><ul>
+<li><a href="#required-parameters">必需參數</a></li>
+<li><a href="#parameters-optional-parameters">可選參數</a></li>
+<li><a href="#parameters-regular-expression-constraints">正則表達式約束</a></li>
+</ul>
+</li>
+<li><a href="#named-routes">命名路由</a></li>
+<li><a href="#route-groups">路由群組</a><ul>
+<li><a href="#route-group-middleware">中介層</a></li>
+<li><a href="#route-group-controllers">控制器</a></li>
+<li><a href="#route-group-subdomain-routing">子網域路由</a></li>
+<li><a href="#route-group-prefixes">路由前綴</a></li>
+<li><a href="#route-group-name-prefixes">路由名稱前綴</a></li>
+</ul>
+</li>
+<li><a href="#route-model-binding">路由模型綁定</a><ul>
+<li><a href="#implicit-binding">隱式綁定</a></li>
+<li><a href="#implicit-enum-binding">隱式列舉綁定</a></li>
+<li><a href="#explicit-binding">顯式綁定</a></li>
+</ul>
+</li>
+<li><a href="#fallback-routes">後備路由</a></li>
+<li><a href="#rate-limiting">速率限制</a><ul>
+<li><a href="#defining-rate-limiters">定義速率限制器</a></li>
+<li><a href="#attaching-rate-limiters-to-routes">將速率限制器附加到路由</a></li>
+</ul>
+</li>
+<li><a href="#form-method-spoofing">表單方法偽造</a></li>
+<li><a href="#accessing-the-current-route">存取當前路由</a></li>
+<li><a href="#cors">跨來源資源共用（CORS）</a></li>
+<li><a href="#route-caching">路由快取</a></li>
+</ul>
+<p><a name="basic-routing"></a></p>
+<h2>基本路由</h2>
+<p>最基本的 Laravel 路由接受一個 URI 和一個閉包，提供了一種非常簡單且富有表達力的方法來定義路由和行為，而無需複雜的路由配置檔案：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Route;
+
+Route::get('/greeting', function () {
+    return 'Hello World';
+});
+</code></pre>
+<p><a name="the-default-route-files"></a></p>
+<h3>預設路由檔案</h3>
+<p>所有 Laravel 路由都在您的路由檔案中定義，這些檔案位於 <code>routes</code> 目錄中。這些檔案由 Laravel 使用您應用程式 <code>bootstrap/app.php</code> 檔案中指定的配置自動載入。<code>routes/web.php</code> 檔案定義了用於您 Web 介面的路由。這些路由被分配 <code>web</code><a href="/docs/middleware#laravels-default-middleware-groups">中介層群組</a>，它提供了像會話狀態和 CSRF 保護這樣的功能。</p>
+<p>對於大多數應用程式，您將首先在 <code>routes/web.php</code> 檔案中定義路由。在 <code>routes/web.php</code> 中定義的路由可以透過在瀏覽器中輸入定義的路由 URL 來存取。例如，您可以透過在瀏覽器中導航到 <code>http://example.com/user</code> 來存取以下路由：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+
+Route::get('/user', [UserController::class, 'index']);
+</code></pre>
+<p><a name="api-routes"></a></p>
+<h4>API 路由</h4>
+<p>如果您的應用程式還將提供無狀態 API，您可以使用 <code>install:api</code> Artisan 命令啟用 API 路由：</p>
+<pre><code class="language-shell">php artisan install:api
+</code></pre>
+<p><code>install:api</code> 命令安裝 <a href="/docs/sanctum">Laravel Sanctum</a>，它提供了一個強大而簡單的 API 令牌認證守衛，可用於認證第三方 API 消費者、SPA 或行動應用程式。此外，<code>install:api</code> 命令創建 <code>routes/api.php</code> 檔案：</p>
+<pre><code class="language-php">Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+</code></pre>
+<p>當然，您可以自由地在應該公開存取的路由上省略 <code>auth:sanctum</code> 中介層。</p>
+<p><code>routes/api.php</code> 中的路由是無狀態的，並被分配到 <code>api</code><a href="/docs/middleware#laravels-default-middleware-groups">中介層群組</a>。此外，<code>/api</code> URI 前綴會自動應用於這些路由，因此您不需要將其手動應用於檔案中的每個路由。您可以透過修改應用程式的 <code>bootstrap/app.php</code> 檔案來更改前綴：</p>
+<pre><code class="language-php">->withRouting(
+    api: __DIR__.'/../routes/api.php',
+    apiPrefix: 'api/admin',
+    // ...
+)
+</code></pre>
+<p><a name="available-router-methods"></a></p>
+<h4>可用的路由器方法</h4>
+<p>路由器允許您註冊回應任何 HTTP 動詞的路由：</p>
+<pre><code class="language-php">Route::get($uri, $callback);
+Route::post($uri, $callback);
+Route::put($uri, $callback);
+Route::patch($uri, $callback);
+Route::delete($uri, $callback);
+Route::options($uri, $callback);
+</code></pre>
+<p>有時您可能需要註冊一個回應多個 HTTP 動詞的路由。您可以使用 <code>match</code> 方法來執行此操作。或者，您甚至可以使用 <code>any</code> 方法註冊一個回應所有 HTTP 動詞的路由：</p>
+<pre><code class="language-php">Route::match(['get', 'post'], '/', function () {
+    // ...
+});
+
+Route::any('/', function () {
+    // ...
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+定義多個共享相同 URI 的路由時，使用 <code>get</code>、<code>post</code>、<code>put</code>、<code>patch</code>、<code>delete</code> 和 <code>options</code> 方法的路由應在使用 <code>any</code>、<code>match</code> 和 <code>redirect</code> 方法的路由之前定義。這確保了傳入的請求與正確的路由匹配。</p>
+</blockquote>
+<p><a name="dependency-injection"></a></p>
+<h4>依賴注入</h4>
+<p>您可以在路由的回呼簽名中鍵入提示路由所需的任何依賴。聲明的依賴將由 Laravel <a href="/docs/container">服務容器</a>自動解析並注入到回呼中。例如，您可以鍵入提示 <code>Illuminate\\Http\\Request</code> 類別，以使當前 HTTP 請求自動注入到您的路由回呼中：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get('/users', function (Request $request) {
+    // ...
+});
+</code></pre>
+<p><a name="csrf-protection"></a></p>
+<h4>CSRF 保護</h4>
+<p>請記住，任何指向在 <code>web</code> 路由檔案中定義的 <code>POST</code>、<code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 路由的 HTML 表單都應包含 CSRF 令牌欄位。否則，請求將被拒絕。您可以在 <a href="/docs/csrf">CSRF 文檔</a>中閱讀更多關於 CSRF 保護的資訊：</p>
+<pre><code class="language-blade"><form method="POST" action="/profile">
+    @csrf
+    ...
+</form>
+</code></pre>
+<p><a name="redirect-routes"></a></p>
+<h3>重定向路由</h3>
+<p>如果您正在定義一個重定向到另一個 URI 的路由，您可以使用 <code>Route::redirect</code> 方法。此方法提供了一個便利的捷徑，因此您不必為執行簡單的重定向定義完整的路由或控制器：</p>
+<pre><code class="language-php">Route::redirect('/here', '/there');
+</code></pre>
+<p>預設情況下，<code>Route::redirect</code> 傳回 <code>302</code> 狀態碼。您可以使用可選的第三個參數來自訂狀態碼：</p>
+<pre><code class="language-php">Route::redirect('/here', '/there', 301);
+</code></pre>
+<p>或者，您可以使用 <code>Route::permanentRedirect</code> 方法來傳回 <code>301</code> 狀態碼：</p>
+<pre><code class="language-php">Route::permanentRedirect('/here', '/there');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+在重定向路由中使用路由參數時，以下參數由 Laravel 保留，不能使用：<code>destination</code> 和 <code>status</code>。</p>
+</blockquote>
+<p><a name="view-routes"></a></p>
+<h3>視圖路由</h3>
+<p>如果您的路由只需要傳回一個<a href="/docs/views">視圖</a>，您可以使用 <code>Route::view</code> 方法。像 <code>redirect</code> 方法一樣，此方法提供了一個簡單的捷徑，因此您不必定義完整的路由或控制器。<code>view</code> 方法接受一個 URI 作為其第一個參數和一個視圖名稱作為其第二個參數。此外，您可以提供一個資料陣列作為可選的第三個參數傳遞給視圖：</p>
+<pre><code class="language-php">Route::view('/welcome', 'welcome');
+
+Route::view('/welcome', 'welcome', ['name' => 'Taylor']);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+在視圖路由中使用路由參數時，以下參數由 Laravel 保留，不能使用：<code>view</code>、<code>data</code>、<code>status</code> 和 <code>headers</code>。</p>
+</blockquote>
+<p><a name="listing-your-routes"></a></p>
+<h3>列出您的路由</h3>
+<p><code>route:list</code> Artisan 命令可以輕鬆提供應用程式定義的所有路由的概述：</p>
+<pre><code class="language-shell">php artisan route:list
+</code></pre>
+<p>預設情況下，分配給每個路由的路由中介層不會在 <code>route:list</code> 輸出中顯示；但是，您可以透過向命令添加 <code>-v</code> 選項來指示 Laravel 顯示路由中介層和中介層群組名稱：</p>
+<pre><code class="language-shell">php artisan route:list -v
+
+# 展開中介層群組...
+php artisan route:list -vv
+</code></pre>
+<p>您還可以指示 Laravel 只顯示以給定 URI 開頭的路由：</p>
+<pre><code class="language-shell">php artisan route:list --path=api
+</code></pre>
+<p>此外，您可以透過在執行 <code>route:list</code> 命令時提供 <code>--except-vendor</code> 選項來指示 Laravel 隱藏第三方套件定義的任何路由：</p>
+<pre><code class="language-shell">php artisan route:list --except-vendor
+</code></pre>
+<p>同樣，您還可以透過在執行 <code>route:list</code> 命令時提供 <code>--only-vendor</code> 選項來指示 Laravel 只顯示第三方套件定義的路由：</p>
+<pre><code class="language-shell">php artisan route:list --only-vendor
+</code></pre>
+<p><a name="routing-customization"></a></p>
+<h3>路由自訂</h3>
+<p>預設情況下，您應用程式的路由由 <code>bootstrap/app.php</code> 檔案配置和載入：</p>
+<pre><code class="language-php">&lt;?php
+
+use Illuminate\\Foundation\\Application;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )->create();
+</code></pre>
+<p>但是，有時您可能希望定義一個全新的檔案來包含應用程式路由的子集。為此，您可以向 <code>withRouting</code> 方法提供一個 <code>then</code> 閉包。在此閉包內，您可以註冊應用程式所需的任何額外路由：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Route;
+
+->withRouting(
+    web: __DIR__.'/../routes/web.php',
+    commands: __DIR__.'/../routes/console.php',
+    health: '/up',
+    then: function () {
+        Route::middleware('api')
+            ->prefix('webhooks')
+            ->name('webhooks.')
+            ->group(base_path('routes/webhooks.php'));
+    },
+)
+</code></pre>
+<p>或者，您甚至可以透過向 <code>withRouting</code> 方法提供 <code>using</code> 閉包來完全控制路由註冊。傳遞此參數時，框架不會註冊任何 HTTP 路由，您負責手動註冊所有路由：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Route;
+
+->withRouting(
+    commands: __DIR__.'/../routes/console.php',
+    using: function () {
+        Route::middleware('api')
+            ->prefix('api')
+            ->group(base_path('routes/api.php'));
+
+        Route::middleware('web')
+            ->group(base_path('routes/web.php'));
+    },
+)
+</code></pre>
+<p><a name="route-parameters"></a></p>
+<h2>路由參數</h2>
+<p><a name="required-parameters"></a></p>
+<h3>必需參數</h3>
+<p>有時您需要在路由中捕獲 URI 的片段。例如，您可能需要從 URL 中捕獲使用者的 ID。您可以透過定義路由參數來執行此操作：</p>
+<pre><code class="language-php">Route::get('/user/{id}', function (string $id) {
+    return 'User '.$id;
+});
+</code></pre>
+<p>您可以根據路由的需要定義任意數量的路由參數：</p>
+<pre><code class="language-php">Route::get('/posts/{post}/comments/{comment}', function (string $postId, string $commentId) {
+    // ...
+});
+</code></pre>
+<p>路由參數始終包含在 <code>{}</code> 括號內，應由字母字元組成。底線（<code>_</code>）在路由參數名稱中也是可接受的。路由參數根據其順序注入到路由回呼/控制器中——路由回呼/控制器參數的名稱無關緊要。</p>
+<p><a name="parameters-and-dependency-injection"></a></p>
+<h4>參數和依賴注入</h4>
+<p>如果您的路由有您希望 Laravel 服務容器自動注入到路由回呼中的依賴，則應在依賴之後列出路由參數：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get('/user/{id}', function (Request $request, string $id) {
+    return 'User '.$id;
+});
+</code></pre>
+<p><a name="parameters-optional-parameters"></a></p>
+<h3>可選參數</h3>
+<p>偶爾您可能需要指定一個不一定存在於 URI 中的路由參數。您可以透過在參數名稱後放置 <code>?</code> 標記來執行此操作。確保為路由的對應變數提供一個預設值：</p>
+<pre><code class="language-php">Route::get('/user/{name?}', function (?string $name = null) {
+    return $name;
+});
+
+Route::get('/user/{name?}', function (?string $name = 'John') {
+    return $name;
+});
+</code></pre>
+<p><a name="parameters-regular-expression-constraints"></a></p>
+<h3>正則表達式約束</h3>
+<p>您可以使用路由實例上的 <code>where</code> 方法來約束路由參數的格式。<code>where</code> 方法接受參數的名稱和定義應如何約束參數的正則表達式：</p>
+<pre><code class="language-php">Route::get('/user/{name}', function (string $name) {
+    // ...
+})->where('name', '[A-Za-z]+');
+
+Route::get('/user/{id}', function (string $id) {
+    // ...
+})->where('id', '[0-9]+');
+
+Route::get('/user/{id}/{name}', function (string $id, string $name) {
+    // ...
+})->where(['id' => '[0-9]+', 'name' => '[a-z]+']);
+</code></pre>
+<p>為了方便，一些常用的正則表達式模式有輔助方法，允許您快速向路由添加模式約束：</p>
+<pre><code class="language-php">Route::get('/user/{id}/{name}', function (string $id, string $name) {
+    // ...
+})->whereNumber('id')->whereAlpha('name');
+
+Route::get('/user/{name}', function (string $name) {
+    // ...
+})->whereAlphaNumeric('name');
+
+Route::get('/user/{id}', function (string $id) {
+    // ...
+})->whereUuid('id');
+
+Route::get('/user/{id}', function (string $id) {
+    // ...
+})->whereUlid('id');
+
+Route::get('/category/{category}', function (string $category) {
+    // ...
+})->whereIn('category', ['movie', 'song', 'painting']);
+
+Route::get('/category/{category}', function (string $category) {
+    // ...
+})->whereIn('category', CategoryEnum::cases());
+</code></pre>
+<p>如果傳入的請求與路由模式約束不匹配，將傳回 404 HTTP 回應。</p>
+<p><a name="parameters-global-constraints"></a></p>
+<h4>全域約束</h4>
+<p>如果您希望路由參數始終受給定正則表達式的約束，可以使用 <code>pattern</code> 方法。您應該在應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中定義這些模式：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Route;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Route::pattern('id', '[0-9]+');
+}
+</code></pre>
+<p>定義模式後，它會自動應用於使用該參數名稱的所有路由：</p>
+<pre><code class="language-php">Route::get('/user/{id}', function (string $id) {
+    // 只有在 {id} 是數字時才執行...
+});
+</code></pre>
+<p><a name="parameters-encoded-forward-slashes"></a></p>
+<h4>編碼的正斜線</h4>
+<p>Laravel 路由元件允許所有字元（<code>/</code> 除外）出現在路由參數值中。您必須使用 <code>where</code> 條件正則表達式明確允許 <code>/</code> 作為佔位符的一部分：</p>
+<pre><code class="language-php">Route::get('/search/{search}', function (string $search) {
+    return $search;
+})->where('search', '.*');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+編碼的正斜線僅在最後一個路由片段中支援。</p>
+</blockquote>
+<p><a name="named-routes"></a></p>
+<h2>命名路由</h2>
+<p>命名路由允許為特定路由方便地生成 URL 或重定向。您可以透過將 <code>name</code> 方法鏈式呼叫到路由定義上來為路由指定名稱：</p>
+<pre><code class="language-php">Route::get('/user/profile', function () {
+    // ...
+})->name('profile');
+</code></pre>
+<p>您還可以為控制器動作指定路由名稱：</p>
+<pre><code class="language-php">Route::get(
+    '/user/profile',
+    [UserProfileController::class, 'show']
+)->name('profile');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+路由名稱應始終是唯一的。</p>
+</blockquote>
+<p><a name="generating-urls-to-named-routes"></a></p>
+<h4>生成命名路由的 URL</h4>
+<p>為給定路由分配名稱後，您可以透過 Laravel 的 <code>route</code> 和 <code>redirect</code> 輔助函數在生成 URL 或重定向時使用路由的名稱：</p>
+<pre><code class="language-php">// 生成 URL...
+$url = route('profile');
+
+// 生成重定向...
+return redirect()->route('profile');
+
+return to_route('profile');
+</code></pre>
+<p>如果命名路由定義了參數，您可以將參數作為 <code>route</code> 函數的第二個參數傳遞。給定的參數將自動以其正確的位置插入到生成的 URL 中：</p>
+<pre><code class="language-php">Route::get('/user/{id}/profile', function (string $id) {
+    // ...
+})->name('profile');
+
+$url = route('profile', ['id' => 1]);
+</code></pre>
+<p>如果您在陣列中傳遞額外的參數，這些鍵/值對將自動添加到生成的 URL 的查詢字串中：</p>
+<pre><code class="language-php">Route::get('/user/{id}/profile', function (string $id) {
+    // ...
+})->name('profile');
+
+$url = route('profile', ['id' => 1, 'photos' => 'yes']);
+
+// http://example.com/user/1/profile?photos=yes
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有時，您可能希望為 URL 參數指定請求範圍的預設值，例如當前語言環境。為此，您可以使用 <a href="/docs/urls#default-values">URL::defaults 方法</a>。</p>
+</blockquote>
+<p><a name="inspecting-the-current-route"></a></p>
+<h4>檢查當前路由</h4>
+<p>如果您希望判斷當前請求是否被路由到給定的命名路由，可以使用 Route 實例上的 <code>named</code> 方法。例如，您可以從路由中介層中檢查當前路由名稱：</p>
+<pre><code class="language-php">use Closure;
+use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+/**
+ * 處理傳入的請求。
+ *
+ * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+ */
+public function handle(Request $request, Closure $next): Response
+{
+    if ($request->route()->named('profile')) {
+        // ...
+    }
+
+    return $next($request);
+}
+</code></pre>
+<p><a name="route-groups"></a></p>
+<h2>路由群組</h2>
+<p>路由群組允許您在大量路由之間共享路由屬性（例如中介層），而無需在每個單獨的路由上定義這些屬性。</p>
+<p>嵌套群組嘗試智能地將屬性與其父群組「合併」。中介層和 <code>where</code> 條件被合併，而名稱和前綴被附加。URI 前綴中的命名空間分隔符和斜線會在適當的時候自動添加。</p>
+<p><a name="route-group-middleware"></a></p>
+<h3>中介層</h3>
+<p>要將<a href="/docs/middleware">中介層</a>分配給群組中的所有路由，您可以在定義群組之前使用 <code>middleware</code> 方法。中介層按其在陣列中列出的順序執行：</p>
+<pre><code class="language-php">Route::middleware(['first', 'second'])->group(function () {
+    Route::get('/', function () {
+        // 使用 first 和 second 中介層...
+    });
+
+    Route::get('/user/profile', function () {
+        // 使用 first 和 second 中介層...
+    });
+});
+</code></pre>
+<p><a name="route-group-controllers"></a></p>
+<h3>控制器</h3>
+<p>如果一組路由都使用相同的<a href="/docs/controllers">控制器</a>，您可以使用 <code>controller</code> 方法為群組中的所有路由定義公共控制器。然後，在定義路由時，您只需要提供它們呼叫的控制器方法：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\OrderController;
+
+Route::controller(OrderController::class)->group(function () {
+    Route::get('/orders/{id}', 'show');
+    Route::post('/orders', 'store');
+});
+</code></pre>
+<p><a name="route-group-subdomain-routing"></a></p>
+<h3>子網域路由</h3>
+<p>路由群組也可用於處理子網域路由。子網域可以像路由 URI 一樣分配路由參數，允許您捕獲子網域的一部分以在路由或控制器中使用。可以在定義群組之前呼叫 <code>domain</code> 方法來指定子網域：</p>
+<pre><code class="language-php">Route::domain('{account}.example.com')->group(function () {
+    Route::get('/user/{id}', function (string $account, string $id) {
+        // ...
+    });
+});
+</code></pre>
+<p><a name="route-group-prefixes"></a></p>
+<h3>路由前綴</h3>
+<p><code>prefix</code> 方法可用於為群組中的每個路由添加給定 URI 的前綴。例如，您可能希望為群組中的所有路由 URI 添加 <code>admin</code> 前綴：</p>
+<pre><code class="language-php">Route::prefix('admin')->group(function () {
+    Route::get('/users', function () {
+        // 匹配 "/admin/users" URL
+    });
+});
+</code></pre>
+<p><a name="route-group-name-prefixes"></a></p>
+<h3>路由名稱前綴</h3>
+<p><code>name</code> 方法可用於為群組中的每個路由名稱添加給定字串的前綴。例如，您可能希望為群組中所有路由的名稱添加 <code>admin</code> 前綴。給定的字串恰好按照指定的方式添加到路由名稱的前面，因此我們將確保在前綴中提供尾隨 <code>.</code> 字元：</p>
+<pre><code class="language-php">Route::name('admin.')->group(function () {
+    Route::get('/users', function () {
+        // 路由分配名稱 "admin.users"...
+    })->name('users');
+});
+</code></pre>
+<p><a name="route-model-binding"></a></p>
+<h2>路由模型綁定</h2>
+<p>將模型 ID 注入到路由或控制器動作時，您通常會查詢資料庫以檢索與該 ID 對應的模型。Laravel 路由模型綁定提供了一種便利的方式來自動將模型實例直接注入到您的路由中。例如，與其注入使用者的 ID，不如注入與給定 ID 匹配的整個 <code>User</code> 模型實例。</p>
+<p><a name="implicit-binding"></a></p>
+<h3>隱式綁定</h3>
+<p>Laravel 會自動解析在路由或控制器動作中定義的 Eloquent 模型，這些模型的鍵入提示變數名稱與路由片段名稱匹配。例如：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users/{user}', function (User $user) {
+    return $user->email;
+});
+</code></pre>
+<p>由於 <code>$user</code> 變數被鍵入提示為 <code>App\\Models\\User</code> Eloquent 模型，並且變數名稱與 <code>{user}</code> URI 片段匹配，Laravel 將自動注入具有與請求 URI 中的對應值匹配的 ID 的模型實例。如果在資料庫中找不到匹配的模型實例，將自動生成 404 HTTP 回應。</p>
+<p>當然，使用控制器方法時也可以進行隱式綁定。同樣，請注意 <code>{user}</code> URI 片段與控制器中的 <code>$user</code> 變數匹配，該變數包含 <code>App\\Models\\User</code> 鍵入提示：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+use App\\Models\\User;
+
+// 路由定義...
+Route::get('/users/{user}', [UserController::class, 'show']);
+
+// 控制器方法定義...
+public function show(User $user)
+{
+    return view('user.profile', ['user' => $user]);
+}
+</code></pre>
+<p><a name="implicit-soft-deleted-models"></a></p>
+<h4>軟刪除模型</h4>
+<p>通常，隱式模型綁定不會檢索已被<a href="/docs/eloquent#soft-deleting">軟刪除</a>的模型。但是，您可以透過將 <code>withTrashed</code> 方法鏈式呼叫到路由的定義上來指示隱式綁定檢索這些模型：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users/{user}', function (User $user) {
+    return $user->email;
+})->withTrashed();
+</code></pre>
+<p><a name="customizing-the-default-key-name"></a></p>
+<h4>自訂金鑰</h4>
+<p>有時您可能希望使用 <code>id</code> 以外的欄位來解析 Eloquent 模型。為此，您可以在路由參數定義中指定該欄位：</p>
+<pre><code class="language-php">use App\\Models\\Post;
+
+Route::get('/posts/{post:slug}', function (Post $post) {
+    return $post;
+});
+</code></pre>
+<p>如果您希望模型綁定在檢索給定模型類別時始終使用 <code>id</code> 以外的資料庫欄位，可以覆蓋 Eloquent 模型上的 <code>getRouteKeyName</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 獲取模型的路由金鑰。
+ */
+public function getRouteKeyName(): string
+{
+    return 'slug';
+}
+</code></pre>
+<p><a name="implicit-model-binding-scoping"></a></p>
+<h4>自訂金鑰和作用域</h4>
+<p>在單個路由定義中隱式綁定多個 Eloquent 模型時，您可能希望約束第二個 Eloquent 模型，使其必須是前一個 Eloquent 模型的子級。例如，考慮此路由定義，它為特定使用者按 slug 檢索部落格文章：</p>
+<pre><code class="language-php">use App\\Models\\Post;
+use App\\Models\\User;
+
+Route::get('/users/{user}/posts/{post:slug}', function (User $user, Post $post) {
+    return $post;
+});
+</code></pre>
+<p>使用自訂鍵的隱式綁定作為嵌套路由參數時，Laravel 將自動約束查詢以透過其父級使用慣例來猜測父級上的關係名稱來檢索嵌套模型。在這種情況下，將假設 <code>User</code> 模型有一個名為 <code>posts</code>（路由參數名稱的複數形式）的關係，可用於檢索 <code>Post</code> 模型。</p>
+<p>如果您願意，您可以指示 Laravel 即使在未提供自訂鍵時也約束「子」綁定。為此，您可以在定義路由時呼叫 <code>scopeBindings</code> 方法：</p>
+<pre><code class="language-php">use App\\Models\\Post;
+use App\\Models\\User;
+
+Route::get('/users/{user}/posts/{post}', function (User $user, Post $post) {
+    return $post;
+})->scopeBindings();
+</code></pre>
+<p>或者，您可以指示一整組路由定義使用作用域綁定：</p>
+<pre><code class="language-php">Route::scopeBindings()->group(function () {
+    Route::get('/users/{user}/posts/{post}', function (User $user, Post $post) {
+        return $post;
+    });
+});
+</code></pre>
+<p>同樣，您可以透過呼叫 <code>withoutScopedBindings</code> 方法來明確指示 Laravel 不要約束綁定：</p>
+<pre><code class="language-php">Route::get('/users/{user}/posts/{post:slug}', function (User $user, Post $post) {
+    return $post;
+})->withoutScopedBindings();
+</code></pre>
+<p><a name="customizing-missing-model-behavior"></a></p>
+<h4>自訂缺失模型行為</h4>
+<p>通常，如果找不到隱式綁定的模型，將生成 404 HTTP 回應。但是，您可以透過在定義路由時呼叫 <code>missing</code> 方法來自訂此行為。<code>missing</code> 方法接受一個閉包，如果找不到隱式綁定的模型，將呼叫該閉包：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\LocationsController;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Redirect;
+
+Route::get('/locations/{location:slug}', [LocationsController::class, 'show'])
+    ->name('locations.view')
+    ->missing(function (Request $request) {
+        return Redirect::route('locations.index');
+    });
+</code></pre>
+<p><a name="implicit-enum-binding"></a></p>
+<h3>隱式列舉綁定</h3>
+<p>PHP 8.1 引入了對<a href="https://www.php.net/manual/en/language.enumerations.backed.php">列舉</a>的支援。為了補充此功能，Laravel 允許您在路由定義上鍵入提示<a href="https://www.php.net/manual/en/language.enumerations.backed.php">字串支持的列舉</a>，Laravel 只有在該路由片段對應於有效的列舉值時才會呼叫該路由。否則，將自動傳回 404 HTTP 回應。例如，給定以下列舉：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Enums;
+
+enum Category: string
+{
+    case Fruits = 'fruits';
+    case People = 'people';
+}
+</code></pre>
+<p>您可以定義一個路由，只有在 <code>{category}</code> 路由片段為 <code>fruits</code> 或 <code>people</code> 時才會被呼叫。否則，Laravel 將傳回 404 HTTP 回應：</p>
+<pre><code class="language-php">use App\\Enums\\Category;
+use Illuminate\\Support\\Facades\\Route;
+
+Route::get('/categories/{category}', function (Category $category) {
+    return $category->value;
+});
+</code></pre>
+<p><a name="explicit-binding"></a></p>
+<h3>顯式綁定</h3>
+<p>您不必使用 Laravel 的隱式、基於慣例的模型解析來使用模型綁定。您還可以明確定義路由參數如何對應於模型。要註冊顯式綁定，請使用路由器的 <code>model</code> 方法為給定參數指定類別。您應該在 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法開始時定義顯式模型綁定：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Route;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Route::model('user', User::class);
+}
+</code></pre>
+<p>接下來，定義一個包含 <code>{user}</code> 參數的路由：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users/{user}', function (User $user) {
+    // ...
+});
+</code></pre>
+<p>由於我們已將所有 <code>{user}</code> 參數綁定到 <code>App\\Models\\User</code> 模型，因此該類別的實例將被注入到路由中。因此，例如，對 <code>users/1</code> 的請求將注入資料庫中 ID 為 <code>1</code> 的 <code>User</code> 實例。</p>
+<p>如果在資料庫中找不到匹配的模型實例，將自動生成 404 HTTP 回應。</p>
+<p><a name="customizing-the-resolution-logic"></a></p>
+<h4>自訂解析邏輯</h4>
+<p>如果您希望定義自己的模型綁定解析邏輯，可以使用 <code>Route::bind</code> 方法。傳遞給 <code>bind</code> 方法的閉包將接收 URI 片段的值，並應返回應注入到路由中的類別實例。同樣，此自訂應在應用程式的 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中進行：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Route;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Route::bind('user', function (string $value) {
+        return User::where('name', $value)->firstOrFail();
+    });
+}
+</code></pre>
+<p>或者，您可以覆蓋 Eloquent 模型上的 <code>resolveRouteBinding</code> 方法。此方法將接收 URI 片段的值，並應返回應注入到路由中的類別實例：</p>
+<pre><code class="language-php">/**
+ * 檢索綁定值的模型。
+ *
+ * @param  mixed  $value
+ * @param  string|null  $field
+ * @return \\Illuminate\\Database\\Eloquent\\Model|null
+ */
+public function resolveRouteBinding($value, $field = null)
+{
+    return $this->where('name', $value)->firstOrFail();
+}
+</code></pre>
+<p>如果路由正在使用<a href="#implicit-model-binding-scoping">隱式綁定作用域</a>，則 <code>resolveChildRouteBinding</code> 方法將用於解析父模型的子綁定：</p>
+<pre><code class="language-php">/**
+ * 檢索綁定值的子模型。
+ *
+ * @param  string  $childType
+ * @param  mixed  $value
+ * @param  string|null  $field
+ * @return \\Illuminate\\Database\\Eloquent\\Model|null
+ */
+public function resolveChildRouteBinding($childType, $value, $field)
+{
+    return parent::resolveChildRouteBinding($childType, $value, $field);
+}
+</code></pre>
+<p><a name="fallback-routes"></a></p>
+<h2>後備路由</h2>
+<p>使用 <code>Route::fallback</code> 方法，您可以定義一個在沒有其他路由匹配傳入請求時執行的路由。通常，未處理的請求將透過應用程式的異常處理器自動渲染「404」頁面。但是，由於您通常會在 <code>routes/web.php</code> 檔案中定義 <code>fallback</code> 路由，因此 <code>web</code> 中介層群組中的所有中介層都將應用於該路由。您可以根據需要自由地向此路由添加額外的中介層：</p>
+<pre><code class="language-php">Route::fallback(function () {
+    // ...
+});
+</code></pre>
+<p><a name="rate-limiting"></a></p>
+<h2>速率限制</h2>
+<p><a name="defining-rate-limiters"></a></p>
+<h3>定義速率限制器</h3>
+<p>Laravel 包含強大且可自訂的速率限制服務，可用於限制給定路由或一組路由的流量。首先，您應該定義滿足應用程式需求的速率限制器配置。</p>
+<p>速率限制器可以在應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中定義：</p>
+<pre><code class="language-php">use Illuminate\\Cache\\RateLimiting\\Limit;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\RateLimiter;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    RateLimiter::for('api', function (Request $request) {
+        return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+    });
+}
+</code></pre>
+<p>速率限制器使用 <code>RateLimiter</code> 外觀的 <code>for</code> 方法定義。<code>for</code> 方法接受一個速率限制器名稱和一個閉包，該閉包返回應應用於分配給速率限制器的路由的限制配置。限制配置是 <code>Illuminate\\Cache\\RateLimiting\\Limit</code> 類別的實例。此類別包含有用的「建構器」方法，因此您可以快速定義限制。速率限制器名稱可以是您希望的任何字串：</p>
+<pre><code class="language-php">use Illuminate\\Cache\\RateLimiting\\Limit;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\RateLimiter;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    RateLimiter::for('global', function (Request $request) {
+        return Limit::perMinute(1000);
+    });
+}
+</code></pre>
+<p>如果傳入的請求超過指定的速率限制，Laravel 將自動傳回具有 429 HTTP 狀態碼的回應。如果您希望定義速率限制應傳回的自己的回應，可以使用 <code>response</code> 方法：</p>
+<pre><code class="language-php">RateLimiter::for('global', function (Request $request) {
+    return Limit::perMinute(1000)->response(function (Request $request, array $headers) {
+        return response('Custom response...', 429, $headers);
+    });
+});
+</code></pre>
+<p>由於速率限制器回呼接收傳入的 HTTP 請求實例，您可以根據傳入請求或已認證的使用者動態構建適當的速率限制：</p>
+<pre><code class="language-php">RateLimiter::for('uploads', function (Request $request) {
+    return $request->user()?->vipCustomer()
+        ? Limit::none()
+        : Limit::perHour(10);
+});
+</code></pre>
+<p><a name="segmenting-rate-limits"></a></p>
+<h4>分割速率限制</h4>
+<p>有時您可能希望按某個任意值分割速率限制。例如，您可能希望允許使用者每分鐘每 IP 位址存取給定路由 100 次。為此，您可以在構建速率限制時使用 <code>by</code> 方法：</p>
+<pre><code class="language-php">RateLimiter::for('uploads', function (Request $request) {
+    return $request->user()->vipCustomer()
+        ? Limit::none()
+        : Limit::perMinute(100)->by($request->ip());
+});
+</code></pre>
+<p>為了使用另一個範例說明此功能，我們可以將路由的存取限制為每分鐘每已認證使用者 ID 100 次，或每分鐘每 IP 位址 10 次（訪客）：</p>
+<pre><code class="language-php">RateLimiter::for('uploads', function (Request $request) {
+    return $request->user()
+        ? Limit::perMinute(100)->by($request->user()->id)
+        : Limit::perMinute(10)->by($request->ip());
+});
+</code></pre>
+<p><a name="multiple-rate-limits"></a></p>
+<h4>多個速率限制</h4>
+<p>如果需要，您可以為給定的速率限制器配置傳回速率限制陣列。每個速率限制將根據它們在陣列中的位置對路由進行評估：</p>
+<pre><code class="language-php">RateLimiter::for('login', function (Request $request) {
+    return [
+        Limit::perMinute(500),
+        Limit::perMinute(3)->by($request->input('email')),
+    ];
+});
+</code></pre>
+<p>如果您正在分配按相同 <code>by</code> 值分割的多個速率限制，則應確保每個 <code>by</code> 值都是唯一的。實現此目的的最簡單方法是為傳遞給 <code>by</code> 方法的值添加前綴：</p>
+<pre><code class="language-php">RateLimiter::for('uploads', function (Request $request) {
+    return [
+        Limit::perMinute(10)->by('minute:'.$request->user()->id),
+        Limit::perDay(1000)->by('day:'.$request->user()->id),
+    ];
+});
+</code></pre>
+<p><a name="response-base-rate-limiting"></a></p>
+<h4>基於回應的速率限制</h4>
+<p>除了對傳入請求進行速率限制外，Laravel 還允許您使用 <code>after</code> 方法根據回應進行速率限制。當您只想將某些回應計入速率限制時（例如驗證錯誤、404 回應或其他特定 HTTP 狀態碼），這很有用。</p>
+<p><code>after</code> 方法接受一個閉包，該閉包接收回應，如果回應應計入速率限制則應傳回 <code>true</code>，如果應忽略則傳回 <code>false</code>。這對於透過限制連續 404 回應來防止枚舉攻擊特別有用，或者允許使用者重試驗證失敗的請求，而不會在應僅限制成功操作的端點上耗盡其速率限制：</p>
+<pre><code class="language-php">use Illuminate\\Cache\\RateLimiting\\Limit;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\RateLimiter;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+RateLimiter::for('resource-not-found', function (Request $request) {
+    return Limit::perMinute(10)
+        ->by($request->user()?->id ?: $request->ip())
+        ->after(function (Response $response) {
+            // 只有將 404 回應計入速率限制以防止枚舉...
+            return $response->status() === 404;
+        });
+});
+</code></pre>
+<p><a name="attaching-rate-limiters-to-routes"></a></p>
+<h3>將速率限制器附加到路由</h3>
+<p>速率限制器可以使用 <code>throttle</code><a href="/docs/middleware">中介層</a>附加到路由或路由群組。throttle 中介層接受您希望分配給路由的速率限制器名稱：</p>
+<pre><code class="language-php">Route::middleware(['throttle:uploads'])->group(function () {
+    Route::post('/audio', function () {
+        // ...
+    });
+
+    Route::post('/video', function () {
+        // ...
+    });
+});
+</code></pre>
+<p><a name="throttling-with-redis"></a></p>
+<h4>使用 Redis 進行節流</h4>
+<p>預設情況下，<code>throttle</code> 中介層映射到 <code>Illuminate\\Routing\\Middleware\\ThrottleRequests</code> 類別。但是，如果您正在使用 Redis 作為應用程式的快取驅動程式，您可能希望指示 Laravel 使用 Redis 來管理速率限制。為此，您應該在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>throttleWithRedis</code> 方法。此方法將 <code>throttle</code> 中介層映射到 <code>Illuminate\\Routing\\Middleware\\ThrottleRequestsWithRedis</code> 中介層類別：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->throttleWithRedis();
+    // ...
+})
+</code></pre>
+<p><a name="form-method-spoofing"></a></p>
+<h2>表單方法偽造</h2>
+<p>HTML 表單不支援 <code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 動作。因此，在定義從 HTML 表單呼叫的 <code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 路由時，您需要向表單添加一個隱藏的 <code>_method</code> 欄位。與 <code>_method</code> 欄位一起發送的值將用作 HTTP 請求方法：</p>
+<pre><code class="language-blade"><form action="/example" method="POST">
+    <input type="hidden" name="_method" value="PUT">
+    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+</form>
+</code></pre>
+<p>為了方便，您可以使用 <code>@method</code><a href="/docs/blade">Blade 指令</a>來生成 <code>_method</code> 輸入欄位：</p>
+<pre><code class="language-blade"><form action="/example" method="POST">
+    @method('PUT')
+    @csrf
+</form>
+</code></pre>
+<p><a name="accessing-the-current-route"></a></p>
+<h2>存取當前路由</h2>
+<p>您可以使用 <code>Route</code> 外觀上的 <code>current</code>、<code>currentRouteName</code> 和 <code>currentRouteAction</code> 方法來存取有關處理傳入請求的路由的資訊：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Route;
+
+$route = Route::current(); // Illuminate\\Routing\\Route
+$name = Route::currentRouteName(); // string
+$action = Route::currentRouteAction(); // string
+</code></pre>
+<p>您可以參閱<a href="https://api.laravel.com/docs/Illuminate/Routing/Router.html">路由外觀的底層類別</a>和 <a href="https://api.laravel.com/docs/Illuminate/Routing/Route.html">Route 實例</a>的 API 文檔，以查看路由器和路由類別上所有可用的方法。</p>
+<p><a name="cors"></a></p>
+<h2>跨來源資源共用（CORS）</h2>
+<p>Laravel 可以自動使用您配置的值來回應 CORS <code>OPTIONS</code> HTTP 請求。<code>OPTIONS</code> 請求將由自動包含在應用程式全域中介層堆疊中的 <code>HandleCors</code><a href="/docs/middleware">中介層</a>自動處理。</p>
+<p>有時，您可能需要自訂應用程式的 CORS 配置值。您可以透過使用 <code>config:publish</code> Artisan 命令發佈 <code>cors</code> 配置檔案來執行此操作：</p>
+<pre><code class="language-shell">php artisan config:publish cors
+</code></pre>
+<p>此命令將在您應用程式的 <code>config</code> 目錄中放置一個 <code>cors.php</code> 配置檔案。</p>
+<blockquote>
+<p>[!NOTE]
+有關 CORS 和 CORS 頁頭的更多資訊，請查閱 <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#The_HTTP_response_headers">MDN Web 文檔關於 CORS 的文檔</a>。</p>
+</blockquote>
+<p><a name="route-caching"></a></p>
+<h2>路由快取</h2>
+<p>將應用程式部署到生產環境時，您應該利用 Laravel 的路由快取。使用路由快取將大幅減少註冊應用程式所有路由所需的時間。要生成路由快取，請執行 <code>route:cache</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan route:cache
+</code></pre>
+<p>運行此命令後，您快取的路由檔案將在每個請求上載入。請記住，如果您添加任何新路由，則需要生成新的路由快取。因此，您應該只在專案部署期間運行 <code>route:cache</code> 命令。</p>
+<p>您可以使用 <code>route:clear</code> 命令來清除路由快取：</p>
+<pre><code class="language-shell">php artisan route:clear
+</code></pre>
+`;
+---
+
+<DocsLayout title="路由" currentPath="routing">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>路由</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">路由</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/routing" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

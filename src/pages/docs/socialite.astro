@@ -1,0 +1,260 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Socialite</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#upgrading-socialite">升級 Socialite</a></li>
+<li><a href="#configuration">配置</a></li>
+<li><a href="#authentication">認證</a><ul>
+<li><a href="#routing">路由</a></li>
+<li><a href="#authentication-and-storage">認證與儲存</a></li>
+<li><a href="#access-scopes">存取範圍</a></li>
+<li><a href="#slack-bot-scopes">Slack Bot 範圍</a></li>
+<li><a href="#optional-parameters">可選參數</a></li>
+</ul>
+</li>
+<li><a href="#retrieving-user-details">檢索使用者詳細資訊</a></li>
+<li><a href="#testing">測試</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>除了典型的基於表單的認證之外，Laravel 還提供了一種簡單且便利的方式，可以使用 <a href="https://github.com/laravel/socialite">Laravel Socialite</a> 與 OAuth 提供者進行認證。Socialite 目前支援透過 Facebook、X、LinkedIn、Google、GitHub、GitLab、Bitbucket 和 Slack 進行認證。</p>
+<blockquote>
+<p>[!NOTE]
+其他平台的適配器可透過社群驅動的 <a href="https://socialiteproviders.com/">Socialite Providers</a> 網站獲取。</p>
+</blockquote>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>要開始使用 Socialite，請使用 Composer 套件管理器將該套件添加到您專案的依賴項中：</p>
+<pre><code class="language-shell">composer require laravel/socialite
+</code></pre>
+<p><a name="upgrading-socialite"></a></p>
+<h2>升級 Socialite</h2>
+<p>升級到 Socialite 的新主要版本時，重要的是您要仔細查閱 <a href="https://github.com/laravel/socialite/blob/master/UPGRADE.md">升級指南</a>。</p>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p>在使用 Socialite 之前，您需要添加應用程式所使用的 OAuth 提供者的憑證。通常，可以透過在您將要認證的服務的控制台中創建「開發者應用程式」來檢索這些憑證。</p>
+<p>這些憑證應放置在應用程式的 <code>config/services.php</code> 配置檔案中，並應使用 <code>facebook</code>、<code>x</code>、<code>linkedin-openid</code>、<code>google</code>、<code>github</code>、<code>gitlab</code>、<code>bitbucket</code>、<code>slack</code> 或 <code>slack-openid</code> 鍵，具體取決於您應用程式需要的提供者：</p>
+<pre><code class="language-php">'github' => [
+    'client_id' => env('GITHUB_CLIENT_ID'),
+    'client_secret' => env('GITHUB_CLIENT_SECRET'),
+    'redirect' => 'http://example.com/callback-url',
+],
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果 <code>redirect</code> 選項包含相對路徑，它將自動解析為完全限定的 URL。</p>
+</blockquote>
+<p><a name="authentication"></a></p>
+<h2>認證</h2>
+<p><a name="routing"></a></p>
+<h3>路由</h3>
+<p>要使用 OAuth 提供者認證使用者，您需要兩個路由：一個用於將使用者重定向到 OAuth 提供者，另一個用於在認證後接收來自提供者的回調。以下範例路由演示了這兩個路由的實現：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+Route::get('/auth/redirect', function () {
+    return Socialite::driver('github')->redirect();
+});
+
+Route::get('/auth/callback', function () {
+    $user = Socialite::driver('github')->user();
+
+    // $user->token
+});
+</code></pre>
+<p><code>Socialite</code> 外觀提供的 <code>redirect</code> 方法負責將使用者重定向到 OAuth 提供者，而 <code>user</code> 方法將檢查傳入的請求，並在使用者批准認證請求後從提供者檢索使用者的資訊。</p>
+<p><a name="authentication-and-storage"></a></p>
+<h3>認證與儲存</h3>
+<p>一旦從 OAuth 提供者檢索到使用者，您就可以判斷該使用者是否存在於應用程式的資料庫中，並<a href="/docs/authentication#authenticate-a-user-instance">認證該使用者</a>。如果使用者不存在於應用程式的資料庫中，您通常會在資料庫中創建一個新記錄來代表該使用者：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Auth;
+use Laravel\\Socialite\\Socialite;
+
+Route::get('/auth/callback', function () {
+    $githubUser = Socialite::driver('github')->user();
+
+    $user = User::updateOrCreate([
+        'github_id' => $githubUser->id,
+    ], [
+        'name' => $githubUser->name,
+        'email' => $githubUser->email,
+        'github_token' => $githubUser->token,
+        'github_refresh_token' => $githubUser->refreshToken,
+    ]);
+
+    Auth::login($user);
+
+    return redirect('/dashboard');
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有關特定 OAuth 提供者可用的使用者資訊，請查閱<a href="#retrieving-user-details">檢索使用者詳細資訊</a>的文件。</p>
+</blockquote>
+<p><a name="access-scopes"></a></p>
+<h3>存取範圍</h3>
+<p>在重定向使用者之前，您可以使用 <code>scopes</code> 方法指定應包含在認證請求中的「範圍」。此方法將合併所有先前指定的範圍與您指定的範圍：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+return Socialite::driver('github')
+    ->scopes(['read:user', 'public_repo'])
+    ->redirect();
+</code></pre>
+<p>您可以使用 <code>setScopes</code> 方法覆蓋認證請求上的所有現有範圍：</p>
+<pre><code class="language-php">return Socialite::driver('github')
+    ->setScopes(['read:user', 'public_repo'])
+    ->redirect();
+</code></pre>
+<p><a name="slack-bot-scopes"></a></p>
+<h3>Slack Bot 範圍</h3>
+<p>Slack 的 API 提供了<a href="https://api.slack.com/authentication/token-types">不同類型的存取令牌</a>，每種令牌都有自己的<a href="https://api.slack.com/scopes">權限範圍</a>。Socialite 與以下兩種 Slack 存取令牌類型相容：</p>
+<div class="content-list" markdown="1"><ul>
+<li>Bot（以 <code>xoxb-</code> 為前綴）</li>
+<li>User（以 <code>xoxp-</code> 為前綴）</li>
+</ul>
+</div><p>預設情況下，<code>slack</code> 驅動程式將生成一個 <code>user</code> 令牌，呼叫驅動程式的 <code>user</code> 方法將返回使用者的詳細資訊。</p>
+<p>Bot 令牌主要在您的應用程式將向使用者擁有的外部 Slack 工作區發送通知時很有用。要生成 bot 令牌，請在將使用者重定向到 Slack 進行認證之前呼叫 <code>asBotUser</code> 方法：</p>
+<pre><code class="language-php">return Socialite::driver('slack')
+    ->asBotUser()
+    ->setScopes(['chat:write', 'chat:write.public', 'chat:write.customize'])
+    ->redirect();
+</code></pre>
+<p>此外，您必須在 Slack 將使用者重定向回您的應用程式後，在呼叫 <code>user</code> 方法之前呼叫 <code>asBotUser</code> 方法：</p>
+<pre><code class="language-php">$user = Socialite::driver('slack')->asBotUser()->user();
+</code></pre>
+<p>生成 bot 令牌時，<code>user</code> 方法仍將返回一個 <code>Laravel\\Socialite\\Two\\User</code> 實例；但是，只有 <code>token</code> 屬性會被填充。此令牌可用於儲存以<a href="/docs/notifications#notifying-external-slack-workspaces">向已認證使用者的 Slack 工作區發送通知</a>。</p>
+<p><a name="optional-parameters"></a></p>
+<h3>可選參數</h3>
+<p>許多 OAuth 提供者在重定向請求上支援其他可選參數。要在請求中包含任何可選參數，請使用關聯陣列呼叫 <code>with</code> 方法：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+return Socialite::driver('google')
+    ->with(['hd' => 'example.com'])
+    ->redirect();
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+使用 <code>with</code> 方法時，請小心不要傳遞任何保留字，例如 <code>state</code> 或 <code>response_type</code>。</p>
+</blockquote>
+<p><a name="retrieving-user-details"></a></p>
+<h2>檢索使用者詳細資訊</h2>
+<p>使用者被重定向回應用程式的認證回調路由後，您可以使用 Socialite 的 <code>user</code> 方法檢索使用者的詳細資訊。<code>user</code> 方法返回的使用者物件提供了各種屬性和方法，您可以用它們來在自己的資料庫中儲存使用者的資訊。</p>
+<p>根據您進行認證的 OAuth 提供者支援 OAuth 1.0 還是 OAuth 2.0，此物件上可能有不同的屬性和方法：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+Route::get('/auth/callback', function () {
+    $user = Socialite::driver('github')->user();
+
+    // OAuth 2.0 提供者...
+    $token = $user->token;
+    $refreshToken = $user->refreshToken;
+    $expiresIn = $user->expiresIn;
+
+    // OAuth 1.0 提供者...
+    $token = $user->token;
+    $tokenSecret = $user->tokenSecret;
+
+    // 所有提供者...
+    $user->getId();
+    $user->getNickname();
+    $user->getName();
+    $user->getEmail();
+    $user->getAvatar();
+});
+</code></pre>
+<p><a name="retrieving-user-details-from-a-token-oauth2"></a></p>
+<h4>從令牌檢索使用者詳細資訊</h4>
+<p>如果您已經擁有使用者的有效存取令牌，您可以使用 Socialite 的 <code>userFromToken</code> 方法檢索其使用者詳細資訊：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+$user = Socialite::driver('github')->userFromToken($token);
+</code></pre>
+<p>如果您正在透過 iOS 應用程式使用 Facebook Limited Login，Facebook 將返回一個 OIDC 令牌而不是存取令牌。像存取令牌一樣，OIDC 令牌可以提供給 <code>userFromToken</code> 方法以檢索使用者詳細資訊。</p>
+<p><a name="stateless-authentication"></a></p>
+<h4>無狀態認證</h4>
+<p><code>stateless</code> 方法可用於禁用 session 狀態驗證。這在向不使用基於 cookie 的 session 的無狀態 API 添加社交認證時很有用：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+return Socialite::driver('google')->stateless()->user();
+</code></pre>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>Laravel Socialite 提供了一種便利的方式來測試 OAuth 認證流程，而無需向 OAuth 提供者發送實際請求。<code>fake</code> 方法允許您模擬 OAuth 提供者的行為並定義應返回的使用者資料。</p>
+<p><a name="faking-the-redirect"></a></p>
+<h4>模擬重定向</h4>
+<p>要測試應用程式是否正確地將使用者重定向到 OAuth 提供者，您可以在向重定向路由發送請求之前呼叫 <code>fake</code> 方法。這將導致 Socialite 返回一個指向假授權 URL 的重定向，而不是重定向到實際的 OAuth 提供者：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+
+test('user is redirected to github', function () {
+    Socialite::fake('github');
+
+    $response = $this->get('/auth/github/redirect');
+
+    $response->assertRedirect();
+});
+</code></pre>
+<p><a name="faking-the-callback"></a></p>
+<h4>模擬回調</h4>
+<p>要測試應用程式的回調路由，您可以呼叫 <code>fake</code> 方法並提供一個 <code>User</code> 實例，該實例應在您的應用程式向提供者請求使用者詳細資訊時返回。<code>User</code> 實例可以使用 <code>fake</code> 方法創建：</p>
+<pre><code class="language-php">use Laravel\\Socialite\\Socialite;
+use Laravel\\Socialite\\Two\\User;
+
+test('user can login with github', function () {
+    Socialite::fake('github', User::fake([
+        'id' => 'github-123',
+        'name' => 'Jason Beggs',
+        'email' => 'jason@example.com',
+    ]));
+
+    $response = $this->get('/auth/github/callback');
+
+    $response->assertRedirect('/dashboard');
+
+    $this->assertDatabaseHas('users', [
+        'name' => 'Jason Beggs',
+        'email' => 'jason@example.com',
+        'github_id' => 'github-123',
+    ]);
+});
+</code></pre>
+<p>預設情況下，<code>User</code> 實例將包含假的 OAuth 令牌值。如果需要，您可以透過向 <code>fake</code> 方法傳遞額外的屬性來覆蓋這些值：</p>
+<pre><code class="language-php">$fakeUser = User::fake([
+    'id' => 'github-123',
+    'name' => 'Jason Beggs',
+    'email' => 'jason@example.com',
+    'token' => 'fake-token',
+    'refreshToken' => 'fake-refresh-token',
+    'expiresIn' => 3600,
+    'approvedScopes' => ['read', 'write'],
+]);
+</code></pre>
+<p>OAuth 1 使用者可以使用 <code>Laravel\\Socialite\\One\\User</code> 類別來模擬。</p>
+`;
+---
+
+<DocsLayout title="Socialite" currentPath="socialite">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Socialite</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Socialite</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/socialite" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

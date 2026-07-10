@@ -1,0 +1,604 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>檔案儲存</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#configuration">配置</a><ul>
+<li><a href="#the-local-driver">本地驅動程式</a></li>
+<li><a href="#the-public-disk">公開磁碟</a></li>
+<li><a href="#driver-prerequisites">驅動程式先決條件</a></li>
+<li><a href="#scoped-and-read-only-filesystems">範圍限定與唯讀檔案系統</a></li>
+<li><a href="#amazon-s3-compatible-filesystems">Amazon S3 相容檔案系統</a></li>
+</ul>
+</li>
+<li><a href="#obtaining-disk-instances">取得磁碟實例</a><ul>
+<li><a href="#on-demand-disks">按需磁碟</a></li>
+</ul>
+</li>
+<li><a href="#retrieving-files">擷取檔案</a><ul>
+<li><a href="#downloading-files">下載檔案</a></li>
+<li><a href="#file-urls">檔案 URL</a></li>
+<li><a href="#temporary-urls">臨時 URL</a></li>
+<li><a href="#file-metadata">檔案元資料</a></li>
+</ul>
+</li>
+<li><a href="#storing-files">儲存檔案</a><ul>
+<li><a href="#prepending-appending-to-files">在檔案前面和後面新增內容</a></li>
+<li><a href="#copying-moving-files">複製和移動檔案</a></li>
+<li><a href="#automatic-streaming">自動串流</a></li>
+<li><a href="#file-uploads">檔案上傳</a></li>
+<li><a href="#file-visibility">檔案可見性</a></li>
+</ul>
+</li>
+<li><a href="#deleting-files">刪除檔案</a></li>
+<li><a href="#directories">目錄</a></li>
+<li><a href="#testing">測試</a></li>
+<li><a href="#custom-filesystems">自訂檔案系統</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 提供了強大的檔案系統抽象，感謝 Frank de Jonge 開發的優秀 <a href="https://github.com/thephpleague/flysystem">Flysystem</a> PHP 套件。Laravel 的 Flysystem 整合提供了用於處理本地檔案系統、SFTP 和 Amazon S3 的簡單驅動程式。更棒的是，由於每個系統的 API 保持不變，在本地開發機器和生產伺服器之間切換這些儲存選項非常簡單。</p>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p>Laravel 的檔案系統配置檔位於 <code>config/filesystems.php</code>。在此檔案中，您可以配置所有檔案系統「磁碟」。每個磁碟代表一個特定的儲存驅動程式和儲存位置。配置檔中包含了每個支援的驅動程式的範例配置，因此您可以修改配置以反映您的儲存偏好和憑證。</p>
+<p><code>local</code> 驅動程式用於與執行 Laravel 應用程式的伺服器上本地儲存的檔案進行互動，而 <code>sftp</code> 儲存驅動程式用於基於 SSH 金鑰的 FTP。<code>s3</code> 驅動程式用於寫入 Amazon 的 S3 雲端儲存服務。</p>
+<blockquote>
+<p>[!NOTE]
+您可以根據需要配置任意數量的磁碟，甚至可以有多個使用相同驅動程式的磁碟。</p>
+</blockquote>
+<p><a name="the-local-driver"></a></p>
+<h3>本地驅動程式</h3>
+<p>使用 <code>local</code> 驅動程式時，所有檔案操作都相對於 <code>filesystems</code> 配置檔中定義的 <code>root</code> 目錄。預設情況下，此值設定為 <code>storage/app/private</code> 目錄。因此，以下方法將寫入到 <code>storage/app/private/example.txt</code>：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+Storage::disk('local')->put('example.txt', 'Contents');
+</code></pre>
+<p><a name="the-public-disk"></a></p>
+<h3>公開磁碟</h3>
+<p>應用程式 <code>filesystems</code> 配置檔中包含的 <code>public</code> 磁碟用於存放將公開存取的檔案。預設情況下，<code>public</code> 磁碟使用 <code>local</code> 驅動程式，並將其檔案儲存在 <code>storage/app/public</code> 中。</p>
+<p>如果您的 <code>public</code> 磁碟使用 <code>local</code> 驅動程式，並且您希望從 Web 存取這些檔案，則應從來源目錄 <code>storage/app/public</code> 建立一個符號連結到目標目錄 <code>public/storage</code>：</p>
+<p>要建立符號連結，您可以使用 <code>storage:link</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan storage:link</code></pre>
+<p>一旦檔案已儲存並且已建立符號連結，您可以使用 <code>asset</code> 輔助函數建立指向檔案的 URL：</p>
+<pre><code class="language-php">echo asset('storage/file.txt');
+</code></pre>
+<p>您可以在 <code>filesystems</code> 配置檔中配置額外的符號連結。執行 <code>storage:link</code> 命令時，將建立每個配置的連結：</p>
+<pre><code class="language-php">'links' => [
+    public_path('storage') => storage_path('app/public'),
+    public_path('images') => storage_path('app/images'),
+],</code></pre>
+<p><code>storage:unlink</code> 命令可用於刪除配置的符號連結：</p>
+<pre><code class="language-shell">php artisan storage:unlink</code></pre>
+<p><a name="driver-prerequisites"></a></p>
+<h3>驅動程式先決條件</h3>
+<p><a name="s3-driver-configuration"></a></p>
+<h4>S3 驅動程式配置</h4>
+<p>在使用 S3 驅動程式之前，您需要通過 Composer 套件管理器安裝 Flysystem S3 套件：</p>
+<pre><code class="language-shell">composer require league/flysystem-aws-s3-v3 "^3.0" --with-all-dependencies</code></pre>
+<p>S3 磁碟配置陣列位於您的 <code>config/filesystems.php</code> 配置檔中。通常，您應使用以下環境變數來配置 S3 資訊和憑證，這些環境變數由 <code>config/filesystems.php</code> 配置檔引用：</p>
+<pre><code class="language-ini">AWS_ACCESS_KEY_ID=&lt;your-key-id&gt;
+AWS_SECRET_ACCESS_KEY=&lt;your-secret-access-key&gt;
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=&lt;your-bucket-name&gt;
+AWS_USE_PATH_STYLE_ENDPOINT=false</code></pre>
+<p>為方便起見，這些環境變數與 AWS CLI 使用的命名慣例匹配。</p>
+<p><a name="ftp-driver-configuration"></a></p>
+<h4>FTP 驅動程式配置</h4>
+<p>在使用 FTP 驅動程式之前，您需要通過 Composer 套件管理器安裝 Flysystem FTP 套件：</p>
+<pre><code class="language-shell">composer require league/flysystem-ftp "^3.0"</code></pre>
+<p>Laravel 的 Flysystem 整合與 FTP 配合良好；但是，框架的預設 <code>config/filesystems.php</code> 配置檔中不包含範例配置。如果您需要配置 FTP 檔案系統，可以使用以下配置範例：</p>
+<pre><code class="language-php">'ftp' => [
+    'driver' => 'ftp',
+    'host' => env('FTP_HOST'),
+    'username' => env('FTP_USERNAME'),
+    'password' => env('FTP_PASSWORD'),
+
+    // Optional FTP Settings...
+    // 'port' => env('FTP_PORT', 21),
+    // 'root' => env('FTP_ROOT'),
+    // 'passive' => true,
+    // 'ssl' => true,
+    // 'timeout' => 30,
+],</code></pre>
+<p><a name="sftp-driver-configuration"></a></p>
+<h4>SFTP 驅動程式配置</h4>
+<p>在使用 SFTP 驅動程式之前，您需要通過 Composer 套件管理器安裝 Flysystem SFTP 套件：</p>
+<pre><code class="language-shell">composer require league/flysystem-sftp-v3 "^3.0"</code></pre>
+<p>Laravel 的 Flysystem 整合與 SFTP 配合良好；但是，框架的預設 <code>config/filesystems.php</code> 配置檔中不包含範例配置。如果您需要配置 SFTP 檔案系統，可以使用以下配置範例：</p>
+<pre><code class="language-php">'sftp' => [
+    'driver' => 'sftp',
+    'host' => env('SFTP_HOST'),
+    'username' => env('SFTP_USERNAME'),
+    'password' => env('SFTP_PASSWORD'),
+    'privateKey' => env('SFTP_PRIVATE_KEY'),
+    'passphrase' => env('SFTP_PASSPHRASE'),
+    'visibility' => 'private',
+    'directory_visibility' => 'private',
+],</code></pre>
+<p><a name="scoped-and-read-only-filesystems"></a></p>
+<h3>範圍限定與唯讀檔案系統</h3>
+<p>範圍限定磁碟允許您定義一個所有路徑都自動添加給定路徑前綴的檔案系統。在建立範圍限定的檔案系統磁碟之前，您需要通過 Composer 套件管理器安裝一個額外的 Flysystem 套件：</p>
+<pre><code class="language-shell">composer require league/flysystem-path-prefixing "^3.0"</code></pre>
+<p>您可以通過定義一個使用 <code>scoped</code> 驅動程式的磁碟來建立任何現有檔案系統磁碟的路徑範圍限定實例。例如，您可以建立一個將現有 <code>s3</code> 磁碟範圍限定到特定路徑前綴的磁碟，然後使用範圍限定磁碟的每個檔案操作都將使用指定的前綴：</p>
+<pre><code class="language-php">'s3-videos' => [
+    'driver' => 'scoped',
+    'disk' => 's3',
+    'prefix' => 'path/to/videos',
+],</code></pre>
+<p>「唯讀」磁碟允許您建立不允許寫入操作的檔案系統磁碟。在使用 <code>read-only</code> 配置選項之前，您需要通過 Composer 套件管理器安裝一個額外的 Flysystem 套件：</p>
+<pre><code class="language-shell">composer require league/flysystem-read-only "^3.0"</code></pre>
+<p>接下來，您可以在一個或多個磁碟的配置陣列中包含 <code>read-only</code> 配置選項：</p>
+<pre><code class="language-php">'s3-videos' => [
+    'driver' => 's3',
+    // ...
+    'read-only' => true,
+],</code></pre>
+<p><a name="amazon-s3-compatible-filesystems"></a></p>
+<h3>Amazon S3 相容檔案系統</h3>
+<p>預設情況下，應用程式的 <code>filesystems</code> 配置檔包含一個 <code>s3</code> 磁碟的配置。除了使用此磁碟與 <a href="https://aws.amazon.com/s3/">Amazon S3</a> 互動之外，您還可以使用它與任何 S3 相容的檔案儲存服務互動，例如 <a href="https://github.com/rustfs/rustfs">RustFS</a>、<a href="https://www.digitalocean.com/products/spaces/">DigitalOcean Spaces</a>、<a href="https://www.vultr.com/products/object-storage/">Vultr Object Storage</a>、<a href="https://www.cloudflare.com/developer-platform/products/r2/">Cloudflare R2</a> 或 <a href="https://www.hetzner.com/storage/object-storage/">Hetzner Cloud Storage</a>。</p>
+<p>通常，在更新磁碟的憑證以匹配您計劃使用的服務的憑證後，您只需更新 <code>endpoint</code> 配置選項的值。此選項的值通常通過 <code>AWS_ENDPOINT</code> 環境變數定義：</p>
+<pre><code class="language-php">'endpoint' => env('AWS_ENDPOINT', 'https://rustfs:9000'),</code></pre>
+<p><a name="obtaining-disk-instances"></a></p>
+<h2>取得磁碟實例</h2>
+<p><code>Storage</code> facade 可用於與任何配置的磁碟進行互動。例如，您可以在 facade 上使用 <code>put</code> 方法將頭像儲存在預設磁碟上。如果您在呼叫 <code>Storage</code> facade 上的方法之前沒有先呼叫 <code>disk</code> 方法，則該方法將自動傳遞給預設磁碟：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+Storage::put('avatars/1', $content);
+</code></pre>
+<p>如果您的應用程式與多個磁碟互動，您可以使用 <code>Storage</code> facade 上的 <code>disk</code> 方法來處理特定磁碟上的檔案：</p>
+<pre><code class="language-php">Storage::disk('s3')->put('avatars/1', $content);
+</code></pre>
+<p><a name="on-demand-disks"></a></p>
+<h3>按需磁碟</h3>
+<p>有時您可能希望在運行時使用給定的配置建立一個磁碟，而該配置實際上並不存在於應用程式的 <code>filesystems</code> 配置檔中。為此，您可以將配置陣列傳遞給 <code>Storage</code> facade 的 <code>build</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+$disk = Storage::build([
+    'driver' => 'local',
+    'root' => '/path/to/root',
+]);
+
+$disk->put('image.jpg', $content);
+</code></pre>
+<p><a name="retrieving-files"></a></p>
+<h2>擷取檔案</h2>
+<p><code>get</code> 方法可用於擷取檔案的內容。該方法將返回檔案的原始字串內容。請記住，所有檔案路徑都應相對於磁碟的「根」位置指定：</p>
+<pre><code class="language-php">$contents = Storage::get('file.jpg');
+</code></pre>
+<p>如果您正在擷取的檔案包含 JSON，可以使用 <code>json</code> 方法擷取檔案並解碼其內容：</p>
+<pre><code class="language-php">$orders = Storage::json('orders.json');
+</code></pre>
+<p><code>exists</code> 方法可用於確定檔案是否存在於磁碟上：</p>
+<pre><code class="language-php">if (Storage::disk('s3')->exists('file.jpg')) {
+    // ...
+}
+</code></pre>
+<p><code>missing</code> 方法可用於確定檔案是否不存在於磁碟上：</p>
+<pre><code class="language-php">if (Storage::disk('s3')->missing('file.jpg')) {
+    // ...
+}
+</code></pre>
+<p><a name="downloading-files"></a></p>
+<h3>下載檔案</h3>
+<p><code>download</code> 方法可用於產生一個強制使用者瀏覽器下載給定路徑檔案的回應。<code>download</code> 方法接受一個檔案名作為方法的第二個參數，該參數將決定下載檔案的使用者所看到的檔案名。最後，您可以將 HTTP 標頭陣列作為第三個參數傳遞給該方法：</p>
+<pre><code class="language-php">return Storage::download('file.jpg');
+
+return Storage::download('file.jpg', $name, $headers);
+</code></pre>
+<p><a name="file-urls"></a></p>
+<h3>檔案 URL</h3>
+<p>您可以使用 <code>url</code> 方法來獲取給定檔案的 URL。如果您使用 <code>local</code> 驅動程式，這通常只會在給定路徑前面加上 <code>/storage</code> 並返回檔案的相對 URL。如果您使用 <code>s3</code> 驅動程式，將返回完整的遠端 URL：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+$url = Storage::url('file.jpg');
+</code></pre>
+<p>使用 <code>local</code> 驅動程式時，所有應公開存取的檔案都應放置在 <code>storage/app/public</code> 目錄中。此外，您應在 <code>public/storage</code> <a href="#the-public-disk">建立一個符號連結</a>，指向 <code>storage/app/public</code> 目錄。</p>
+<blockquote>
+<p>[!WARNING]
+使用 <code>local</code> 驅動程式時，<code>url</code> 的返回值不會進行 URL 編碼。因此，我們建議始終使用能夠產生有效 URL 的名稱來儲存檔案。</p>
+</blockquote>
+<p><a name="url-host-customization"></a></p>
+<h4>URL 主機自訂</h4>
+<p>如果您想修改使用 <code>Storage</code> facade 產生的 URL 的主機，可以在磁碟的配置陣列中新增或更改 <code>url</code> 選項：</p>
+<pre><code class="language-php">'public' => [
+    'driver' => 'local',
+    'root' => storage_path('app/public'),
+    'url' => env('APP_URL').'/storage',
+    'visibility' => 'public',
+    'throw' => false,
+],</code></pre>
+<p><a name="temporary-urls"></a></p>
+<h3>臨時 URL</h3>
+<p>使用 <code>temporaryUrl</code> 方法，您可以為使用 <code>local</code> 和 <code>s3</code> 驅動程式儲存的檔案建立臨時 URL。此方法接受一個路徑和一個指定 URL 何時過期的 <code>DateTime</code> 實例：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+$url = Storage::temporaryUrl(
+    'file.jpg', now()->plus(minutes: 5)
+);
+</code></pre>
+<p><a name="enabling-local-temporary-urls"></a></p>
+<h4>啟用本地臨時 URL</h4>
+<p>如果您在對 <code>local</code> 驅動程式引入臨時 URL 支援之前就開始開發應用程式，則可能需要啟用本地臨時 URL。為此，請在 <code>config/filesystems.php</code> 配置檔中將 <code>serve</code> 選項新增到您的 <code>local</code> 磁碟配置陣列中：</p>
+<pre><code class="language-php">'local' => [
+    'driver' => 'local',
+    'root' => storage_path('app/private'),
+    'serve' => true,
+    'throw' => false,
+],</code></pre>
+<p><a name="s3-request-parameters"></a></p>
+<h4>S3 請求參數</h4>
+<p>如果您需要指定額外的 <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html#RESTObjectGET-requests">S3 請求參數</a>，可以將請求參數陣列作為第三個參數傳遞給 <code>temporaryUrl</code> 方法：</p>
+<pre><code class="language-php">$url = Storage::temporaryUrl(
+    'file.jpg',
+    now()->plus(minutes: 5),
+    [
+        'ResponseContentType' => 'application/octet-stream',
+        'ResponseContentDisposition' => 'attachment; filename=file2.jpg',
+    ]
+);
+</code></pre>
+<p><a name="customizing-temporary-urls"></a></p>
+<h4>自訂臨時 URL</h4>
+<p>如果您需要自訂如何為特定儲存磁碟建立臨時 URL，可以使用 <code>buildTemporaryUrlsUsing</code> 方法。例如，如果您有一個允許下載檔案的控制器，而該檔案儲存在通常不支援臨時 URL 的磁碟上，這會很有用。通常，此方法應從服務提供者的 <code>boot</code> 方法中呼叫：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use DateTime;
+use Illuminate\\Support\\Facades\\Storage;
+use Illuminate\\Support\\Facades\\URL;
+use Illuminate\\Support\\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        Storage::disk('local')->buildTemporaryUrlsUsing(
+            function (string $path, DateTime $expiration, array $options) {
+                return URL::temporarySignedRoute(
+                    'files.download',
+                    $expiration,
+                    array_merge($options, ['path' => $path])
+                );
+            }
+        );
+    }
+}
+</code></pre>
+<p><a name="temporary-upload-urls"></a></p>
+<h4>臨時上傳 URL</h4>
+<blockquote>
+<p>[!WARNING]
+產生臨時上傳 URL 的能力僅受 <code>s3</code> 和 <code>local</code> 驅動程式支援。</p>
+</blockquote>
+<p>如果您需要產生一個可用於直接從客戶端應用程式上傳檔案的臨時 URL，可以使用 <code>temporaryUploadUrl</code> 方法。此方法接受一個路徑和一個指定 URL 何時過期的 <code>DateTime</code> 實例。<code>temporaryUploadUrl</code> 方法返回一個關聯陣列，可以解構為上傳 URL 和應與上傳請求一起包含的標頭：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+['url' => $url, 'headers' => $headers] = Storage::temporaryUploadUrl(
+    'file.jpg', now()->plus(minutes: 5)
+);
+</code></pre>
+<p>此方法主要用於無伺服器環境，其中客戶端應用程式需要直接將檔案上傳到雲端儲存系統（如 Amazon S3）。</p>
+<p><a name="file-metadata"></a></p>
+<h3>檔案元資料</h3>
+<p>除了讀取和寫入檔案之外，Laravel 還可以提供關於檔案本身的資訊。例如，<code>size</code> 方法可用於獲取檔案的大小（以位元組為單位）：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+$size = Storage::size('file.jpg');
+</code></pre>
+<p><code>lastModified</code> 方法返回檔案最後一次修改的 UNIX 時間戳：</p>
+<pre><code class="language-php">$time = Storage::lastModified('file.jpg');
+</code></pre>
+<p>給定檔案的 MIME 類型可以通過 <code>mimeType</code> 方法獲取：</p>
+<pre><code class="language-php">$mime = Storage::mimeType('file.jpg');
+</code></pre>
+<p><a name="file-paths"></a></p>
+<h4>檔案路徑</h4>
+<p>您可以使用 <code>path</code> 方法獲取給定檔案的路徑。如果您使用 <code>local</code> 驅動程式，這將返回檔案的絕對路徑。如果您使用 <code>s3</code> 驅動程式，此方法將返回檔案在 S3 儲存桶中的相對路徑：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+$path = Storage::path('file.jpg');
+</code></pre>
+<p><a name="storing-files"></a></p>
+<h2>儲存檔案</h2>
+<p><code>put</code> 方法可用於將檔案內容儲存在磁碟上。您也可以將 PHP <code>resource</code> 傳遞給 <code>put</code> 方法，這將使用 Flysystem 的底層串流支援。請記住，所有檔案路徑都應相對於為磁碟配置的「根」位置指定：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+Storage::put('file.jpg', $contents);
+
+Storage::put('file.jpg', $resource);
+</code></pre>
+<p><a name="failed-writes"></a></p>
+<h4>寫入失敗</h4>
+<p>如果 <code>put</code> 方法（或其他「寫入」操作）無法將檔案寫入磁碟，將返回 <code>false</code>：</p>
+<pre><code class="language-php">if (! Storage::put('file.jpg', $contents)) {
+    // The file could not be written to disk...
+}
+</code></pre>
+<p>如果您願意，可以在檔案系統磁碟的配置陣列中定義 <code>throw</code> 選項。當此選項定義為 <code>true</code> 時，諸如 <code>put</code> 之類的「寫入」方法將在寫入操作失敗時拋出 <code>League\\Flysystem\\UnableToWriteFile</code> 實例：</p>
+<pre><code class="language-php">'public' => [
+    'driver' => 'local',
+    // ...
+    'throw' => true,
+],</code></pre>
+<p><a name="prepending-appending-to-files"></a></p>
+<h3>在檔案前面和後面新增內容</h3>
+<p><code>prepend</code> 和 <code>append</code> 方法允許您在檔案的開頭或結尾寫入內容：</p>
+<pre><code class="language-php">Storage::prepend('file.log', 'Prepended Text');
+
+Storage::append('file.log', 'Appended Text');
+</code></pre>
+<p><a name="copying-moving-files"></a></p>
+<h3>複製和移動檔案</h3>
+<p><code>copy</code> 方法可用於將現有檔案複製到磁碟上的新位置，而 <code>move</code> 方法可用於重新命名或將現有檔案移動到新位置：</p>
+<pre><code class="language-php">Storage::copy('old/file.jpg', 'new/file.jpg');
+
+Storage::move('old/file.jpg', 'new/file.jpg');
+</code></pre>
+<p><a name="automatic-streaming"></a></p>
+<h3>自動串流</h3>
+<p>將檔案串流到儲存可以顯著降低記憶體使用量。如果您希望 Laravel 自動管理將給定檔案串流到您的儲存位置，可以使用 <code>putFile</code> 或 <code>putFileAs</code> 方法。此方法接受一個 <code>Illuminate\\Http\\File</code> 或 <code>Illuminate\\Http\\UploadedFile</code> 實例，並將自動將檔案串流到您想要的位置：</p>
+<pre><code class="language-php">use Illuminate\\Http\\File;
+use Illuminate\\Support\\Facades\\Storage;
+
+// Automatically generate a unique ID for filename...
+$path = Storage::putFile('photos', new File('/path/to/photo'));
+
+// Manually specify a filename...
+$path = Storage::putFileAs('photos', new File('/path/to/photo'), 'photo.jpg');
+</code></pre>
+<p>關於 <code>putFile</code> 方法有幾點需要注意。請注意，我們只指定了目錄名稱，而不是檔案名。預設情況下，<code>putFile</code> 方法將產生一個唯一 ID 作為檔案名。檔案的副檔名將通過檢查檔案的 MIME 類型來確定。<code>putFile</code> 方法將返回檔案的路徑，因此您可以將包含產生的檔案名的路徑儲存在資料庫中。</p>
+<p><code>putFile</code> 和 <code>putFileAs</code> 方法還接受一個參數來指定儲存檔案的「可見性」。如果您將檔案儲存在 Amazon S3 等雲端磁碟上，並且希望檔案通過產生的 URL 可公開存取，這特別有用：</p>
+<pre><code class="language-php">Storage::putFile('photos', new File('/path/to/photo'), 'public');
+</code></pre>
+<p><a name="file-uploads"></a></p>
+<h3>檔案上傳</h3>
+<p>在 Web 應用程式中，儲存檔案最常見的用例之一是儲存使用者上傳的檔案，例如照片和文件。Laravel 使使用上傳檔案實例上的 <code>store</code> 方法儲存上傳的檔案變得非常簡單。使用您希望儲存上傳檔案的路徑呼叫 <code>store</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\Request;
+
+class UserAvatarController extends Controller
+{
+    public function update(Request $request): string
+    {
+        $path = $request->file('avatar')->store('avatars');
+
+        return $path;
+    }
+}
+</code></pre>
+<p>關於此範例有幾點需要注意。請注意，我們只指定了目錄名稱，而不是檔案名。預設情況下，<code>store</code> 方法將產生一個唯一 ID 作為檔案名。檔案的副檔名將通過檢查檔案的 MIME 類型來確定。<code>store</code> 方法將返回檔案的路徑，因此您可以將包含產生的檔案名的路徑儲存在資料庫中。</p>
+<p>您也可以在 <code>Storage</code> facade 上呼叫 <code>putFile</code> 方法來執行與上例相同的檔案儲存操作：</p>
+<pre><code class="language-php">$path = Storage::putFile('avatars', $request->file('avatar'));
+</code></pre>
+<p><a name="specifying-a-file-name"></a></p>
+<h4>指定檔案名</h4>
+<p>如果您不希望自動為儲存的檔案分配檔案名，可以使用 <code>storeAs</code> 方法，該方法接受路徑、檔案名和（可選）磁碟作為其參數：</p>
+<pre><code class="language-php">$path = $request->file('avatar')->storeAs(
+    'avatars', $request->user()->id
+);
+</code></pre>
+<p>您也可以在 <code>Storage</code> facade 上使用 <code>putFileAs</code> 方法，該方法將執行與上例相同的檔案儲存操作：</p>
+<pre><code class="language-php">$path = Storage::putFileAs(
+    'avatars', $request->file('avatar'), $request->user()->id
+);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+不可列印和無效的 unicode 字元將自動從檔案路徑中移除。因此，您可能希望在將檔案路徑傳遞給 Laravel 的檔案儲存方法之前對其進行清理。檔案路徑使用 <code>League\\Flysystem\\WhitespacePathNormalizer::normalizePath</code> 方法進行標準化。</p>
+</blockquote>
+<p><a name="specifying-a-disk"></a></p>
+<h4>指定磁碟</h4>
+<p>預設情況下，此上傳檔案的 <code>store</code> 方法將使用您的預設磁碟。如果您想指定另一個磁碟，請將磁碟名稱作為第二個參數傳遞給 <code>store</code> 方法：</p>
+<pre><code class="language-php">$path = $request->file('avatar')->store(
+    'avatars/'.$request->user()->id, 's3'
+);
+</code></pre>
+<p>如果您使用 <code>storeAs</code> 方法，可以將磁碟名稱作為第三個參數傳遞給該方法：</p>
+<pre><code class="language-php">$path = $request->file('avatar')->storeAs(
+    'avatars',
+    $request->user()->id,
+    's3'
+);
+</code></pre>
+<p><a name="other-uploaded-file-information"></a></p>
+<h4>其他上傳檔案資訊</h4>
+<p>如果您想獲得上傳檔案的原始名稱和副檔名，可以使用 <code>getClientOriginalName</code> 和 <code>getClientOriginalExtension</code> 方法：</p>
+<pre><code class="language-php">$file = $request->file('avatar');
+
+$name = $file->getClientOriginalName();
+$extension = $file->getClientOriginalExtension();
+</code></pre>
+<p>但是，請記住，<code>getClientOriginalName</code> 和 <code>getClientOriginalExtension</code> 方法被認為是不安全的，因為檔案名和副檔名可能被惡意使用者篡改。因此，您通常應優先使用 <code>hashName</code> 和 <code>extension</code> 方法來獲取給定上傳檔案的名稱和副檔名：</p>
+<pre><code class="language-php">$file = $request->file('avatar');
+
+$name = $file->hashName();
+$extension = $file->extension();
+</code></pre>
+<p><a name="file-visibility"></a></p>
+<h3>檔案可見性</h3>
+<p>在 Laravel 的 Flysystem 整合中，「可見性」是跨多個平台的檔案權限抽象。檔案可以宣告為 <code>public</code> 或 <code>private</code>。當檔案被宣告為 <code>public</code> 時，表示該檔案通常應可被其他人存取。例如，使用 S3 驅動程式時，您可以檢索 <code>public</code> 檔案的 URL。</p>
+<p>您可以通過 <code>put</code> 方法在寫入檔案時設定可見性：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+Storage::put('file.jpg', $contents, 'public');
+</code></pre>
+<p>如果檔案已儲存，可以通過 <code>getVisibility</code> 和 <code>setVisibility</code> 方法檢索和設定其可見性：</p>
+<pre><code class="language-php">$visibility = Storage::getVisibility('file.jpg');
+
+Storage::setVisibility('file.jpg', 'public');
+</code></pre>
+<p>處理上傳的檔案時，您可以使用 <code>storePublicly</code> 和 <code>storePubliclyAs</code> 方法以 <code>public</code> 可見性儲存上傳的檔案：</p>
+<pre><code class="language-php">$path = $request->file('avatar')->storePublicly('avatars', 's3');
+
+$path = $request->file('avatar')->storePubliclyAs(
+    'avatars',
+    $request->user()->id,
+    's3'
+);
+</code></pre>
+<p><a name="local-files-and-visibility"></a></p>
+<h4>本地檔案與可見性</h4>
+<p>使用 <code>local</code> 驅動程式時，<code>public</code> <a href="#file-visibility">可見性</a>轉換為目錄的 <code>0755</code> 權限和檔案的 <code>0644</code> 權限。您可以在應用程式的 <code>filesystems</code> 配置檔中修改權限映射：</p>
+<pre><code class="language-php">'local' => [
+    'driver' => 'local',
+    'root' => storage_path('app'),
+    'permissions' => [
+        'file' => [
+            'public' => 0644,
+            'private' => 0600,
+        ],
+        'dir' => [
+            'public' => 0755,
+            'private' => 0700,
+        ],
+    ],
+    'throw' => false,
+],</code></pre>
+<p><a name="deleting-files"></a></p>
+<h2>刪除檔案</h2>
+<p><code>delete</code> 方法接受單個檔案名或要刪除的檔案陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+Storage::delete('file.jpg');
+
+Storage::delete(['file.jpg', 'file2.jpg']);
+</code></pre>
+<p>如有必要，您可以指定應從哪個磁碟刪除檔案：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+Storage::disk('s3')->delete('path/file.jpg');
+</code></pre>
+<p><a name="directories"></a></p>
+<h2>目錄</h2>
+<p><a name="get-all-files-within-a-directory"></a></p>
+<h4>獲取目錄中的所有檔案</h4>
+<p><code>files</code> 方法返回給定目錄中所有檔案的陣列。如果您想檢索給定目錄中包括子目錄在內的所有檔案的列表，可以使用 <code>allFiles</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Storage;
+
+$files = Storage::files($directory);
+
+$files = Storage::allFiles($directory);
+</code></pre>
+<p><a name="get-all-directories-within-a-directory"></a></p>
+<h4>獲取目錄中的所有子目錄</h4>
+<p><code>directories</code> 方法返回給定目錄中所有子目錄的陣列。如果您想檢索給定目錄中包括子目錄在內的所有目錄的列表，可以使用 <code>allDirectories</code> 方法：</p>
+<pre><code class="language-php">$directories = Storage::directories($directory);
+
+$directories = Storage::allDirectories($directory);
+</code></pre>
+<p><a name="create-a-directory"></a></p>
+<h4>建立目錄</h4>
+<p><code>makeDirectory</code> 方法將建立給定的目錄，包括任何需要的子目錄：</p>
+<pre><code class="language-php">Storage::makeDirectory($directory);
+</code></pre>
+<p><a name="delete-a-directory"></a></p>
+<h4>刪除目錄</h4>
+<p>最後，<code>deleteDirectory</code> 方法可用於移除目錄及其所有檔案：</p>
+<pre><code class="language-php">Storage::deleteDirectory($directory);
+</code></pre>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p><code>Storage</code> facade 的 <code>fake</code> 方法允許您輕鬆建立一個虛擬磁碟，結合 <code>Illuminate\\Http\\UploadedFile</code> 類別的檔案產生工具，大大簡化了檔案上傳的測試。例如：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use Illuminate\\Http\\UploadedFile;
+use Illuminate\\Support\\Facades\\Storage;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_albums_can_be_uploaded(): void
+    {
+        Storage::fake('photos');
+
+        $response = $this->json('POST', '/photos', [
+            UploadedFile::fake()->image('photo1.jpg'),
+            UploadedFile::fake()->image('photo2.jpg')
+        ]);
+
+        Storage::disk('photos')->assertExists('photo1.jpg');
+        Storage::disk('photos')->assertExists(['photo1.jpg', 'photo2.jpg']);
+        Storage::disk('photos')->assertMissing('missing.jpg');
+        Storage::disk('photos')->assertMissing(['missing.jpg', 'non-existing.jpg']);
+        Storage::disk('photos')->assertCount('/wallpapers', 2);
+        Storage::disk('photos')->assertDirectoryEmpty('/wallpapers');
+    }
+}
+</code></pre>
+<p>預設情況下，<code>fake</code> 方法將刪除其臨時目錄中的所有檔案。如果您希望保留這些檔案，可以使用 <code>persistentFake</code> 方法代替。有關測試檔案上傳的更多資訊，您可以查閱 <a href="/docs/http-tests#testing-file-uploads">HTTP 測試文件中有關檔案上傳的資訊</a>。</p>
+<blockquote>
+<p>[!WARNING]
+<code>image</code> 方法需要 <a href="https://www.php.net/manual/en/book.image.php">GD 擴充功能</a>。</p>
+</blockquote>
+<p><a name="custom-filesystems"></a></p>
+<h2>自訂檔案系統</h2>
+<p>Laravel 的 Flysystem 整合提供了對幾個「驅動程式」的開箱即用支援；但是，Flysystem 不僅限於這些，還有許多其他儲存系統的適配器。如果您想在 Laravel 應用程式中使用這些額外適配器之一，可以建立一個自訂驅動程式。</p>
+<p>為了定義自訂檔案系統，您需要一個 Flysystem 適配器。讓我們將一個社群維護的 Dropbox 適配器新增到我們的專案中：</p>
+<pre><code class="language-shell">composer require spatie/flysystem-dropbox</code></pre>
+<p>接下來，您可以在應用程式的其中一個<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中註冊驅動程式。為此，您應使用 <code>Storage</code> facade 的 <code>extend</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Contracts\\Foundation\\Application;
+use Illuminate\\Filesystem\\FilesystemAdapter;
+use Illuminate\\Support\\Facades\\Storage;
+use Illuminate\\Support\\ServiceProvider;
+use League\\Flysystem\\Filesystem;
+use Spatie\\Dropbox\\Client as DropboxClient;
+use Spatie\\FlysystemDropbox\\DropboxAdapter;
+
+class AppServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // ...
+    }
+
+    public function boot(): void
+    {
+        Storage::extend('dropbox', function (Application $app, array $config) {
+            $adapter = new DropboxAdapter(new DropboxClient(
+                $config['authorization_token']
+            ));
+
+            return new FilesystemAdapter(
+                new Filesystem($adapter, $config),
+                $adapter,
+                $config
+            );
+        });
+    }
+}
+</code></pre>
+<p><code>extend</code> 方法的第一個參數是驅動程式的名稱，第二個參數是一個接收 <code>$app</code> 和 <code>$config</code> 變數的閉包。該閉包必須返回一個 <code>Illuminate\\Filesystem\\FilesystemAdapter</code> 實例。<code>$config</code> 變數包含在 <code>config/filesystems.php</code> 中為指定磁碟定義的值。</p>
+<p>一旦您建立並註冊了擴充功能的服務提供者，就可以在 <code>config/filesystems.php</code> 配置檔中使用 <code>dropbox</code> 驅動程式。</p>
+`;
+---
+
+<DocsLayout title="檔案儲存" currentPath="filesystem">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>檔案儲存</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">檔案儲存</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/filesystem" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,264 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Envoy</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#writing-tasks">編寫任務</a><ul>
+<li><a href="#defining-tasks">定義任務</a></li>
+<li><a href="#multiple-servers">多台伺服器</a></li>
+<li><a href="#setup">設定</a></li>
+<li><a href="#variables">變數</a></li>
+<li><a href="#stories">故事</a></li>
+<li><a href="#completion-hooks">完成鉤子</a></li>
+</ul>
+</li>
+<li><a href="#running-tasks">執行任務</a><ul>
+<li><a href="#confirming-task-execution">確認任務執行</a></li>
+</ul>
+</li>
+<li><a href="#notifications">通知</a><ul>
+<li><a href="#slack">Slack</a></li>
+<li><a href="#discord">Discord</a></li>
+<li><a href="#telegram">Telegram</a></li>
+<li><a href="#microsoft-teams">Microsoft Teams</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/envoy">Laravel Envoy</a> 是一個用於在遠端伺服器上執行常見任務的工具。使用 <a href="/docs/blade">Blade</a> 風格的語法，您可以輕鬆設定部署任務、Artisan 命令等。目前，Envoy 僅支援 Mac 和 Linux 作業系統。但是，可以使用 <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">WSL2</a> 來實現 Windows 支援。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，使用 Composer 套件管理器將 Envoy 安裝到您的專案中：</p>
+<pre><code class="language-shell">composer require laravel/envoy --dev
+</code></pre>
+<p>Envoy 安裝後，Envoy 二進位檔案將在應用程式的 <code>vendor/bin</code> 目錄中可用：</p>
+<pre><code class="language-shell">php vendor/bin/envoy
+</code></pre>
+<p><a name="writing-tasks"></a></p>
+<h2>編寫任務</h2>
+<p><a name="defining-tasks"></a></p>
+<h3>定義任務</h3>
+<p>任務是 Envoy 的基本建構塊。任務定義了在呼叫任務時應在遠端伺服器上執行的 shell 命令。例如，您可以定義一個任務，在所有應用程式的佇列工作者伺服器上執行 <code>php artisan queue:restart</code> 命令。</p>
+<p>所有 Envoy 任務都應在應用程式根目錄的 <code>Envoy.blade.php</code> 檔案中定義。以下是一個入門範例：</p>
+<pre><code class="language-blade">@servers(['web' => ['user@192.168.1.1'], 'workers' => ['user@192.168.1.2']])
+
+@task('restart-queues', ['on' => 'workers'])
+    cd /home/user/example.com
+    php artisan queue:restart
+@endtask
+</code></pre>
+<p>如您所見，檔案頂部定義了一個 <code>@servers</code> 陣列，允許您透過任務聲明的 <code>on</code> 選項來引用這些伺服器。在 <code>@task</code> 聲明中，您應該放置在呼叫任務時應在伺服器上執行的 shell 命令。</p>
+<p><a name="local-tasks"></a></p>
+<h4>本機任務</h4>
+<p>您可以透過將伺服器的 IP 位址指定為 <code>127.0.0.1</code> 來強制腳本在本機電腦上執行：</p>
+<pre><code class="language-blade">@servers(['localhost' => '127.0.0.1'])
+</code></pre>
+<p><a name="importing-envoy-tasks"></a></p>
+<h4>匯入 Envoy 任務</h4>
+<p>使用 <code>@import</code> 指令，您可以匯入其他 Envoy 檔案，使其故事和任務新增到您的檔案中。檔案匯入後，您可以像在自己的 Envoy 檔案中定義一樣執行它們包含的任務：</p>
+<pre><code class="language-blade">@import('vendor/package/Envoy.blade.php')
+</code></pre>
+<p><a name="multiple-servers"></a></p>
+<h3>多台伺服器</h3>
+<p>Envoy 允許您輕鬆地在多台伺服器上執行任務。首先，將額外的伺服器新增到 <code>@servers</code> 聲明中。每個伺服器應分配一個唯一的名稱。定義額外的伺服器後，您可以在任務的 <code>on</code> 陣列中列出每個伺服器：</p>
+<pre><code class="language-blade">@servers(['web-1' => '192.168.1.1', 'web-2' => '192.168.1.2'])
+
+@task('deploy', ['on' => ['web-1', 'web-2']])
+    cd /home/user/example.com
+    git pull origin {{ $branch }}
+    php artisan migrate --force
+@endtask
+</code></pre>
+<p><a name="parallel-execution"></a></p>
+<h4>平行執行</h4>
+<p>預設情況下，任務將在每台伺服器上序列執行。換句話說，任務將在第一台伺服器上完成執行後才繼續在第二台伺服器上執行。如果您希望在多台伺服器上平行執行任務，請在任務聲明中新增 <code>parallel</code> 選項：</p>
+<pre><code class="language-blade">@servers(['web-1' => '192.168.1.1', 'web-2' => '192.168.1.2'])
+
+@task('deploy', ['on' => ['web-1', 'web-2'], 'parallel' => true])
+    cd /home/user/example.com
+    git pull origin {{ $branch }}
+    php artisan migrate --force
+@endtask
+</code></pre>
+<p><a name="setup"></a></p>
+<h3>設定</h3>
+<p>有時，您可能需要在執行 Envoy 任務之前執行任意 PHP 程式碼。您可以使用 <code>@setup</code> 指令來定義一個 PHP 程式碼區塊，該區塊應在任務之前執行：</p>
+<pre><code class="language-php">@setup
+    $now = new DateTime;
+@endsetup
+</code></pre>
+<p>如果您需要在任務執行之前引入其他 PHP 檔案，可以在 <code>Envoy.blade.php</code> 檔案頂部使用 <code>@include</code> 指令：</p>
+<pre><code class="language-blade">@include('vendor/autoload.php')
+
+@task('restart-queues')
+    # ...
+@endtask
+</code></pre>
+<p><a name="variables"></a></p>
+<h3>變數</h3>
+<p>如有需要，您可以在呼叫 Envoy 時透過在命令列上指定參數來將其傳遞給 Envoy 任務：</p>
+<pre><code class="language-shell">php vendor/bin/envoy run deploy --branch=master
+</code></pre>
+<p>您可以使用 Blade 的「echo」語法在任務中存取選項。您還可以在任務中定義 Blade <code>if</code> 陳述式和迴圈。例如，讓我們在執行 <code>git pull</code> 命令之前驗證 <code>$branch</code> 變數的存在：</p>
+<pre><code class="language-blade">@servers(['web' => ['user@192.168.1.1']])
+
+@task('deploy', ['on' => 'web'])
+    cd /home/user/example.com
+
+    @if ($branch)
+        git pull origin {{ $branch }}
+    @endif
+
+    php artisan migrate --force
+@endtask
+</code></pre>
+<p><a name="stories"></a></p>
+<h3>故事</h3>
+<p>故事將一組任務組合在一個方便的名稱下。例如，一個 <code>deploy</code> 故事可以透過在其定義中列出任務名稱來執行 <code>update-code</code> 和 <code>install-dependencies</code> 任務：</p>
+<pre><code class="language-blade">@servers(['web' => ['user@192.168.1.1']])
+
+@story('deploy')
+    update-code
+    install-dependencies
+@endstory
+
+@task('update-code')
+    cd /home/user/example.com
+    git pull origin master
+@endtask
+
+@task('install-dependencies')
+    cd /home/user/example.com
+    composer install
+@endtask
+</code></pre>
+<p>故事編寫完成後，您可以像呼叫任務一樣呼叫它：</p>
+<pre><code class="language-shell">php vendor/bin/envoy run deploy
+</code></pre>
+<p><a name="completion-hooks"></a></p>
+<h3>鉤子</h3>
+<p>當任務和故事執行時，會執行多個鉤子。Envoy 支援的鉤子類型有 <code>@before</code>、<code>@after</code>、<code>@error</code>、<code>@success</code> 和 <code>@finished</code>。這些鉤子中的所有程式碼都被解釋為 PHP 並在本機執行，而不是在任務互動的遠端伺服器上執行。</p>
+<p>您可以隨意定義任意數量的這些鉤子。它們將按照在 Envoy 腳本中出現的順序執行。</p>
+<p><a name="hook-before"></a></p>
+<h4><code>@before</code></h4>
+<p>在每次任務執行之前，Envoy 腳本中註冊的所有 <code>@before</code> 鉤子都將執行。<code>@before</code> 鉤子接收將要執行的任務名稱：</p>
+<pre><code class="language-blade">@before
+    if ($task === 'deploy') {
+        // ...
+    }
+@endbefore
+</code></pre>
+<p><a name="completion-after"></a></p>
+<h4><code>@after</code></h4>
+<p>在每次任務執行之後，Envoy 腳本中註冊的所有 <code>@after</code> 鉤子都將執行。<code>@after</code> 鉤子接收已執行的任務名稱：</p>
+<pre><code class="language-blade">@after
+    if ($task === 'deploy') {
+        // ...
+    }
+@endafter
+</code></pre>
+<p><a name="completion-error"></a></p>
+<h4><code>@error</code></h4>
+<p>每次任務失敗後（以大於 <code>0</code> 的狀態代碼退出），Envoy 腳本中註冊的所有 <code>@error</code> 鉤子都將執行。<code>@error</code> 鉤子接收已執行的任務名稱：</p>
+<pre><code class="language-blade">@error
+    if ($task === 'deploy') {
+        // ...
+    }
+@enderror
+</code></pre>
+<p><a name="completion-success"></a></p>
+<h4><code>@success</code></h4>
+<p>如果所有任務都已成功執行且沒有錯誤，Envoy 腳本中註冊的所有 <code>@success</code> 鉤子都將執行：</p>
+<pre><code class="language-blade">@success
+    // ...
+@endsuccess
+</code></pre>
+<p><a name="completion-finished"></a></p>
+<h4><code>@finished</code></h4>
+<p>在所有任務執行完畢後（無論退出狀態如何），所有 <code>@finished</code> 鉤子都將執行。<code>@finished</code> 鉤子接收已完成任務的狀態代碼，該代碼可能為 <code>null</code> 或大於或等於 <code>0</code> 的整數：</p>
+<pre><code class="language-blade">@finished
+    if ($exitCode > 0) {
+        // There were errors in one of the tasks...
+    }
+@endfinished
+</code></pre>
+<p><a name="running-tasks"></a></p>
+<h2>執行任務</h2>
+<p>要執行在應用程式的 <code>Envoy.blade.php</code> 檔案中定義的任務或故事，請執行 Envoy 的 <code>run</code> 命令，並傳遞您要執行的任務或故事的名稱。Envoy 將執行任務並在任務運行時顯示遠端伺服器的輸出：</p>
+<pre><code class="language-shell">php vendor/bin/envoy run deploy
+</code></pre>
+<p><a name="confirming-task-execution"></a></p>
+<h3>確認任務執行</h3>
+<p>如果您希望在伺服器上執行給定任務之前收到確認提示，應在任務聲明中新增 <code>confirm</code> 指令。此選項對於破壞性操作特別有用：</p>
+<pre><code class="language-blade">@task('deploy', ['on' => 'web', 'confirm' => true])
+    cd /home/user/example.com
+    git pull origin {{ $branch }}
+    php artisan migrate
+@endtask
+</code></pre>
+<p><a name="notifications"></a></p>
+<h2>通知</h2>
+<p><a name="slack"></a></p>
+<h3>Slack</h3>
+<p>Envoy 支援在每次任務執行後向 <a href="https://slack.com">Slack</a> 傳送通知。<code>@slack</code> 指令接受一個 Slack webhook URL 和一個頻道 / 用戶名稱。您可以透過在 Slack 控制面板中建立「Incoming WebHooks」整合來取得您的 webhook URL。</p>
+<p>您應該將整個 webhook URL 作為傳遞給 <code>@slack</code> 指令的第一個參數。傳遞給 <code>@slack</code> 指令的第二個參數應為頻道名稱（<code>#channel</code>）或用戶名稱（<code>@user</code>）：</p>
+<pre><code class="language-blade">@finished
+    @slack('webhook-url', '#bots')
+@endfinished
+</code></pre>
+<p>預設情況下，Envoy 通知將向通知頻道傳送一條描述已執行任務的訊息。但是，您可以透過向 <code>@slack</code> 指令傳遞第三個參數來用您自己的自訂訊息覆寫此訊息：</p>
+<pre><code class="language-blade">@finished
+    @slack('webhook-url', '#bots', 'Hello, Slack.')
+@endfinished
+</code></pre>
+<p><a name="discord"></a></p>
+<h3>Discord</h3>
+<p>Envoy 還支援在每次任務執行後向 <a href="https://discord.com">Discord</a> 傳送通知。<code>@discord</code> 指令接受一個 Discord webhook URL 和一條訊息。您可以透過在伺服器設定中建立「Webhook」並選擇 webhook 應發送到哪個頻道來取得您的 webhook URL。您應該將整個 Webhook URL 傳入 <code>@discord</code> 指令：</p>
+<pre><code class="language-blade">@finished
+    @discord('discord-webhook-url')
+@endfinished
+</code></pre>
+<p><a name="telegram"></a></p>
+<h3>Telegram</h3>
+<p>Envoy 還支援在每次任務執行後向 <a href="https://telegram.org">Telegram</a> 傳送通知。<code>@telegram</code> 指令接受一個 Telegram Bot ID 和一個 Chat ID。您可以透過使用 <a href="https://t.me/botfather">BotFather</a> 建立一個新機器人來取得您的 Bot ID。您可以使用 <a href="https://t.me/username_to_id_bot">@username_to_id_bot</a> 取得有效的 Chat ID。您應該將整個 Bot ID 和 Chat ID 傳入 <code>@telegram</code> 指令：</p>
+<pre><code class="language-blade">@finished
+    @telegram('bot-id','chat-id')
+@endfinished
+</code></pre>
+<p><a name="microsoft-teams"></a></p>
+<h3>Microsoft Teams</h3>
+<p>Envoy 還支援在每次任務執行後向 <a href="https://www.microsoft.com/en-us/microsoft-teams">Microsoft Teams</a> 傳送通知。<code>@microsoftTeams</code> 指令接受一個 Teams Webhook（必需）、一條訊息、主題顏色（success、info、warning、error）和一個選項陣列。您可以透過建立新的<a href="https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook">傳入 webhook</a> 來取得您的 Teams Webhook。Teams API 有许多其他屬性可以用來自訂您的訊息框，如標題、摘要和區段。您可以在 <a href="https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#example-of-connector-message">Microsoft Teams 文件</a>中找到更多資訊。您應該將整個 Webhook URL 傳入 <code>@microsoftTeams</code> 指令：</p>
+<pre><code class="language-blade">@finished
+    @microsoftTeams('webhook-url')
+@endfinished
+</code></pre>
+`;
+---
+
+<DocsLayout title="Laravel Envoy" currentPath="envoy">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Envoy</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Envoy</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/envoy" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

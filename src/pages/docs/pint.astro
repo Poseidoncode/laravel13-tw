@@ -1,0 +1,208 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Pint</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a></li>
+<li><a href="#running-pint">執行 Pint</a></li>
+<li><a href="#configuring-pint">設定 Pint</a><ul>
+<li><a href="#presets">預設規則集</a></li>
+<li><a href="#rules">規則</a></li>
+<li><a href="#excluding-files-or-folders">排除檔案 / 資料夾</a></li>
+</ul>
+</li>
+<li><a href="#continuous-integration">持續整合</a><ul>
+<li><a href="#running-tests-on-github-actions">GitHub Actions</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/pint">Laravel Pint</a> 是一個為極簡主義者設計的 PHP 程式碼風格修正工具。Pint 建構在 <a href="https://github.com/FriendsOfPHP/PHP-CS-Fixer">PHP CS Fixer</a> 之上，讓您能輕鬆確保程式碼風格保持整潔和一致。</p>
+<p>Pint 會自動安裝在所有新的 Laravel 應用程式中，因此您可以立即開始使用它。預設情況下，Pint 不需要任何設定，並且會遵循 Laravel 的程式碼風格來修正您程式碼中的風格問題。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>Pint 已包含在 Laravel 框架的最新版本中，因此通常不需要安裝。但是，對於較舊的應用程式，您可以透過 Composer 安裝 Laravel Pint：</p>
+<pre><code class="language-shell">composer require laravel/pint --dev
+</code></pre>
+<p><a name="running-pint"></a></p>
+<h2>執行 Pint</h2>
+<p>您可以透過呼叫專案 <code>vendor/bin</code> 目錄中可用的 <code>pint</code> 執行檔來指示 Pint 修正程式碼風格問題：</p>
+<pre><code class="language-shell">./vendor/bin/pint
+</code></pre>
+<p>如果您希望 Pint 以平行模式（實驗性）運行以提高效能，可以使用 <code>--parallel</code> 選項：</p>
+<pre><code class="language-shell">./vendor/bin/pint --parallel
+</code></pre>
+<p>平行模式也允許您透過 <code>--max-processes</code> 選項指定要執行的最大處理程序數。如果未提供此選項，Pint 將使用您機器上所有可用的核心：</p>
+<pre><code class="language-shell">./vendor/bin/pint --parallel --max-processes=4
+</code></pre>
+<p>您也可以對特定檔案或目錄執行 Pint：</p>
+<pre><code class="language-shell">./vendor/bin/pint app/Models
+
+./vendor/bin/pint app/Models/User.php
+</code></pre>
+<p>Pint 將顯示所有已更新檔案的完整清單。您可以透過在呼叫 Pint 時提供 <code>-v</code> 選項來查看更多關於 Pint 變更的詳細資訊：</p>
+<pre><code class="language-shell">./vendor/bin/pint -v
+</code></pre>
+<p>如果您希望 Pint 僅檢查程式碼的風格錯誤而不實際修改檔案，可以使用 <code>--test</code> 選項。如果發現任何程式碼風格錯誤，Pint 將傳回非零的結束代碼：</p>
+<pre><code class="language-shell">./vendor/bin/pint --test
+</code></pre>
+<p>如果您希望 Pint 僅修改根據 Git 與提供的分支不同的檔案，可以使用 <code>--diff=[branch]</code> 選項。這可以在您的 CI 環境（如 GitHub Actions）中有效使用，透過僅檢查新增或修改的檔案來節省時間：</p>
+<pre><code class="language-shell">./vendor/bin/pint --diff=main
+</code></pre>
+<p>如果您希望 Pint 僅修改根據 Git 有未提交變更的檔案，可以使用 <code>--dirty</code> 選項：</p>
+<pre><code class="language-shell">./vendor/bin/pint --dirty
+</code></pre>
+<p>如果您希望 Pint 修正所有有程式碼風格錯誤的檔案，但在修正任何錯誤時也以非零結束代碼退出，可以使用 <code>--repair</code> 選項：</p>
+<pre><code class="language-shell">./vendor/bin/pint --repair
+</code></pre>
+<p><a name="configuring-pint"></a></p>
+<h2>設定 Pint</h2>
+<p>如前所述，Pint 不需要任何設定。但是，如果您希望自訂預設規則集、規則或檢查的資料夾，可以在專案的根目錄中建立 <code>pint.json</code> 檔案來實現：</p>
+<pre><code class="language-json">{
+    "preset": "laravel"
+}
+</code></pre>
+<p>此外，如果您希望使用來自特定目錄的 <code>pint.json</code>，可以在呼叫 Pint 時提供 <code>--config</code> 選項：</p>
+<pre><code class="language-shell">./vendor/bin/pint --config vendor/my-company/coding-style/pint.json
+</code></pre>
+<p><a name="presets"></a></p>
+<h3>預設規則集</h3>
+<p>預設規則集定義了一組可用於修正程式碼中風格問題的規則。預設情況下，Pint 使用 <code>laravel</code> 預設規則集，它透過遵循 Laravel 的程式碼風格來修正問題。但是，您可以透過向 Pint 提供 <code>--preset</code> 選項來指定不同的預設規則集：</p>
+<pre><code class="language-shell">./vendor/bin/pint --preset psr12
+</code></pre>
+<p>如果您願意，也可以在專案的 <code>pint.json</code> 檔案中設定預設規則集：</p>
+<pre><code class="language-json">{
+    "preset": "psr12"
+}
+</code></pre>
+<p>Pint 目前支援的預設規則集有：<code>laravel</code>、<code>per</code>、<code>psr12</code>、<code>symfony</code> 和 <code>empty</code>。</p>
+<p><a name="rules"></a></p>
+<h3>規則</h3>
+<p>規則是 Pint 用來修正程式碼中風格問題的樣式指南。如上所述，預設規則集是預定義的規則群組，對於大多數 PHP 專案來說應該是完美的，因此您通常不需要擔心它們包含的各個規則。</p>
+<p>但是，如果您願意，可以在 <code>pint.json</code> 檔案中啟用或停用特定規則，或使用 <code>empty</code> 預設規則集並從頭定義規則：</p>
+<pre><code class="language-json">{
+    "preset": "laravel",
+    "rules": {
+        "simplified_null_return": true,
+        "array_indentation": false,
+        "new_with_parentheses": {
+            "anonymous_class": true,
+            "named_class": true
+        }
+    }
+}
+</code></pre>
+<p>Pint 建構在 <a href="https://github.com/FriendsOfPHP/PHP-CS-Fixer">PHP CS Fixer</a> 之上。因此，您可以使用它的任何規則來修正專案中的程式碼風格問題：<a href="https://mlocati.github.io/php-cs-fixer-configurator">PHP CS Fixer 設定器</a>。</p>
+<p><a name="custom-rules"></a></p>
+<h4>自訂規則</h4>
+<p>除了 PHP CS Fixer 規則外，Pint 還提供了以 <code>Pint/</code> 為前綴的自訂規則。這些規則預設未啟用，但您可以在 <code>pint.json</code> 檔案中啟用它們。</p>
+<p><a name="phpdoc-type-annotations-only"></a></p>
+<h5><code>Pint/phpdoc_type_annotations_only</code></h5>
+<p>此規則會從您的程式碼中移除所有註解和文件區塊文字，僅保留包含 <code>@</code> 標註的行，例如 <code>@param</code>、<code>@return</code>、<code>@var</code>、<code>@phpstan-type</code> 等：</p>
+<pre><code class="language-php">/**
+ * Get the posts for the user. [tl! remove]
+ * [tl! remove]
+ * @return HasMany<Post, $this>
+ */
+public function posts(): HasMany
+</code></pre>
+<p>不包含 <code>@</code> 標註的單行註解和區塊註解會被完全移除。如果您希望保留特定註解，可以使用 <code>@note</code>、<code>@warning</code> 或 <code>@todo</code> 為其添加前綴：</p>
+<pre><code class="language-php">// @note This comment will be preserved.
+</code></pre>
+<p>要啟用此規則，請將其加入您的 <code>pint.json</code> 檔案：</p>
+<pre><code class="language-json">{
+    "preset": "laravel",
+    "rules": {
+        "Pint/phpdoc_type_annotations_only": true
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+此規則會自動跳過 <code>config</code> 目錄中的檔案，因為設定檔通常依賴註解來提供文件說明。</p>
+</blockquote>
+<p><a name="excluding-files-or-folders"></a></p>
+<h3>排除檔案 / 資料夾</h3>
+<p>預設情況下，Pint 會檢查專案中除了 <code>vendor</code> 目錄之外的所有 <code>.php</code> 檔案。如果您希望排除更多資料夾，可以使用 <code>exclude</code> 設定選項來實現：</p>
+<pre><code class="language-json">{
+    "exclude": [
+        "my-specific/folder"
+    ]
+}
+</code></pre>
+<p>如果您希望排除所有包含給定名稱模式的檔案，可以使用 <code>notName</code> 設定選項來實現：</p>
+<pre><code class="language-json">{
+    "notName": [
+        "*-my-file.php"
+    ]
+}
+</code></pre>
+<p>如果您希望透過提供檔案的確切路徑來排除某個檔案，可以使用 <code>notPath</code> 設定選項來實現：</p>
+<pre><code class="language-json">{
+    "notPath": [
+        "path/to/excluded-file.php"
+    ]
+}
+</code></pre>
+<p><a name="continuous-integration"></a></p>
+<h2>持續整合</h2>
+<p><a name="running-tests-on-github-actions"></a></p>
+<h3>GitHub Actions</h3>
+<p>要使用 Laravel Pint 自動化檢查您的專案，您可以設定 <a href="https://github.com/features/actions">GitHub Actions</a>，在每次將新程式碼推送到 GitHub 時執行 Pint。首先，請確保在 GitHub 的 <strong>Settings > Actions > General > Workflow permissions</strong> 中授予工作流程「讀寫權限」。然後，建立一個 <code>.github/workflows/lint.yml</code> 檔案，內容如下：</p>
+<pre><code class="language-yaml">name: Fix Code Style
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.4]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: \${{ matrix.php }}
+          tools: pint
+
+      - name: Run Pint
+        run: pint
+
+      - name: Commit linted files
+        uses: stefanzweifel/git-auto-commit-action@v6
+</code></pre>
+`;
+---
+
+<DocsLayout title="Laravel Pint" currentPath="pint">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Pint</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Pint</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/pint" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

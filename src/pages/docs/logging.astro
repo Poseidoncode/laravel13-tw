@@ -1,0 +1,495 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>日誌記錄</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#configuration">設定</a><ul>
+<li><a href="#available-channel-drivers">可用的管道驅動程式</a></li>
+<li><a href="#channel-prerequisites">管道先決條件</a></li>
+<li><a href="#logging-deprecation-warnings">記錄棄用警告</a></li>
+</ul>
+</li>
+<li><a href="#building-log-stacks">建構日誌堆疊</a></li>
+<li><a href="#writing-log-messages">寫入日誌訊息</a><ul>
+<li><a href="#contextual-information">上下文資訊</a></li>
+<li><a href="#writing-to-specific-channels">寫入特定管道</a></li>
+</ul>
+</li>
+<li><a href="#monolog-channel-customization">Monolog 管道自訂</a><ul>
+<li><a href="#customizing-monolog-for-channels">為管道自訂 Monolog</a></li>
+<li><a href="#creating-monolog-handler-channels">建立 Monolog 處理器管道</a></li>
+<li><a href="#creating-custom-channels-via-factories">透過工廠建立自訂管道</a></li>
+</ul>
+</li>
+<li><a href="#tailing-log-messages-using-pail">使用 Pail 追蹤日誌訊息</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>為了幫助您了解更多關於應用程式內部發生的事情，Laravel 提供了強大的日誌記錄服務，允許您將訊息記錄到檔案、系統錯誤日誌，甚至到 Slack 來通知您的整個團隊。</p>
+<p>Laravel 日誌記錄基於「管道」。每個管道代表一種寫入日誌資訊的特定方式。例如，<code>single</code> 管道將日誌檔案寫入單一日誌檔案，而 <code>slack</code> 管道將日誌訊息發送到 Slack。日誌訊息可以根據其嚴重性寫入多個管道。</p>
+<p>在底層，Laravel 使用 <a href="https://github.com/Seldaek/monolog">Monolog</a> 函式庫，它支援多種強大的日誌處理器。Laravel 讓您能輕鬆配置這些處理器，允許您混合和匹配它們來自訂應用程式的日誌處理。</p>
+<p><a name="configuration"></a></p>
+<h2>設定</h2>
+<p>控制應用程式日誌記錄行為的所有配置選項都位於 <code>config/logging.php</code> 配置檔中。此檔案允許您配置應用程式的日誌管道，因此請務必查看每個可用的管道及其選項。我們將在下面回顧一些常見的選項。</p>
+<p>預設情況下，Laravel 在記錄訊息時將使用 <code>stack</code> 管道。<code>stack</code> 管道用於將多個日誌管道聚合為單一管道。有關建構堆疊的更多資訊，請查看<a href="#building-log-stacks">以下文件</a>。</p>
+<p><a name="available-channel-drivers"></a></p>
+<h3>可用的管道驅動程式</h3>
+<p>每個日誌管道都由一個「驅動程式」驅動。驅動程式決定了日誌訊息的記錄方式和位置。以下日誌管道驅動程式在每個 Laravel 應用程式中都可用。大多數這些驅動程式的條目已存在於應用程式的 <code>config/logging.php</code> 配置檔中，因此請務必查看此檔案以熟悉其內容：</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>名稱</th><th>描述</th></tr></thead>
+<tbody>
+<tr><td><code>custom</code></td><td>呼叫指定工廠來建立管道的驅動程式。</td></tr>
+<tr><td><code>daily</code></td><td>基於 <code>RotatingFileHandler</code> 的 Monolog 驅動程式，每天輪替。</td></tr>
+<tr><td><code>errorlog</code></td><td>基於 <code>ErrorLogHandler</code> 的 Monolog 驅動程式。</td></tr>
+<tr><td><code>monolog</code></td><td>可以使用任何支援的 Monolog 處理器的 Monolog 工廠驅動程式。</td></tr>
+<tr><td><code>papertrail</code></td><td>基於 <code>SyslogUdpHandler</code> 的 Monolog 驅動程式。</td></tr>
+<tr><td><code>single</code></td><td>單一檔案或基於路徑的日誌管道（<code>StreamHandler</code>）。</td></tr>
+<tr><td><code>slack</code></td><td>基於 <code>SlackWebhookHandler</code> 的 Monolog 驅動程式。</td></tr>
+<tr><td><code>stack</code></td><td>用於促进建立「多管道」管道的包裝器。</td></tr>
+<tr><td><code>syslog</code></td><td>基於 <code>SyslogHandler</code> 的 Monolog 驅動程式。</td></tr>
+</tbody>
+</table>
+</div>
+<blockquote>
+<p>[!NOTE]
+查看<a href="#monolog-channel-customization">進階管道自訂</a>文件以了解更多關於 <code>monolog</code> 和 <code>custom</code> 驅動程式的資訊。</p>
+</blockquote>
+<p><a name="configuring-the-channel-name"></a></p>
+<h4>配置管道名稱</h4>
+<p>預設情況下，Monolog 使用與當前環境匹配的「管道名稱」實例化，例如 <code>production</code> 或 <code>local</code>。要更改此值，您可以在管道的配置中新增 <code>name</code> 選項：</p>
+<pre><code class="language-php">'stack' => [
+    'driver' => 'stack',
+    'name' => 'channel-name',
+    'channels' => ['single', 'slack'],
+],
+</code></pre>
+<p><a name="channel-prerequisites"></a></p>
+<h3>管道先決條件</h3>
+<p><a name="configuring-the-single-and-daily-channels"></a></p>
+<h4>配置 Single 和 Daily 管道</h4>
+<p><code>single</code> 和 <code>daily</code> 管道有三個可選的配置選項：<code>bubble</code>、<code>permission</code> 和 <code>locking</code>。</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>名稱</th><th>描述</th><th>預設值</th></tr></thead>
+<tbody>
+<tr><td><code>bubble</code></td><td>指示訊息在處理後是否應冒泡到其他管道。</td><td><code>true</code></td></tr>
+<tr><td><code>locking</code></td><td>在寫入日誌檔案之前嘗試鎖定它。</td><td><code>false</code></td></tr>
+<tr><td><code>permission</code></td><td>日誌檔案的權限。</td><td><code>0644</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>此外，<code>daily</code> 管道的保留策略可以透過 <code>LOG_DAILY_DAYS</code> 環境變數或設定 <code>days</code> 配置選項來配置。</p>
+<div class="overflow-auto">
+<table>
+<thead><tr><th>名稱</th><th>描述</th><th>預設值</th></tr></thead>
+<tbody>
+<tr><td><code>days</code></td><td>每日日誌檔案應保留的天數。</td><td><code>14</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><a name="configuring-the-papertrail-channel"></a></p>
+<h4>配置 Papertrail 管道</h4>
+<p><code>papertrail</code> 管道需要 <code>host</code> 和 <code>port</code> 配置選項。可以透過 <code>PAPERTRAIL_URL</code> 和 <code>PAPERTRAIL_PORT</code> 環境變數來定義。您可以從 <a href="https://help.papertrailapp.com/kb/configuration/configuring-centralized-logging-from-php-apps/#send-events-from-php-app">Papertrail</a> 取得這些值。</p>
+<p><a name="configuring-the-slack-channel"></a></p>
+<h4>配置 Slack 管道</h4>
+<p><code>slack</code> 管道需要 <code>url</code> 配置選項。可以透過 <code>LOG_SLACK_WEBHOOK_URL</code> 環境變數來定義。此 URL 應與您為 Slack 團隊配置的<a href="https://slack.com/apps/A0F7XDUAZ-incoming-webhooks">傳入 webhook</a> 的 URL 匹配。</p>
+<p>預設情況下，Slack 僅接收 <code>critical</code> 等級及以上的日誌；但是，您可以使用 <code>LOG_LEVEL</code> 環境變數或修改 Slack 日誌管道配置陣列中的 <code>level</code> 配置選項來調整。</p>
+<p><a name="logging-deprecation-warnings"></a></p>
+<h3>記錄棄用警告</h3>
+<p>PHP、Laravel 和其他函式庫通常會通知用戶它們的某些功能已被棄用，並將在未來版本中移除。如果您想記錄這些棄用警告，可以使用 <code>LOG_DEPRECATIONS_CHANNEL</code> 環境變數或在應用程式的 <code>config/logging.php</code> 配置檔中指定您首選的 <code>deprecations</code> 日誌管道：</p>
+<pre><code class="language-php">'deprecations' => [
+    'channel' => env('LOG_DEPRECATIONS_CHANNEL', 'null'),
+    'trace' => env('LOG_DEPRECATIONS_TRACE', false),
+],
+
+'channels' => [
+    // ...
+]
+</code></pre>
+<p>或者，您可以定義一個名為 <code>deprecations</code> 的日誌管道。如果存在此名稱的日誌管道，它將始終用於記錄棄用：</p>
+<pre><code class="language-php">'channels' => [
+    'deprecations' => [
+        'driver' => 'single',
+        'path' => storage_path('logs/php-deprecation-warnings.log'),
+    ],
+],
+</code></pre>
+<p><a name="building-log-stacks"></a></p>
+<h2>建構日誌堆疊</h2>
+<p>如前所述，<code>stack</code> 驅動程式允許您為了方便將多個管道組合成單一日誌管道。為了說明如何使用日誌堆疊，讓我們看看您可能在生產應用程式中看到的範例配置：</p>
+<pre><code class="language-php">'channels' => [
+    'stack' => [
+        'driver' => 'stack',
+        'channels' => ['syslog', 'slack'], // [tl! add]
+        'ignore_exceptions' => false,
+    ],
+
+    'syslog' => [
+        'driver' => 'syslog',
+        'level' => env('LOG_LEVEL', 'debug'),
+        'facility' => env('LOG_SYSLOG_FACILITY', LOG_USER),
+        'replace_placeholders' => true,
+    ],
+
+    'slack' => [
+        'driver' => 'slack',
+        'url' => env('LOG_SLACK_WEBHOOK_URL'),
+        'username' => env('LOG_SLACK_USERNAME', 'Laravel Log'),
+        'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
+        'level' => env('LOG_LEVEL', 'critical'),
+        'replace_placeholders' => true,
+    ],
+],
+</code></pre>
+<p>讓我們解析此配置。首先，注意我們的 <code>stack</code> 管道透過其 <code>channels</code> 選項聚合了另外兩個管道：<code>syslog</code> 和 <code>slack</code>。因此，記錄訊息時，這兩個管道都有機會記錄該訊息。但是，正如我們將在下面看到的，這些管道是否實際記錄該訊息可能由訊息的嚴重性 / 「等級」決定。</p>
+<p><a name="log-levels"></a></p>
+<h4>日誌等級</h4>
+<p>注意上面範例中 <code>syslog</code> 和 <code>slack</code> 管道配置中存在的 <code>level</code> 配置選項。此選項決定了訊息被管道記錄所需的最低「等級」。驅動 Laravel 日誌記錄服務的 Monolog 提供了 <a href="https://tools.ietf.org/html/rfc5424">RFC 5424 規範</a>中定義的所有日誌等級。按嚴重性降序排列，這些日誌等級為：<strong>emergency</strong>、<strong>alert</strong>、<strong>critical</strong>、<strong>error</strong>、<strong>warning</strong>、<strong>notice</strong>、<strong>info</strong> 和 <strong>debug</strong>。</p>
+<p>假設我們使用 <code>debug</code> 方法記錄一條訊息：</p>
+<pre><code class="language-php">Log::debug('An informational message.');
+</code></pre>
+<p>根據我們的配置，<code>syslog</code> 管道將把訊息寫入系統日誌；但是，由於錯誤訊息不是 <code>critical</code> 或以上，它不會被發送到 Slack。但是，如果我們記錄一條 <code>emergency</code> 訊息，它將被發送到系統日誌和 Slack，因為 <code>emergency</code> 等級高於兩個管道的最低等級閾值：</p>
+<pre><code class="language-php">Log::emergency('The system is down!');
+</code></pre>
+<p><a name="writing-log-messages"></a></p>
+<h2>寫入日誌訊息</h2>
+<p>您可以使用 <code>Log</code> <a href="/docs/facades">facade</a> 將資訊寫入日誌。如前所述，記錄器提供了 <a href="https://tools.ietf.org/html/rfc5424">RFC 5424 規範</a>中定義的八個日誌等級：<strong>emergency</strong>、<strong>alert</strong>、<strong>critical</strong>、<strong>error</strong>、<strong>warning</strong>、<strong>notice</strong>、<strong>info</strong> 和 <strong>debug</strong>：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+
+Log::emergency($message);
+Log::alert($message);
+Log::critical($message);
+Log::error($message);
+Log::warning($message);
+Log::notice($message);
+Log::info($message);
+Log::debug($message);
+</code></pre>
+<p>您可以呼叫這些方法中的任何一個來記錄相應等級的訊息。預設情況下，訊息將寫入由 <code>logging</code> 配置檔配置的預設日誌管道：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Log;
+use Illuminate\\View\\View;
+
+class UserController extends Controller
+{
+    /**
+     * Show the profile for the given user.
+     */
+    public function show(string $id): View
+    {
+        Log::info('Showing the user profile for user: {id}', ['id' => $id]);
+
+        return view('user.profile', [
+            'user' => User::findOrFail($id)
+        ]);
+    }
+}
+</code></pre>
+<p><a name="contextual-information"></a></p>
+<h3>上下文資訊</h3>
+<p>可以將上下文資料陣列傳遞給日誌方法。此上下文資料將被格式化並與日誌訊息一起顯示：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+
+Log::info('User {id} failed to login.', ['id' => $user->id]);
+</code></pre>
+<p>有時，您可能希望指定一些應包含在特定管道中所有後續日誌條目中的上下文資訊。例如，您可能希望記錄與應用程式中每個傳入請求關聯的請求 ID。要實現此目的，您可以呼叫 <code>Log</code> facade 的 <code>withContext</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Log;
+use Illuminate\\Support\\Str;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class AssignRequestId
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $requestId = (string) Str::uuid();
+
+        Log::withContext([
+            'request-id' => $requestId
+        ]);
+
+        $response = $next($request);
+
+        $response->headers->set('Request-Id', $requestId);
+
+        return $response;
+    }
+}
+</code></pre>
+<p>如果您想在所有日誌管道之間共享上下文資訊，可以呼叫 <code>Log::shareContext()</code> 方法。此方法將向所有已建立的管道和隨後建立的任何管道提供上下文資訊：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Log;
+use Illuminate\\Support\\Str;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class AssignRequestId
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $requestId = (string) Str::uuid();
+
+        Log::shareContext([
+            'request-id' => $requestId
+        ]);
+
+        // ...
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您需要在處理佇列任務時共享日誌上下文，可以使用<a href="/docs/queues#job-middleware">任務中介層</a>。</p>
+</blockquote>
+<p><a name="writing-to-specific-channels"></a></p>
+<h3>寫入特定管道</h3>
+<p>有時您可能希望將訊息記錄到應用程式預設管道以外的管道。您可以使用 <code>Log</code> facade 上的 <code>channel</code> 方法來檢索和記錄到配置檔中定義的任何管道：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+
+Log::channel('slack')->info('Something happened!');
+</code></pre>
+<p>如果您想建立一個由多個管道組成的按需日誌堆疊，可以使用 <code>stack</code> 方法：</p>
+<pre><code class="language-php">Log::stack(['single', 'slack'])->info('Something happened!');
+</code></pre>
+<p><a name="on-demand-channels"></a></p>
+<h4>按需管道</h4>
+<p>也可以透過在執行時提供配置來建立按需管道，而該配置無需存在於應用程式的 <code>logging</code> 配置檔中。要實現此目的，您可以向 <code>Log</code> facade 的 <code>build</code> 方法傳遞一個配置陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+
+Log::build([
+  'driver' => 'single',
+  'path' => storage_path('logs/custom.log'),
+])->info('Something happened!');
+</code></pre>
+<p>您可能還希望將按需管道包含在按需日誌堆疊中。這可以透過將按需管道實例包含在傳遞給 <code>stack</code> 方法的陣列中來實現：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Log;
+
+$channel = Log::build([
+  'driver' => 'single',
+  'path' => storage_path('logs/custom.log'),
+]);
+
+Log::stack(['slack', $channel])->info('Something happened!');
+</code></pre>
+<p><a name="monolog-channel-customization"></a></p>
+<h2>Monolog 管道自訂</h2>
+<p><a name="customizing-monolog-for-channels"></a></p>
+<h3>為管道自訂 Monolog</h3>
+<p>有時您可能需要完全控制如何為現有管道配置 Monolog。例如，您可能想為 Laravel 的內建 <code>single</code> 管道配置自訂 Monolog <code>FormatterInterface</code> 實作。</p>
+<p>首先，在管道的配置上定義一個 <code>tap</code> 陣列。<code>tap</code> 陣列應包含一個類別列表，這些類別應有機會在 Monolog 實例建立後自訂（或「接入」）它。這些類別沒有慣例位置，因此您可以自由地在應用程式中建立一個目錄來存放這些類別：</p>
+<pre><code class="language-php">'single' => [
+    'driver' => 'single',
+    'tap' => [App\\Logging\\CustomizeFormatter::class],
+    'path' => storage_path('logs/laravel.log'),
+    'level' => env('LOG_LEVEL', 'debug'),
+    'replace_placeholders' => true,
+],
+</code></pre>
+<p>在管道上配置 <code>tap</code> 選項後，您就可以定義將自訂 Monolog 實例的類別。此類別只需要一個方法：<code>__invoke</code>，它接收一個 <code>Illuminate\\Log\\Logger</code> 實例。<code>Illuminate\\Log\\Logger</code> 實例將所有方法呼叫代理到底層 Monolog 實例：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Logging;
+
+use Illuminate\\Log\\Logger;
+use Monolog\\Formatter\\LineFormatter;
+
+class CustomizeFormatter
+{
+    /**
+     * Customize the given logger instance.
+     */
+    public function __invoke(Logger $logger): void
+    {
+        foreach ($logger->getHandlers() as $handler) {
+            $handler->setFormatter(new LineFormatter(
+                '[%datetime%] %channel%.%level_name%: %message% %context% %extra%'
+            ));
+        }
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+所有「tap」類別都由<a href="/docs/container">服務容器</a>解析，因此它們需要的任何構造函數依賴項都將自動注入。</p>
+</blockquote>
+<p><a name="creating-monolog-handler-channels"></a></p>
+<h3>建立 Monolog 處理器管道</h3>
+<p>Monolog 有各種<a href="https://github.com/Seldaek/monolog/tree/main/src/Monolog/Handler">可用的處理器</a>，Laravel 並未為每個處理器都包含內建管道。在某些情況下，您可能希望建立一個自訂管道，它僅是沒有對應 Laravel 日誌驅動程式的特定 Monolog 處理器的實例。這些管道可以使用 <code>monolog</code> 驅動程式輕鬆建立。</p>
+<p>使用 <code>monolog</code> 驅動程式時，<code>handler</code> 配置選項用於指定將實例化哪個處理器。或者，可以使用 <code>handler_with</code> 配置選項指定處理器需要的任何構造函數參數：</p>
+<pre><code class="language-php">'logentries' => [
+    'driver'  => 'monolog',
+    'handler' => Monolog\\Handler\\SyslogUdpHandler::class,
+    'handler_with' => [
+        'host' => 'my.logentries.internal.datahubhost.company.com',
+        'port' => '10000',
+    ],
+],
+</code></pre>
+<p><a name="monolog-formatters"></a></p>
+<h4>Monolog 格式化器</h4>
+<p>使用 <code>monolog</code> 驅動程式時，Monolog <code>LineFormatter</code> 將用作預設格式化器。但是，您可以使用 <code>formatter</code> 和 <code>formatter_with</code> 配置選項來自訂傳遞給處理器的格式化器類型：</p>
+<pre><code class="language-php">'browser' => [
+    'driver' => 'monolog',
+    'handler' => Monolog\\Handler\\BrowserConsoleHandler::class,
+    'formatter' => Monolog\\Formatter\\HtmlFormatter::class,
+    'formatter_with' => [
+        'dateFormat' => 'Y-m-d',
+    ],
+],
+</code></pre>
+<p>如果您使用能夠提供自己格式化器的 Monolog 處理器，可以將 <code>formatter</code> 配置選項的值設為 <code>default</code>：</p>
+<pre><code class="language-php">'newrelic' => [
+    'driver' => 'monolog',
+    'handler' => Monolog\\Handler\\NewRelicHandler::class,
+    'formatter' => 'default',
+],
+</code></pre>
+<p><a name="monolog-processors"></a></p>
+<h4>Monolog 處理器</h4>
+<p>Monolog 還可以在記錄訊息之前處理它們。您可以建立自己的處理器或使用 <a href="https://github.com/Seldaek/monolog/tree/main/src/Monolog/Processor">Monolog 提供的現有處理器</a>。</p>
+<p>如果您想自訂 <code>monolog</code> 驅動程式的處理器，請在管道的配置中新增 <code>processors</code> 配置值：</p>
+<pre><code class="language-php">'memory' => [
+    'driver' => 'monolog',
+    'handler' => Monolog\\Handler\\StreamHandler::class,
+    'handler_with' => [
+        'stream' => 'php://stderr',
+    ],
+    'processors' => [
+        // Simple syntax...
+        Monolog\\Processor\\MemoryUsageProcessor::class,
+
+        // With options...
+        [
+            'processor' => Monolog\\Processor\\PsrLogMessageProcessor::class,
+            'with' => ['removeUsedContextFields' => true],
+        ],
+    ],
+],
+</code></pre>
+<p><a name="creating-custom-channels-via-factories"></a></p>
+<h3>透過工廠建立自訂管道</h3>
+<p>如果您想定義一個完全自訂的管道，您可以在其中完全控制 Monolog 的實例化和配置，可以在 <code>config/logging.php</code> 配置檔中指定 <code>custom</code> 驅動程式類型。您的配置應包含一個 <code>via</code> 選項，該選項包含將被呼叫來建立 Monolog 實例的工廠類別名稱：</p>
+<pre><code class="language-php">'channels' => [
+    'example-custom-channel' => [
+        'driver' => 'custom',
+        'via' => App\\Logging\\CreateCustomLogger::class,
+    ],
+],
+</code></pre>
+<p>配置 <code>custom</code> 驅動程式管道後，您就可以定義將建立 Monolog 實例的類別。此類別只需要一個 <code>__invoke</code> 方法，該方法應返回 Monolog 記錄器實例。該方法將接收管道配置陣列作為其唯一參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Logging;
+
+use Monolog\\Logger;
+
+class CreateCustomLogger
+{
+    /**
+     * Create a custom Monolog instance.
+     */
+    public function __invoke(array $config): Logger
+    {
+        return new Logger(/* ... */);
+    }
+}
+</code></pre>
+<p><a name="tailing-log-messages-using-pail"></a></p>
+<h2>使用 Pail 追蹤日誌訊息</h2>
+<p>通常您可能需要即時追蹤應用程式的日誌。例如，除錯問題或監控應用程式日誌中的特定類型錯誤時。</p>
+<p>Laravel Pail 是一個套件，允許您直接從命令列輕鬆深入了解 Laravel 應用程式的日誌檔案。與標準 <code>tail</code> 命令不同，Pail 設計為與任何日誌驅動程式配合使用，包括 Sentry 或 Flare。此外，Pail 提供了一組有用的篩選器來幫助您快速找到所需內容。</p>
+<p><a name="pail-installation"></a></p>
+<h3>安裝</h3>
+<blockquote>
+<p>[!WARNING]
+Laravel Pail 需要 <a href="https://www.php.net/manual/en/book.pcntl.php">PCNTL</a> PHP 擴充功能。</p>
+</blockquote>
+<p>首先，使用 Composer 套件管理器將 Pail 安裝到您的專案中：</p>
+<pre><code class="language-shell">composer require --dev laravel/pail
+</code></pre>
+<p><a name="pail-usage"></a></p>
+<h3>用法</h3>
+<p>要開始追蹤日誌，請執行 <code>pail</code> 命令：</p>
+<pre><code class="language-shell">php artisan pail
+</code></pre>
+<p>要增加輸出的詳細程度並避免截斷（…），請使用 <code>-v</code> 選項：</p>
+<pre><code class="language-shell">php artisan pail -v
+</code></pre>
+<p>要獲得最大的詳細程度並顯示異常堆疊追蹤，請使用 <code>-vv</code> 選項：</p>
+<pre><code class="language-shell">php artisan pail -vv
+</code></pre>
+<p>要停止追蹤日誌，隨時按 <code>Ctrl+C</code>。</p>
+<p><a name="pail-filtering-logs"></a></p>
+<h3>篩選日誌</h3>
+<p><a name="pail-filtering-logs-filter-option"></a></p>
+<h4><code>--filter</code></h4>
+<p>您可以使用 <code>--filter</code> 選項按類型、檔案、訊息和堆疊追蹤內容篩選日誌：</p>
+<pre><code class="language-shell">php artisan pail --filter="QueryException"
+</code></pre>
+<p><a name="pail-filtering-logs-message-option"></a></p>
+<h4><code>--message</code></h4>
+<p>要僅按訊息篩選日誌，可以使用 <code>--message</code> 選項：</p>
+<pre><code class="language-shell">php artisan pail --message="User created"
+</code></pre>
+<p><a name="pail-filtering-logs-level-option"></a></p>
+<h4><code>--level</code></h4>
+<p><code>--level</code> 選項可用於按<a href="#log-levels">日誌等級</a>篩選日誌：</p>
+<pre><code class="language-shell">php artisan pail --level=error
+</code></pre>
+<p><a name="pail-filtering-logs-user-option"></a></p>
+<h4><code>--user</code></h4>
+<p>要僅顯示在給定用戶已認證時寫入的日誌，可以將用戶的 ID 傳遞給 <code>--user</code> 選項：</p>
+<pre><code class="language-shell">php artisan pail --user=1
+</code></pre>
+`;
+---
+
+<DocsLayout title="日誌記錄" currentPath="logging">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>日誌記錄</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">日誌記錄</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/logging" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

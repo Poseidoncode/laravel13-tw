@@ -1,0 +1,424 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>錯誤處理</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#configuration">設定</a></li>
+<li><a href="#handling-exceptions">處理異常</a><ul>
+<li><a href="#reporting-exceptions">報告異常</a></li>
+<li><a href="#exception-log-levels">異常日誌等級</a></li>
+<li><a href="#ignoring-exceptions-by-type">依類型忽略異常</a></li>
+<li><a href="#rendering-exceptions">渲染異常</a></li>
+<li><a href="#renderable-exceptions">可報告和可渲染的異常</a></li>
+</ul>
+</li>
+<li><a href="#throttling-reported-exceptions">限制報告的異常</a></li>
+<li><a href="#http-exceptions">HTTP 異常</a><ul>
+<li><a href="#custom-http-error-pages">自訂 HTTP 錯誤頁面</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>當您啟動一個新的 Laravel 專案時，錯誤和異常處理已經為您配置好；但是，您可以隨時在應用程式的 <code>bootstrap/app.php</code> 中使用 <code>withExceptions</code> 方法來管理異常的報告和渲染方式。</p>
+<p>傳遞給 <code>withExceptions</code> 閉包的 <code>$exceptions</code> 物件是 <code>Illuminate\\Foundation\\Configuration\\Exceptions</code> 的實例，負責管理應用程式中的異常處理。我們將在整個文件中深入探討此物件。</p>
+<p><a name="configuration"></a></p>
+<h2>設定</h2>
+<p><code>config/app.php</code> 設定檔中的 <code>debug</code> 選項決定了實際向用戶顯示多少錯誤資訊。預設情況下，此選項設定為遵循 <code>APP_DEBUG</code> 環境變數的值，該值儲存在 <code>.env</code> 檔案中。</p>
+<p>在本機開發期間，您應將 <code>APP_DEBUG</code> 環境變數設為 <code>true</code>。</p>
+<blockquote>
+<p>[!WARNING]
+在生產環境中，<code>APP_DEBUG</code> 的值應始終為 <code>false</code>。如果在生產環境中將值設為 <code>true</code>，您可能會將敏感的設定值暴露給應用程式的最終用戶。</p>
+</blockquote>
+<p><a name="handling-exceptions"></a></p>
+<h2>處理異常</h2>
+<p><a name="reporting-exceptions"></a></p>
+<h3>報告異常</h3>
+<p>在 Laravel 中，異常報告用於記錄異常或將它們發送到外部服務，如 <a href="https://github.com/getsentry/sentry-laravel">Sentry</a> 或 <a href="https://flareapp.io">Flare</a>。預設情況下，異常將根據您的<a href="/docs/logging">日誌記錄</a>設定進行記錄。但是，您可以自由地以任何方式記錄異常。</p>
+<p>如果您需要以不同方式報告不同類型的異常，可以在應用程式的 <code>bootstrap/app.php</code> 中使用 <code>report</code> 異常方法來註冊一個閉包，該閉包應在需要報告給定類型的異常時執行。Laravel 將透過檢查閉包的類型提示來判斷閉包報告什麼類型的異常：</p>
+<pre><code class="language-php">use App\\Exceptions\\InvalidOrderException;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->report(function (InvalidOrderException $e) {
+        // ...
+    });
+})
+</code></pre>
+<p>當您使用 <code>report</code> 方法註冊自訂異常報告回呼時，Laravel 仍將使用應用程式的預設日誌記錄設定來記錄異常。如果您希望阻止異常傳播到預設日誌記錄堆疊，可以在定義報告回呼時使用 <code>stop</code> 方法或從回呼返回 <code>false</code>：</p>
+<pre><code class="language-php">use App\\Exceptions\\InvalidOrderException;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->report(function (InvalidOrderException $e) {
+        // ...
+    })->stop();
+
+    $exceptions->report(function (InvalidOrderException $e) {
+        return false;
+    });
+})
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要自訂給定異常的異常報告，您也可以使用<a href="/docs/errors#renderable-exceptions">可報告異常</a>。</p>
+</blockquote>
+<p><a name="global-log-context"></a></p>
+<h4>全域日誌上下文</h4>
+<p>如果可用，Laravel 會自動將當前用戶的 ID 作為上下文資料新增到每個異常的日誌訊息中。您可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>context</code> 異常方法來定義自己的全域上下文資料。此資訊將包含在應用程式寫入的每個異常日誌訊息中：</p>
+<pre><code class="language-php">->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->context(fn () => [
+        'foo' => 'bar',
+    ]);
+})
+</code></pre>
+<p><a name="exception-log-context"></a></p>
+<h4>異常日誌上下文</h4>
+<p>雖然為每個日誌訊息新增上下文很有用，但有時特定異常可能有您希望包含在日誌中的獨特上下文。透過在應用程式的一個異常上定義 <code>context</code> 方法，您可以指定應新增到異常日誌條目中的與該異常相關的任何資料：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Exceptions;
+
+use Exception;
+
+class InvalidOrderException extends Exception
+{
+    // ...
+
+    /**
+     * Get the exception's context information.
+     *
+     * @return array<string, mixed>
+     */
+    public function context(): array
+    {
+        return ['order_id' => $this->orderId];
+    }
+}
+</code></pre>
+<p><a name="the-report-helper"></a></p>
+<h4><code>report</code> 輔助函數</h4>
+<p>有時您可能需要報告異常但繼續處理當前請求。<code>report</code> 輔助函數允許您快速報告異常，而無需向用戶渲染錯誤頁面：</p>
+<pre><code class="language-php">public function isValid(string $value): bool
+{
+    try {
+        // Validate the value...
+    } catch (Throwable $e) {
+        report($e);
+
+        return false;
+    }
+}
+</code></pre>
+<p><a name="deduplicating-reported-exceptions"></a></p>
+<h4>去重報告的異常</h4>
+<p>如果您在應用程式中使用 <code>report</code> 函數，偶爾可能會多次報告相同的異常，在日誌中建立重複的條目。</p>
+<p>如果您希望確保單一異常實例只被報告一次，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中呼叫 <code>dontReportDuplicates</code> 異常方法：</p>
+<pre><code class="language-php">->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->dontReportDuplicates();
+})
+</code></pre>
+<p>現在，當使用相同的異常實例呼叫 <code>report</code> 輔助函數時，只有第一次呼叫會被報告：</p>
+<pre><code class="language-php">$original = new RuntimeException('Whoops!');
+
+report($original); // reported
+
+try {
+    throw $original;
+} catch (Throwable $caught) {
+    report($caught); // ignored
+}
+
+report($original); // ignored
+report($caught); // ignored
+</code></pre>
+<p><a name="exception-log-levels"></a></p>
+<h3>異常日誌等級</h3>
+<p>當訊息寫入應用程式的<a href="/docs/logging">日誌</a>時，訊息以指定的<a href="/docs/logging#log-levels">日誌等級</a>寫入，該等級指示正在記錄的訊息的嚴重性或重要性。</p>
+<p>如上所述，即使您使用 <code>report</code> 方法註冊了自訂異常報告回呼，Laravel 仍將使用應用程式的預設日誌記錄設定來記錄異常；但是，由於日誌等級有時會影響訊息被記錄的管道，您可能希望配置某些異常被記錄的日誌等級。</p>
+<p>要實現此目的，您可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>level</code> 異常方法。此方法接受異常類型作為第一個參數，日誌等級作為第二個參數：</p>
+<pre><code class="language-php">use PDOException;
+use Psr\\Log\\LogLevel;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->level(PDOException::class, LogLevel::CRITICAL);
+})
+</code></pre>
+<p><a name="ignoring-exceptions-by-type"></a></p>
+<h3>依類型忽略異常</h3>
+<p>在建構應用程式時，有些類型的異常您永遠不想報告。要忽略這些異常，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>dontReport</code> 異常方法。提供給此方法的任何類別永遠不會被報告；但是，它們可能仍有自訂渲染邏輯：</p>
+<pre><code class="language-php">use App\\Exceptions\\InvalidOrderException;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->dontReport([
+        InvalidOrderException::class,
+    ]);
+})
+</code></pre>
+<p>或者，您可以簡單地使用 <code>Illuminate\\Contracts\\Debug\\ShouldntReport</code> 介面「標記」一個異常類別。當異常被標記此介面時，它永遠不會被 Laravel 的異常處理器報告：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Exceptions;
+
+use Exception;
+use Illuminate\\Contracts\\Debug\\ShouldntReport;
+
+class PodcastProcessingException extends Exception implements ShouldntReport
+{
+    //
+}
+</code></pre>
+<p>如果您需要更精確地控制何時忽略特定類型的異常，可以向 <code>dontReportWhen</code> 方法提供一個閉包：</p>
+<pre><code class="language-php">use App\\Exceptions\\InvalidOrderException;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->dontReportWhen(function (Throwable $e) {
+        return $e instanceof PodcastProcessingException &&
+               $e->reason() === 'Subscription expired';
+    });
+})
+</code></pre>
+<p>在內部，Laravel 已經為您忽略了某些類型的錯誤，例如 404 HTTP 錯誤導致的異常、來源不匹配生成的 403 HTTP 響應，或無效 CSRF 令牌生成的 419 HTTP 響應。如果您希望指示 Laravel 停止忽略給定類型的異常，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>stopIgnoring</code> 異常方法：</p>
+<pre><code class="language-php">use Symfony\\Component\\HttpKernel\\Exception\\HttpException;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->stopIgnoring(HttpException::class);
+})
+</code></pre>
+<p><a name="rendering-exceptions"></a></p>
+<h3>渲染異常</h3>
+<p>預設情況下，Laravel 異常處理器將為您將異常轉換為 HTTP 響應。但是，您可以自由地為給定類型的異常註冊自訂渲染閉包。您可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>render</code> 異常方法來實現。</p>
+<p>傳遞給 <code>render</code> 方法的閉包應返回 <code>Illuminate\\Http\\Response</code> 的實例，可以透過 <code>response</code> 輔助函數生成。Laravel 將透過檢查閉包的類型提示來判斷閉包渲染什麼類型的異常：</p>
+<pre><code class="language-php">use App\\Exceptions\\InvalidOrderException;
+use Illuminate\\Http\\Request;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->render(function (InvalidOrderException $e, Request $request) {
+        return response()->view('errors.invalid-order', status: 500);
+    });
+})
+</code></pre>
+<p>您也可以使用 <code>render</code> 方法來覆寫 Laravel 或 Symfony 內建異常（如 <code>NotFoundHttpException</code>）的渲染行為。如果傳遞給 <code>render</code> 方法的閉包沒有返回值，將使用 Laravel 的預設異常渲染：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+        if ($request->is('api/*')) {
+            return response()->json([
+                'message' => 'Record not found.'
+            ], 404);
+        }
+    });
+})
+</code></pre>
+<p><a name="rendering-exceptions-as-json"></a></p>
+<h4>將異常渲染為 JSON</h4>
+<p>渲染異常時，Laravel 將根據請求的 <code>Accept</code> 標頭自動判斷異常應渲染為 HTML 還是 JSON 響應。如果您想自訂 Laravel 如何判斷是否渲染 HTML 或 JSON 異常響應，可以使用 <code>shouldRenderJsonWhen</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
+        if ($request->is('admin/*')) {
+            return true;
+        }
+
+        return $request->expectsJson();
+    });
+})
+</code></pre>
+<p><a name="customizing-the-exception-response"></a></p>
+<h4>自訂異常響應</h4>
+<p>極少數情況下，您可能需要自訂 Laravel 異常處理器渲染的整個 HTTP 響應。要實現此目的，您可以使用 <code>respond</code> 方法註冊一個響應自訂閉包：</p>
+<pre><code class="language-php">use Symfony\\Component\\HttpFoundation\\Response;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->respond(function (Response $response) {
+        if ($response->getStatusCode() === 419) {
+            return back()->with([
+                'message' => 'The page expired, please try again.',
+            ]);
+        }
+
+        return $response;
+    });
+})
+</code></pre>
+<p><a name="renderable-exceptions"></a></p>
+<h3>可報告和可渲染的異常</h3>
+<p>您可以在應用程式的異常上直接定義 <code>report</code> 和 <code>render</code> 方法，而不是在應用程式的 <code>bootstrap/app.php</code> 檔案中定義自訂報告和渲染行為。當這些方法存在時，它們將被框架自動呼叫：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Exceptions;
+
+use Exception;
+use Illuminate\\Http\\Request;
+use Illuminate\\Http\\Response;
+
+class InvalidOrderException extends Exception
+{
+    /**
+     * Report the exception.
+     */
+    public function report(): void
+    {
+        // ...
+    }
+
+    /**
+     * Render the exception as an HTTP response.
+     */
+    public function render(Request $request): Response
+    {
+        return response(/* ... */);
+    }
+}
+</code></pre>
+<p>如果您 的異常擴展了已經可渲染的異常（如 Laravel 或 Symfony 的內建異常），可以從異常的 <code>render</code> 方法返回 <code>false</code> 來渲染異常的預設 HTTP 響應：</p>
+<pre><code class="language-php">/**
+ * Render the exception as an HTTP response.
+ */
+public function render(Request $request): Response|bool
+{
+    if (/** Determine if the exception needs custom rendering */) {
+
+        return response(/* ... */);
+    }
+
+    return false;
+}
+</code></pre>
+<p>如果您的異常包含僅在滿足某些條件時才需要的自訂報告邏輯，您可能需要指示 Laravel 有時使用預設異常處理設定來報告異常。要實現此目的，您可以從異常的 <code>report</code> 方法返回 <code>false</code>：</p>
+<pre><code class="language-php">/**
+ * Report the exception.
+ */
+public function report(): bool
+{
+    if (/** Determine if the exception needs custom reporting */) {
+
+        // ...
+
+        return true;
+    }
+
+    return false;
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您可以對 <code>report</code> 方法的任何所需依賴項進行類型提示，它們將被 Laravel 的<a href="/docs/container">服務容器</a>自動注入到方法中。</p>
+</blockquote>
+<p><a name="throttling-reported-exceptions"></a></p>
+<h3>限制報告的異常</h3>
+<p>如果您的應用程式報告了大量異常，您可能想限制實際記錄或發送到應用程式外部錯誤追蹤服務的異常數量。</p>
+<p>要隨機抽樣異常，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>throttle</code> 異常方法。<code>throttle</code> 方法接受一個應返回 <code>Lottery</code> 實例的閉包：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Lottery;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->throttle(function (Throwable $e) {
+        return Lottery::odds(1, 1000);
+    });
+})
+</code></pre>
+<p>也可以根據異常類型進行條件抽樣。如果您只想抽樣特定異常類別的實例，可以僅為該類別返回 <code>Lottery</code> 實例：</p>
+<pre><code class="language-php">use App\\Exceptions\\ApiMonitoringException;
+use Illuminate\\Support\\Lottery;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->throttle(function (Throwable $e) {
+        if ($e instanceof ApiMonitoringException) {
+            return Lottery::odds(1, 1000);
+        }
+    });
+})
+</code></pre>
+<p>您也可以透過返回 <code>Limit</code> 實例而非 <code>Lottery</code> 來限制記錄或發送到外部錯誤追蹤服務的異常。如果您想防止異常突然湧入日誌，例如當應用程式使用的第三方服務當機時，這很有用：</p>
+<pre><code class="language-php">use Illuminate\\Broadcasting\\BroadcastException;
+use Illuminate\\Cache\\RateLimiting\\Limit;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->throttle(function (Throwable $e) {
+        if ($e instanceof BroadcastException) {
+            return Limit::perMinute(300);
+        }
+    });
+})
+</code></pre>
+<p>預設情況下，限制將使用異常的類別作為速率限制索引鍵。您可以透過在 <code>Limit</code> 上使用 <code>by</code> 方法指定自己的索引鍵來自訂：</p>
+<pre><code class="language-php">use Illuminate\\Broadcasting\\BroadcastException;
+use Illuminate\\Cache\\RateLimiting\\Limit;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->throttle(function (Throwable $e) {
+        if ($e instanceof BroadcastException) {
+            return Limit::perMinute(300)->by($e->getMessage());
+        }
+    });
+})
+</code></pre>
+<p>當然，您可以為不同的異常返回 <code>Lottery</code> 和 <code>Limit</code> 實例的混合：</p>
+<pre><code class="language-php">use App\\Exceptions\\ApiMonitoringException;
+use Illuminate\\Broadcasting\\BroadcastException;
+use Illuminate\\Cache\\RateLimiting\\Limit;
+use Illuminate\\Support\\Lottery;
+use Throwable;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->throttle(function (Throwable $e) {
+        return match (true) {
+            $e instanceof BroadcastException => Limit::perMinute(300),
+            $e instanceof ApiMonitoringException => Lottery::odds(1, 1000),
+            default => Limit::none(),
+        };
+    });
+})
+</code></pre>
+<p><a name="http-exceptions"></a></p>
+<h2>HTTP 異常</h2>
+<p>某些異常描述了來自伺服器的 HTTP 錯誤代碼。例如，這可能是「頁面未找到」錯誤（404）、「未授權錯誤」（401），甚至是開發者生成的 500 錯誤。為了從應用程式中的任何地方生成此類響應，可以使用 <code>abort</code> 輔助函數：</p>
+<pre><code class="language-php">abort(404);
+</code></pre>
+<p><a name="custom-http-error-pages"></a></p>
+<h3>自訂 HTTP 錯誤頁面</h3>
+<p>Laravel 讓您能輕鬆為各種 HTTP 狀態碼顯示自訂錯誤頁面。例如，要自訂 404 HTTP 狀態碼的錯誤頁面，請建立一個 <code>resources/views/errors/404.blade.php</code> 視圖模板。此視圖將為應用程式生成的所有 404 錯誤渲染。此目錄中的視圖應命名為與其對應的 HTTP 狀態碼匹配。由 <code>abort</code> 函數引發的 <code>Symfony\\Component\\HttpKernel\\Exception\\HttpException</code> 實例將作為 <code>$exception</code> 變數傳遞給視圖：</p>
+<pre><code class="language-blade">&lt;h2&gt;{{ $exception->getMessage() }}&lt;/h2&gt;
+</code></pre>
+<p>您可以使用 <code>vendor:publish</code> Artisan 命令發佈 Laravel 的預設錯誤頁面模板。模板發佈後，您可以根據自己的喜好自訂它們：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=laravel-errors
+</code></pre>
+<p><a name="fallback-http-error-pages"></a></p>
+<h4>後備 HTTP 錯誤頁面</h4>
+<p>您還可以為給定的一系列 HTTP 狀態碼定義一個「後備」錯誤頁面。如果沒有與發生的特定 HTTP 狀態碼對應的頁面，將渲染此頁面。要實現此目的，請在應用程式的 <code>resources/views/errors</code> 目錄中定義一個 <code>4xx.blade.php</code> 模板和一個 <code>5xx.blade.php</code> 模板。</p>
+<p>定義後備錯誤頁面時，後備頁面不會影響 <code>404</code>、<code>500</code> 和 <code>503</code> 錯誤響應，因為 Laravel 對這些狀態碼有內部專用頁面。要自訂為這些狀態碼渲染的頁面，您應該為每個狀態碼單獨定義一個自訂錯誤頁面。</p>
+`;
+---
+
+<DocsLayout title="錯誤處理" currentPath="errors">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>錯誤處理</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">錯誤處理</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/errors" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

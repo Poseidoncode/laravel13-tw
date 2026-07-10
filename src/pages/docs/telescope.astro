@@ -1,0 +1,400 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Telescope</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#local-only-installation">僅限本機安裝</a></li>
+<li><a href="#configuration">設定</a></li>
+<li><a href="#data-pruning">資料修剪</a></li>
+<li><a href="#dashboard-authorization">儀表板授權</a></li>
+</ul>
+</li>
+<li><a href="#upgrading-telescope">升級 Telescope</a></li>
+<li><a href="#filtering">篩選</a><ul>
+<li><a href="#filtering-entries">條目</a></li>
+<li><a href="#filtering-batches">批次</a></li>
+</ul>
+</li>
+<li><a href="#tagging">標籤</a></li>
+<li><a href="#available-watchers">可用的觀察者</a><ul>
+<li><a href="#batch-watcher">批次觀察者</a></li>
+<li><a href="#cache-watcher">快取觀察者</a></li>
+<li><a href="#command-watcher">命令觀察者</a></li>
+<li><a href="#dump-watcher">Dump 觀察者</a></li>
+<li><a href="#event-watcher">事件觀察者</a></li>
+<li><a href="#exception-watcher">異常觀察者</a></li>
+<li><a href="#gate-watcher">Gate 觀察者</a></li>
+<li><a href="#http-client-watcher">HTTP 客戶端觀察者</a></li>
+<li><a href="#job-watcher">任務觀察者</a></li>
+<li><a href="#log-watcher">日誌觀察者</a></li>
+<li><a href="#mail-watcher">郵件觀察者</a></li>
+<li><a href="#model-watcher">模型觀察者</a></li>
+<li><a href="#notification-watcher">通知觀察者</a></li>
+<li><a href="#query-watcher">查詢觀察者</a></li>
+<li><a href="#redis-watcher">Redis 觀察者</a></li>
+<li><a href="#request-watcher">請求觀察者</a></li>
+<li><a href="#schedule-watcher">排程觀察者</a></li>
+<li><a href="#view-watcher">視圖觀察者</a></li>
+</ul>
+</li>
+<li><a href="#displaying-user-avatars">顯示用戶頭像</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/telescope">Laravel Telescope</a> 是您本機 Laravel 開發環境的絕佳伴侶。Telescope 提供了對進入應用程式的請求、異常、日誌條目、資料庫查詢、佇列任務、郵件、通知、快取操作、排程任務、變數 dump 等的深入了解。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>您可以使用 Composer 套件管理器將 Telescope 安裝到您的 Laravel 專案中：</p>
+<pre><code class="language-shell">composer require laravel/telescope
+</code></pre>
+<p>安裝 Telescope 後，使用 <code>telescope:install</code> Artisan 命令發佈其資產和遷移。安裝 Telescope 後，您還應該執行 <code>migrate</code> 命令以建立儲存 Telescope 資料所需的表：</p>
+<pre><code class="language-shell">php artisan telescope:install
+
+php artisan migrate
+</code></pre>
+<p>最後，您可以透過 <code>/telescope</code> 路由存取 Telescope 儀表板。</p>
+<p><a name="local-only-installation"></a></p>
+<h3>僅限本機安裝</h3>
+<p>如果您計劃僅使用 Telescope 來輔助本機開發，可以使用 <code>--dev</code> 標誌安裝 Telescope：</p>
+<pre><code class="language-shell">composer require laravel/telescope --dev
+
+php artisan telescope:install
+
+php artisan migrate
+</code></pre>
+<p>執行 <code>telescope:install</code> 後，應從應用程式的 <code>bootstrap/providers.php</code> 配置檔中移除 <code>TelescopeServiceProvider</code> 服務提供者註冊。相反，應在 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>register</code> 方法中手動註冊 Telescope 的服務提供者。我們將在註冊提供者之前確保當前環境為 <code>local</code>：</p>
+<pre><code class="language-php">/**
+ * Register any application services.
+ */
+public function register(): void
+{
+    if ($this->app->environment('local') && class_exists(\\Laravel\\Telescope\\TelescopeServiceProvider::class)) {
+        $this->app->register(\\Laravel\\Telescope\\TelescopeServiceProvider::class);
+        $this->app->register(TelescopeServiceProvider::class);
+    }
+}
+</code></pre>
+<p>最後，您還應該透過在 <code>composer.json</code> 檔案中新增以下內容來防止 Telescope 套件被<a href="/docs/packages#package-discovery">自動發現</a>：</p>
+<pre><code class="language-json">"extra": {
+    "laravel": {
+        "dont-discover": [
+            "laravel/telescope"
+        ]
+    }
+},
+</code></pre>
+<p><a name="configuration"></a></p>
+<h3>設定</h3>
+<p>發佈 Telescope 的資產後，其主要配置檔將位於 <code>config/telescope.php</code>。此配置檔允許您配置<a href="#available-watchers">觀察者選項</a>。每個配置選項都包含其用途的描述，因此請務必仔細探索此檔案。</p>
+<p>如果需要，您可以使用 <code>enabled</code> 配置選項完全停用 Telescope 的資料收集：</p>
+<pre><code class="language-php">'enabled' => env('TELESCOPE_ENABLED', true),
+</code></pre>
+<p><a name="data-pruning"></a></p>
+<h3>資料修剪</h3>
+<p>如果不進行修剪，<code>telescope_entries</code> 表可以非常快速地累積記錄。為了緩解此問題，您應該<a href="/docs/scheduling">排程</a> <code>telescope:prune</code> Artisan 命令每天執行：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Schedule;
+
+Schedule::command('telescope:prune')->daily();
+</code></pre>
+<p>預設情況下，超過 24 小時的所有條目都將被修剪。您可以在呼叫命令時使用 <code>hours</code> 選項來決定保留 Telescope 資料的時間。例如，以下命令將刪除超過 48 小時前建立的所有記錄：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Schedule;
+
+Schedule::command('telescope:prune --hours=48')->daily();
+</code></pre>
+<p><a name="dashboard-authorization"></a></p>
+<h3>儀表板授權</h3>
+<p>Telescope 儀表板可以透過 <code>/telescope</code> 路由存取。預設情況下，您只能在 <code>local</code> 環境中存取此儀表板。在 <code>app/Providers/TelescopeServiceProvider.php</code> 檔案中，有一個<a href="/docs/authorization#gates">授權閘道</a>定義。此授權閘道控制在<strong>非本機</strong>環境中對 Telescope 的存取。您可以根據需要自由修改此閘道以限制對 Telescope 安裝的存取：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+/**
+ * Register the Telescope gate.
+ *
+ * This gate determines who can access Telescope in non-local environments.
+ */
+protected function gate(): void
+{
+    Gate::define('viewTelescope', function (User $user) {
+        return in_array($user->email, [
+            'taylor@laravel.com',
+        ]);
+    });
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+您應該確保在生產環境中將 <code>APP_ENV</code> 環境變數更改為 <code>production</code>。否則，您的 Telescope 安裝將公開可用。</p>
+</blockquote>
+<p><a name="upgrading-telescope"></a></p>
+<h2>升級 Telescope</h2>
+<p>升級到 Telescope 的新主要版本時，務必仔細查看<a href="https://github.com/laravel/telescope/blob/master/UPGRADE.md">升級指南</a>。</p>
+<p>此外，升級到任何新版本的 Telescope 時，應重新發佈 Telescope 的資產：</p>
+<pre><code class="language-shell">php artisan telescope:publish
+</code></pre>
+<p>為了保持資產最新並避免未來更新中的問題，您可以將 <code>vendor:publish --tag=laravel-assets</code> 命令新增到應用程式 <code>composer.json</code> 檔案中的 <code>post-update-cmd</code> 腳本：</p>
+<pre><code class="language-json">{
+    "scripts": {
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ]
+    }
+}
+</code></pre>
+<p><a name="filtering"></a></p>
+<h2>篩選</h2>
+<p><a name="filtering-entries"></a></p>
+<h3>條目</h3>
+<p>您可以透過 <code>App\\Providers\\TelescopeServiceProvider</code> 類別中定義的 <code>filter</code> 閉包來篩選 Telescope 記錄的資料。預設情況下，此閉包記錄 <code>local</code> 環境中的所有資料，以及所有其他環境中的異常、失敗任務、排程任務和具有監控標籤的資料：</p>
+<pre><code class="language-php">use Laravel\\Telescope\\IncomingEntry;
+use Laravel\\Telescope\\Telescope;
+
+/**
+ * Register any application services.
+ */
+public function register(): void
+{
+    $this->hideSensitiveRequestDetails();
+
+    Telescope::filter(function (IncomingEntry $entry) {
+        if ($this->app->environment('local')) {
+            return true;
+        }
+
+        return $entry->isReportableException() ||
+            $entry->isFailedJob() ||
+            $entry->isScheduledTask() ||
+            $entry->isSlowQuery() ||
+            $entry->hasMonitoredTag();
+    });
+}
+</code></pre>
+<p><a name="filtering-batches"></a></p>
+<h3>批次</h3>
+<p>雖然 <code>filter</code> 閉包篩選單個條目的資料，但您可以使用 <code>filterBatch</code> 方法來註冊一個閉包，該閉包篩選給定請求或控制台命令的所有資料。如果閉包返回 <code>true</code>，所有條目都將被 Telescope 記錄：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Collection;
+use Laravel\\Telescope\\IncomingEntry;
+use Laravel\\Telescope\\Telescope;
+
+/**
+ * Register any application services.
+ */
+public function register(): void
+{
+    $this->hideSensitiveRequestDetails();
+
+    Telescope::filterBatch(function (Collection $entries) {
+        if ($this->app->environment('local')) {
+            return true;
+        }
+
+        return $entries->contains(function (IncomingEntry $entry) {
+            return $entry->isReportableException() ||
+                $entry->isFailedJob() ||
+                $entry->isScheduledTask() ||
+                $entry->isSlowQuery() ||
+                $entry->hasMonitoredTag();
+            });
+    });
+}
+</code></pre>
+<p><a name="tagging"></a></p>
+<h2>標籤</h2>
+<p>Telescope 允許您透過「標籤」搜尋條目。通常，標籤是 Eloquent 模型類別名稱或已認證的用戶 ID，Telescope 會自動將它們新增到條目中。有時，您可能想將自己的自訂標籤附加到條目。要實現此目的，可以使用 <code>Telescope::tag</code> 方法。<code>tag</code> 方法接受一個應返回標籤陣列的閉包。閉包返回的標籤將與 Telescope 自動附加到條目的任何標籤合併。通常，您應該在 <code>App\\Providers\\TelescopeServiceProvider</code> 類別的 <code>register</code> 方法中呼叫 <code>tag</code> 方法：</p>
+<pre><code class="language-php">use Laravel\\Telescope\\EntryType;
+use Laravel\\Telescope\\IncomingEntry;
+use Laravel\\Telescope\\Telescope;
+
+/**
+ * Register any application services.
+ */
+public function register(): void
+{
+    $this->hideSensitiveRequestDetails();
+
+    Telescope::tag(function (IncomingEntry $entry) {
+        return $entry->type === EntryType::REQUEST
+            ? ['status:'.$entry->content['response_status']]
+            : [];
+    });
+}
+</code></pre>
+<p><a name="available-watchers"></a></p>
+<h2>可用的觀察者</h2>
+<p>Telescope「觀察者」在執行請求或控制台命令時收集應用程式資料。您可以在 <code>config/telescope.php</code> 配置檔中自訂要啟用的觀察者列表：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\CacheWatcher::class => true,
+    Watchers\\CommandWatcher::class => true,
+    // ...
+],
+</code></pre>
+<p>某些觀察者還允許您提供額外的自訂選項：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\QueryWatcher::class => [
+        'enabled' => env('TELESCOPE_QUERY_WATCHER', true),
+        'slow' => 100,
+    ],
+    // ...
+],
+</code></pre>
+<p><a name="batch-watcher"></a></p>
+<h3>批次觀察者</h3>
+<p>批次觀察者記錄有關佇列<a href="/docs/queues#job-batching">批次</a>的資訊，包括任務和連線資訊。</p>
+<p><a name="cache-watcher"></a></p>
+<h3>快取觀察者</h3>
+<p>快取觀察者在快取索引鍵被命中、未命中、更新和遺忘時記錄資料。</p>
+<p><a name="command-watcher"></a></p>
+<h3>命令觀察者</h3>
+<p>命令觀察者在執行 Artisan 命令時記錄參數、選項、退出代碼和輸出。如果您想排除某些命令不被觀察者記錄，可以在 <code>config/telescope.php</code> 檔案中的 <code>ignore</code> 選項中指定：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\CommandWatcher::class => [
+        'enabled' => env('TELESCOPE_COMMAND_WATCHER', true),
+        'ignore' => ['key:generate'],
+    ],
+    // ...
+],
+</code></pre>
+<p><a name="dump-watcher"></a></p>
+<h3>Dump 觀察者</h3>
+<p>dump 觀察者在 Telescope 中記錄並顯示您的變數 dump。使用 Laravel 時，可以使用全域 <code>dump</code> 函數來 dump 變數。必須在瀏覽器中開啟 dump 觀察者標籤頁才能記錄 dump，否則 dump 將被觀察者忽略。</p>
+<p><a name="event-watcher"></a></p>
+<h3>事件觀察者</h3>
+<p>事件觀察者記錄應用程式派發的任何<a href="/docs/events">事件</a>的有效負載、監聽器和廣播資料。Laravel 框架的內部事件被事件觀察者忽略。</p>
+<p><a name="exception-watcher"></a></p>
+<h3>異常觀察者</h3>
+<p>異常觀察者記錄應用程式拋出的任何可報告異常的資料和堆疊追蹤。</p>
+<p><a name="gate-watcher"></a></p>
+<h3>Gate 觀察者</h3>
+<p>Gate 觀察者記錄應用程式的 <a href="/docs/authorization">gate 和 policy</a> 檢查的資料和結果。如果您想排除某些能力不被觀察者記錄，可以在 <code>config/telescope.php</code> 檔案中的 <code>ignore_abilities</code> 選項中指定：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\GateWatcher::class => [
+        'enabled' => env('TELESCOPE_GATE_WATCHER', true),
+        'ignore_abilities' => ['viewNova'],
+    ],
+    // ...
+],
+</code></pre>
+<p><a name="http-client-watcher"></a></p>
+<h3>HTTP 客戶端觀察者</h3>
+<p>HTTP 客戶端觀察者記錄應用程式發出的<a href="/docs/http-client"> HTTP 客戶端請求</a>。</p>
+<p><a name="job-watcher"></a></p>
+<h3>任務觀察者</h3>
+<p>任務觀察者記錄應用程式派發的任何<a href="/docs/queues">任務</a>的資料和狀態。</p>
+<p><a name="log-watcher"></a></p>
+<h3>日誌觀察者</h3>
+<p>日誌觀察者記錄應用程式寫入的任何<a href="/docs/logging">日誌資料</a>。</p>
+<p>預設情況下，Telescope 僅記錄 <code>error</code> 等級及以上的日誌。但是，您可以修改應用程式 <code>config/telescope.php</code> 配置檔中的 <code>level</code> 選項來修改此行為：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\LogWatcher::class => [
+        'enabled' => env('TELESCOPE_LOG_WATCHER', true),
+        'level' => 'debug',
+    ],
+
+    // ...
+],
+</code></pre>
+<p><a name="mail-watcher"></a></p>
+<h3>郵件觀察者</h3>
+<p>郵件觀察者允許您在瀏覽器中預覽應用程式發送的<a href="/docs/mail">郵件</a>及其關聯資料。您也可以將郵件下載為 <code>.eml</code> 檔案。</p>
+<p><a name="model-watcher"></a></p>
+<h3>模型觀察者</h3>
+<p>模型觀察者在派發 Eloquent <a href="/docs/eloquent#events">模型事件</a>時記錄模型變更。您可以透過觀察者的 <code>events</code> 選項指定應記錄哪些模型事件：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\ModelWatcher::class => [
+        'enabled' => env('TELESCOPE_MODEL_WATCHER', true),
+        'events' => ['eloquent.created*', 'eloquent.updated*'],
+    ],
+    // ...
+],
+</code></pre>
+<p>如果您想記錄在給定請求期間水合的模型數量，請啟用 <code>hydrations</code> 選項：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\ModelWatcher::class => [
+        'enabled' => env('TELESCOPE_MODEL_WATCHER', true),
+        'events' => ['eloquent.created*', 'eloquent.updated*'],
+        'hydrations' => true,
+    ],
+    // ...
+],
+</code></pre>
+<p><a name="notification-watcher"></a></p>
+<h3>通知觀察者</h3>
+<p>通知觀察者記錄應用程式發送的所有<a href="/docs/notifications">通知</a>。如果通知觸發了郵件且您啟用了郵件觀察者，郵件也將可在郵件觀察者畫面上預覽。</p>
+<p><a name="query-watcher"></a></p>
+<h3>查詢觀察者</h3>
+<p>查詢觀察者記錄應用程式執行的所有查詢的原始 SQL、綁定和執行時間。觀察者還將任何超過 100 毫秒的查詢標記為 <code>slow</code>。您可以使用觀察者的 <code>slow</code> 選項自訂慢查詢閾值：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\QueryWatcher::class => [
+        'enabled' => env('TELESCOPE_QUERY_WATCHER', true),
+        'slow' => 50,
+    ],
+    // ...
+],
+</code></pre>
+<p><a name="redis-watcher"></a></p>
+<h3>Redis 觀察者</h3>
+<p>Redis 觀察者記錄應用程式執行的所有 <a href="/docs/redis">Redis</a> 命令。如果您正在使用 Redis 進行快取，Redis 觀察者也將記錄快取命令。</p>
+<p><a name="request-watcher"></a></p>
+<h3>請求觀察者</h3>
+<p>請求觀察者記錄與應用程式處理的任何請求關聯的請求、標頭、Session 和響應資料。您可以透過 <code>size_limit</code>（千位元組）選項限制記錄的響應資料：</p>
+<pre><code class="language-php">'watchers' => [
+    Watchers\\RequestWatcher::class => [
+        'enabled' => env('TELESCOPE_REQUEST_WATCHER', true),
+        'size_limit' => env('TELESCOPE_RESPONSE_SIZE_LIMIT', 64),
+    ],
+    // ...
+],
+</code></pre>
+<p><a name="schedule-watcher"></a></p>
+<h3>排程觀察者</h3>
+<p>排程觀察者記錄應用程式運行的任何<a href="/docs/scheduling">排程任務</a>的命令和輸出。</p>
+<p><a name="view-watcher"></a></p>
+<h3>視圖觀察者</h3>
+<p>視圖觀察者記錄渲染視圖時使用的<a href="/docs/views">視圖</a>名稱、路徑、資料和「合成器」。</p>
+<p><a name="displaying-user-avatars"></a></p>
+<h2>顯示用戶頭像</h2>
+<p>Telescope 儀表板顯示儲存給定條目時已認證的用戶的頭像。預設情況下，Telescope 將使用 Gravatar 網路服務來檢索頭像。但是，您可以透過在 <code>App\\Providers\\TelescopeServiceProvider</code> 類別中註冊回呼來自訂頭像 URL。回呼將接收用戶的 ID 和電子郵件地址，並應返回用戶的頭像圖片 URL：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Laravel\\Telescope\\Telescope;
+
+/**
+ * Register any application services.
+ */
+public function register(): void
+{
+    // ...
+
+    Telescope::avatar(function (?string $id, ?string $email) {
+        return ! is_null($id)
+            ? '/avatars/'.User::find($id)->avatar_path
+            : '/generic-avatar.jpg';
+    });
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="Laravel Telescope" currentPath="telescope">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Telescope</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Telescope</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/telescope" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

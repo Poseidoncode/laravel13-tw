@@ -1,0 +1,1310 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>郵件</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#configuration">配置</a></li>
+<li><a href="#driver-prerequisites">驅動程式先決條件</a></li>
+<li><a href="#failover-configuration">故障轉移配置</a></li>
+<li><a href="#round-robin-configuration">循環配置</a></li>
+</ul>
+</li>
+<li><a href="#generating-mailables">生成可郵寄物件</a></li>
+<li><a href="#writing-mailables">編寫可郵寄物件</a><ul>
+<li><a href="#configuring-the-sender">配置寄件者</a></li>
+<li><a href="#configuring-the-view">配置視圖</a></li>
+<li><a href="#view-data">視圖資料</a></li>
+<li><a href="#attachments">附件</a></li>
+<li><a href="#inline-attachments">內聯附件</a></li>
+<li><a href="#attachable-objects">可附加物件</a></li>
+<li><a href="#headers">頁頭</a></li>
+<li><a href="#tags-and-metadata">標籤和元資料</a></li>
+<li><a href="#customizing-the-symfony-message">自訂 Symfony 訊息</a></li>
+</ul>
+</li>
+<li><a href="#markdown-mailables">Markdown 可郵寄物件</a><ul>
+<li><a href="#generating-markdown-mailables">生成 Markdown 可郵寄物件</a></li>
+<li><a href="#writing-markdown-messages">編寫 Markdown 訊息</a></li>
+<li><a href="#customizing-the-components">自訂元件</a></li>
+</ul>
+</li>
+<li><a href="#sending-mail">發送郵件</a><ul>
+<li><a href="#queueing-mail">郵件佇列</a></li>
+</ul>
+</li>
+<li><a href="#rendering-mailables">渲染可郵寄物件</a><ul>
+<li><a href="#previewing-mailables-in-the-browser">在瀏覽器中預覽可郵寄物件</a></li>
+</ul>
+</li>
+<li><a href="#localizing-mailables">本地化可郵寄物件</a></li>
+<li><a href="#testing-mailables">測試</a><ul>
+<li><a href="#testing-mailable-content">測試可郵寄物件內容</a></li>
+<li><a href="#testing-mailable-sending">測試可郵寄物件發送</a></li>
+</ul>
+</li>
+<li><a href="#mail-and-local-development">郵件和本地開發</a></li>
+<li><a href="#events">事件</a></li>
+<li><a href="#custom-transports">自訂傳輸</a><ul>
+<li><a href="#additional-symfony-transports">額外的 Symfony 傳輸</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>發送電子郵件不必複雜。Laravel 提供了一個乾淨、簡單的電子郵件 API，由流行的 <a href="https://symfony.com/doc/current/mailer.html">Symfony Mailer</a> 元件提供支援。Laravel 和 Symfony Mailer 提供了透過 SMTP、Cloudflare、Mailgun、Postmark、Resend、Amazon SES 和 <code>sendmail</code> 發送電子郵件的驅動程式，讓您可以快速開始透過您選擇的本地或雲端服務發送郵件。</p>
+<p><a name="configuration"></a></p>
+<h3>配置</h3>
+<p>Laravel 的電子郵件服務可以透過應用程式的 <code>config/mail.php</code> 配置檔案進行配置。在此檔案中配置的每個郵件程式都可以有其自己獨特的配置，甚至可以有自己獨特的「傳輸」，允許您的應用程式使用不同的電子郵件服務來傳送特定的電子郵件。例如，您的應用程式可能會使用 Postmark 來傳送交易郵件，同時使用 Amazon SES 來傳送大量郵件。</p>
+<p>在您的 <code>mail</code> 配置檔案中，您會找到一個 <code>mailers</code> 配置陣列。此陣列包含 Laravel 支援的每個主要郵件驅動程式/傳輸的範例配置條目，而 <code>default</code> 配置值決定了當您的應用程式需要傳送電子郵件時預設使用哪個郵件程式。</p>
+<p><a name="driver-prerequisites"></a></p>
+<h3>驅動程式/傳輸先決條件</h3>
+<p>基於 API 的驅動程式（例如 Mailgun、Postmark 和 Resend）通常比透過 SMTP 伺服器發送郵件更簡單、更快。如果可能，我們建議您使用這些驅動程式之一。</p>
+<p><a name="cloudflare-driver"></a></p>
+<h4>Cloudflare 驅動程式</h4>
+<p>要使用 Cloudflare 驅動程式，請透過 Composer 安裝 Symfony 的 HTTP 客戶端：</p>
+<pre><code class="language-shell">composer require symfony/http-client
+</code></pre>
+<p>接下來，您需要在應用程式的 <code>config/mail.php</code> 配置檔案中進行兩項更改。首先，將預設郵件程式設定為 <code>cloudflare</code>：</p>
+<pre><code class="language-php">'default' => env('MAIL_MAILER', 'cloudflare'),
+</code></pre>
+<p>其次，將以下配置陣列添加到您的 <code>mailers</code> 陣列中：</p>
+<pre><code class="language-php">'cloudflare' => [
+    'transport' => 'cloudflare',
+],
+</code></pre>
+<p>配置好應用程式的預設郵件程式後，將以下選項添加到 <code>config/services.php</code> 配置檔案中：</p>
+<pre><code class="language-php">'cloudflare' => [
+    'account_id' => env('CLOUDFLARE_ACCOUNT_ID'),
+    'key' => env('CLOUDFLARE_KEY'),
+],
+</code></pre>
+<p><a name="mailgun-driver"></a></p>
+<h4>Mailgun 驅動程式</h4>
+<p>要使用 Mailgun 驅動程式，請透過 Composer 安裝 Symfony 的 Mailgun Mailer 傳輸：</p>
+<pre><code class="language-shell">composer require symfony/mailgun-mailer symfony/http-client
+</code></pre>
+<p>接下來，您需要在應用程式的 <code>config/mail.php</code> 配置檔案中進行兩項更改。首先，將預設郵件程式設定為 <code>mailgun</code>：</p>
+<pre><code class="language-php">'default' => env('MAIL_MAILER', 'mailgun'),
+</code></pre>
+<p>其次，將以下配置陣列添加到您的 <code>mailers</code> 陣列中：</p>
+<pre><code class="language-php">'mailgun' => [
+    'transport' => 'mailgun',
+    // 'client' => [
+    //     'timeout' => 5,
+    // ],
+],
+</code></pre>
+<p>配置好應用程式的預設郵件程式後，將以下選項添加到 <code>config/services.php</code> 配置檔案中：</p>
+<pre><code class="language-php">'mailgun' => [
+    'domain' => env('MAILGUN_DOMAIN'),
+    'secret' => env('MAILGUN_SECRET'),
+    'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+    'scheme' => 'https',
+],
+</code></pre>
+<p>如果您不在美國使用 <a href="https://documentation.mailgun.com/docs/mailgun/api-reference/api-overview#mailgun-regions">Mailgun 區域</a>，可以在 <code>services</code> 配置檔案中定義您區域的端點：</p>
+<pre><code class="language-php">'mailgun' => [
+    'domain' => env('MAILGUN_DOMAIN'),
+    'secret' => env('MAILGUN_SECRET'),
+    'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
+    'scheme' => 'https',
+],
+</code></pre>
+<p><a name="postmark-driver"></a></p>
+<h4>Postmark 驅動程式</h4>
+<p>要使用 <a href="https://postmarkapp.com/">Postmark</a> 驅動程式，請透過 Composer 安裝 Symfony 的 Postmark Mailer 傳輸：</p>
+<pre><code class="language-shell">composer require symfony/postmark-mailer symfony/http-client
+</code></pre>
+<p>接下來，將應用程式 <code>config/mail.php</code> 配置檔案中的 <code>default</code> 選項設定為 <code>postmark</code>。配置好應用程式的預設郵件程式後，確保您的 <code>config/services.php</code> 配置檔案包含以下選項：</p>
+<pre><code class="language-php">'postmark' => [
+    'key' => env('POSTMARK_API_KEY'),
+],
+</code></pre>
+<p>如果您希望指定給定郵件程式應使用的 Postmark 訊息流，可以將 <code>message_stream_id</code> 配置選項添加到郵件程式的配置陣列中。此配置陣列可以在應用程式的 <code>config/mail.php</code> 配置檔案中找到：</p>
+<pre><code class="language-php">'postmark' => [
+    'transport' => 'postmark',
+    'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
+    // 'client' => [
+    //     'timeout' => 5,
+    // ],
+],
+</code></pre>
+<p>這樣您也可以設定多個具有不同訊息流的 Postmark 郵件程式。</p>
+<p><a name="resend-driver"></a></p>
+<h4>Resend 驅動程式</h4>
+<p>要使用 <a href="https://resend.com/">Resend</a> 驅動程式，請透過 Composer 安裝 Resend 的 PHP SDK：</p>
+<pre><code class="language-shell">composer require resend/resend-php
+</code></pre>
+<p>接下來，將應用程式 <code>config/mail.php</code> 配置檔案中的 <code>default</code> 選項設定為 <code>resend</code>。配置好應用程式的預設郵件程式後，確保您的 <code>config/services.php</code> 配置檔案包含以下選項：</p>
+<pre><code class="language-php">'resend' => [
+    'key' => env('RESEND_API_KEY'),
+],
+</code></pre>
+<p><a name="ses-driver"></a></p>
+<h4>SES 驅動程式</h4>
+<p>要使用 Amazon SES 驅動程式，您必須首先安裝 Amazon AWS SDK for PHP。您可以透過 Composer 套件管理器安裝此庫：</p>
+<pre><code class="language-shell">composer require aws/aws-sdk-php
+</code></pre>
+<p>接下來，將 <code>config/mail.php</code> 配置檔案中的 <code>default</code> 選項設定為 <code>ses</code>，並驗證您的 <code>config/services.php</code> 配置檔案包含以下選項：</p>
+<pre><code class="language-php">'ses' => [
+    'key' => env('AWS_ACCESS_KEY_ID'),
+    'secret' => env('AWS_SECRET_ACCESS_KEY'),
+    'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+],
+</code></pre>
+<p>要透過會話令牌使用 AWS <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html">臨時憑據</a>，您可以在應用程式的 SES 配置中添加一個 <code>token</code> 鍵：</p>
+<pre><code class="language-php">'ses' => [
+    'key' => env('AWS_ACCESS_KEY_ID'),
+    'secret' => env('AWS_SECRET_ACCESS_KEY'),
+    'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    'token' => env('AWS_SESSION_TOKEN'),
+],
+</code></pre>
+<p>要與 SES 的<a href="https://docs.aws.amazon.com/ses/latest/dg/sending-email-subscription-management.html">訂閱管理功能</a>互動，您可以在郵件訊息的 <a href="#headers">headers</a> 方法返回的陣列中返回 <code>X-Ses-List-Management-Options</code> 頁頭：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息頁頭。
+ */
+public function headers(): Headers
+{
+    return new Headers(
+        text: [
+            'X-Ses-List-Management-Options' => 'contactListName=MyContactList;topicName=MyTopic',
+        ],
+    );
+}
+</code></pre>
+<p>如果您希望定義 Laravel 在發送電子郵件時應傳遞給 AWS SDK 的 <code>SendEmail</code> 方法的<a href="https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sesv2-2019-09-27.html#sendemail">額外選項</a>，可以在 <code>ses</code> 配置中定義一個 <code>options</code> 陣列：</p>
+<pre><code class="language-php">'ses' => [
+    'key' => env('AWS_ACCESS_KEY_ID'),
+    'secret' => env('AWS_SECRET_ACCESS_KEY'),
+    'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    'options' => [
+        'ConfigurationSetName' => 'MyConfigurationSet',
+        'EmailTags' => [
+            ['Name' => 'foo', 'Value' => 'bar'],
+        ],
+    ],
+],
+</code></pre>
+<p><a name="failover-configuration"></a></p>
+<h3>故障轉移配置</h3>
+<p>有時，您配置用於傳送應用程式郵件的外部服務可能會停機。在這些情況下，定義一個或多個備份郵件傳遞配置會很有用，以防主要傳遞驅動程式停機。</p>
+<p>為此，您應該在應用程式的 <code>mail</code> 配置檔案中定義一個使用 <code>failover</code> 傳輸的郵件程式。應用程式的 <code>failover</code> 郵件程式的配置陣列應包含一個 <code>mailers</code> 陣列，該陣列引用應按順序選擇用於傳遞的配置郵件程式：</p>
+<pre><code class="language-php">'mailers' => [
+    'failover' => [
+        'transport' => 'failover',
+        'mailers' => [
+            'postmark',
+            'mailgun',
+            'sendmail',
+        ],
+        'retry_after' => 60,
+    ],
+
+    // ...
+],
+</code></pre>
+<p>配置好使用 <code>failover</code> 傳輸的郵件程式後，您需要在應用程式的 <code>.env</code> 檔案中將故障轉移郵件程式設定為預設郵件程式，以使用故障轉移功能：</p>
+<pre><code class="language-ini">MAIL_MAILER=failover
+</code></pre>
+<p><a name="round-robin-configuration"></a></p>
+<h3>循環配置</h3>
+<p><code>roundrobin</code> 傳輸允許您將郵件工作負載分配到多個郵件程式。首先，在應用程式的 <code>mail</code> 配置檔案中定義一個使用 <code>roundrobin</code> 傳輸的郵件程式。應用程式的 <code>roundrobin</code> 郵件程式的配置陣列應包含一個 <code>mailers</code> 陣列，該陣列引用哪些配置的郵件程式應用於傳遞：</p>
+<pre><code class="language-php">'mailers' => [
+    'roundrobin' => [
+        'transport' => 'roundrobin',
+        'mailers' => [
+            'ses',
+            'postmark',
+        ],
+        'retry_after' => 60,
+    ],
+
+    // ...
+],
+</code></pre>
+<p>定義好循環郵件程式後，您應該將此郵件程式設定為應用程式使用的預設郵件程式，方法是在應用程式的 <code>mail</code> 配置檔案中將其名稱指定為 <code>default</code> 配置鍵的值：</p>
+<pre><code class="language-php">'default' => env('MAIL_MAILER', 'roundrobin'),
+</code></pre>
+<p>循環傳輸從配置的郵件程式清單中隨機選擇一個郵件程式，然後在每個後續電子郵件中切換到下一個可用的郵件程式。與 <code>failover</code> 傳輸相比，<code>roundrobin</code> 傳輸提供<a href="https://en.wikipedia.org/wiki/Load_balancing_(computing)">負載平衡</a>，而 <code>failover</code> 傳輸有助於實現<a href="https://en.wikipedia.org/wiki/High_availability">高可用性</a>。</p>
+<p><a name="generating-mailables"></a></p>
+<h2>生成可郵寄物件</h2>
+<p>構建 Laravel 應用程式時，應用程式發送的每種類型的電子郵件都表示為一個「可郵寄」類別。這些類別存儲在 <code>app/Mail</code> 目錄中。如果您在應用程式中沒有看到此目錄，請不要擔心，因為當您使用 <code>make:mail</code> Artisan 命令創建第一個可郵寄類別時，它會為您生成：</p>
+<pre><code class="language-shell">php artisan make:mail OrderShipped
+</code></pre>
+<p><a name="writing-mailables"></a></p>
+<h2>編寫可郵寄物件</h2>
+<p>生成可郵寄類別後，打開它以便我們探索其內容。可郵寄類別配置在多個方法中完成，包括 <code>envelope</code>、<code>content</code> 和 <code>attachments</code> 方法。</p>
+<p><code>envelope</code> 方法返回一個 <code>Illuminate\\Mail\\Mailables\\Envelope</code> 物件，用於定義主題和（有時）訊息的收件者。<code>content</code> 方法返回一個 <code>Illuminate\\Mail\\Mailables\\Content</code> 物件，用於定義將用於生成訊息內容的 <a href="/docs/blade">Blade 範本</a>。</p>
+<p><a name="configuring-the-sender"></a></p>
+<h3>配置寄件者</h3>
+<p><a name="using-the-envelope"></a></p>
+<h4>使用信封</h4>
+<p>首先，讓我們探索配置電子郵件的寄件者。或者，換句話說，電子郵件將從誰那裡「發送」。有兩種方式可以配置寄件者。首先，您可以在訊息的信封上指定「from」地址：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Address;
+use Illuminate\\Mail\\Mailables\\Envelope;
+
+/**
+ * 獲取訊息信封。
+ */
+public function envelope(): Envelope
+{
+    return new Envelope(
+        from: new Address('jeffrey@example.com', 'Jeffrey Way'),
+        subject: 'Order Shipped',
+    );
+}
+</code></pre>
+<p>如果您願意，您還可以指定一個 <code>replyTo</code> 地址：</p>
+<pre><code class="language-php">return new Envelope(
+    from: new Address('jeffrey@example.com', 'Jeffrey Way'),
+    replyTo: [
+        new Address('taylor@example.com', 'Taylor Otwell'),
+    ],
+    subject: 'Order Shipped',
+);
+</code></pre>
+<p><a name="using-a-global-from-address"></a></p>
+<h4>使用全域 <code>from</code> 地址</h4>
+<p>但是，如果您的應用程式對所有電子郵件都使用相同的「from」地址，則將其添加到您生成的每個可郵寄類別中可能會很繁瑣。相反，您可以在 <code>config/mail.php</code> 配置檔案中指定一個全域「from」地址。如果在可郵寄類別中未指定其他「from」地址，將使用此地址：</p>
+<pre><code class="language-php">'from' => [
+    'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+    'name' => env('MAIL_FROM_NAME', 'Example'),
+],
+</code></pre>
+<p>此外，您還可以在 <code>config/mail.php</code> 配置檔案中定義一個全域「reply_to」地址：</p>
+<pre><code class="language-php">'reply_to' => [
+    'address' => 'example@example.com',
+    'name' => 'App Name',
+],
+</code></pre>
+<p><a name="configuring-the-view"></a></p>
+<h3>配置視圖</h3>
+<p>在可郵寄類別的 <code>content</code> 方法中，您可以定義 <code>view</code>，或者在渲染電子郵件內容時應使用哪個範本。由於每個電子郵件通常使用 <a href="/docs/blade">Blade 範本</a>來渲染其內容，因此在構建電子郵件 HTML 時，您可以充分利用 Blade 範本引擎的功能和便利性：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息內容定義。
+ */
+public function content(): Content
+{
+    return new Content(
+        view: 'mail.orders.shipped',
+    );
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您可能希望創建一個 <code>resources/views/mail</code> 目錄來容納所有電子郵件範本；但是，您可以自由地將它們放在 <code>resources/views</code> 目錄中的任何位置。</p>
+</blockquote>
+<p><a name="plain-text-emails"></a></p>
+<h4>純文字電子郵件</h4>
+<p>如果您希望定義電子郵件的純文字版本，可以在創建訊息的 <code>Content</code> 定義時指定純文字範本。像 <code>view</code> 參數一樣，<code>text</code> 參數應該是一個範本名稱，將用於渲染電子郵件的內容。您可以自由定義訊息的 HTML 和純文字版本：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息內容定義。
+ */
+public function content(): Content
+{
+    return new Content(
+        view: 'mail.orders.shipped',
+        text: 'mail.orders.shipped-text'
+    );
+}
+</code></pre>
+<p>為了清晰起見，<code>html</code> 參數可用作 <code>view</code> 參數的別名：</p>
+<pre><code class="language-php">return new Content(
+    html: 'mail.orders.shipped',
+    text: 'mail.orders.shipped-text'
+);
+</code></pre>
+<p><a name="view-data"></a></p>
+<h3>視圖資料</h3>
+<p><a name="via-public-properties"></a></p>
+<h4>透過公共屬性</h4>
+<p>通常，您希望向視圖傳遞一些資料，以便在渲染電子郵件 HTML 時使用。有兩種方式可以使資料在視圖中可用。首先，定義在可郵寄類別上的任何公共屬性都將自動在視圖中可用。因此，例如，您可以將資料傳遞到可郵寄類別的構造函數中，並將該資料設定為類別上定義的公共屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Mail;
+
+use App\\Models\\Order;
+use Illuminate\\Bus\\Queueable;
+use Illuminate\\Mail\\Mailable;
+use Illuminate\\Mail\\Mailables\\Content;
+use Illuminate\\Queue\\SerializesModels;
+
+class OrderShipped extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    /**
+     * 創建一個新的訊息實例。
+     */
+    public function __construct(
+        public Order $order,
+    ) {}
+
+    /**
+     * 獲取訊息內容定義。
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'mail.orders.shipped',
+        );
+    }
+}
+</code></pre>
+<p>將資料設定為公共屬性後，它將自動在視圖中可用，因此您可以像在 Blade 範本中存取任何其他資料一樣存取它：</p>
+<pre><code class="language-blade"><div>
+    Price: {{ $order->price }}
+</div>
+</code></pre>
+<p><a name="via-the-with-parameter"></a></p>
+<h4>透過 <code>with</code> 參數</h4>
+<p>如果您希望在將電子郵件資料發送到範本之前自訂其格式，可以透過 <code>Content</code> 定義的 <code>with</code> 參數手動將資料傳遞給視圖。通常，您仍然會透過可郵寄類別的構造函數傳遞資料；但是，您應該將這些資料設定為 <code>protected</code> 或 <code>private</code> 屬性，以便資料不會自動在範本中可用：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Mail;
+
+use App\\Models\\Order;
+use Illuminate\\Bus\\Queueable;
+use Illuminate\\Mail\\Mailable;
+use Illuminate\\Mail\\Mailables\\Content;
+use Illuminate\\Queue\\SerializesModels;
+
+class OrderShipped extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    /**
+     * 創建一個新的訊息實例。
+     */
+    public function __construct(
+        protected Order $order,
+    ) {}
+
+    /**
+     * 獲取訊息內容定義。
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'mail.orders.shipped',
+            with: [
+                'orderName' => $this->order->name,
+                'orderPrice' => $this->order->price,
+            ],
+        );
+    }
+}
+</code></pre>
+<p>透過 <code>with</code> 參數傳遞資料後，它將自動在視圖中可用，因此您可以像在 Blade 範本中存取任何其他資料一樣存取它：</p>
+<pre><code class="language-blade"><div>
+    Price: {{ $orderPrice }}
+</div>
+</code></pre>
+<p><a name="attachments"></a></p>
+<h3>附件</h3>
+<p>要向電子郵件添加附件，您將向訊息的 <code>attachments</code> 方法返回的陣列中添加附件。首先，您可以透過向 <code>Attachment</code> 類別提供的 <code>fromPath</code> 方法提供檔案路徑來添加附件：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Attachment;
+
+/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromPath('/path/to/file'),
+    ];
+}
+</code></pre>
+<p>將檔案附加到訊息時，您還可以使用 <code>as</code> 和 <code>withMime</code> 方法指定附件的顯示名稱和/或 MIME 類型：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromPath('/path/to/file')
+            ->as('name.pdf')
+            ->withMime('application/pdf'),
+    ];
+}
+</code></pre>
+<p><a name="attaching-files-from-disk"></a></p>
+<h4>從磁碟附加檔案</h4>
+<p>如果您已在其中一個<a href="/docs/filesystem">文件系統磁碟</a>上儲存了檔案，可以使用 <code>fromStorage</code> 附件方法將其附加到電子郵件：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromStorage('/path/to/file'),
+    ];
+}
+</code></pre>
+<p>當然，您還可以指定附件的名稱和 MIME 類型：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromStorage('/path/to/file')
+            ->as('name.pdf')
+            ->withMime('application/pdf'),
+    ];
+}
+</code></pre>
+<p>如果您需要指定與預設磁碟不同的儲存磁碟，可以使用 <code>fromStorageDisk</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromStorageDisk('s3', '/path/to/file')
+            ->as('name.pdf')
+            ->withMime('application/pdf'),
+    ];
+}
+</code></pre>
+<p><a name="raw-data-attachments"></a></p>
+<h4>原始資料附件</h4>
+<p><code>fromData</code> 附件方法可用於將原始位元組字串作為附件附加。例如，如果您已在記憶體中生成 PDF 並希望將其附加到電子郵件而不將其寫入磁碟，則可以使用此方法。<code>fromData</code> 方法接受一個解析原始資料位元組的閉包以及應分配給附件的名稱：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromData(fn () => $this->pdf, 'Report.pdf')
+            ->withMime('application/pdf'),
+    ];
+}
+</code></pre>
+<p><a name="inline-attachments"></a></p>
+<h3>內聯附件</h3>
+<p>將內聯圖像嵌入到電子郵件中通常很繁瑣；但是，Laravel 提供了一種將圖像附加到電子郵件的便利方式。要嵌入內聯圖像，請使用電子郵件範本中的 <code>$message</code> 變數上的 <code>embed</code> 方法。Laravel 自動使 <code>$message</code> 變數在您的所有電子郵件範本中可用，因此您無需擔心手動傳遞它：</p>
+<pre><code class="language-blade"><body>
+    Here is an image:
+
+    <img src="{{ $message->embed($pathToImage) }}">
+</body>
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+<code>$message</code> 變數在純文字訊息範本中不可用，因為純文字訊息不使用內聯附件。</p>
+</blockquote>
+<p><a name="embedding-raw-data-attachments"></a></p>
+<h4>嵌入原始資料附件</h4>
+<p>如果您已經有一個希望嵌入到電子郵件範本中的原始圖像資料字串，可以在 <code>$message</code> 變數上呼叫 <code>embedData</code> 方法。呼叫 <code>embedData</code> 方法時，您需要提供一個應分配給嵌入圖像的檔名：</p>
+<pre><code class="language-blade"><body>
+    Here is an image from raw data:
+
+    <img src="{{ $message->embedData($data, 'example-image.jpg') }}">
+</body>
+</code></pre>
+<p><a name="attachable-objects"></a></p>
+<h3>可附加物件</h3>
+<p>雖然透過簡單的字串路徑將檔案附加到訊息通常足夠了，但在許多情況下，應用程式中的可附加實體由類別表示。例如，如果您的應用程式正在將照片附加到訊息，則您的應用程式可能還有一個表示該照片的 <code>Photo</code> 模型。在這種情況下，將 <code>Photo</code> 模型簡單地傳遞給 <code>attach</code> 方法不是更方便嗎？可附加物件允許您執行此操作。</p>
+<p>首先，在將附加到訊息的物件上實現 <code>Illuminate\\Contracts\\Mail\\Attachable</code> 介面。此介面要求您的類別定義一個返回 <code>Illuminate\\Mail\\Attachment</code> 實例的 <code>toMailAttachment</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Contracts\\Mail\\Attachable;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Mail\\Attachment;
+
+class Photo extends Model implements Attachable
+{
+    /**
+     * 獲取模型的可附加表示。
+     */
+    public function toMailAttachment(): Attachment
+    {
+        return Attachment::fromPath('/path/to/file');
+    }
+}
+</code></pre>
+<p>定義可附加物件後，您可以在構建電子郵件訊息時從 <code>attachments</code> 方法返回該物件的實例：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ *
+ * @return array<int, \\Illuminate\\Mail\\Mailables\\Attachment>
+ */
+public function attachments(): array
+{
+    return [$this->photo];
+}
+</code></pre>
+<p>當然，附件資料可以儲存在遠端檔案儲存服務（如 Amazon S3）上。因此，Laravel 還允許您從儲存在應用程式其中一個<a href="/docs/filesystem">文件系統磁碟</a>上的資料生成附件實例：</p>
+<pre><code class="language-php">// 從預設磁碟上的檔案創建附件...
+return Attachment::fromStorage($this->path);
+
+// 從特定磁碟上的檔案創建附件...
+return Attachment::fromStorageDisk('backblaze', $this->path);
+</code></pre>
+<p>此外，您可以透過記憶體中的資料創建附件實例。為此，向 <code>fromData</code> 方法提供一個閉包。該閉包應返回代表附件的原始資料：</p>
+<pre><code class="language-php">return Attachment::fromData(fn () => $this->content, 'Photo Name');
+</code></pre>
+<p>Laravel 還提供了其他可用於自訂附件的方法。例如，您可以使用 <code>as</code> 和 <code>withMime</code> 方法來自訂檔案的名稱和 MIME 類型：</p>
+<pre><code class="language-php">return Attachment::fromPath('/path/to/file')
+    ->as('Photo Name')
+    ->withMime('image/jpeg');
+</code></pre>
+<p><a name="headers"></a></p>
+<h3>頁頭</h3>
+<p>有時您可能需要向外部訊息附加額外的頁頭。例如，您可能需要設定一個自訂的 <code>Message-Id</code> 或其他任意文字頁頭。</p>
+<p>為此，請在您的可郵寄物件上定義一個 <code>headers</code> 方法。<code>headers</code> 方法應返回一個 <code>Illuminate\\Mail\\Mailables\\Headers</code> 實例。此類別接受 <code>messageId</code>、<code>references</code> 和 <code>text</code> 參數。當然，您只需要提供特定訊息所需的參數：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Headers;
+
+/**
+ * 獲取訊息頁頭。
+ */
+public function headers(): Headers
+{
+    return new Headers(
+        messageId: 'custom-message-id@example.com',
+        references: ['previous-message@example.com'],
+        text: [
+            'X-Custom-Header' => 'Custom Value',
+        ],
+    );
+}
+</code></pre>
+<p><a name="tags-and-metadata"></a></p>
+<h3>標籤和元資料</h3>
+<p>一些第三方電子郵件提供者（例如 Mailgun 和 Postmark）支援訊息「標籤」和「元資料」，可用於對應用程式發送的電子郵件進行分組和追蹤。您可以透過 <code>Envelope</code> 定義向電子郵件訊息添加標籤和元資料：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Envelope;
+
+/**
+ * 獲取訊息信封。
+ *
+ * @return \\Illuminate\\Mail\\Mailables\\Envelope
+ */
+public function envelope(): Envelope
+{
+    return new Envelope(
+        subject: 'Order Shipped',
+        tags: ['shipment'],
+        metadata: [
+            'order_id' => $this->order->id,
+        ],
+    );
+}
+</code></pre>
+<p>如果您的應用程式正在使用 Mailgun 驅動程式，您可以查閱 Mailgun 的文檔以了解更多關於<a href="https://documentation.mailgun.com/docs/mailgun/user-manual/tracking-messages/#tags">標籤</a>和<a href="https://documentation.mailgun.com/docs/mailgun/user-manual/sending-messages/#attaching-metadata-to-messages">元資料</a>的資訊。同樣，也可以查閱 Postmark 文檔以了解更多關於其對<a href="https://postmarkapp.com/blog/tags-support-for-smtp">標籤</a>和<a href="https://postmarkapp.com/support/article/1125-custom-metadata-faq">元資料</a>支援的資訊。</p>
+<p>如果您的應用程式正在使用 Amazon SES 傳送電子郵件，您應該使用 <code>metadata</code> 方法將 <a href="https://docs.aws.amazon.com/ses/latest/APIReference/API_MessageTag.html">SES「標籤」</a>附加到訊息。</p>
+<p><a name="customizing-the-symfony-message"></a></p>
+<h3>自訂 Symfony 訊息</h3>
+<p>Laravel 的郵件功能由 Symfony Mailer 提供支援。Laravel 允許您註冊自訂回呼，這些回呼將在發送訊息之前與 Symfony Message 實例一起被呼叫。這為您提供了在發送訊息之前深度自訂訊息的機會。為此，請在您的 <code>Envelope</code> 定義上定義一個 <code>using</code> 參數：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Envelope;
+use Symfony\\Component\\Mime\\Email;
+
+/**
+ * 獲取訊息信封。
+ */
+public function envelope(): Envelope
+{
+    return new Envelope(
+        subject: 'Order Shipped',
+        using: [
+            function (Email $message) {
+                // ...
+            },
+        ]
+    );
+}
+</code></pre>
+<p><a name="markdown-mailables"></a></p>
+<h2>Markdown 可郵寄物件</h2>
+<p>Markdown 可郵寄訊息允許您在可郵寄物件中利用 <a href="/docs/notifications#mail-notifications">郵件通知</a>的預建範本和元件。由於訊息是用 Markdown 編寫的，Laravel 能夠為訊息渲染漂亮、響應式的 HTML 範本，同時自動生成純文字對應物。</p>
+<p><a name="generating-markdown-mailables"></a></p>
+<h3>生成 Markdown 可郵寄物件</h3>
+<p>要生成具有相應 Markdown 範本的可郵寄物件，您可以使用 <code>make:mail</code> Artisan 命令的 <code>--markdown</code> 選項：</p>
+<pre><code class="language-shell">php artisan make:mail OrderShipped --markdown=mail.orders.shipped
+</code></pre>
+<p>然後，在其 <code>content</code> 方法中配置可郵寄 <code>Content</code> 定義時，使用 <code>markdown</code> 參數而不是 <code>view</code> 參數：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Content;
+
+/**
+ * 獲取訊息內容定義。
+ */
+public function content(): Content
+{
+    return new Content(
+        markdown: 'mail.orders.shipped',
+        with: [
+            'url' => $this->orderUrl,
+        ],
+    );
+}
+</code></pre>
+<p><a name="writing-markdown-messages"></a></p>
+<h3>編寫 Markdown 訊息</h3>
+<p>Markdown 可郵寄物件使用 Blade 元件和 Markdown 語法的組合，允許您輕鬆構建郵件訊息，同時利用 Laravel 的預建電子郵件 UI 元件：</p>
+<pre><code class="language-blade"><x-mail::message>
+# Order Shipped
+
+Your order has been shipped!
+
+<x-mail::button :url="$url">
+View Order
+</x-mail::button>
+
+Thanks,<br>
+{{ config('app.name') }}
+</x-mail::message>
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+編寫 Markdown 電子郵件時不要使用過多縮排。根據 Markdown 標準，Markdown 解析器會將縮排的內容渲染為代碼塊。</p>
+</blockquote>
+<p><a name="button-component"></a></p>
+<h4>按鈕元件</h4>
+<p>按鈕元件渲染一個居中的按鈕連結。該元件接受兩個參數：<code>url</code> 和可選的 <code>color</code>。支援的顏色有 <code>primary</code>、<code>success</code> 和 <code>error</code>。您可以根據需要向訊息添加任意數量的按鈕元件：</p>
+<pre><code class="language-blade"><x-mail::button :url="$url" color="success">
+View Order
+</x-mail::button>
+</code></pre>
+<p><a name="panel-component"></a></p>
+<h4>面板元件</h4>
+<p>面板元件在背景顏色與訊息其餘部分略有不同的面板中渲染給定的文字塊。這使您可以引起對給定文字塊的注意：</p>
+<pre><code class="language-blade"><x-mail::panel>
+This is the panel content.
+</x-mail::panel>
+</code></pre>
+<p><a name="table-component"></a></p>
+<h4>表格元件</h4>
+<p>表格元件允許您將 Markdown 表格轉換為 HTML 表格。該元件接受 Markdown 表格作為其內容。表格欄位對齊使用預設的 Markdown 表格對齊語法支援：</p>
+<pre><code class="language-blade"><x-mail::table>
+| Laravel       | Table         | Example       |
+| ------------- | :-----------: | ------------: |
+| Col 2 is      | Centered      | $10           |
+| Col 3 is      | Right-Aligned | $20           |
+</x-mail::table>
+</code></pre>
+<p><a name="customizing-the-components"></a></p>
+<h3>自訂元件</h3>
+<p>您可以匯出所有 Markdown 郵件元件到您自己的應用程式以進行自訂。要匯出元件，請使用 <code>vendor:publish</code> Artisan 命令來發佈 <code>laravel-mail</code> 資產標籤：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=laravel-mail
+</code></pre>
+<p>此命令將 Markdown 郵件元件發佈到 <code>resources/views/vendor/mail</code> 目錄。<code>mail</code> 目錄將包含一個 <code>html</code> 和一個 <code>text</code> 目錄，每個目錄都包含每個可用元件的各自表示。您可以根據需要自由地自訂這些元件。</p>
+<p><a name="customizing-the-css"></a></p>
+<h4>自訂 CSS</h4>
+<p>匯出元件後，<code>resources/views/vendor/mail/html/themes</code> 目錄將包含一個 <code>default.css</code> 檔案。您可以自訂此檔案中的 CSS，您的樣式將自動轉換為 Markdown 郵件訊息的 HTML 表示中的內聯 CSS 樣式。</p>
+<p>如果您希望為 Laravel 的 Markdown 元件構建一個全新的主題，可以將 CSS 檔案放在 <code>html/themes</code> 目錄中。命名並儲存 CSS 檔案後，更新應用程式 <code>config/mail.php</code> 配置檔案的 <code>theme</code> 選項以匹配您新主題的名稱。</p>
+<p>要自訂個別可郵寄物件的主題，可以將可郵寄物件類別的 <code>$theme</code> 屬性設定為發送該可郵寄物件時應使用的主題名稱。</p>
+<p><a name="sending-mail"></a></p>
+<h2>發送郵件</h2>
+<p>要發送訊息，請使用 <code>Mail</code><a href="/docs/facades">外觀</a>上的 <code>to</code> 方法。<code>to</code> 方法接受一個電子郵件地址、一個使用者實例或一個使用者集合。如果您傳遞一個物件或物件集合，郵件程式將在判斷電子郵件的收件者時自動使用它們的 <code>email</code> 和 <code>name</code> 屬性，因此請確保這些屬性在您的物件上可用。指定收件者後，您可以將可郵寄物件的實例傳遞給 <code>send</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Mail\\OrderShipped;
+use App\\Models\\Order;
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Mail;
+
+class OrderShipmentController extends Controller
+{
+    /**
+     * 發貨給定訂單。
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $order = Order::findOrFail($request->order_id);
+
+        // 發貨訂單...
+
+        Mail::to($request->user())->send(new OrderShipped($order));
+
+        return redirect('/orders');
+    }
+}
+</code></pre>
+<p>您不僅限於在發送訊息時指定「to」收件者。您可以透過鏈式呼叫各自的方法來自由設定「to」、「cc」和「bcc」收件者：</p>
+<pre><code class="language-php">Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->send(new OrderShipped($order));
+</code></pre>
+<p><a name="looping-over-recipients"></a></p>
+<h4>迭代收件者</h4>
+<p>偶爾，您可能需要透過迭代收件者/電子郵件地址陣列來向收件者列表發送可郵寄物件。但是，由於 <code>to</code> 方法會將電子郵件地址附加到可郵寄物件的收件者列表中，因此每次循環迭代都會向每個先前的收件者發送另一封電子郵件。因此，您應該始終為每個收件者重新創建可郵寄物件實例：</p>
+<pre><code class="language-php">foreach (['taylor@example.com', 'dries@example.com'] as $recipient) {
+    Mail::to($recipient)->send(new OrderShipped($order));
+}
+</code></pre>
+<p><a name="sending-mail-via-a-specific-mailer"></a></p>
+<h4>透過特定郵件程式發送郵件</h4>
+<p>預設情況下，Laravel 將使用在應用程式的 <code>mail</code> 配置檔案中配置為 <code>default</code> 郵件程式的郵件程式來發送電子郵件。但是，您可以使用 <code>mailer</code> 方法來使用特定的郵件程式配置發送訊息：</p>
+<pre><code class="language-php">Mail::mailer('postmark')
+    ->to($request->user())
+    ->send(new OrderShipped($order));
+</code></pre>
+<p><a name="queueing-mail"></a></p>
+<h3>郵件佇列</h3>
+<p><a name="queueing-a-mail-message"></a></p>
+<h4>郵件訊息佇列</h4>
+<p>由於發送電子郵件可能會對應用程式的回應時間產生負面影響，因此許多開發者選擇將電子郵件訊息放入佇列以進行背景發送。Laravel 使用其內建的<a href="/docs/queues">統一佇列 API</a>使這變得很容易。要將郵件訊息放入佇列，請在指定訊息的收件者後使用 <code>Mail</code> 外觀上的 <code>queue</code> 方法：</p>
+<pre><code class="language-php">Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->queue(new OrderShipped($order));
+</code></pre>
+<p>此方法將自動處理將作業推送到佇列的問題，以便在背景中發送訊息。在使用此功能之前，您需要<a href="/docs/queues">配置您的佇列</a>。</p>
+<p><a name="delayed-message-queueing"></a></p>
+<h4>延遲訊息佇列</h4>
+<p>如果您希望延遲佇列電子郵件訊息的傳遞，可以使用 <code>later</code> 方法。作為第一個參數，<code>later</code> 方法接受一個 <code>DateTime</code> 實例，指示應何時發送訊息：</p>
+<pre><code class="language-php">Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->later(now()->plus(minutes: 10), new OrderShipped($order));
+</code></pre>
+<p><a name="pushing-to-specific-queues"></a></p>
+<h4>推送到特定佇列</h4>
+<p>由於使用 <code>make:mail</code> 命令生成的所有可郵寄類別都使用 <code>Illuminate\\Bus\\Queueable</code> trait，因此您可以在任何可郵寄物件實例上呼叫 <code>onQueue</code> 和 <code>onConnection</code> 方法，允許您指定訊息的連接和佇列名稱：</p>
+<pre><code class="language-php">$message = (new OrderShipped($order))
+    ->onConnection('sqs')
+    ->onQueue('emails');
+
+Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->queue($message);
+</code></pre>
+<p>或者，您可以使用可郵寄物件類別上的 <code>Connection</code> 和 <code>Queue</code> 屬性來指定連接和佇列：</p>
+<pre><code class="language-php">use Illuminate\\Queue\\Attributes\\Connection;
+use Illuminate\\Queue\\Attributes\\Queue;
+
+#[Connection('sqs')]
+#[Queue('emails')]
+class OrderShipped extends Mailable
+{
+    // ...
+}
+</code></pre>
+<p><a name="queueing-by-default"></a></p>
+<h4>預設佇列</h4>
+<p>如果您有希望始終被放入佇列的可郵寄類別，可以在類別上實現 <code>ShouldQueue</code> 合約。現在，即使您在郵寄時呼叫 <code>send</code> 方法，由於它實現了合約，可郵寄物件仍將被放入佇列：</p>
+<pre><code class="language-php">use Illuminate\\Contracts\\Queue\\ShouldQueue;
+
+class OrderShipped extends Mailable implements ShouldQueue
+{
+    // ...
+}
+</code></pre>
+<p><a name="queued-mailables-and-database-transactions"></a></p>
+<h4>佇列可郵寄物件和資料庫交易</h4>
+<p>當佇列可郵寄物件在資料庫交易內被派發時，它們可能會在資料庫交易提交之前被佇列處理。當這種情況發生時，在資料庫交易期間對模型或資料庫記錄進行的任何更新可能尚未反映在資料庫中。此外，在交易內創建的任何模型或資料庫記錄可能不存在於資料庫中。如果您的可郵寄物件依賴這些模型，則在處理發送佇列可郵寄物件的作業時可能會發生意外錯誤。</p>
+<p>如果您的佇列連接的 <code>after_commit</code> 配置選項設定為 <code>false</code>，您仍然可以透過在發送郵件訊息時呼叫 <code>afterCommit</code> 方法來指示特定的佇列可郵寄物件應在所有打開的資料庫交易提交後被派發：</p>
+<pre><code class="language-php">Mail::to($request->user())->send(
+    (new OrderShipped($order))->afterCommit()
+);
+</code></pre>
+<p>或者，您可以從可郵寄物件的構造函數中呼叫 <code>afterCommit</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Mail;
+
+use Illuminate\\Bus\\Queueable;
+use Illuminate\\Contracts\\Queue\\ShouldQueue;
+use Illuminate\\Mail\\Mailable;
+use Illuminate\\Queue\\SerializesModels;
+
+class OrderShipped extends Mailable implements ShouldQueue
+{
+    use Queueable, SerializesModels;
+
+    /**
+     * 創建一個新的訊息實例。
+     */
+    public function __construct()
+    {
+        $this->afterCommit();
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+要了解更多關於解決這些問題的資訊，請查閱有關<a href="/docs/queues#jobs-and-database-transactions">佇列作業和資料庫交易</a>的文檔。</p>
+</blockquote>
+<p><a name="queued-email-failures"></a></p>
+<h4>佇列電子郵件失敗</h4>
+<p>當佇列電子郵件失敗時，如果已定義，將呼叫佇列可郵寄物件類別上的 <code>failed</code> 方法。導致佇列電子郵件失敗的 <code>Throwable</code> 實例將被傳遞給 <code>failed</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Mail;
+
+use Illuminate\\Contracts\\Queue\\ShouldQueue;
+use Illuminate\\Mail\\Mailable;
+use Illuminate\\Queue\\SerializesModels;
+use Throwable;
+
+class OrderDelayed extends Mailable implements ShouldQueue
+{
+    use SerializesModels;
+
+    /**
+     * 處理佇列電子郵件失敗。
+     */
+    public function failed(Throwable $exception): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p><a name="rendering-mailables"></a></p>
+<h2>渲染可郵寄物件</h2>
+<p>有時您可能希望捕獲可郵寄物件的 HTML 內容而不發送它。為此，您可以呼叫可郵寄物件的 <code>render</code> 方法。此方法將返回可郵寄物件的已評估 HTML 內容作為字串：</p>
+<pre><code class="language-php">use App\\Mail\\InvoicePaid;
+use App\\Models\\Invoice;
+
+$invoice = Invoice::find(1);
+
+return (new InvoicePaid($invoice))->render();
+</code></pre>
+<p><a name="previewing-mailables-in-the-browser"></a></p>
+<h3>在瀏覽器中預覽可郵寄物件</h3>
+<p>設計可郵寄物件的範本時，像典型的 Blade 範本一樣在瀏覽器中快速預覽渲染的可郵寄物件是很方便的。為此，Laravel 允許您從路由閉包或控制器直接返回任何可郵寄物件。當返回可郵寄物件時，它將被渲染並顯示在瀏覽器中，允許您快速預覽其設計而無需將其發送到實際的電子郵件地址：</p>
+<pre><code class="language-php">Route::get('/mailable', function () {
+    $invoice = App\\Models\\Invoice::find(1);
+
+    return new App\\Mail\\InvoicePaid($invoice);
+});
+</code></pre>
+<p><a name="localizing-mailables"></a></p>
+<h2>本地化可郵寄物件</h2>
+<p>Laravel 允許您以不同於請求當前語言環境的語言環境發送可郵寄物件，並且即使郵件被放入佇列也會記住此語言環境。</p>
+<p>為此，<code>Mail</code> 外觀提供了一個 <code>locale</code> 方法來設定所需的語言。當評估可郵寄物件的範本時，應用程式將切換到此語言環境，然後在評估完成後恢復到先前的語言環境：</p>
+<pre><code class="language-php">Mail::to($request->user())->locale('es')->send(
+    new OrderShipped($order)
+);
+</code></pre>
+<p><a name="user-preferred-locales"></a></p>
+<h4>使用者首選語言環境</h4>
+<p>有時，應用程式會儲存每個使用者的首選語言環境。透過在一個或多個模型上實現 <code>HasLocalePreference</code> 合約，您可以指示 Laravel 在發送郵件時使用此儲存的語言環境：</p>
+<pre><code class="language-php">use Illuminate\\Contracts\\Translation\\HasLocalePreference;
+
+class User extends Model implements HasLocalePreference
+{
+    /**
+     * 獲取使用者的首選語言環境。
+     */
+    public function preferredLocale(): string
+    {
+        return $this->locale;
+    }
+}
+</code></pre>
+<p>實現介面後，Laravel 將在向模型發送可郵寄物件和通知時自動使用首選語言環境。因此，使用此介面時無需呼叫 <code>locale</code> 方法：</p>
+<pre><code class="language-php">Mail::to($request->user())->send(new OrderShipped($order));
+</code></pre>
+<p><a name="testing-mailables"></a></p>
+<h2>測試</h2>
+<p><a name="testing-mailable-content"></a></p>
+<h3>測試可郵寄物件內容</h3>
+<p>Laravel 提供了多種方法來檢查可郵寄物件的結構。此外，Laravel 還提供了幾種便利的方法來測試您的可郵寄物件是否包含您預期的內容：</p>
+<pre><code class="language-php">use App\\Mail\\InvoicePaid;
+use App\\Models\\User;
+
+test('mailable content', function () {
+    $user = User::factory()->create();
+
+    $mailable = new InvoicePaid($user);
+
+    $mailable->assertFrom('jeffrey@example.com');
+    $mailable->assertTo('taylor@example.com');
+    $mailable->assertHasCc('abigail@example.com');
+    $mailable->assertHasBcc('victoria@example.com');
+    $mailable->assertHasReplyTo('tyler@example.com');
+    $mailable->assertHasSubject('Invoice Paid');
+    $mailable->assertHasTag('example-tag');
+    $mailable->assertHasMetadata('key', 'value');
+
+    $mailable->assertSeeInHtml($user->email);
+    $mailable->assertDontSeeInHtml('Invoice Not Paid');
+    $mailable->assertSeeInOrderInHtml(['Invoice Paid', 'Thanks']);
+
+    $mailable->assertSeeInText($user->email);
+    $mailable->assertDontSeeInText('Invoice Not Paid');
+    $mailable->assertSeeInOrderInText(['Invoice Paid', 'Thanks']);
+
+    $mailable->assertHasAttachment('/path/to/file');
+    $mailable->assertHasAttachment(Attachment::fromPath('/path/to/file'));
+    $mailable->assertHasAttachedData($pdfData, 'name.pdf', ['mime' => 'application/pdf']);
+    $mailable->assertHasAttachmentFromStorage('/path/to/file', 'name.pdf', ['mime' => 'application/pdf']);
+    $mailable->assertHasAttachmentFromStorageDisk('s3', '/path/to/file', 'name.pdf', ['mime' => 'application/pdf']);
+});
+</code></pre>
+<pre><code class="language-php">use App\\Mail\\InvoicePaid;
+use App\\Models\\User;
+
+public function test_mailable_content(): void
+{
+    $user = User::factory()->create();
+
+    $mailable = new InvoicePaid($user);
+
+    $mailable->assertFrom('jeffrey@example.com');
+    $mailable->assertTo('taylor@example.com');
+    $mailable->assertHasCc('abigail@example.com');
+    $mailable->assertHasBcc('victoria@example.com');
+    $mailable->assertHasReplyTo('tyler@example.com');
+    $mailable->assertHasSubject('Invoice Paid');
+    $mailable->assertHasTag('example-tag');
+    $mailable->assertHasMetadata('key', 'value');
+
+    $mailable->assertSeeInHtml($user->email);
+    $mailable->assertDontSeeInHtml('Invoice Not Paid');
+    $mailable->assertSeeInOrderInHtml(['Invoice Paid', 'Thanks']);
+
+    $mailable->assertSeeInText($user->email);
+    $mailable->assertDontSeeInText('Invoice Not Paid');
+    $mailable->assertSeeInOrderInText(['Invoice Paid', 'Thanks']);
+
+    $mailable->assertHasAttachment('/path/to/file');
+    $mailable->assertHasAttachment(Attachment::fromPath('/path/to/file'));
+    $mailable->assertHasAttachedData($pdfData, 'name.pdf', ['mime' => 'application/pdf']);
+    $mailable->assertHasAttachmentFromStorage('/path/to/file', 'name.pdf', ['mime' => 'application/pdf']);
+    $mailable->assertHasAttachmentFromStorageDisk('s3', '/path/to/file', 'name.pdf', ['mime' => 'application/pdf']);
+}
+</code></pre>
+<p>正如您可能預期的那樣，「HTML」斷言斷言可郵寄物件的 HTML 版本包含給定的字串，而「text」斷言斷言可郵寄物件的純文字版本包含給定的字串。</p>
+<p><a name="testing-mailable-sending"></a></p>
+<h3>測試可郵寄物件發送</h3>
+<p>我們建議將可郵寄物件的內容測試與斷言給定可郵寄物件已「發送」給特定使用者的測試分開進行。通常，可郵寄物件的內容與您正在測試的代碼無關，只需斷言 Laravel 被指示發送給定的可郵寄物件就足夠了。</p>
+<p>您可以使用 <code>Mail</code> 外觀的 <code>fake</code> 方法來防止郵件被發送。呼叫 <code>Mail</code> 外觀的 <code>fake</code> 方法後，您可以斷言已指示可郵寄物件發送給使用者，甚至可以檢查可郵寄物件收到的資料：</p>
+<pre><code class="language-php">&lt;?php
+
+use App\\Mail\\OrderShipped;
+use Illuminate\\Support\\Facades\\Mail;
+
+test('orders can be shipped', function () {
+    Mail::fake();
+
+    // 執行訂單發貨...
+
+    // 斷言沒有發送可郵寄物件...
+    Mail::assertNothingSent();
+
+    // 斷言已發送可郵寄物件...
+    Mail::assertSent(OrderShipped::class);
+
+    // 斷言可郵寄物件已發送兩次...
+    Mail::assertSent(OrderShipped::class, 2);
+
+    // 斷言可郵寄物件已發送到電子郵件地址...
+    Mail::assertSent(OrderShipped::class, 'example@laravel.com');
+
+    // 斷言可郵寄物件已發送到多個電子郵件地址...
+    Mail::assertSent(OrderShipped::class, ['example@laravel.com', '...']);
+
+    // 斷言可郵寄物件未發送...
+    Mail::assertNotSent(AnotherMailable::class);
+
+    // 斷言可郵寄物件已發送兩次...
+    Mail::assertSentTimes(OrderShipped::class, 2);
+
+    // 斷言共發送了 3 個可郵寄物件...
+    Mail::assertSentCount(3);
+});
+</code></pre>
+<pre><code class="language-php">&lt;?php
+
+namespace Tests\\Feature;
+
+use App\\Mail\\OrderShipped;
+use Illuminate\\Support\\Facades\\Mail;
+use Tests\\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_orders_can_be_shipped(): void
+    {
+        Mail::fake();
+
+        // 執行訂單發貨...
+
+        // 斷言沒有發送可郵寄物件...
+        Mail::assertNothingSent();
+
+        // 斷言已發送可郵寄物件...
+        Mail::assertSent(OrderShipped::class);
+
+        // 斷言可郵寄物件已發送兩次...
+        Mail::assertSent(OrderShipped::class, 2);
+
+        // 斷言可郵寄物件已發送到電子郵件地址...
+        Mail::assertSent(OrderShipped::class, 'example@laravel.com');
+
+        // 斷言可郵寄物件已發送到多個電子郵件地址...
+        Mail::assertSent(OrderShipped::class, ['example@laravel.com', '...']);
+
+        // 斷言可郵寄物件未發送...
+        Mail::assertNotSent(AnotherMailable::class);
+
+        // 斷言可郵寄物件已發送兩次...
+        Mail::assertSentTimes(OrderShipped::class, 2);
+
+        // 斷言共發送了 3 個可郵寄物件...
+        Mail::assertSentCount(3);
+    }
+}
+</code></pre>
+<p>如果您正在將可郵寄物件放入佇列以便在背景中發送，則應使用 <code>assertQueued</code> 方法而不是 <code>assertSent</code>：</p>
+<pre><code class="language-php">Mail::assertQueued(OrderShipped::class);
+Mail::assertNotQueued(OrderShipped::class);
+Mail::assertNothingQueued();
+Mail::assertQueuedCount(3);
+</code></pre>
+<p>您還可以使用 <code>assertOutgoingCount</code> 方法來斷言已發送或放入佇列的可郵寄物件總數：</p>
+<pre><code class="language-php">Mail::assertOutgoingCount(3);
+</code></pre>
+<p>您可以向 <code>assertSent</code>、<code>assertNotSent</code>、<code>assertQueued</code> 或 <code>assertNotQueued</code> 方法傳遞一個閉包，以斷言發送了一個通過給定「真理測試」的可郵寄物件。如果至少發送了一個通過給定真理測試的可郵寄物件，則斷言將成功：</p>
+<pre><code class="language-php">Mail::assertSent(function (OrderShipped $mail) use ($order) {
+    return $mail->order->id === $order->id;
+});
+</code></pre>
+<p>當呼叫 <code>Mail</code> 外觀的斷言方法時，提供給閉包接受的可郵寄物件實例提供了檢查可郵寄物件的有用方法：</p>
+<pre><code class="language-php">Mail::assertSent(OrderShipped::class, function (OrderShipped $mail) use ($user) {
+    return $mail->hasTo($user->email) &&
+           $mail->hasCc('...') &&
+           $mail->hasBcc('...') &&
+           $mail->hasReplyTo('...') &&
+           $mail->hasFrom('...') &&
+           $mail->hasSubject('...') &&
+           $mail->hasMetadata('order_id', $mail->order->id);
+           $mail->usesMailer('ses');
+});
+</code></pre>
+<p>可郵寄物件實例還包含幾個用於檢查可郵寄物件附件的有用方法：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Mailables\\Attachment;
+
+Mail::assertSent(OrderShipped::class, function (OrderShipped $mail) {
+    return $mail->hasAttachment(
+        Attachment::fromPath('/path/to/file')
+            ->as('name.pdf')
+            ->withMime('application/pdf')
+    );
+});
+
+Mail::assertSent(OrderShipped::class, function (OrderShipped $mail) {
+    return $mail->hasAttachment(
+        Attachment::fromStorageDisk('s3', '/path/to/file')
+    );
+});
+
+Mail::assertSent(OrderShipped::class, function (OrderShipped $mail) use ($pdfData) {
+    return $mail->hasAttachment(
+        Attachment::fromData(fn () => $pdfData, 'name.pdf')
+    );
+});
+</code></pre>
+<p>您可能已經注意到有兩個方法可以用於斷言未發送郵件：<code>assertNotSent</code> 和 <code>assertNotQueued</code>。有時您可能希望斷言未發送<strong>或</strong>未放入佇列的郵件。為此，您可以使用 <code>assertNothingOutgoing</code> 和 <code>assertNotOutgoing</code> 方法：</p>
+<pre><code class="language-php">Mail::assertNothingOutgoing();
+
+Mail::assertNotOutgoing(function (OrderShipped $mail) use ($order) {
+    return $mail->order->id === $order->id;
+});
+</code></pre>
+<p><a name="mail-and-local-development"></a></p>
+<h2>郵件和本地開發</h2>
+<p>開發發送電子郵件的應用程式時，您可能不希望實際向即時電子郵件地址發送電子郵件。Laravel 提供了多種方式來「禁用」在本地開發期間實際發送電子郵件。</p>
+<p><a name="log-driver"></a></p>
+<h4>日誌驅動程式</h4>
+<p><code>log</code> 郵件驅動程式將不會發送您的電子郵件，而是將所有電子郵件訊息寫入您的日誌檔案以供檢查。通常，此驅動程式僅在本地開發期間使用。有關如何按環境配置應用程式的更多資訊，請查看<a href="/docs/configuration#environment-configuration">配置文檔</a>。</p>
+<p><a name="mailtrap"></a></p>
+<h4>HELO / Mailtrap / Mailpit</h4>
+<p>或者，您可以使用像 <a href="https://usehelo.com">HELO</a> 或 <a href="https://mailtrap.io">Mailtrap</a> 這樣的服務以及 <code>smtp</code> 驅動程式來將您的電子郵件訊息發送到「虛擬」信箱，您可以在真正的電子郵件客戶端中查看它們。這種方法的好處是允許您在 Mailtrap 的訊息查看器中實際檢查最終的電子郵件。</p>
+<p>如果您正在使用 <a href="/docs/sail">Laravel Sail</a>，您可以使用 <a href="https://github.com/axllent/mailpit">Mailpit</a> 來預覽您的訊息。當 Sail 運行時，您可以透過以下網址存取 Mailpit 介面：<code>http://localhost:8025</code>。</p>
+<p><a name="using-a-global-to-address"></a></p>
+<h4>使用全域 <code>to</code> 地址</h4>
+<p>最後，您可以透過呼叫 <code>Mail</code> 外觀提供的 <code>alwaysTo</code> 方法來指定一個全域「to」地址。通常，此方法應從應用程式的其中一個服務提供者的 <code>boot</code> 方法中被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Mail;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    if ($this->app->environment('local')) {
+        Mail::alwaysTo('taylor@example.com');
+    }
+}
+</code></pre>
+<p>使用 <code>alwaysTo</code> 方法時，郵件訊息上的任何額外「cc」或「bcc」地址將被移除。</p>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Laravel 在發送郵件訊息時會派發兩個事件。<code>MessageSending</code> 事件在訊息被發送之前派發，而 <code>MessageSent</code> 事件在訊息被發送後派發。請記住，這些事件是在郵件被<em>發送</em>時派發的，而不是在放入佇列時。您可以在應用程式中為這些事件<a href="/docs/events">創建事件監聽器</a>：</p>
+<pre><code class="language-php">use Illuminate\\Mail\\Events\\MessageSending;
+// use Illuminate\\Mail\\Events\\MessageSent;
+
+class LogMessage
+{
+    /**
+     * 處理事件。
+     */
+    public function handle(MessageSending $event): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p><a name="custom-transports"></a></p>
+<h2>自訂傳輸</h2>
+<p>Laravel 包含多種郵件傳輸；但是，您可能希望編寫自己的傳輸以透過 Laravel 不直接支援的其他服務傳遞電子郵件。首先，定義一個擴展 <code>Symfony\\Component\\Mailer\\Transport\\AbstractTransport</code> 類別的類別。然後，在您的傳輸上實現 <code>doSend</code> 和 <code>__toString</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Mail;
+
+use MailchimpTransactional\\ApiClient;
+use Symfony\\Component\\Mailer\\SentMessage;
+use Symfony\\Component\\Mailer\\Transport\\AbstractTransport;
+use Symfony\\Component\\Mime\\Address;
+use Symfony\\Component\\Mime\\MessageConverter;
+
+class MailchimpTransport extends AbstractTransport
+{
+    /**
+     * 創建一個新的 Mailchimp 傳輸實例。
+     */
+    public function __construct(
+        protected ApiClient $client,
+    ) {
+        parent::__construct();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function doSend(SentMessage $message): void
+    {
+        $email = MessageConverter::toEmail($message->getOriginalMessage());
+
+        $this->client->messages->send(['message' => [
+            'from_email' => $email->getFrom(),
+            'to' => collect($email->getTo())->map(function (Address $email) {
+                return ['email' => $email->getAddress(), 'type' => 'to'];
+            })->all(),
+            'subject' => $email->getSubject(),
+            'text' => $email->getTextBody(),
+        ]]);
+    }
+
+    /**
+     * 獲取傳輸的字串表示。
+     */
+    public function __toString(): string
+    {
+        return 'mailchimp';
+    }
+}
+</code></pre>
+<p>定義好自訂傳輸後，您可以透過 <code>Mail</code> 外觀提供的 <code>extend</code> 方法來註冊它。通常，這應該在應用程式的 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中完成。一個 <code>$config</code> 參數將被傳遞給提供給 <code>extend</code> 方法的閉包。此參數將包含在應用程式的 <code>config/mail.php</code> 配置檔案中為郵件程式定義的配置陣列：</p>
+<pre><code class="language-php">use App\\Mail\\MailchimpTransport;
+use Illuminate\\Support\\Facades\\Mail;
+use MailchimpTransactional\\ApiClient;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Mail::extend('mailchimp', function (array $config = []) {
+        $client = new ApiClient;
+
+        $client->setApiKey($config['key']);
+
+        return new MailchimpTransport($client);
+    });
+}
+</code></pre>
+<p>定義並註冊好自訂傳輸後，您可以在應用程式的 <code>config/mail.php</code> 配置檔案中創建一個使用新傳輸的郵件程式定義：</p>
+<pre><code class="language-php">'mailchimp' => [
+    'transport' => 'mailchimp',
+    'key' => env('MAILCHIMP_API_KEY'),
+    // ...
+],
+</code></pre>
+<p><a name="additional-symfony-transports"></a></p>
+<h3>額外的 Symfony 傳輸</h3>
+<p>Laravel 包含對一些現有 Symfony 維護的郵件傳輸（如 Mailgun 和 Postmark）的支援。但是，您可能希望擴展 Laravel 以支援額外的 Symfony 維護的傳輸。您可以透過透過 Composer 要求必要的 Symfony 郵件程式並將傳輸註冊到 Laravel 來實現這一點。例如，您可以安裝並註冊「Brevo」（以前稱為「Sendinblue」）Symfony 郵件程式：</p>
+<pre><code class="language-shell">composer require symfony/brevo-mailer symfony/http-client
+</code></pre>
+<p>安裝好 Brevo 郵件程式套件後，您可以在應用程式的 <code>services</code> 配置檔案中添加 Brevo API 憑據的條目：</p>
+<pre><code class="language-php">'brevo' => [
+    'key' => env('BREVO_API_KEY'),
+],
+</code></pre>
+<p>接下來，您可以使用 <code>Mail</code> 外觀的 <code>extend</code> 方法將傳輸註冊到 Laravel。通常，這應該在服務提供者的 <code>boot</code> 方法中完成：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Mail;
+use Symfony\\Component\\Mailer\\Bridge\\Brevo\\Transport\\BrevoTransportFactory;
+use Symfony\\Component\\Mailer\\Transport\\Dsn;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Mail::extend('brevo', function () {
+        return (new BrevoTransportFactory)->create(
+            new Dsn(
+                'brevo+api',
+                'default',
+                config('services.brevo.key')
+            )
+        );
+    });
+}
+</code></pre>
+<p>註冊好傳輸後，您可以在應用程式的 <code>config/mail.php</code> 配置檔案中創建一個使用新傳輸的郵件程式定義：</p>
+<pre><code class="language-php">'brevo' => [
+    'transport' => 'brevo',
+    // ...
+],
+</code></pre>
+`;
+---
+
+<DocsLayout title="郵件" currentPath="mail">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>郵件</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">郵件</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/mail" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

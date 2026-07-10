@@ -1,0 +1,264 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>視圖</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#writing-views-in-react-svelte-or-vue">使用 React / Svelte / Vue 編寫視圖</a></li>
+</ul>
+</li>
+<li><a href="#creating-and-rendering-views">創建和渲染視圖</a><ul>
+<li><a href="#nested-view-directories">嵌套視圖目錄</a></li>
+<li><a href="#creating-the-first-available-view">創建第一個可用視圖</a></li>
+<li><a href="#determining-if-a-view-exists">判斷視圖是否存在</a></li>
+</ul>
+</li>
+<li><a href="#passing-data-to-views">向視圖傳遞資料</a><ul>
+<li><a href="#sharing-data-with-all-views">與所有視圖共享資料</a></li>
+</ul>
+</li>
+<li><a href="#view-composers">視圖合成器</a><ul>
+<li><a href="#view-creators">視圖創建器</a></li>
+</ul>
+</li>
+<li><a href="#optimizing-views">優化視圖</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>當然，直接從路由和控制器傳回完整的 HTML 文件字串是不切實際的。幸運的是，視圖提供了一種便利的方式來將所有 HTML 放置在單獨的文件中。</p>
+<p>視圖將您的控制器/應用程式邏輯與呈現邏輯分離，並存儲在 <code>resources/views</code> 目錄中。使用 Laravel 時，視圖模板通常使用 <a href="/docs/blade">Blade 模板語言</a>來編寫。一個簡單的視圖可能看起來像這樣：</p>
+<pre><code class="language-blade">&lt;!-- 視圖存儲在 resources/views/greeting.blade.php --&gt;
+
+&lt;html&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Hello, {{ $name }}&lt;/h1&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>由於此視圖存儲在 <code>resources/views/greeting.blade.php</code>，我們可以使用全域 <code>view</code> 輔助函數來傳回它，像這樣：</p>
+<pre><code class="language-php">Route::get('/', function () {
+    return view('greeting', ['name' => 'James']);
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+想了解更多關於如何編寫 Blade 模板的資訊嗎？請查看完整的 <a href="/docs/blade">Blade 文檔</a>來開始使用。</p>
+</blockquote>
+<p><a name="writing-views-in-react-svelte-or-vue"></a></p>
+<h3>使用 React / Svelte / Vue 編寫視圖</h3>
+<p>許多開發者開始不再透過 Blade 使用 PHP 編寫前端模板，而是更喜歡使用 React、Svelte 或 Vue 來編寫模板。Laravel 透過 <a href="https://inertiajs.com/">Inertia</a> 讓這變得非常簡單，Inertia 是一個庫，讓您可以輕鬆地將 React / Svelte / Vue 前端與 Laravel 後端連接，而無需構建 SPA 的典型複雜性。</p>
+<p>我們的 <a href="/docs/starter-kits">React、Svelte 和 Vue 應用程式入門套件</a>為您的下一個由 Inertia 驅動的 Laravel 應用程式提供了絕佳的起點。</p>
+<p><a name="creating-and-rendering-views"></a></p>
+<h2>創建和渲染視圖</h2>
+<p>您可以透過在應用程式的 <code>resources/views</code> 目錄中放置帶有 <code>.blade.php</code> 擴展名的文件或使用 <code>make:view</code> Artisan 命令來創建視圖：</p>
+<pre><code class="language-shell">php artisan make:view greeting
+</code></pre>
+<p><code>.blade.php</code> 擴展名通知框架該文件包含 <a href="/docs/blade">Blade 模板</a>。Blade 模板包含 HTML 以及 Blade 指令，允許您輕鬆地顯示值、創建「if」語句、迭代資料等。</p>
+<p>創建視圖後，您可以使用全域 <code>view</code> 輔助函數從應用程式的路由或控制器中傳回它：</p>
+<pre><code class="language-php">Route::get('/', function () {
+    return view('greeting', ['name' => 'James']);
+});
+</code></pre>
+<p>視圖也可以使用 <code>View</code> 外觀來傳回：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\View;
+
+return View::make('greeting', ['name' => 'James']);
+</code></pre>
+<p>如您所見，傳遞給 <code>view</code> 輔助函數的第一個參數對應於 <code>resources/views</code> 目錄中視圖檔案的名稱。第二個參數是應該提供給視圖的資料陣列。在此範例中，我們傳遞 <code>name</code> 變數，它使用 <a href="/docs/blade">Blade 語法</a>在視圖中顯示。</p>
+<p><a name="nested-view-directories"></a></p>
+<h3>嵌套視圖目錄</h3>
+<p>視圖也可以嵌套在 <code>resources/views</code> 目錄的子目錄中。可以使用「點」記法來引用嵌套視圖。例如，如果您的視圖存儲在 <code>resources/views/admin/profile.blade.php</code>，您可以從應用程式的路由/控制器中像這樣傳回它：</p>
+<pre><code class="language-php">return view('admin.profile', $data);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+視圖目錄名稱不應包含 <code>.</code> 字元。</p>
+</blockquote>
+<p><a name="creating-the-first-available-view"></a></p>
+<h3>創建第一個可用視圖</h3>
+<p>使用 <code>View</code> 外觀的 <code>first</code> 方法，您可以創建給定視圖陣列中存在的第一個視圖。如果您的應用程式或套件允許視圖被自訂或覆蓋，這可能會很有用：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\View;
+
+return View::first(['custom.admin', 'admin'], $data);
+</code></pre>
+<p><a name="determining-if-a-view-exists"></a></p>
+<h3>判斷視圖是否存在</h3>
+<p>如果您需要判斷視圖是否存在，可以使用 <code>View</code> 外觀。<code>exists</code> 方法在視圖存在時將傳回 <code>true</code>：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\View;
+
+if (View::exists('admin.profile')) {
+    // ...
+}
+</code></pre>
+<p><a name="passing-data-to-views"></a></p>
+<h2>向視圖傳遞資料</h2>
+<p>正如您在前面的範例中所見，您可以向視圖傳遞資料陣列，以使該資料可供視圖使用：</p>
+<pre><code class="language-php">return view('greetings', ['name' => 'Victoria']);
+</code></pre>
+<p>以這種方式傳遞資訊時，資料應該是一個包含鍵/值對的陣列。向視圖提供資料後，您可以使用資料的鍵在視圖中存取每個值，例如 <code>&lt;?php echo $name; ?&gt;</code>。</p>
+<p>作為向 <code>view</code> 輔助函數傳遞完整資料陣列的替代方案，您可以使用 <code>with</code> 方法向視圖添加單個資料。<code>with</code> 方法傳回視圖物件的實例，以便您可以在傳回視圖之前繼續鏈式呼叫方法：</p>
+<pre><code class="language-php">return view('greeting')
+    ->with('name', 'Victoria')
+    ->with('occupation', 'Astronaut');
+</code></pre>
+<p><a name="sharing-data-with-all-views"></a></p>
+<h3>與所有視圖共享資料</h3>
+<p>有時您可能需要與應用程式渲染的所有視圖共享資料。您可以使用 <code>View</code> 外觀的 <code>share</code> 方法來執行此操作。通常，您應該在服務提供者的 <code>boot</code> 方法中放置對 <code>share</code> 方法的呼叫。您可以自由地將它們添加到 <code>App\\Providers\\AppServiceProvider</code> 類別中，或生成一個單獨的服務提供者來容納它們：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\Facades\\View;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 註冊任何應用程式服務。
+     */
+    public function register(): void
+    {
+        // ...
+    }
+
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        View::share('key', 'value');
+    }
+}
+</code></pre>
+<p><a name="view-composers"></a></p>
+<h2>視圖合成器</h2>
+<p>視圖合成器是在渲染視圖時被呼叫的回呼或類別方法。如果您有想要在每次渲染視圖時綁定到視圖的資料，視圖合成器可以幫助您將該邏輯組織到一個位置。如果同一視圖被應用程式中的多個路由或控制器傳回，並且總是需要特定的資料，視圖合成器可能特別有用。</p>
+<p>通常，視圖合成器將在您應用程式的<a href="/docs/providers">服務提供者</a>之一中註冊。在此範例中，我們將假設 <code>App\\Providers\\AppServiceProvider</code> 將容納此邏輯。</p>
+<p>我們將使用 <code>View</code> 外觀的 <code>composer</code> 方法來註冊視圖合成器。Laravel 不包含用於基於類別的視圖合成器的預設目錄，因此您可以自由地按照您希望的方式組織它們。例如，您可以創建一個 <code>app/View/Composers</code> 目錄來容納所有應用程式的視圖合成器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use App\\View\\Composers\\ProfileComposer;
+use Illuminate\\Support\\Facades;
+use Illuminate\\Support\\ServiceProvider;
+use Illuminate\\View\\View;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 註冊任何應用程式服務。
+     */
+    public function register(): void
+    {
+        // ...
+    }
+
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        // 使用基於類別的合成器...
+        Facades\\View::composer('profile', ProfileComposer::class);
+
+        // 使用基於閉包的合成器...
+        Facades\\View::composer('welcome', function (View $view) {
+            // ...
+        });
+
+        Facades\\View::composer('dashboard', function (View $view) {
+            // ...
+        });
+    }
+}
+</code></pre>
+<p>現在我們已經註冊了合成器，每次渲染 <code>profile</code> 視圖時，<code>App\\View\\Composers\\ProfileComposer</code> 類別的 <code>compose</code> 方法都將被執行。讓我們來看看合成器類別的範例：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\View\\Composers;
+
+use App\\Repositories\\UserRepository;
+use Illuminate\\View\\View;
+
+class ProfileComposer
+{
+    /**
+     * 創建一個新的 Profile 合成器。
+     */
+    public function __construct(
+        protected UserRepository $users,
+    ) {}
+
+    /**
+     * 將資料綁定到視圖。
+     */
+    public function compose(View $view): void
+    {
+        $view->with('count', $this->users->count());
+    }
+}
+</code></pre>
+<p>如您所見，所有視圖合成器都透過<a href="/docs/container">服務容器</a>解析，因此您可以在合成器的構造函數中鍵入提示您需要的任何依賴。</p>
+<p><a name="attaching-a-composer-to-multiple-views"></a></p>
+<h4>將合成器附加到多個視圖</h4>
+<p>您可以透過將視圖陣列作為第一個參數傳遞給 <code>composer</code> 方法，將視圖合成器同時附加到多個視圖：</p>
+<pre><code class="language-php">use App\\Views\\Composers\\MultiComposer;
+use Illuminate\\Support\\Facades\\View;
+
+View::composer(
+    ['profile', 'dashboard'],
+    MultiComposer::class
+);
+</code></pre>
+<p><code>composer</code> 方法還接受 <code>*</code> 字元作為萬用字元，允許您將合成器附加到所有視圖：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades;
+use Illuminate\\View\\View;
+
+Facades\\View::composer('*', function (View $view) {
+    // ...
+});
+</code></pre>
+<p><a name="view-creators"></a></p>
+<h3>視圖創建器</h3>
+<p>視圖「創建器」與視圖合成器非常相似；但是，它們在視圖實例化後立即執行，而不是等到視圖即將渲染時。要註冊視圖創建器，請使用 <code>creator</code> 方法：</p>
+<pre><code class="language-php">use App\\View\\Creators\\ProfileCreator;
+use Illuminate\\Support\\Facades\\View;
+
+View::creator('profile', ProfileCreator::class);
+</code></pre>
+<p><a name="optimizing-views"></a></p>
+<h2>優化視圖</h2>
+<p>預設情況下，Blade 模板視圖是按需編譯的。當執行渲染視圖的請求時，Laravel 將判斷視圖的編譯版本是否存在。如果文件存在，Laravel 將判斷未編譯的視圖是否比編譯的視圖更新。如果編譯的視圖不存在，或未編譯的視圖已被修改，Laravel 將重新編譯視圖。</p>
+<p>在請求期間編譯視圖可能對效能產生輕微的負面影響，因此 Laravel 提供了 <code>view:cache</code> Artisan 命令來預編譯應用程式使用的所有視圖。為了提高效能，您可能希望將此命令作為部署過程的一部分來執行：</p>
+<pre><code class="language-shell">php artisan view:cache
+</code></pre>
+<p>您可以使用 <code>view:clear</code> 命令來清除視圖快取：</p>
+<pre><code class="language-shell">php artisan view:clear
+</code></pre>
+`;
+---
+
+<DocsLayout title="視圖" currentPath="views">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>視圖</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">視圖</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/views" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

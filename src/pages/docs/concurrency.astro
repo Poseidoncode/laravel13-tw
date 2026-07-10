@@ -1,0 +1,111 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>並行處理</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#running-concurrent-tasks">執行並行任務</a><ul>
+<li><a href="#named-results">命名結果</a></li>
+<li><a href="#task-timeouts">任務逾時</a></li>
+</ul>
+</li>
+<li><a href="#deferring-concurrent-tasks">延遲並行任務</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>有時您可能需要執行幾個彼此不依賴的慢速任務。在許多情況下，透過並行執行任務可以實現顯著的效能改善。Laravel 的 <code>Concurrency</code> facade 提供了一個簡單、方便的 API 來並行執行閉包。</p>
+<p><a name="how-it-works"></a></p>
+<h4>運作原理</h4>
+<p>Laravel 透過序列化給定的閉包並將它們派發到隱藏的 Artisan CLI 命令來實現並行處理，該命令會反序列化閉包並在其自己的 PHP 進程中呼叫它。閉包被呼叫後，結果值會被序列化回父進程。</p>
+<p><code>Concurrency</code> facade 支援三種驅動程式：<code>process</code>（預設）、<code>fork</code> 和 <code>sync</code>。</p>
+<p><code>fork</code> 驅動程式提供比預設 <code>process</code> 驅動程式更好的效能，但它只能在 PHP 的 CLI 上下文中使用，因為 PHP 不支援在 Web 請求期間進行 fork。使用 <code>fork</code> 驅動程式之前，您需要安裝 <code>spatie/fork</code> 套件：</p>
+<pre><code class="language-shell">composer require spatie/fork
+</code></pre>
+<p><code>sync</code> 驅動程式主要在測試時有用，當您想停用所有並行處理並僅在父進程中按順序執行給定的閉包時。</p>
+<p><a name="running-concurrent-tasks"></a></p>
+<h2>執行並行任務</h2>
+<p>要執行並行任務，您可以呼叫 <code>Concurrency</code> facade 的 <code>run</code> 方法。<code>run</code> 方法接受一個閉包陣列，這些閉包應在子 PHP 進程中同時執行：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Concurrency;
+use Illuminate\\Support\\Facades\\DB;
+
+[$userCount, $orderCount] = Concurrency::run([
+    fn () => DB::table('users')->count(),
+    fn () => DB::table('orders')->count(),
+]);
+</code></pre>
+<p>要使用特定的驅動程式，可以使用 <code>driver</code> 方法：</p>
+<pre><code class="language-php">$results = Concurrency::driver('fork')->run(...);
+</code></pre>
+<p>或者，要變更預設的並行處理驅動程式，您應該透過 <code>config:publish</code> Artisan 命令發佈 <code>concurrency</code> 設定檔，並更新檔案中的 <code>default</code> 選項：</p>
+<pre><code class="language-shell">php artisan config:publish concurrency
+</code></pre>
+<p><a name="named-results"></a></p>
+<h3>命名結果</h3>
+<p>如果您希望透過名稱而非位置來存取並行任務結果，可以提供一個關聯陣列的閉包。每個結果將使用與其對應閉包相同的索引鍵返回：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Concurrency;
+use Illuminate\\Support\\Facades\\DB;
+
+$results = Concurrency::run([
+    'users' => fn () => DB::table('users')->count(),
+    'orders' => fn () => DB::table('orders')->count(),
+]);
+
+$userCount = $results['users'];
+$orderCount = $results['orders'];
+</code></pre>
+<p><a name="task-timeouts"></a></p>
+<h3>任務逾時</h3>
+<p>使用 <code>process</code> 驅動程式（預設）時，您可以透過向 <code>run</code> 方法提供逾時時間來指定並行任務在被終止之前允許運行的最大秒數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Concurrency;
+use Illuminate\\Support\\Facades\\DB;
+
+[$userCount, $orderCount] = Concurrency::run([
+    fn () => DB::table('users')->count(),
+    fn () => DB::table('orders')->count(),
+], timeout: 30);
+</code></pre>
+<p>如果您偏好更具表達性的逾時定義，也可以提供 <code>CarbonInterval</code> 實例：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Concurrency;
+
+use function Illuminate\\Support\\seconds;
+
+Concurrency::run([...], timeout: seconds(30));
+</code></pre>
+<p><a name="deferring-concurrent-tasks"></a></p>
+<h2>延遲並行任務</h2>
+<p>如果您想並行執行一組閉包，但對這些閉包返回的結果不感興趣，應該考慮使用 <code>defer</code> 方法。當 <code>defer</code> 方法被呼叫時，給定的閉包不會立即執行。相反，Laravel 將在 HTTP 響應已傳送到用戶後並行執行這些閉包：</p>
+<pre><code class="language-php">use App\\Services\\Metrics;
+use Illuminate\\Support\\Facades\\Concurrency;
+
+Concurrency::defer([
+    fn () => Metrics::report('users'),
+    fn () => Metrics::report('orders'),
+]);
+</code></pre>
+`;
+---
+
+<DocsLayout title="並行處理" currentPath="concurrency">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>並行處理</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">並行處理</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/concurrency" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

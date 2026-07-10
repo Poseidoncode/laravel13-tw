@@ -1,0 +1,410 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Redis</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#configuration">配置</a><ul>
+<li><a href="#clusters">叢集</a></li>
+<li><a href="#predis">Predis</a></li>
+<li><a href="#phpredis">PhpRedis</a></li>
+</ul>
+</li>
+<li><a href="#interacting-with-redis">與 Redis 互動</a><ul>
+<li><a href="#transactions">交易</a></li>
+<li><a href="#pipelining-commands">管線命令</a></li>
+</ul>
+</li>
+<li><a href="#pubsub">Pub / Sub</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://redis.io">Redis</a> 是一個開源的進階鍵值儲存。它通常被稱為資料結構伺服器，因為金鑰可以包含<a href="https://redis.io/docs/latest/develop/data-types/strings/">字串</a>、<a href="https://redis.io/docs/latest/develop/data-types/hashes/">雜湊</a>、<a href="https://redis.io/docs/latest/develop/data-types/lists/">列表</a>、<a href="https://redis.io/docs/latest/develop/data-types/sets/">集合</a>和<a href="https://redis.io/docs/latest/develop/data-types/sorted-sets/">有序集合</a>。</p>
+<p>在使用 Redis 與 Laravel 之前，我們鼓勵您透過 PECL 安裝並使用 <a href="https://github.com/phpredis/phpredis">PhpRedis</a> PHP 擴展。該擴展比「使用者端」PHP 套件更複雜，但對於大量使用 Redis 的應用程式可能會產生更好的效能。如果您使用 <a href="/docs/sail">Laravel Sail</a>，此擴展已安裝在您應用程式的 Docker 容器中。</p>
+<p>如果您無法安裝 PhpRedis 擴展，可以透過 Composer 安裝 <code>predis/predis</code> 套件。Predis 是一個完全用 PHP 編寫的 Redis 客戶端，不需要任何額外的擴展：</p>
+<pre><code class="language-shell">composer require predis/predis
+</code></pre>
+<p><a name="configuration"></a></p>
+<h2>配置</h2>
+<p>您可以透過 <code>config/database.php</code> 配置檔案來配置您應用程式的 Redis 設定。在此檔案中，您將看到一個包含您應用程式使用的 Redis 伺服器的 <code>redis</code> 陣列：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    'options' => [
+        'cluster' => env('REDIS_CLUSTER', 'redis'),
+        'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+    ],
+
+    'default' => [
+        'url' => env('REDIS_URL'),
+        'host' => env('REDIS_HOST', '127.0.0.1'),
+        'username' => env('REDIS_USERNAME'),
+        'password' => env('REDIS_PASSWORD'),
+        'port' => env('REDIS_PORT', '6379'),
+        'database' => env('REDIS_DB', '0'),
+    ],
+
+    'cache' => [
+        'url' => env('REDIS_URL'),
+        'host' => env('REDIS_HOST', '127.0.0.1'),
+        'username' => env('REDIS_USERNAME'),
+        'password' => env('REDIS_PASSWORD'),
+        'port' => env('REDIS_PORT', '6379'),
+        'database' => env('REDIS_CACHE_DB', '1'),
+    ],
+
+],
+</code></pre>
+<p>配置檔案中定義的每個 Redis 伺服器都需要有名稱、主機和連接埠，除非您定義一個單一 URL 來表示 Redis 連接：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    'options' => [
+        'cluster' => env('REDIS_CLUSTER', 'redis'),
+        'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+    ],
+
+    'default' => [
+        'url' => 'tcp://127.0.0.1:6379?database=0',
+    ],
+
+    'cache' => [
+        'url' => 'tls://user:password@127.0.0.1:6380?database=1',
+    ],
+
+],
+</code></pre>
+<p><a name="configuring-the-connection-scheme"></a></p>
+<h4>配置連接方案</h4>
+<p>預設情況下，Redis 客戶端在連接到 Redis 伺服器時將使用 <code>tcp</code> 方案；但是，您可以透過在 Redis 伺服器的配置陣列中指定 <code>scheme</code> 配置選項來使用 TLS / SSL 加密：</p>
+<pre><code class="language-php">'default' => [
+    'scheme' => 'tls',
+    'url' => env('REDIS_URL'),
+    'host' => env('REDIS_HOST', '127.0.0.1'),
+    'username' => env('REDIS_USERNAME'),
+    'password' => env('REDIS_PASSWORD'),
+    'port' => env('REDIS_PORT', '6379'),
+    'database' => env('REDIS_DB', '0'),
+],
+</code></pre>
+<p><a name="clusters"></a></p>
+<h3>叢集</h3>
+<p>如果您的應用程式正在使用 Redis 伺服器叢集，您應該在 Redis 配置的 <code>clusters</code> 鍵中定義這些叢集。此配置鍵預設不存在，因此您需要在應用程式的 <code>config/database.php</code> 配置檔案中創建它：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    'options' => [
+        'cluster' => env('REDIS_CLUSTER', 'redis'),
+        'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+    ],
+
+    'clusters' => [
+        'default' => [
+            [
+                'url' => env('REDIS_URL'),
+                'host' => env('REDIS_HOST', '127.0.0.1'),
+                'username' => env('REDIS_USERNAME'),
+                'password' => env('REDIS_PASSWORD'),
+                'port' => env('REDIS_PORT', '6379'),
+                'database' => env('REDIS_DB', '0'),
+            ],
+        ],
+    ],
+
+    // ...
+],
+</code></pre>
+<p>預設情況下，Laravel 將使用原生 Redis 叢集，因為 <code>options.cluster</code> 配置值設定為 <code>redis</code>。Redis 叢集是一個很好的預設選項，因為它可以優雅地處理故障轉移。</p>
+<p>Laravel 在使用 Predis 時還支援客戶端分片。但是，客戶端分片無法處理故障轉移；因此，它主要適用於可從另一個主要資料儲存中取得的暫時性快取資料。</p>
+<p>如果您希望使用客戶端分片而不是原生 Redis 叢集，可以從應用程式的 <code>config/database.php</code> 配置檔案中移除 <code>options.cluster</code> 配置值：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    'clusters' => [
+        // ...
+    ],
+
+    // ...
+],
+</code></pre>
+<p><a name="predis"></a></p>
+<h3>Predis</h3>
+<p>如果您希望應用程式透過 Predis 套件與 Redis 互動，應確保 <code>REDIS_CLIENT</code> 環境變數的值為 <code>predis</code>：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'predis'),
+
+    // ...
+],
+</code></pre>
+<p>除了預設配置選項外，Predis 還支援可為每個 Redis 伺服器定義的額外<a href="https://github.com/nrk/predis/wiki/Connection-Parameters">連接參數</a>。要使用這些額外的配置選項，請將它們添加到您應用程式 <code>config/database.php</code> 配置檔案中的 Redis 伺服器配置中：</p>
+<pre><code class="language-php">'default' => [
+    'url' => env('REDIS_URL'),
+    'host' => env('REDIS_HOST', '127.0.0.1'),
+    'username' => env('REDIS_USERNAME'),
+    'password' => env('REDIS_PASSWORD'),
+    'port' => env('REDIS_PORT', '6379'),
+    'database' => env('REDIS_DB', '0'),
+    'read_write_timeout' => 60,
+],
+</code></pre>
+<p><a name="phpredis"></a></p>
+<h3>PhpRedis</h3>
+<p>預設情況下，Laravel 將使用 PhpRedis 擴展與 Redis 通訊。Laravel 用於與 Redis 通訊的客戶端由 <code>redis.client</code> 配置選項的值決定，該值通常反映 <code>REDIS_CLIENT</code> 環境變數的值：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    // ...
+],
+</code></pre>
+<p>除了預設配置選項外，PhpRedis 還支援以下額外連接參數：<code>name</code>、<code>persistent</code>、<code>persistent_id</code>、<code>prefix</code>、<code>read_timeout</code>、<code>retry_interval</code>、<code>max_retries</code>、<code>backoff_algorithm</code>、<code>backoff_base</code>、<code>backoff_cap</code>、<code>timeout</code> 和 <code>context</code>。您可以將這些選項中的任何一個添加到 <code>config/database.php</code> 配置檔案中的 Redis 伺服器配置中：</p>
+<pre><code class="language-php">'default' => [
+    'url' => env('REDIS_URL'),
+    'host' => env('REDIS_HOST', '127.0.0.1'),
+    'username' => env('REDIS_USERNAME'),
+    'password' => env('REDIS_PASSWORD'),
+    'port' => env('REDIS_PORT', '6379'),
+    'database' => env('REDIS_DB', '0'),
+    'read_timeout' => 60,
+    'context' => [
+        // 'auth' => ['username', 'secret'],
+        // 'stream' => ['verify_peer' => false],
+    ],
+],
+</code></pre>
+<p><a name="retry-and-backoff-configuration"></a></p>
+<h4>重試和退避配置</h4>
+<p><code>retry_interval</code>、<code>max_retries</code>、<code>backoff_algorithm</code>、<code>backoff_base</code> 和 <code>backoff_cap</code> 選項可用於配置 PhpRedis 客戶端應如何嘗試重新連接到 Redis 伺服器。支援以下退避演算法：<code>default</code>、<code>decorrelated_jitter</code>、<code>equal_jitter</code>、<code>exponential</code>、<code>uniform</code> 和 <code>constant</code>：</p>
+<pre><code class="language-php">'default' => [
+    'url' => env('REDIS_URL'),
+    'host' => env('REDIS_HOST', '127.0.0.1'),
+    'username' => env('REDIS_USERNAME'),
+    'password' => env('REDIS_PASSWORD'),
+    'port' => env('REDIS_PORT', '6379'),
+    'database' => env('REDIS_DB', '0'),
+    'max_retries' => env('REDIS_MAX_RETRIES', 3),
+    'backoff_algorithm' => env('REDIS_BACKOFF_ALGORITHM', 'decorrelated_jitter'),
+    'backoff_base' => env('REDIS_BACKOFF_BASE', 100),
+    'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
+],
+</code></pre>
+<p>Predis 3.4.0 及更高版本支援透過 <code>Retry</code> 類別進行內建重試和退避配置。使用以下策略之一配置 <code>retry</code> 選項：<code>NoBackoff</code>、<code>EqualBackoff</code> 或 <code>ExponentialBackoff</code>：</p>
+<pre><code class="language-php">use Predis\\Retry;
+use Predis\\Retry\\Strategy\\ExponentialBackoff;
+
+'default' => [
+    'url' => env('REDIS_URL'),
+    // ...
+    'retry' => new Retry(
+        new ExponentialBackoff(
+            env('REDIS_BACKOFF_BASE', 100),
+            env('REDIS_BACKOFF_CAP', 1000),
+            true, // 啟用抖動
+        ),
+        env('REDIS_MAX_RETRIES', 3)
+    )
+],
+</code></pre>
+<p><a name="unix-socket-connections"></a></p>
+<h4>Unix Socket 連接</h4>
+<p>Redis 連接也可以配置為使用 Unix socket 而不是 TCP。這可以透過消除與應用程式在同一伺服器上的 Redis 實例的連接的 TCP 開銷來提高效能。要配置 Redis 使用 Unix socket，請將 <code>REDIS_HOST</code> 環境變數設定為 Redis socket 的路徑，並將 <code>REDIS_PORT</code> 環境變數設定為 <code>0</code>：</p>
+<pre><code class="language-env">REDIS_HOST=/run/redis/redis.sock
+REDIS_PORT=0
+</code></pre>
+<p><a name="phpredis-serialization"></a></p>
+<h4>PhpRedis 序列化和壓縮</h4>
+<p>PhpRedis 擴展還可以配置為使用多種序列化和壓縮演算法。這些演算法可以透過 Redis 配置的 <code>options</code> 陣列來配置：</p>
+<pre><code class="language-php">'redis' => [
+
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+
+    'options' => [
+        'cluster' => env('REDIS_CLUSTER', 'redis'),
+        'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+        'serializer' => Redis::SERIALIZER_MSGPACK,
+        'compression' => Redis::COMPRESSION_LZ4,
+    ],
+
+    // ...
+],
+</code></pre>
+<p>目前支援的序列化器包括：<code>Redis::SERIALIZER_NONE</code>（預設）、<code>Redis::SERIALIZER_PHP</code>、<code>Redis::SERIALIZER_JSON</code>、<code>Redis::SERIALIZER_IGBINARY</code> 和 <code>Redis::SERIALIZER_MSGPACK</code>。</p>
+<p>支援的壓縮演算法包括：<code>Redis::COMPRESSION_NONE</code>（預設）、<code>Redis::COMPRESSION_LZF</code>、<code>Redis::COMPRESSION_ZSTD</code> 和 <code>Redis::COMPRESSION_LZ4</code>。</p>
+<p><a name="interacting-with-redis"></a></p>
+<h2>與 Redis 互動</h2>
+<p>您可以透過在 <code>Redis</code><a href="/docs/facades">外觀</a>上呼叫各種方法來與 Redis 互動。<code>Redis</code> 外觀支援動態方法，這意味著您可以在外觀上呼叫任何 <a href="https://redis.io/commands">Redis 命令</a>，該命令將被直接傳遞給 Redis。在此範例中，我們將透過在 <code>Redis</code> 外觀上呼叫 <code>get</code> 方法來呼叫 Redis <code>GET</code> 命令：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Support\\Facades\\Redis;
+use Illuminate\\View\\View;
+
+class UserController extends Controller
+{
+    /**
+     * 顯示給定使用者的個人資料。
+     */
+    public function show(string $id): View
+    {
+        return view('user.profile', [
+            'user' => Redis::get('user:profile:'.$id)
+        ]);
+    }
+}
+</code></pre>
+<p>如上所述，您可以在 <code>Redis</code> 外觀上呼叫任何 Redis 命令。Laravel 使用魔法方法將命令傳遞給 Redis 伺服器。如果 Redis 命令需要參數，您應該將它們傳遞給外觀的對應方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Redis;
+
+Redis::set('name', 'Taylor');
+
+$values = Redis::lrange('names', 5, 10);
+</code></pre>
+<p>或者，您可以使用 <code>Redis</code> 外觀的 <code>command</code> 方法將命令傳遞給伺服器，該方法接受命令名稱作為第一個參數，值陣列作為第二個參數：</p>
+<pre><code class="language-php">$values = Redis::command('lrange', ['name', 5, 10]);
+</code></pre>
+<p><a name="using-multiple-redis-connections"></a></p>
+<h4>使用多個 Redis 連接</h4>
+<p>您應用程式的 <code>config/database.php</code> 配置檔案允許您定義多個 Redis 連接/伺服器。您可以使用 <code>Redis</code> 外觀的 <code>connection</code> 方法來取得特定 Redis 連接的連接：</p>
+<pre><code class="language-php">$redis = Redis::connection('connection-name');
+</code></pre>
+<p>要取得預設 Redis 連接的實例，您可以在不附加任何額外參數的情況下呼叫 <code>connection</code> 方法：</p>
+<pre><code class="language-php">$redis = Redis::connection();
+</code></pre>
+<p><a name="transactions"></a></p>
+<h3>交易</h3>
+<p><code>Redis</code> 外觀的 <code>transaction</code> 方法提供了 Redis 原生 <code>MULTI</code> 和 <code>EXEC</code> 命令的便利包裝器。<code>transaction</code> 方法接受一個閉包作為其唯一參數。此閉包將接收一個 Redis 連接實例，並可以向該實例發出它想要的任何命令。在閉包內發出的所有 Redis 命令將在單個原子交易中執行：</p>
+<pre><code class="language-php">use Redis;
+use Illuminate\\Support\\Facades;
+
+\\Facades\\Redis::transaction(function (Redis $redis) {
+    $redis->incr('user_visits', 1);
+    $redis->incr('total_visits', 1);
+});
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+定義 Redis 交易時，您不能從 Redis 連接中檢索任何值。請記住，您的交易將作為單個原子操作執行，該操作在您的整個閉包完成執行其命令之前不會執行。</p>
+</blockquote>
+<h4>Lua 腳本</h4>
+<p><code>eval</code> 方法提供了在單個原子操作中執行多個 Redis 命令的另一種方法。但是，<code>eval</code> 方法的好處是能夠在該操作期間與 Redis 鍵值互動並檢查它們。Redis 腳本是用 <a href="https://www.lua.org">Lua 程式語言</a>編寫的。</p>
+<p><code>eval</code> 方法一開始可能有點可怕，但我們將探索一個基本範例來打破僵局。<code>eval</code> 方法需要幾個參數。首先，您應該將 Lua 腳本（作為字串）傳遞給方法。其次，您應該傳遞腳本互動的金鑰數量（作為整數）。第三，您應該傳遞這些金鑰的名稱。最後，您可以傳遞您需要在腳本中存取的任何其他額外參數。</p>
+<p>在此範例中，我們將增加一個計數器，檢查其新值，然後如果第一個計數器的值大於五，則增加第二個計數器。最後，我們將傳回第一個計數器的值：</p>
+<pre><code class="language-php">$value = Redis::eval(&lt;&lt;&lt;'LUA'
+    local counter = redis.call("incr", KEYS[1])
+
+    if counter > 5 then
+        redis.call("incr", KEYS[2])
+    end
+
+    return counter
+LUA, 2, 'first-counter', 'second-counter');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+請查閱 <a href="https://redis.io/commands/eval">Redis 文檔</a>以了解更多關於 Redis 腳本的資訊。</p>
+</blockquote>
+<p><a name="pipelining-commands"></a></p>
+<h3>管線命令</h3>
+<p>有時您可能需要執行數十個 Redis 命令。與其為每個命令向 Redis 伺服器發出網路請求，不如使用 <code>pipeline</code> 方法。<code>pipeline</code> 方法接受一個參數：一個接收 Redis 實例的閉包。您可以向此 Redis 實例發出所有命令，它們將同時發送到 Redis 伺服器，以減少向伺服器的網路請求。命令仍將按發出順序執行：</p>
+<pre><code class="language-php">use Redis;
+use Illuminate\\Support\\Facades;
+
+\\Facades\\Redis::pipeline(function (Redis $pipe) {
+    for ($i = 0; $i < 1000; $i++) {
+        $pipe->set("key:$i", $i);
+    }
+});
+</code></pre>
+<p><a name="pubsub"></a></p>
+<h2>發佈 / 訂閱</h2>
+<p>Laravel 提供了 Redis <code>publish</code> 和 <code>subscribe</code> 命令的便利介面。這些 Redis 命令允許您在給定的「頻道」上監聽訊息。您可以從另一個應用程式或甚至使用另一種程式語言將訊息發佈到頻道，從而實現應用程式和程序之間的輕鬆通訊。</p>
+<p>首先，讓我們使用 <code>subscribe</code> 方法設置一個頻道監聽器。我們將把此方法呼叫放在 <a href="/docs/artisan">Artisan 命令</a>中，因為呼叫 <code>subscribe</code> 方法會開始一個長時間運行的過程：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Console\\Commands;
+
+use Illuminate\\Console\\Command;
+use Illuminate\\Support\\Facades\\Redis;
+
+class RedisSubscribe extends Command
+{
+    /**
+     * 控制台命令的名稱和簽名。
+     *
+     * @var string
+     */
+    protected $signature = 'redis:subscribe';
+
+    /**
+     * 控制台命令描述。
+     *
+     * @var string
+     */
+    protected $description = '訂閱 Redis 頻道';
+
+    /**
+     * 執行控制台命令。
+     */
+    public function handle(): void
+    {
+        Redis::subscribe(['test-channel'], function (string $message) {
+            echo $message;
+        });
+    }
+}
+</code></pre>
+<p>現在我們可以使用 <code>publish</code> 方法向頻道發佈訊息：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Redis;
+
+Route::get('/publish', function () {
+    // ...
+
+    Redis::publish('test-channel', json_encode([
+        'name' => 'Adam Wathan'
+    ]));
+});
+</code></pre>
+<p><a name="wildcard-subscriptions"></a></p>
+<h4>萬用字元訂閱</h4>
+<p>使用 <code>psubscribe</code> 方法，您可以訂閱萬用字元頻道，這對於捕獲所有頻道上的所有訊息很有用。頻道名稱將作為第二個參數傳遞給提供的閉包：</p>
+<pre><code class="language-php">Redis::psubscribe(['*'], function (string $message, string $channel) {
+    echo $message;
+});
+
+Redis::psubscribe(['users.*'], function (string $message, string $channel) {
+    echo $message;
+});
+</code></pre>
+`;
+---
+
+<DocsLayout title="Redis" currentPath="redis">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Redis</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Redis</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/redis" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

@@ -1,0 +1,153 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>目錄結構</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#the-root-directory">根目錄</a><ul>
+<li><a href="#the-root-app-directory"><code>app</code> 目錄</a></li>
+<li><a href="#the-bootstrap-directory"><code>bootstrap</code> 目錄</a></li>
+<li><a href="#the-config-directory"><code>config</code> 目錄</a></li>
+<li><a href="#the-database-directory"><code>database</code> 目錄</a></li>
+<li><a href="#the-public-directory"><code>public</code> 目錄</a></li>
+<li><a href="#the-resources-directory"><code>resources</code> 目錄</a></li>
+<li><a href="#the-routes-directory"><code>routes</code> 目錄</a></li>
+<li><a href="#the-storage-directory"><code>storage</code> 目錄</a></li>
+<li><a href="#the-tests-directory"><code>tests</code> 目錄</a></li>
+<li><a href="#the-vendor-directory"><code>vendor</code> 目錄</a></li>
+</ul>
+</li>
+<li><a href="#the-app-directory">App 目錄</a><ul>
+<li><a href="#the-broadcasting-directory"><code>Broadcasting</code> 目錄</a></li>
+<li><a href="#the-console-directory"><code>Console</code> 目錄</a></li>
+<li><a href="#the-events-directory"><code>Events</code> 目錄</a></li>
+<li><a href="#the-exceptions-directory"><code>Exceptions</code> 目錄</a></li>
+<li><a href="#the-http-directory"><code>Http</code> 目錄</a></li>
+<li><a href="#the-jobs-directory"><code>Jobs</code> 目錄</a></li>
+<li><a href="#the-listeners-directory"><code>Listeners</code> 目錄</a></li>
+<li><a href="#the-mail-directory"><code>Mail</code> 目錄</a></li>
+<li><a href="#the-models-directory"><code>Models</code> 目錄</a></li>
+<li><a href="#the-notifications-directory"><code>Notifications</code> 目錄</a></li>
+<li><a href="#the-policies-directory"><code>Policies</code> 目錄</a></li>
+<li><a href="#the-providers-directory"><code>Providers</code> 目錄</a></li>
+<li><a href="#the-rules-directory"><code>Rules</code> 目錄</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>預設的 Laravel 應用程式結構旨在為大型和小型應用程式提供一個良好的起點。但您可以自由地按照任何您希望的方式組織您的應用程式。Laravel 幾乎不限制任何給定類別的位置——只要 Composer 可以自動載入該類別。</p>
+<p><a name="the-root-directory"></a></p>
+<h2>根目錄</h2>
+<p><a name="the-root-app-directory"></a></p>
+<h3>App 目錄</h3>
+<p><code>app</code> 目錄包含應用程式的核心代碼。我們很快就會更詳細地探討這個目錄；但是，應用程式中幾乎所有類別都將位於此目錄中。</p>
+<p><a name="the-bootstrap-directory"></a></p>
+<h3>Bootstrap 目錄</h3>
+<p><code>bootstrap</code> 目錄包含引導框架的 <code>app.php</code> 檔案。此目錄還包含一個 <code>cache</code> 目錄，其中包含框架為效能優化生成的檔案，如路由和服務快取檔案。</p>
+<p><a name="the-config-directory"></a></p>
+<h3>Config 目錄</h3>
+<p>顧名思義，<code>config</code> 目錄包含您應用程式的所有配置檔案。閱讀所有這些檔案並熟悉可用的所有選項是一個很好的主意。</p>
+<p><a name="the-database-directory"></a></p>
+<h3>Database 目錄</h3>
+<p><code>database</code> 目錄包含您的資料庫遷移、模型工廠和 seeds。如果您願意，也可以使用此目錄來儲存 SQLite 資料庫。</p>
+<p><a name="the-public-directory"></a></p>
+<h3>Public 目錄</h3>
+<p><code>public</code> 目錄包含 <code>index.php</code> 檔案，這是所有進入您應用程式的請求的入口點，並配置自動載入。此目錄還包含您的資源，如圖片、JavaScript 和 CSS。</p>
+<p><a name="the-resources-directory"></a></p>
+<h3>Resources 目錄</h3>
+<p><code>resources</code> 目錄包含您的 <a href="/docs/views">視圖</a>以及您的原始未編譯資源，如 CSS 或 JavaScript。</p>
+<p><a name="the-routes-directory"></a></p>
+<h3>Routes 目錄</h3>
+<p><code>routes</code> 目錄包含您應用程式的所有路由定義。預設情況下，Laravel 包含兩個路由檔案：<code>web.php</code> 和 <code>console.php</code>。</p>
+<p><code>web.php</code> 檔案包含 Laravel 放置在 <code>web</code> 中介層群組中的路由，該群組提供 Session 狀態、CSRF 保護和 Cookie 加密。如果您的應用程式不提供無狀態、RESTful API，那麼您所有的路由很可能都將定義在 <code>web.php</code> 檔案中。</p>
+<p><code>console.php</code> 檔案是您可以定義所有基於閉包的控制台命令的地方。每個閉包都綁定到一個命令實例，提供了一種與每個命令的 IO 方法互動的簡單方法。即使此檔案不定義 HTTP 路由，它也定義了基於控制台的應用程式入口點（路由）。您也可以在 <code>console.php</code> 檔案中<a href="/docs/scheduling">排程</a>任務。</p>
+<p>您可以選擇透過 <code>install:api</code> 和 <code>install:broadcasting</code> Artisan 命令安裝用於 API 路由（<code>api.php</code>）和廣播頻道（<code>channels.php</code>）的額外路由檔案。</p>
+<p><code>api.php</code> 檔案包含旨在無狀態的路由，因此透過這些路由進入應用程式的請求旨在透過<a href="/docs/sanctum">令牌</a>進行身份驗證，並且無法存取 Session 狀態。</p>
+<p><code>channels.php</code> 檔案是您可以註冊應用程式支援的所有<a href="/docs/broadcasting">事件廣播</a>頻道的地方。</p>
+<p><a name="the-storage-directory"></a></p>
+<h3>Storage 目錄</h3>
+<p><code>storage</code> 目錄包含您的日誌、編譯的 Blade 模板、基於檔案的 Session、檔案快取以及框架生成的其他檔案。此目錄分為 <code>app</code>、<code>framework</code> 和 <code>logs</code> 目錄。<code>app</code> 目錄可用於儲存應用程式生成的任何檔案。<code>framework</code> 目錄用於儲存框架生成的檔案和快取。最後，<code>logs</code> 目錄包含您應用程式的日誌檔案。</p>
+<p><code>storage/app/public</code> 目錄可用於儲存用戶生成的檔案，如應可公開存取的個人資料頭像。您應該在 <code>public/storage</code> 創建一個指向此目錄的符號連結。您可以使用 <code>php artisan storage:link</code> Artisan 命令創建該連結。</p>
+<p><a name="the-tests-directory"></a></p>
+<h3>Tests 目錄</h3>
+<p><code>tests</code> 目錄包含您的自動化測試。開箱即用提供了範例 <a href="https://pestphp.com">Pest</a> 或 <a href="https://phpunit.de/">PHPUnit</a> 單元測試和功能測試。每個測試類別應以 <code>Test</code> 後綴結尾。您可以使用 <code>/vendor/bin/pest</code> 或 <code>/vendor/bin/phpunit</code> 命令運行測試。或者，如果您想要更詳細和美觀的測試結果表示，可以使用 <code>php artisan test</code> Artisan 命令運行測試。</p>
+<p><a name="the-vendor-directory"></a></p>
+<h3>Vendor 目錄</h3>
+<p><code>vendor</code> 目錄包含您的 <a href="https://getcomposer.org">Composer</a> 依賴項。</p>
+<p><a name="the-app-directory"></a></p>
+<h2>App 目錄</h2>
+<p>您應用程式的大部分內容都位於 <code>app</code> 目錄中。預設情況下，此目錄在 <code>App</code> 命名空間下，並由 Composer 使用 <a href="https://www.php-fig.org/psr/psr-4/">PSR-4 自動載入標準</a>進行自動載入。</p>
+<p>預設情況下，<code>app</code> 目錄包含 <code>Http</code>、<code>Models</code> 和 <code>Providers</code> 目錄。但是，隨著您使用 make Artisan 命令生成類別，一段時間後，app 目錄內將生成各種其他目錄。例如，除非您執行 <code>make:command</code> Artisan 命令來生成命令類別，否則 <code>app/Console</code> 目錄將不存在。</p>
+<p><code>Console</code> 和 <code>Http</code> 目錄將在下面各自的章節中進一步解釋，但可以將 <code>Console</code> 和 <code>Http</code> 目錄視為提供對應用程式核心的 API。HTTP 協議和 CLI 都是與應用程式互動的機制，但不實際包含應用程式邏輯。換句話說，它們是向應用程式發出命令的兩種方式。<code>Console</code> 目錄包含您所有的 Artisan 命令，而 <code>Http</code> 目錄包含您的控制器、中介層和請求。</p>
+<blockquote>
+<p>[!NOTE]
+<code>app</code> 目錄中的許多類別都可以透過 Artisan 命令生成。要查看可用命令，請在終端中運行 <code>php artisan list make</code> 命令。</p>
+</blockquote>
+<p><a name="the-broadcasting-directory"></a></p>
+<h3>Broadcasting 目錄</h3>
+<p><code>Broadcasting</code> 目錄包含您應用程式的所有廣播頻道類別。這些類別使用 <code>make:channel</code> 命令生成。此目錄預設不存在，但當您創建第一個頻道時將為您創建。要了解更多關於頻道的資訊，請查看<a href="/docs/broadcasting">事件廣播</a>文檔。</p>
+<p><a name="the-console-directory"></a></p>
+<h3>Console 目錄</h3>
+<p><code>Console</code> 目錄包含您應用程式的所有自訂 Artisan 命令。這些命令可以使用 <code>make:command</code> 命令生成。</p>
+<p><a name="the-events-directory"></a></p>
+<h3>Events 目錄</h3>
+<p>此目錄預設不存在，但 <code>event:generate</code> 和 <code>make:event</code> Artisan 命令將為您創建。<code>Events</code> 目錄包含<a href="/docs/events">事件類別</a>。事件可用於提醒應用程式的其他部分已發生給定操作，提供了極大的靈活性和解耦。</p>
+<p><a name="the-exceptions-directory"></a></p>
+<h3>Exceptions 目錄</h3>
+<p><code>Exceptions</code> 目錄包含您應用程式的所有自訂異常。這些異常可以使用 <code>make:exception</code> 命令生成。</p>
+<p><a name="the-http-directory"></a></p>
+<h3>Http 目錄</h3>
+<p><code>Http</code> 目錄包含您的控制器、中介層和表單請求。幾乎所有處理進入您應用程式請求的邏輯都將置於此目錄中。</p>
+<p><a name="the-jobs-directory"></a></p>
+<h3>Jobs 目錄</h3>
+<p>此目錄預設不存在，但如果您執行 <code>make:job</code> Artisan 命令，將為您創建。<code>Jobs</code> 目錄包含您應用程式的<a href="/docs/queues">可佇列化任務</a>。任務可以由您的應用程式佇列化，或在當前請求生命週期內同步運行。在當前請求期間同步運行的任務有時被稱為「命令」，因為它們是<a href="https://en.wikipedia.org/wiki/Command_pattern">命令模式</a>的實現。</p>
+<p><a name="the-listeners-directory"></a></p>
+<h3>Listeners 目錄</h3>
+<p>此目錄預設不存在，但如果您執行 <code>event:generate</code> 或 <code>make:listener</code> Artisan 命令，將為您創建。<code>Listeners</code> 目錄包含處理您<a href="/docs/events">事件</a>的類別。事件監聽器接收一個事件實例並執行邏輯以回應事件的觸發。例如，<code>UserRegistered</code> 事件可能由 <code>SendWelcomeEmail</code> 監聽器處理。</p>
+<p><a name="the-mail-directory"></a></p>
+<h3>Mail 目錄</h3>
+<p>此目錄預設不存在，但如果您執行 <code>make:mail</code> Artisan 命令，將為您創建。<code>Mail</code> 目錄包含您應用程式發送的所有<a href="/docs/mail">代表電子郵件的類別</a>。郵件物件允許您將構建電子郵件的所有邏輯封裝在一個簡單的類別中，可以使用 <code>Mail::send</code> 方法發送。</p>
+<p><a name="the-models-directory"></a></p>
+<h3>Models 目錄</h3>
+<p><code>Models</code> 目錄包含您所有的 <a href="/docs/eloquent">Eloquent 模型類別</a>。Laravel 包含的 Eloquent ORM 提供了一個優雅、簡單的 ActiveRecord 實現，用於與資料庫互動。每個資料庫表都有一個對應的「模型」，用於與該表互動。模型允許您查詢表中的資料，以及向表中插入新記錄。</p>
+<p><a name="the-notifications-directory"></a></p>
+<h3>Notifications 目錄</h3>
+<p>此目錄預設不存在，但如果您執行 <code>make:notification</code> Artisan 命令，將為您創建。<code>Notifications</code> 目錄包含應用程式發送的所有「事務性」<a href="/docs/notifications">通知</a>，例如關於應用程式內行的事件的簡單通知。Laravel 的通知功能抽象了透過多種驅動程式（如電子郵件、Slack、SMS 或儲存在資料庫中）發送通知。</p>
+<p><a name="the-policies-directory"></a></p>
+<h3>Policies 目錄</h3>
+<p>此目錄預設不存在，但如果您執行 <code>make:policy</code> Artisan 命令，將為您創建。<code>Policies</code> 目錄包含您應用程式的<a href="/docs/authorization">授權策略類別</a>。策略用於判斷用戶是否可以對資源執行給定操作。</p>
+<p><a name="the-providers-directory"></a></p>
+<h3>Providers 目錄</h3>
+<p><code>Providers</code> 目錄包含您應用程式的所有<a href="/docs/providers">服務提供者</a>。服務提供者透過在服務容器中綁定服務、註冊事件或執行任何其他任務來為傳入請求準備應用程式，從而引導您的應用程式。</p>
+<p>在全新的 Laravel 應用程式中，此目錄已包含 <code>AppServiceProvider</code>。您可以根據需要自由將自己的提供者添加到此目錄中。</p>
+<p><a name="the-rules-directory"></a></p>
+<h3>Rules 目錄</h3>
+<p>此目錄預設不存在，但如果您執行 <code>make:rule</code> Artisan 命令，將為您創建。<code>Rules</code> 目錄包含您應用程式的自訂驗證規則物件。規則用於將複雜的驗證邏輯封裝在一個簡單的物件中。更多資訊，請查看<a href="/docs/validation">驗證文檔</a>。</p>
+`;
+---
+
+<DocsLayout title="目錄結構" currentPath="structure">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>目錄結構</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">目錄結構</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/structure" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

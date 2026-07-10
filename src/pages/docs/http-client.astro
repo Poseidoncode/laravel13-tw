@@ -1,0 +1,766 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>HTTP 客戶端</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#making-requests">發出請求</a><ul>
+<li><a href="#request-data">請求資料</a></li>
+<li><a href="#headers">頁頭</a></li>
+<li><a href="#authentication">認證</a></li>
+<li><a href="#timeout">逾時</a></li>
+<li><a href="#retries">重試</a></li>
+<li><a href="#error-handling">錯誤處理</a></li>
+<li><a href="#guzzle-middleware">Guzzle 中介層</a></li>
+<li><a href="#guzzle-options">Guzzle 選項</a></li>
+</ul>
+</li>
+<li><a href="#concurrent-requests">並發請求</a><ul>
+<li><a href="#request-pooling">請求池</a></li>
+<li><a href="#request-batching">請求批次</a></li>
+</ul>
+</li>
+<li><a href="#macros">巨集</a></li>
+<li><a href="#testing">測試</a><ul>
+<li><a href="#faking-responses">偽造回應</a></li>
+<li><a href="#inspecting-requests">檢查請求</a></li>
+<li><a href="#preventing-stray-requests">防止雜散請求</a></li>
+</ul>
+</li>
+<li><a href="#events">事件</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 圍繞 <a href="http://docs.guzzlephp.org/en/stable/">Guzzle HTTP 客戶端</a>提供了一個富有表達力的最小化 API，允許您快速發出外部 HTTP 請求以與其他 Web 應用程式通訊。Laravel 對 Guzzle 的包裝專注於其最常見的用例和優良的開發者體驗。</p>
+<p><a name="making-requests"></a></p>
+<h2>發出請求</h2>
+<p>要發出請求，您可以使用 <code>Http</code> 外觀提供的 <code>head</code>、<code>get</code>、<code>post</code>、<code>put</code>、<code>patch</code> 和 <code>delete</code> 方法。首先，讓我們看看如何向另一個 URL 發出基本的 <code>GET</code> 請求：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::get('http://example.com');
+</code></pre>
+<p><code>get</code> 方法返回一個 <code>Illuminate\\Http\\Client\\Response</code> 實例，它提供了多種可用於檢查回應的方法：</p>
+<pre><code class="language-php">$response->body() : string;
+$response->json($key = null, $default = null) : mixed;
+$response->object() : object;
+$response->collect($key = null) : Illuminate\\Support\\Collection;
+$response->resource() : resource;
+$response->status() : int;
+$response->successful() : bool;
+$response->redirect(): bool;
+$response->failed() : bool;
+$response->clientError() : bool;
+$response->header($header) : string;
+$response->headers() : array;
+</code></pre>
+<p><code>Illuminate\\Http\\Client\\Response</code> 物件還實現了 PHP 的 <code>ArrayAccess</code> 介面，允許您直接在回應上存取 JSON 回應資料：</p>
+<pre><code class="language-php">return Http::get('http://example.com/users/1')['name'];
+</code></pre>
+<p>除了上面列出的回應方法外，以下方法可用於判斷回應是否具有特定狀態碼：</p>
+<pre><code class="language-php">$response->ok() : bool;                  // 200 OK
+$response->created() : bool;             // 201 Created
+$response->accepted() : bool;            // 202 Accepted
+$response->noContent() : bool;           // 204 No Content
+$response->movedPermanently() : bool;    // 301 Moved Permanently
+$response->found() : bool;               // 302 Found
+$response->badRequest() : bool;          // 400 Bad Request
+$response->unauthorized() : bool;        // 401 Unauthorized
+$response->paymentRequired() : bool;     // 402 Payment Required
+$response->forbidden() : bool;           // 403 Forbidden
+$response->notFound() : bool;            // 404 Not Found
+$response->requestTimeout() : bool;      // 408 Request Timeout
+$response->conflict() : bool;            // 409 Conflict
+$response->unprocessableEntity() : bool; // 422 Unprocessable Entity
+$response->tooManyRequests() : bool;     // 429 Too Many Requests
+$response->serverError() : bool;         // 500 Internal Server Error
+</code></pre>
+<p><a name="uri-templates"></a></p>
+<h4>URI 範本</h4>
+<p>HTTP 客戶端還允許您使用 <a href="https://www.rfc-editor.org/rfc/rfc6570">URI 範本規範</a>來構建請求 URL。要定義可由 URI 範本展開的 URL 參數，您可以使用 <code>withUrlParameters</code> 方法：</p>
+<pre><code class="language-php">Http::withUrlParameters([
+    'endpoint' => 'https://laravel.com',
+    'page' => 'docs',
+    'version' => '13.x',
+    'topic' => 'validation',
+])->get('{+endpoint}/{page}/{version}/{topic}');
+</code></pre>
+<p><a name="dumping-requests"></a></p>
+<h4>傾印請求</h4>
+<p>如果您希望在發出請求之前傾印外部請求實例並終止腳本的執行，可以在請求定義的開頭添加 <code>dd</code> 方法：</p>
+<pre><code class="language-php">return Http::dd()->get('http://example.com');
+</code></pre>
+<p><a name="request-data"></a></p>
+<h3>請求資料</h3>
+<p>當然，當發出 <code>POST</code>、<code>PUT</code> 和 <code>PATCH</code> 請求時，通常會傳送額外的資料，因此這些方法接受一個資料陣列作為其第二個參數。預設情況下，資料將使用 <code>application/json</code> 內容類型傳送：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::post('http://example.com/users', [
+    'name' => 'Steve',
+    'role' => 'Network Administrator',
+]);
+</code></pre>
+<p><a name="get-request-query-parameters"></a></p>
+<h4>GET 請求查詢參數</h4>
+<p>發出 <code>GET</code> 請求時，您可以直接將查詢字串附加到 URL，或者將鍵/值對陣列作為第二個參數傳遞給 <code>get</code> 方法：</p>
+<pre><code class="language-php">$response = Http::get('http://example.com/users', [
+    'name' => 'Taylor',
+    'page' => 1,
+]);
+</code></pre>
+<p>或者，可以使用 <code>withQueryParameters</code> 方法：</p>
+<pre><code class="language-php">Http::retry(3, 100)->withQueryParameters([
+    'name' => 'Taylor',
+    'page' => 1,
+])->get('http://example.com/users');
+</code></pre>
+<p><a name="sending-form-url-encoded-requests"></a></p>
+<h4>發送表單 URL 編碼請求</h4>
+<p>如果您希望使用 <code>application/x-www-form-urlencoded</code> 內容類型傳送資料，則應在發出請求之前呼叫 <code>asForm</code> 方法：</p>
+<pre><code class="language-php">$response = Http::asForm()->post('http://example.com/users', [
+    'name' => 'Sara',
+    'role' => 'Privacy Consultant',
+]);
+</code></pre>
+<p><a name="sending-a-raw-request-body"></a></p>
+<h4>發送原始請求主體</h4>
+<p>如果您希望在發出請求時提供原始請求主體，可以使用 <code>withBody</code> 方法。內容類型可以透過方法的第二個參數提供：</p>
+<pre><code class="language-php">$response = Http::withBody(
+    base64_encode($photo), 'image/jpeg'
+)->post('http://example.com/photo');
+</code></pre>
+<p><a name="multi-part-requests"></a></p>
+<h4>多部分請求</h4>
+<p>如果您希望將檔案作為多部分請求傳送，則應在發出請求之前呼叫 <code>attach</code> 方法。此方法接受檔案的名稱和內容。如果需要，您可以提供第三個參數，它將被視為檔案的檔名，而第四個參數可用於提供與檔案相關的頁頭：</p>
+<pre><code class="language-php">$response = Http::attach(
+    'attachment', file_get_contents('photo.jpg'), 'photo.jpg', ['Content-Type' => 'image/jpeg']
+)->post('http://example.com/attachments');
+</code></pre>
+<p>與其傳遞檔案的原始內容，您還可以傳遞一個串流資源：</p>
+<pre><code class="language-php">$photo = fopen('photo.jpg', 'r');
+
+$response = Http::attach(
+    'attachment', $photo, 'photo.jpg'
+)->post('http://example.com/attachments');
+</code></pre>
+<p><a name="headers"></a></p>
+<h3>頁頭</h3>
+<p>可以使用 <code>withHeaders</code> 方法將頁頭添加到請求。此 <code>withHeaders</code> 方法接受一個鍵/值對陣列：</p>
+<pre><code class="language-php">$response = Http::withHeaders([
+    'X-First' => 'foo',
+    'X-Second' => 'bar'
+])->post('http://example.com/users', [
+    'name' => 'Taylor',
+]);
+</code></pre>
+<p>您可以使用 <code>accept</code> 方法來指定您的應用程式期望回應請求時使用哪種內容類型：</p>
+<pre><code class="language-php">$response = Http::accept('application/json')->get('http://example.com/users');
+</code></pre>
+<p>為了方便，您可以使用 <code>acceptJson</code> 方法來快速指定您的應用程式期望 <code>application/json</code> 內容類型回應請求：</p>
+<pre><code class="language-php">$response = Http::acceptJson()->get('http://example.com/users');
+</code></pre>
+<p><code>withHeaders</code> 方法將新頁頭合併到請求的現有頁頭中。如果需要，您可以使用 <code>replaceHeaders</code> 方法完全替換所有頁頭：</p>
+<pre><code class="language-php">$response = Http::withHeaders([
+    'X-Original' => 'foo',
+])->replaceHeaders([
+    'X-Replacement' => 'bar',
+])->post('http://example.com/users', [
+    'name' => 'Taylor',
+]);
+</code></pre>
+<p><a name="authentication"></a></p>
+<h3>認證</h3>
+<p>您可以分別使用 <code>withBasicAuth</code> 和 <code>withDigestAuth</code> 方法來指定基本認證和摘要認證憑據：</p>
+<pre><code class="language-php">// 基本認證...
+$response = Http::withBasicAuth('taylor@laravel.com', 'secret')->post(/* ... */);
+
+// 摘要認證...
+$response = Http::withDigestAuth('taylor@laravel.com', 'secret')->post(/* ... */);
+</code></pre>
+<p><a name="bearer-tokens"></a></p>
+<h4>Bearer 令牌</h4>
+<p>如果您希望快速向請求的 <code>Authorization</code> 頁頭添加一個 bearer 令牌，可以使用 <code>withToken</code> 方法：</p>
+<pre><code class="language-php">$response = Http::withToken('token')->post(/* ... */);
+</code></pre>
+<p><a name="timeout"></a></p>
+<h3>逾時</h3>
+<p><code>timeout</code> 方法可用於指定等待回應的最大秒數。預設情況下，HTTP 客戶端將在 30 秒後逾時：</p>
+<pre><code class="language-php">$response = Http::timeout(3)->get(/* ... */);
+</code></pre>
+<p>如果超過給定的逾時時間，將拋出 <code>Illuminate\\Http\\Client\\ConnectionException</code> 的實例。</p>
+<p>您可以使用 <code>connectTimeout</code> 方法來指定嘗試連接到伺服器時等待的最大秒數。預設為 10 秒：</p>
+<pre><code class="language-php">$response = Http::connectTimeout(3)->get(/* ... */);
+</code></pre>
+<p><a name="retries"></a></p>
+<h3>重試</h3>
+<p>如果您希望 HTTP 客戶端在發生客戶端或伺服器錯誤時自動重試請求，可以使用 <code>retry</code> 方法。<code>retry</code> 方法接受應嘗試請求的最大次數和 Laravel 應在嘗試之間等待的毫秒數：</p>
+<pre><code class="language-php">$response = Http::retry(3, 100)->post(/* ... */);
+</code></pre>
+<p>如果您希望手動計算嘗試之間睡眠的毫秒數，可以將一個閉包作為第二個參數傳遞給 <code>retry</code> 方法：</p>
+<pre><code class="language-php">use Exception;
+
+$response = Http::retry(3, function (int $attempt, Exception $exception) {
+    return $attempt * 100;
+})->post(/* ... */);
+</code></pre>
+<p>為了方便，您還可以向 <code>retry</code> 方法傳遞一個陣列作為第一個參數。此陣列將用於確定後續嘗試之間睡眠的毫秒數：</p>
+<pre><code class="language-php">$response = Http::retry([100, 200])->post(/* ... */);
+</code></pre>
+<p>如果需要，您可以向 <code>retry</code> 方法傳遞第三個參數。第三個參數應該是一個可呼叫物件，用於判斷是否應實際嘗試重試。例如，您可能希望僅在初始請求遇到 <code>ConnectionException</code> 時才重試請求：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\PendingRequest;
+use Throwable;
+
+$response = Http::retry(3, 100, function (Throwable $exception, PendingRequest $request) {
+    return $exception instanceof ConnectionException;
+})->post(/* ... */);
+</code></pre>
+<p>如果請求嘗試失敗，您可能希望在進行新的嘗試之前對請求進行更改。您可以透過修改傳遞給可呼叫物件的請求參數來實現此目的。例如，如果第一次嘗試傳回了認證錯誤，您可能希望使用新的授權令牌重試請求：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\PendingRequest;
+use Illuminate\\Http\\Client\\RequestException;
+use Throwable;
+
+$response = Http::withToken($this->getToken())->retry(2, 0, function (Throwable $exception, PendingRequest $request) {
+    if (! $exception instanceof RequestException || $exception->response->status() !== 401) {
+        return false;
+    }
+
+    $request->withToken($this->getNewToken());
+
+    return true;
+})->post(/* ... */);
+</code></pre>
+<p>如果所有請求都失敗，將拋出 <code>Illuminate\\Http\\Client\\RequestException</code> 的實例。如果您希望禁用此行為，可以向 <code>throw</code> 參數提供 <code>false</code> 值。禁用後，客戶端收到的最後一個回應將在所有重試嘗試後返回：</p>
+<pre><code class="language-php">$response = Http::retry(3, 100, throw: false)->post(/* ... */);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果所有請求都因連接問題而失敗，即使將 <code>throw</code> 參數設定為 <code>false</code>，也將拋出 <code>Illuminate\\Http\\Client\\ConnectionException</code>。</p>
+</blockquote>
+<p><a name="error-handling"></a></p>
+<h3>錯誤處理</h3>
+<p>與 Guzzle 的預設行為不同，Laravel 的 HTTP 客戶端包裝器不會在客戶端或伺服器錯誤（來自伺服器的 <code>400</code> 和 <code>500</code> 級回應）時拋出異常。您可以使用 <code>successful</code>、<code>clientError</code> 或 <code>serverError</code> 方法來判斷是否傳回了這些錯誤之一：</p>
+<pre><code class="language-php">// 判斷狀態碼是否 >= 200 且 < 300...
+$response->successful();
+
+// 判斷狀態碼是否 >= 400...
+$response->failed();
+
+// 判斷回應是否具有 400 級狀態碼...
+$response->clientError();
+
+// 判斷回應是否具有 500 級狀態碼...
+$response->serverError();
+
+// 如果有客戶端或伺服器錯誤，則立即執行給定的回呼...
+$response->onError(callable $callback);
+</code></pre>
+<p><a name="throwing-exceptions"></a></p>
+<h4>拋出異常</h4>
+<p>如果您有一個回應實例，並且希望在回應狀態碼指示客戶端或伺服器錯誤時拋出 <code>Illuminate\\Http\\Client\\RequestException</code> 的實例，可以使用 <code>throw</code> 或 <code>throwIf</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Response;
+
+$response = Http::post(/* ... */);
+
+// 如果發生客戶端或伺服器錯誤，則拋出異常...
+$response->throw();
+
+// 如果發生錯誤且給定條件為 true，則拋出異常...
+$response->throwIf($condition);
+
+// 如果發生錯誤且給定閉包解析為 true，則拋出異常...
+$response->throwIf(fn (Response $response) => true);
+
+// 如果發生錯誤且給定條件為 false，則拋出異常...
+$response->throwUnless($condition);
+
+// 如果發生錯誤且給定閉包解析為 false，則拋出異常...
+$response->throwUnless(fn (Response $response) => false);
+
+// 如果回應具有特定狀態碼，則拋出異常...
+$response->throwIfStatus(403);
+
+// 除非回應具有特定狀態碼，否則拋出異常...
+$response->throwUnlessStatus(200);
+
+// 如果發生伺服器錯誤（狀態 >500），則拋出異常...
+$response->throwIfServerError();
+
+// 如果發生客戶端錯誤（狀態 >400 且 <500），則拋出異常...
+$response->throwIfClientError();
+
+return $response['user']['id'];
+</code></pre>
+<p><code>Illuminate\\Http\\Client\\RequestException</code> 實例有一個公共 <code>$response</code> 屬性，允許您檢查返回的回應。</p>
+<p><code>throw</code> 方法在沒有發生錯誤時返回回應實例，允許您將其他操作鏈式呼叫到 <code>throw</code> 方法：</p>
+<pre><code class="language-php">return Http::post(/* ... */)->throw()->json();
+</code></pre>
+<p>如果您希望在拋出異常之前執行一些額外的邏輯，可以將一個閉包傳遞給 <code>throw</code> 方法。異常將在閉包被呼叫後自動拋出，因此您不需要從閉包中重新拋出異常：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Response;
+use Illuminate\\Http\\Client\\RequestException;
+
+return Http::post(/* ... */)->throw(function (Response $response, RequestException $e) {
+    // ...
+})->json();
+</code></pre>
+<p>預設情況下，<code>RequestException</code> 訊息在被記錄或報告時會被截斷為 120 個字元。要自訂或禁用此行為，您可以在 <code>bootstrap/app.php</code> 檔案中配置應用程式的已註冊行為時使用 <code>truncateAt</code> 和 <code>dontTruncate</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\RequestException;
+
+->registered(function (): void {
+    // 將請求異常訊息截斷為 240 個字元...
+    RequestException::truncateAt(240);
+
+    // 禁用請求異常訊息截斷...
+    RequestException::dontTruncate();
+})
+</code></pre>
+<p>或者，您可以使用 <code>truncateExceptionsAt</code> 方法按請求自訂異常截斷行為：</p>
+<pre><code class="language-php">return Http::truncateExceptionsAt(240)->post(/* ... */);
+</code></pre>
+<p><a name="guzzle-middleware"></a></p>
+<h3>Guzzle 中介層</h3>
+<p>由於 Laravel 的 HTTP 客戶端由 Guzzle 驅動，您可以利用 <a href="https://docs.guzzlephp.org/en/stable/handlers-and-middleware.html">Guzzle 中介層</a>來操作外部請求或檢查傳入回應。要操作外部請求，請透過 <code>withRequestMiddleware</code> 方法註冊一個 Guzzle 中介層：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+use Psr\\Http\\Message\\RequestInterface;
+
+$response = Http::withRequestMiddleware(
+    function (RequestInterface $request) {
+        return $request->withHeader('X-Example', 'Value');
+    }
+)->get('http://example.com');
+</code></pre>
+<p>同樣，您可以透過 <code>withResponseMiddleware</code> 方法註冊一個中間件來檢查傳入的 HTTP 回應：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+use Psr\\Http\\Message\\ResponseInterface;
+
+$response = Http::withResponseMiddleware(
+    function (ResponseInterface $response) {
+        $header = $response->getHeader('X-Example');
+
+        // ...
+
+        return $response;
+    }
+)->get('http://example.com');
+</code></pre>
+<p><a name="global-middleware"></a></p>
+<h4>全域中介層</h4>
+<p>有時，您可能希望註冊一個應用於每個外部請求和傳入回應的中介層。為此，您可以使用 <code>globalRequestMiddleware</code> 和 <code>globalResponseMiddleware</code> 方法。通常，這些方法應在應用程式的 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+Http::globalRequestMiddleware(fn ($request) => $request->withHeader(
+    'User-Agent', 'Example Application/1.0'
+));
+
+Http::globalResponseMiddleware(fn ($response) => $response->withHeader(
+    'X-Finished-At', now()->toDateTimeString()
+));
+</code></pre>
+<p><a name="guzzle-options"></a></p>
+<h3>Guzzle 選項</h3>
+<p>您可以使用 <code>withOptions</code> 方法為外部請求指定額外的 <a href="http://docs.guzzlephp.org/en/stable/request-options.html">Guzzle 請求選項</a>。<code>withOptions</code> 方法接受一個鍵/值對陣列：</p>
+<pre><code class="language-php">$response = Http::withOptions([
+    'debug' => true,
+])->get('http://example.com/users');
+</code></pre>
+<p><a name="global-options"></a></p>
+<h4>全域選項</h4>
+<p>要配置每個外部請求的預設選項，您可以使用 <code>globalOptions</code> 方法。通常，此方法應從應用程式的 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Http::globalOptions([
+        'allow_redirects' => false,
+    ]);
+}
+</code></pre>
+<p><a name="concurrent-requests"></a></p>
+<h2>並發請求</h2>
+<p>有時，您可能希望並發發出多個 HTTP 請求。換句話說，您希望同時派發多個請求，而不是按順序發出請求。這可以在與緩慢的 HTTP API 互動時帶來顯著的效能提升。</p>
+<p><a name="request-pooling"></a></p>
+<h3>請求池</h3>
+<p>幸運的是，您可以使用 <code>pool</code> 方法來實現這一點。<code>pool</code> 方法接受一個閉包，該閉包接收一個 <code>Illuminate\\Http\\Client\\Pool</code> 實例，允許您輕鬆地將請求添加到請求池中以便派發：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Pool;
+use Illuminate\\Support\\Facades\\Http;
+
+$responses = Http::pool(fn (Pool $pool) => [
+    $pool->get('http://localhost/first'),
+    $pool->get('http://localhost/second'),
+    $pool->get('http://localhost/third'),
+]);
+
+return $responses[0]->ok() &&
+       $responses[1]->ok() &&
+       $responses[2]->ok();
+</code></pre>
+<p>如您所見，每個回應實例都可以根據其添加到池中的順序來存取。如果您願意，可以使用 <code>as</code> 方法為請求命名，這允許您按名稱存取相應的回應：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Pool;
+use Illuminate\\Support\\Facades\\Http;
+
+$responses = Http::pool(fn (Pool $pool) => [
+    $pool->as('first')->get('http://localhost/first'),
+    $pool->as('second')->get('http://localhost/second'),
+    $pool->as('third')->get('http://localhost/third'),
+]);
+
+return $responses['first']->ok();
+</code></pre>
+<p>請求池的最大並發數可以透過向 <code>pool</code> 方法提供 <code>concurrency</code> 參數來控制。此值決定了在處理請求池時可以並發執行的 HTTP 請求的最大數量：</p>
+<pre><code class="language-php">$responses = Http::pool(fn (Pool $pool) => [
+    // ...
+], concurrency: 5);
+</code></pre>
+<p><a name="customizing-concurrent-requests"></a></p>
+<h4>自訂並發請求</h4>
+<p><code>pool</code> 方法不能與其他 HTTP 客戶端方法（例如 <code>withHeaders</code> 或 <code>middleware</code> 方法）鏈式呼叫。如果您希望向池化請求應用自訂頁頭或中介層，則應在池中的每個請求上配置這些選項：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Pool;
+use Illuminate\\Support\\Facades\\Http;
+
+$headers = [
+    'X-Example' => 'example',
+];
+
+$responses = Http::pool(fn (Pool $pool) => [
+    $pool->withHeaders($headers)->get('http://laravel.test/test'),
+    $pool->withHeaders($headers)->get('http://laravel.test/test'),
+    $pool->withHeaders($headers)->get('http://laravel.test/test'),
+]);
+</code></pre>
+<p><a name="request-batching"></a></p>
+<h3>請求批次</h3>
+<p>在 Laravel 中處理並發請求的另一種方式是使用 <code>batch</code> 方法。像 <code>pool</code> 方法一樣，它接受一個閉包，該閉包接收一個 <code>Illuminate\\Http\\Client\\Batch</code> 實例，允許您輕鬆地將請求添加到請求池中以便派發，但它還允許您定義完成回呼：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Batch;
+use Illuminate\\Http\\Client\\ConnectionException;
+use Illuminate\\Http\\Client\\RequestException;
+use Illuminate\\Http\\Client\\Response;
+use Illuminate\\Support\\Facades\\Http;
+
+$responses = Http::batch(fn (Batch $batch) => [
+    $batch->get('http://localhost/first'),
+    $batch->get('http://localhost/second'),
+    $batch->get('http://localhost/third'),
+])->before(function (Batch $batch) {
+    // 批次已創建但尚未初始化任何請求...
+})->progress(function (Batch $batch, int|string $key, Response $response) {
+    // 單個請求已成功完成...
+})->then(function (Batch $batch, array $results) {
+    // 所有請求都成功完成了...
+})->catch(function (Batch $batch, int|string $key, Response|RequestException|ConnectionException $response) {
+    // 檢測到批次請求失敗...
+})->finally(function (Batch $batch, array $results) {
+    // 批次已完成執行...
+})->send();
+</code></pre>
+<p>像 <code>pool</code> 方法一樣，您可以使用 <code>as</code> 方法來命名您的請求：</p>
+<pre><code class="language-php">$responses = Http::batch(fn (Batch $batch) => [
+    $batch->as('first')->get('http://localhost/first'),
+    $batch->as('second')->get('http://localhost/second'),
+    $batch->as('third')->get('http://localhost/third'),
+])->send();
+</code></pre>
+<p>呼叫 <code>send</code> 方法啟動 <code>batch</code> 後，您無法向其添加新嘗試。嘗試這樣做將導致拋出 <code>Illuminate\\Http\\Client\\BatchInProgressException</code> 異常。</p>
+<p>請求批次的最大並發數可以透過 <code>concurrency</code> 方法來控制。此值決定了在處理請求批次時可以並發執行的 HTTP 請求的最大數量：</p>
+<pre><code class="language-php">$responses = Http::batch(fn (Batch $batch) => [
+    // ...
+])->concurrency(5)->send();
+</code></pre>
+<p><a name="inspecting-batches"></a></p>
+<h4>檢查批次</h4>
+<p>提供給批次完成回呼的 <code>Illuminate\\Http\\Client\\Batch</code> 實例具有多種屬性和方法，可協助您與給定的請求批次互動並檢查它：</p>
+<pre><code class="language-php">// 分配給批次的請求數量...
+$batch->totalRequests;
+ 
+// 尚未處理的請求數量...
+$batch->pendingRequests;
+ 
+// 已失敗的請求數量...
+$batch->failedRequests;
+
+// 截至目前為止已處理的請求數量...
+$batch->processedRequests();
+
+// 指示批次是否已完成執行...
+$batch->finished();
+
+// 指示批次是否有請求失敗...
+$batch->hasFailures();
+</code></pre>
+<p><a name="deferring-batches"></a></p>
+<h4>延遲批次</h4>
+<p>當呼叫 <code>defer</code> 方法時，請求批次不會立即執行。相反，Laravel 將在當前應用程式請求的 HTTP 回應發送給使用者後執行該批次，使您的應用程式保持快速和回應迅速：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Batch;
+use Illuminate\\Support\\Facades\\Http;
+
+$responses = Http::batch(fn (Batch $batch) => [
+    $batch->get('http://localhost/first'),
+    $batch->get('http://localhost/second'),
+    $batch->get('http://localhost/third'),
+])->then(function (Batch $batch, array $results) {
+    // 所有請求都成功完成了...
+})->defer();
+</code></pre>
+<p><a name="macros"></a></p>
+<h2>巨集</h2>
+<p>Laravel HTTP 客戶端允許您定義「巨集」，它可以作為一種流暢、富有表達力的機制，用於在與應用程式中的服務互動時配置常見的請求路徑和頁頭。首先，您可以在應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中定義巨集：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Http::macro('github', function () {
+        return Http::withHeaders([
+            'X-Example' => 'example',
+        ])->baseUrl('https://github.com');
+    });
+}
+</code></pre>
+<p>配置好巨集後，您可以從應用程式中的任何地方呼叫它來創建一個具有指定配置的待處理請求：</p>
+<pre><code class="language-php">$response = Http::github()->get('/');
+</code></pre>
+<p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>許多 Laravel 服務提供功能來幫助您輕鬆且富有表達力地編寫測試，Laravel 的 HTTP 客戶端也不例外。<code>Http</code> 外觀的 <code>fake</code> 方法允許您指示 HTTP 客戶端在發出請求時返回存根/虛擬回應。</p>
+<p><a name="faking-responses"></a></p>
+<h3>偽造回應</h3>
+<p>例如，要指示 HTTP 客戶端對每個請求傳回空的 <code>200</code> 狀態碼回應，您可以不帶參數地呼叫 <code>fake</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+Http::fake();
+
+$response = Http::post(/* ... */);
+</code></pre>
+<p><a name="faking-specific-urls"></a></p>
+<h4>偽造特定 URL</h4>
+<p>或者，您可以向 <code>fake</code> 方法傳遞一個陣列。陣列的鍵應代表您希望偽造的 URL 模式及其關聯的回應。<code>*</code> 字元可用作萬用字元。您可以使用 <code>Http</code> 外觀的 <code>response</code> 方法來為這些端點構建存根/偽造回應：</p>
+<pre><code class="language-php">Http::fake([
+    // 為 GitHub 端點偽造 JSON 回應...
+    'github.com/*' => Http::response(['foo' => 'bar'], 200, $headers),
+
+    // 為 Google 端點偽造字串回應...
+    'google.com/*' => Http::response('Hello World', 200, $headers),
+]);
+</code></pre>
+<p>對未偽造的 URL 發出的任何請求都將實際執行。如果您希望指定一個用於偽造所有不匹配 URL 的後備 URL 模式，可以使用單個 <code>*</code> 字元：</p>
+<pre><code class="language-php">Http::fake([
+    // 為 GitHub 端點偽造 JSON 回應...
+    'github.com/*' => Http::response(['foo' => 'bar'], 200, ['Headers']),
+
+    // 為所有其他端點偽造字串回應...
+    '*' => Http::response('Hello World', 200, ['Headers']),
+]);
+</code></pre>
+<p>為了方便，可以透過提供字串、陣列或整數作為回應來生成簡單的字串、JSON 和空回應：</p>
+<pre><code class="language-php">Http::fake([
+    'google.com/*' => 'Hello World',
+    'github.com/*' => ['foo' => 'bar'],
+    'chatgpt.com/*' => 200,
+]);
+</code></pre>
+<p><a name="faking-connection-exceptions"></a></p>
+<h4>偽造異常</h4>
+<p>有時您可能需要測試如果 HTTP 客戶端在嘗試發出請求時遇到 <code>Illuminate\\Http\\Client\\ConnectionException</code>，您的應用程式的行為。您可以使用 <code>failedConnection</code> 方法指示 HTTP 客戶端拋出連接異常：</p>
+<pre><code class="language-php">Http::fake([
+    'github.com/*' => Http::failedConnection(),
+]);
+</code></pre>
+<p>要測試如果拋出 <code>Illuminate\\Http\\Client\\RequestException</code>，您的應用程式的行為，您可以使用 <code>failedRequest</code> 方法：</p>
+<pre><code class="language-php">$this->mock(GithubService::class);
+    ->shouldReceive('getUser')
+    ->andThrow(
+        Http::failedRequest(['code' => 'not_found'], 404)
+    );
+</code></pre>
+<p><a name="faking-response-sequences"></a></p>
+<h4>偽造回應序列</h4>
+<p>有時您可能需要指定單個 URL 應按特定順序返回一系列偽造回應。您可以使用 <code>Http::sequence</code> 方法來構建回應來實現這一點：</p>
+<pre><code class="language-php">Http::fake([
+    // 為 GitHub 端點偽造一系列回應...
+    'github.com/*' => Http::sequence()
+        ->push('Hello World', 200)
+        ->push(['foo' => 'bar'], 200)
+        ->pushStatus(404),
+]);
+</code></pre>
+<p>當回應序列中的所有回應都已被消耗時，任何進一步的請求都將導致回應序列拋出異常。如果您希望指定在序列為空時應返回的預設回應，可以使用 <code>whenEmpty</code> 方法：</p>
+<pre><code class="language-php">Http::fake([
+    // 為 GitHub 端點偽造一系列回應...
+    'github.com/*' => Http::sequence()
+        ->push('Hello World', 200)
+        ->push(['foo' => 'bar'], 200)
+        ->whenEmpty(Http::response()),
+]);
+</code></pre>
+<p>如果您希望偽造一系列回應但不需要指定應偽造的特定 URL 模式，可以使用 <code>Http::fakeSequence</code> 方法：</p>
+<pre><code class="language-php">Http::fakeSequence()
+    ->push('Hello World', 200)
+    ->whenEmpty(Http::response());
+</code></pre>
+<p><a name="fake-callback"></a></p>
+<h4>偽造回呼</h4>
+<p>如果您需要更複雜的邏輯來判斷為特定端點返回什麼回應，可以將一個閉包傳遞給 <code>fake</code> 方法。此閉包將接收 <code>Illuminate\\Http\\Client\\Request</code> 的實例，並應返回一個回應實例。在閉包內，您可以執行必要的邏輯來判斷返回什麼類型的回應：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Request;
+
+Http::fake(function (Request $request) {
+    return Http::response('Hello World', 200);
+});
+</code></pre>
+<p><a name="inspecting-requests"></a></p>
+<h3>檢查請求</h3>
+<p>偽造回應時，您可能偶爾希望檢查客戶端收到的請求，以確保您的應用程式傳送了正確的資料或頁頭。您可以透過在呼叫 <code>Http::fake</code> 後呼叫 <code>Http::assertSent</code> 方法來實現這一點。</p>
+<p><code>assertSent</code> 方法接受一個閉包，該閉包將接收一個 <code>Illuminate\\Http\\Client\\Request</code> 實例，並應返回一個布林值，指示請求是否符合您的期望。為了使測試通過，必須至少發出一個符合給定期望的請求：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Request;
+use Illuminate\\Support\\Facades\\Http;
+
+Http::fake();
+
+Http::withHeaders([
+    'X-First' => 'foo',
+])->post('http://example.com/users', [
+    'name' => 'Taylor',
+    'role' => 'Developer',
+]);
+
+Http::assertSent(function (Request $request) {
+    return $request->hasHeader('X-First', 'foo') &&
+           $request->url() == 'http://example.com/users' &&
+           $request['name'] == 'Taylor' &&
+           $request['role'] == 'Developer';
+});
+</code></pre>
+<p>如果需要，您可以使用 <code>assertNotSent</code> 方法斷言未傳送特定請求：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Request;
+use Illuminate\\Support\\Facades\\Http;
+
+Http::fake();
+
+Http::post('http://example.com/users', [
+    'name' => 'Taylor',
+    'role' => 'Developer',
+]);
+
+Http::assertNotSent(function (Request $request) {
+    return $request->url() === 'http://example.com/posts';
+});
+</code></pre>
+<p>您可以使用 <code>assertSentCount</code> 方法來斷言在測試期間「傳送」了多少個請求：</p>
+<pre><code class="language-php">Http::fake();
+
+Http::assertSentCount(5);
+</code></pre>
+<p>或者，您可以使用 <code>assertNothingSent</code> 方法來斷言在測試期間沒有傳送任何請求：</p>
+<pre><code class="language-php">Http::fake();
+
+Http::assertNothingSent();
+</code></pre>
+<p><a name="recording-requests-and-responses"></a></p>
+<h4>記錄請求/回應</h4>
+<p>您可以使用 <code>recorded</code> 方法來收集所有請求及其相應的回應。<code>recorded</code> 方法返回一個包含 <code>Illuminate\\Http\\Client\\Request</code> 和 <code>Illuminate\\Http\\Client\\Response</code> 實例的陣列集合：</p>
+<pre><code class="language-php">Http::fake([
+    'https://laravel.com' => Http::response(status: 500),
+    'https://nova.laravel.com/' => Http::response(),
+]);
+
+Http::get('https://laravel.com');
+Http::get('https://nova.laravel.com/');
+
+$recorded = Http::recorded();
+
+[$request, $response] = $recorded[0];
+</code></pre>
+<p>此外，<code>recorded</code> 方法接受一個閉包，該閉包將接收 <code>Illuminate\\Http\\Client\\Request</code> 和 <code>Illuminate\\Http\\Client\\Response</code> 的實例，可用於根據您的期望篩選請求/回應對：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Request;
+use Illuminate\\Http\\Client\\Response;
+
+Http::fake([
+    'https://laravel.com' => Http::response(status: 500),
+    'https://nova.laravel.com/' => Http::response(),
+]);
+
+Http::get('https://laravel.com');
+Http::get('https://nova.laravel.com/');
+
+$recorded = Http::recorded(function (Request $request, Response $response) {
+    return $request->url() !== 'https://laravel.com' &&
+           $response->successful();
+});
+</code></pre>
+<p><a name="preventing-stray-requests"></a></p>
+<h3>防止雜散請求</h3>
+<p>如果您希望確保透過 HTTP 客戶端傳送的所有請求在單個測試或完整測試套件中都被偽造，可以呼叫 <code>preventStrayRequests</code> 方法。呼叫此方法後，任何沒有相應偽造回應的請求都將拋出異常，而不是發出實際的 HTTP 請求：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+Http::preventStrayRequests();
+
+Http::fake([
+    'github.com/*' => Http::response('ok'),
+]);
+
+// 返回 "ok" 回應...
+Http::get('https://github.com/laravel/framework');
+
+// 拋出異常...
+Http::get('https://laravel.com');
+</code></pre>
+<p>有時，您可能希望防止大多數雜散請求，同時仍允許特定請求執行。為此，您可以向 <code>allowStrayRequests</code> 方法傳遞一個 URL 模式陣列。匹配給定模式之一的任何請求都將被允許，而所有其他請求將繼續拋出異常：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+Http::preventStrayRequests();
+
+Http::allowStrayRequests([
+    'http://127.0.0.1:5000/*',
+]);
+
+// 此請求被執行...
+Http::get('http://127.0.0.1:5000/generate');
+
+// 拋出異常...
+Http::get('https://laravel.com');
+</code></pre>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Laravel 在發送 HTTP 請求的過程中觸發三個事件。<code>RequestSending</code> 事件在請求被發送之前觸發，而 <code>ResponseReceived</code> 事件在收到給定請求的回應後觸發。如果沒有收到給定請求的回應，則觸發 <code>ConnectionFailed</code> 事件。</p>
+<p><code>RequestSending</code> 和 <code>ConnectionFailed</code> 事件都包含一個公共 <code>$request</code> 屬性，您可以用來檢查 <code>Illuminate\\Http\\Client\\Request</code> 實例。同樣，<code>ResponseReceived</code> 事件包含一個 <code>$request</code> 屬性和一個 <code>$response</code> 屬性，可用於檢查 <code>Illuminate\\Http\\Client\\Response</code> 實例。您可以在應用程式中為這些事件<a href="/docs/events">創建事件監聽器</a>：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Client\\Events\\RequestSending;
+
+class LogRequest
+{
+    /**
+     * 處理事件。
+     */
+    public function handle(RequestSending $event): void
+    {
+        // $event->request ...
+    }
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="HTTP 客戶端" currentPath="http-client">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>HTTP 客戶端</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">HTTP 客戶端</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/http-client" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

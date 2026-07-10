@@ -1,0 +1,490 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>中介層</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#defining-middleware">定義中介層</a></li>
+<li><a href="#registering-middleware">註冊中介層</a><ul>
+<li><a href="#global-middleware">全域中介層</a></li>
+<li><a href="#assigning-middleware-to-routes">將中介層分配給路由</a></li>
+<li><a href="#middleware-groups">中介層群組</a></li>
+<li><a href="#middleware-aliases">中介層別名</a></li>
+<li><a href="#sorting-middleware">中介層排序</a></li>
+</ul>
+</li>
+<li><a href="#middleware-parameters">中介層參數</a></li>
+<li><a href="#terminable-middleware">可終止的中介層</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>中介層提供了一個便利的機制來檢查和過濾進入您應用程式的 HTTP 請求。例如，Laravel 包含一個驗證您應用程式使用者是否已認證的中介層。如果使用者未認證，中介層將把使用者重定向到您應用程式的登入畫面。但是，如果使用者已認證，中介層將允許請求進一步進入應用程式。</p>
+<p>可以編寫額外的中介層來執行認證以外的各種任務。例如，記錄中介層可能會記錄進入您應用程式的所有請求。Laravel 包含各種中介層，包括用於認證和 CSRF 保護的中介層；但是，所有使用者定義的中介層通常位於您應用程式的 <code>app/Http/Middleware</code> 目錄中。</p>
+<p><a name="defining-middleware"></a></p>
+<h2>定義中介層</h2>
+<p>要創建一個新的中介層，請使用 <code>make:middleware</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan make:middleware EnsureTokenIsValid
+</code></pre>
+<p>此命令將在您的 <code>app/Http/Middleware</code> 目錄中放置一個新的 <code>EnsureTokenIsValid</code> 類別。在此中介層中，我們將只在提供的 <code>token</code> 輸入與指定值匹配時允許存取路由。否則，我們將把使用者重定向回 <code>/home</code> URI：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class EnsureTokenIsValid
+{
+    /**
+     * 處理傳入的請求。
+     *
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        if ($request->input('token') !== 'my-secret-token') {
+            return redirect('/home');
+        }
+
+        return $next($request);
+    }
+}
+</code></pre>
+<p>如您所見，如果給定的 <code>token</code> 與我們的密鑰令牌不匹配，中介層將向客戶端傳回 HTTP 重定向；否則，請求將被進一步傳遞到應用程式。要將請求進一步傳遞到應用程式（允許中介層「通過」），您應該使用 <code>$request</code> 呼叫 <code>$next</code> 回呼。</p>
+<p>最好將中介層設想為 HTTP 請求在到達您應用程式之前必須通過的一系列「層」。每一層都可以檢查請求，甚至完全拒絕它。</p>
+<blockquote>
+<p>[!NOTE]
+所有中介層都透過<a href="/docs/container">服務容器</a>解析，因此您可以在中介層的構造函數中鍵入提示您需要的任何依賴。</p>
+</blockquote>
+<p><a name="middleware-and-responses"></a></p>
+<h4>中介層和回應</h4>
+<p>當然，中介層可以在將請求進一步傳遞到應用程式之前或之後執行任務。例如，以下中介層將在應用程式處理請求<strong>之前</strong>執行某些任務：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class BeforeMiddleware
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        // 執行動作
+
+        return $next($request);
+    }
+}
+</code></pre>
+<p>但是，此中介層將在應用程式處理請求<strong>之後</strong>執行其任務：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class AfterMiddleware
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $response = $next($request);
+
+        // 執行動作
+
+        return $response;
+    }
+}
+</code></pre>
+<p><a name="registering-middleware"></a></p>
+<h2>註冊中介層</h2>
+<p><a name="global-middleware"></a></p>
+<h3>全域中介層</h3>
+<p>如果您希望中介層在每次向應用程式發出 HTTP 請求時執行，可以將其附加到應用程式 <code>bootstrap/app.php</code> 檔案中的全域中介層堆疊：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureTokenIsValid;
+
+->withMiddleware(function (Middleware $middleware): void {
+     $middleware->append(EnsureTokenIsValid::class);
+})
+</code></pre>
+<p>提供給 <code>withMiddleware</code> 閉包的 <code>$middleware</code> 物件是 <code>Illuminate\\Foundation\\Configuration\\Middleware</code> 的實例，負責管理分配給應用程式路由的中介層。<code>append</code> 方法將中介層添加到全域中介層清單的末尾。如果您希望將中介層添加到清單的開頭，應該使用 <code>prepend</code> 方法。</p>
+<p><a name="manually-managing-laravels-default-global-middleware"></a></p>
+<h4>手動管理 Laravel 的預設全域中介層</h4>
+<p>如果您希望手動管理 Laravel 的全域中介層堆疊，可以將 Laravel 的預設全域中介層堆疊提供給 <code>use</code> 方法。然後，您可以根據需要調整預設中介層堆疊：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->use([
+        \\Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks::class,
+        // \\Illuminate\\Http\\Middleware\\TrustHosts::class,
+        \\Illuminate\\Http\\Middleware\\TrustProxies::class,
+        \\Illuminate\\Http\\Middleware\\HandleCors::class,
+        \\Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance::class,
+        \\Illuminate\\Http\\Middleware\\ValidatePostSize::class,
+        \\Illuminate\\Foundation\\Http\\Middleware\\TrimStrings::class,
+        \\Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull::class,
+    ]);
+})
+</code></pre>
+<p><a name="assigning-middleware-to-routes"></a></p>
+<h3>將中介層分配給路由</h3>
+<p>如果您希望將中介層分配給特定路由，可以在定義路由時呼叫 <code>middleware</code> 方法：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureTokenIsValid;
+
+Route::get('/profile', function () {
+    // ...
+})->middleware(EnsureTokenIsValid::class);
+</code></pre>
+<p>您可以透過將中介層名稱陣列傳遞給 <code>middleware</code> 方法來將多個中介層分配給路由：</p>
+<pre><code class="language-php">Route::get('/', function () {
+    // ...
+})->middleware([First::class, Second::class]);
+</code></pre>
+<p><a name="excluding-middleware"></a></p>
+<h4>排除中介層</h4>
+<p>將中介層分配給一組路由時，您可能偶爾需要防止中介層應用於群組中的單個路由。您可以使用 <code>withoutMiddleware</code> 方法來完成此操作：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureTokenIsValid;
+
+Route::middleware([EnsureTokenIsValid::class])->group(function () {
+    Route::get('/', function () {
+        // ...
+    });
+
+    Route::get('/profile', function () {
+        // ...
+    })->withoutMiddleware([EnsureTokenIsValid::class]);
+});
+</code></pre>
+<p>您也可以從整個路由定義<a href="/docs/routing#route-groups">群組</a>中排除一組給定的中介層：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureTokenIsValid;
+
+Route::withoutMiddleware([EnsureTokenIsValid::class])->group(function () {
+    Route::get('/profile', function () {
+        // ...
+    });
+});
+</code></pre>
+<p><code>withoutMiddleware</code> 方法只能移除路由中介層，不適用於<a href="#global-middleware">全域中介層</a>。</p>
+<p><a name="middleware-groups"></a></p>
+<h3>中介層群組</h3>
+<p>有時您可能希望將多個中介層歸組到一個鍵下，以便更容易分配給路由。您可以使用應用程式 <code>bootstrap/app.php</code> 檔案中的 <code>appendToGroup</code> 方法來完成此操作：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\First;
+use App\\Http\\Middleware\\Second;
+
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->appendToGroup('group-name', [
+        First::class,
+        Second::class,
+    ]);
+
+    $middleware->prependToGroup('group-name', [
+        First::class,
+        Second::class,
+    ]);
+})
+</code></pre>
+<p>中介層群組可以使用與單個中介層相同的語法分配給路由和控制器動作：</p>
+<pre><code class="language-php">Route::get('/', function () {
+    // ...
+})->middleware('group-name');
+
+Route::middleware(['group-name'])->group(function () {
+    // ...
+});
+</code></pre>
+<p><a name="laravels-default-middleware-groups"></a></p>
+<h4>Laravel 的預設中介層群組</h4>
+<p>Laravel 包含預定義的 <code>web</code> 和 <code>api</code> 中介層群組，其中包含您可能希望應用於 Web 和 API 路由的常見中介層。請記住，Laravel 會自動將這些中介層群組應用於對應的 <code>routes/web.php</code> 和 <code>routes/api.php</code> 檔案：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th><code>web</code> 中介層群組</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Illuminate\\Cookie\\Middleware\\EncryptCookies</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Session\\Middleware\\StartSession</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\View\\Middleware\\ShareErrorsFromSession</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery</code></td>
+</tr>
+<tr>
+<td><code>Illuminate\\Routing\\Middleware\\SubstituteBindings</code></td>
+</tr>
+</tbody></table>
+</div><div class="overflow-auto"><table>
+<thead>
+<tr>
+<th><code>api</code> 中介層群組</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Illuminate\\Routing\\Middleware\\SubstituteBindings</code></td>
+</tr>
+</tbody></table>
+</div><p>如果您希望將中介層附加或前置到這些群組，可以使用應用程式 <code>bootstrap/app.php</code> 檔案中的 <code>web</code> 和 <code>api</code> 方法。<code>web</code> 和 <code>api</code> 方法是 <code>appendToGroup</code> 方法的便利替代方案：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureTokenIsValid;
+use App\\Http\\Middleware\\EnsureUserIsSubscribed;
+
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->web(append: [
+        EnsureUserIsSubscribed::class,
+    ]);
+
+    $middleware->api(prepend: [
+        EnsureTokenIsValid::class,
+    ]);
+})
+</code></pre>
+<p>您甚至可以用自己的自訂中介層替換 Laravel 的預設中介層群組條目：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\StartCustomSession;
+use Illuminate\\Session\\Middleware\\StartSession;
+
+$middleware->web(replace: [
+    StartSession::class => StartCustomSession::class,
+]);
+</code></pre>
+<p>或者，您可以完全移除中介層：</p>
+<pre><code class="language-php">$middleware->web(remove: [
+    StartSession::class,
+]);
+</code></pre>
+<p><a name="manually-managing-laravels-default-middleware-groups"></a></p>
+<h4>手動管理 Laravel 的預設中介層群組</h4>
+<p>如果您希望手動管理 Laravel 預設 <code>web</code> 和 <code>api</code> 中介層群組中的所有中介層，可以完全重新定義這些群組。以下範例將使用其預設中介層定義 <code>web</code> 和 <code>api</code> 中介層群組，允許您根據需要進行自訂：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->group('web', [
+        \\Illuminate\\Cookie\\Middleware\\EncryptCookies::class,
+        \\Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse::class,
+        \\Illuminate\\Session\\Middleware\\StartSession::class,
+        \\Illuminate\\View\\Middleware\\ShareErrorsFromSession::class,
+        \\Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery::class,
+        \\Illuminate\\Routing\\Middleware\\SubstituteBindings::class,
+        // \\Illuminate\\Session\\Middleware\\AuthenticateSession::class,
+    ]);
+
+    $middleware->group('api', [
+        // \\Laravel\\Sanctum\\Http\\Middleware\\EnsureFrontendRequestsAreStateful::class,
+        // 'throttle:api',
+        \\Illuminate\\Routing\\Middleware\\SubstituteBindings::class,
+    ]);
+})
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+預設情況下，<code>web</code> 和 <code>api</code> 中介層群組會由 <code>bootstrap/app.php</code> 檔案自動應用於應用程式對應的 <code>routes/web.php</code> 和 <code>routes/api.php</code> 檔案。</p>
+</blockquote>
+<p><a name="middleware-aliases"></a></p>
+<h3>中介層別名</h3>
+<p>您可以在應用程式的 <code>bootstrap/app.php</code> 檔案中為中介層分配別名。中介層別名允許您為給定的中介層類別定義一個簡短的別名，對於具有長類別名的中介層特別有用：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureUserIsSubscribed;
+
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->alias([
+        'subscribed' => EnsureUserIsSubscribed::class
+    ]);
+})
+</code></pre>
+<p>在應用程式的 <code>bootstrap/app.php</code> 檔案中定義中介層別名後，您可以在將中介層分配給路由時使用別名：</p>
+<pre><code class="language-php">Route::get('/profile', function () {
+    // ...
+})->middleware('subscribed');
+</code></pre>
+<p>為了方便，Laravel 的一些內建中介層預設有別名。例如，<code>auth</code> 中介層是 <code>Illuminate\\Auth\\Middleware\\Authenticate</code> 中介層的別名。以下是預設中介層別名的列表：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>別名</th>
+<th>中介層</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>auth</code></td>
+<td><code>Illuminate\\Auth\\Middleware\\Authenticate</code></td>
+</tr>
+<tr>
+<td><code>auth.basic</code></td>
+<td><code>Illuminate\\Auth\\Middleware\\AuthenticateWithBasicAuth</code></td>
+</tr>
+<tr>
+<td><code>auth.session</code></td>
+<td><code>Illuminate\\Session\\Middleware\\AuthenticateSession</code></td>
+</tr>
+<tr>
+<td><code>cache.headers</code></td>
+<td><code>Illuminate\\Http\\Middleware\\SetCacheHeaders</code></td>
+</tr>
+<tr>
+<td><code>can</code></td>
+<td><code>Illuminate\\Auth\\Middleware\\Authorize</code></td>
+</tr>
+<tr>
+<td><code>guest</code></td>
+<td><code>Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated</code></td>
+</tr>
+<tr>
+<td><code>password.confirm</code></td>
+<td><code>Illuminate\\Auth\\Middleware\\RequirePassword</code></td>
+</tr>
+<tr>
+<td><code>precognitive</code></td>
+<td><code>Illuminate\\Foundation\\Http\\Middleware\\HandlePrecognitiveRequests</code></td>
+</tr>
+<tr>
+<td><code>signed</code></td>
+<td><code>Illuminate\\Routing\\Middleware\\ValidateSignature</code></td>
+</tr>
+<tr>
+<td><code>subscribed</code></td>
+<td><code>\\Spark\\Http\\Middleware\\VerifyBillableIsSubscribed</code></td>
+</tr>
+<tr>
+<td><code>throttle</code></td>
+<td><code>Illuminate\\Routing\\Middleware\\ThrottleRequests</code> 或 <code>Illuminate\\Routing\\Middleware\\ThrottleRequestsWithRedis</code></td>
+</tr>
+<tr>
+<td><code>verified</code></td>
+<td><code>Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified</code></td>
+</tr>
+</tbody></table>
+</div><p><a name="sorting-middleware"></a></p>
+<h3>中介層排序</h3>
+<p>極少情況下，您可能需要您的中介層以特定順序執行，但在將它們分配給路由時無法控制它們的順序。在這些情況下，您可以使用應用程式 <code>bootstrap/app.php</code> 檔案中的 <code>priority</code> 方法指定中介層優先級：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->priority([
+        \\Illuminate\\Foundation\\Http\\Middleware\\HandlePrecognitiveRequests::class,
+        \\Illuminate\\Cookie\\Middleware\\EncryptCookies::class,
+        \\Illuminate\\Cookie\\Middleware\\AddQueuedCookiesToResponse::class,
+        \\Illuminate\\Session\\Middleware\\StartSession::class,
+        \\Illuminate\\View\\Middleware\\ShareErrorsFromSession::class,
+        \\Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery::class,
+        \\Laravel\\Sanctum\\Http\\Middleware\\EnsureFrontendRequestsAreStateful::class,
+        \\Illuminate\\Routing\\Middleware\\ThrottleRequests::class,
+        \\Illuminate\\Routing\\Middleware\\ThrottleRequestsWithRedis::class,
+        \\Illuminate\\Routing\\Middleware\\SubstituteBindings::class,
+        \\Illuminate\\Contracts\\Auth\\Middleware\\AuthenticatesRequests::class,
+        \\Illuminate\\Auth\\Middleware\\Authorize::class,
+    ]);
+})
+</code></pre>
+<p><a name="middleware-parameters"></a></p>
+<h2>中介層參數</h2>
+<p>中介層也可以接收額外的參數。例如，如果您的應用程式需要在執行給定動作之前驗證已認證的使用者具有給定的「角色」，您可以創建一個接收角色名稱作為額外參數的 <code>EnsureUserHasRole</code> 中介層。</p>
+<p>額外的中介層參數將在 <code>$next</code> 參數之後傳遞給中介層：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class EnsureUserHasRole
+{
+    /**
+     * 處理傳入的請求。
+     *
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     */
+    public function handle(Request $request, Closure $next, string $role): Response
+    {
+        if (! $request->user()->hasRole($role)) {
+            // 重定向...
+        }
+
+        return $next($request);
+    }
+}
+</code></pre>
+<p>可以在定義路由時指定中介層參數，方法是使用 <code>:</code> 分隔中介層名稱和參數：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\EnsureUserHasRole;
+
+Route::put('/post/{id}', function (string $id) {
+    // ...
+})->middleware(EnsureUserHasRole::class.':editor');
+</code></pre>
+<p>多個參數可以用逗號分隔：</p>
+<pre><code class="language-php">Route::put('/post/{id}', function (string $id) {
+    // ...
+})->middleware(EnsureUserHasRole::class.':editor,publisher');
+</code></pre>
+<p><a name="terminable-middleware"></a></p>
+<h2>可終止的中介層</h2>
+<p>有時中介層可能需要在 HTTP 回應發送到瀏覽器後執行一些工作。如果您在中介層上定義了 <code>terminate</code> 方法，並且您的 Web 伺服器使用 <a href="https://www.php.net/manual/en/install.fpm.php">FastCGI</a>，則 <code>terminate</code> 方法將在回應發送到瀏覽器後自動被呼叫：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Illuminate\\Session\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class TerminatingMiddleware
+{
+    /**
+     * 處理傳入的請求。
+     *
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        return $next($request);
+    }
+
+    /**
+     * 在回應發送到瀏覽器後處理任務。
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        // ...
+    }
+}
+</code></pre>
+<p><code>terminate</code> 方法應該同時接收請求和回應。定義可終止的中介層後，您應該將其添加到應用程式 <code>bootstrap/app.php</code> 檔案中的路由或全域中介層清單中。</p>
+<p>在中介層上呼叫 <code>terminate</code> 方法時，Laravel 將從<a href="/docs/container">服務容器</a>解析一個新的中介層實例。如果您希望在呼叫 <code>handle</code> 和 <code>terminate</code> 方法時使用相同的中介層實例，請使用容器的 <code>singleton</code> 方法向容器註冊中介層。通常這應該在 <code>AppServiceProvider</code> 的 <code>register</code> 方法中完成：</p>
+<pre><code class="language-php">use App\\Http\\Middleware\\TerminatingMiddleware;
+
+/**
+ * 註冊任何應用程式服務。
+ */
+public function register(): void
+{
+    $this->app->singleton(TerminatingMiddleware::class);
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="中介層" currentPath="middleware">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>中介層</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">中介層</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/middleware" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

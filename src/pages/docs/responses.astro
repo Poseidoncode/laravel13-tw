@@ -1,0 +1,897 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>HTTP 回應</h1>
+<ul>
+<li><a href="#creating-responses">創建回應</a><ul>
+<li><a href="#attaching-headers-to-responses">向回應附加標頭</a></li>
+<li><a href="#attaching-cookies-to-responses">向回應附加 Cookie</a></li>
+<li><a href="#cookies-and-encryption">Cookie 與加密</a></li>
+</ul>
+</li>
+<li><a href="#redirects">重定向</a><ul>
+<li><a href="#redirecting-named-routes">重定向到命名路由</a></li>
+<li><a href="#redirecting-controller-actions">重定向到控制器動作</a></li>
+<li><a href="#redirecting-external-domains">重定向到外部網域</a></li>
+<li><a href="#redirecting-with-flashed-session-data">帶有閃存 Session 資料的重定向</a></li>
+</ul>
+</li>
+<li><a href="#other-response-types">其他回應類型</a><ul>
+<li><a href="#view-responses">視圖回應</a></li>
+<li><a href="#json-responses">JSON 回應</a></li>
+<li><a href="#file-downloads">檔案下載</a></li>
+<li><a href="#file-responses">檔案回應</a></li>
+</ul>
+</li>
+<li><a href="#streamed-responses">串流回應</a><ul>
+<li><a href="#consuming-streamed-responses">使用串流回應</a></li>
+<li><a href="#streamed-json-responses">串流 JSON 回應</a></li>
+<li><a href="#event-streams">事件串流 (SSE)</a></li>
+<li><a href="#streamed-downloads">串流下載</a></li>
+</ul>
+</li>
+<li><a href="#response-macros">回應巨集</a></li>
+</ul>
+<p><a name="creating-responses"></a></p>
+<h2>創建回應</h2>
+<p><a name="strings-arrays"></a></p>
+<h4>字串與陣列</h4>
+<p>所有路由和控制器都應返回一個回應，該回應將被傳回使用者的瀏覽器。Laravel 提供了幾種不同的方式來返回回應。最基本的回應是從路由或控制器返回一個字串。框架將自動將字串轉換為完整的 HTTP 回應：</p>
+<pre><code class="language-php">Route::get('/', function () {
+    return 'Hello World';
+});
+</code></pre>
+<p>除了從路由和控制器返回字串外，您還可以返回陣列。框架將自動將陣列轉換為 JSON 回應：</p>
+<pre><code class="language-php">Route::get('/', function () {
+    return [1, 2, 3];
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您知道嗎？您也可以從路由或控制器返回 <a href="/docs/eloquent-collections">Eloquent 集合</a>？它們將自動轉換為 JSON。試試看！</p>
+</blockquote>
+<p><a name="response-objects"></a></p>
+<h4>回應物件</h4>
+<p>通常，您不會只從路由動作返回簡單的字串或陣列。相反，您將返回完整的 <code>Illuminate\\Http\\Response</code> 實例或<a href="/docs/views">視圖</a>。</p>
+<p>返回完整的 <code>Response</code> 實例允許您自訂回應的 HTTP 狀態碼和標頭。<code>Response</code> 實例繼承自 <code>Symfony\\Component\\HttpFoundation\\Response</code> 類別，該類別提供了多種用於構建 HTTP 回應的方法：</p>
+<pre><code class="language-php">Route::get('/home', function () {
+    return response('Hello World', 200)
+        ->header('Content-Type', 'text/plain');
+});
+</code></pre>
+<p><a name="eloquent-models-and-collections"></a></p>
+<h4>Eloquent 模型與集合</h4>
+<p>您還可以直接從路由和控制器返回 <a href="/docs/eloquent">Eloquent ORM</a> 模型和集合。當您這樣做時，Laravel 將自動將模型和集合轉換為 JSON 回應，同時尊重模型的<a href="/docs/eloquent-serialization#hiding-attributes-from-json">隱藏屬性</a>：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/user/{user}', function (User $user) {
+    return $user;
+});
+</code></pre>
+<p><a name="attaching-headers-to-responses"></a></p>
+<h3>向回應附加標頭</h3>
+<p>請記住，大多數回應方法都是可鏈式呼叫的，允許以流暢的方式構建回應實例。例如，您可以使用 <code>header</code> 方法在將回應傳回使用者之前向其添加一系列標頭：</p>
+<pre><code class="language-php">return response($content)
+    ->header('Content-Type', $type)
+    ->header('X-Header-One', 'Header Value')
+    ->header('X-Header-Two', 'Header Value');
+</code></pre>
+<p>或者，您可以使用 <code>withHeaders</code> 方法指定要添加到回應的標頭陣列：</p>
+<pre><code class="language-php">return response($content)
+    ->withHeaders([
+        'Content-Type' => $type,
+        'X-Header-One' => 'Header Value',
+        'X-Header-Two' => 'Header Value',
+    ]);
+</code></pre>
+<p>您可以使用 <code>withoutHeader</code> 方法從傳出回應中移除特定標頭：</p>
+<pre><code class="language-php">return response($content)->withoutHeader('X-Debug');
+
+return response($content)->withoutHeader(['X-Debug', 'X-Powered-By']);
+</code></pre>
+<p><a name="cache-control-middleware"></a></p>
+<h4>快取控制中介層</h4>
+<p>Laravel 包含一個 <code>cache.headers</code> 中介層，可用於快速設定一組路由的 <code>Cache-Control</code> 標頭。指令應使用對應快取控制指令的「蛇形命名」等效形式提供，並應以分號分隔。如果在指令列表中指定了 <code>etag</code>，回應內容的 MD5 雜湊值將自動設定為 ETag 標識符：</p>
+<pre><code class="language-php">Route::middleware('cache.headers:public;max_age=30;s_maxage=300;stale_while_revalidate=600;etag')->group(function () {
+    Route::get('/privacy', function () {
+        // ...
+    });
+
+    Route::get('/terms', function () {
+        // ...
+    });
+});
+</code></pre>
+<p><a name="attaching-cookies-to-responses"></a></p>
+<h3>向回應附加 Cookie</h3>
+<p>您可以使用 <code>cookie</code> 方法將 Cookie 附加到傳出的 <code>Illuminate\\Http\\Response</code> 實例。您應該將名稱、值和 Cookie 應被視為有效的分鐘數傳遞給此方法：</p>
+<pre><code class="language-php">return response('Hello World')->cookie(
+    'name', 'value', $minutes
+);
+</code></pre>
+<p><code>cookie</code> 方法還接受幾個較少使用的額外參數。通常，這些參數與傳遞給 PHP 原生 <a href="https://secure.php.net/manual/en/function.setcookie.php">setcookie</a> 方法的參數具有相同的目的和含義：</p>
+<pre><code class="language-php">return response('Hello World')->cookie(
+    'name', 'value', $minutes, $path, $domain, $secure, $httpOnly
+);
+</code></pre>
+<p>如果您希望確保某個 Cookie 隨傳出回應一起發送，但您還沒有該回應的實例，可以使用 <code>Cookie</code> 外觀來「佇列化」Cookie，以便在發送回應時將其附加到回應。<code>queue</code> 方法接受創建 Cookie 實例所需的參數。這些 Cookie 將在發送給瀏覽器之前附加到傳出回應：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Cookie;
+
+Cookie::queue('name', 'value', $minutes);
+</code></pre>
+<p><a name="generating-cookie-instances"></a></p>
+<h4>生成 Cookie 實例</h4>
+<p>如果您希望生成一個可以在稍後附加到回應實例的 <code>Symfony\\Component\\HttpFoundation\\Cookie</code> 實例，可以使用全域 <code>cookie</code> 輔助函數。除非將此 Cookie 附加到回應實例，否則它不會被傳回給客戶端：</p>
+<pre><code class="language-php">$cookie = cookie('name', 'value', $minutes);
+
+return response('Hello World')->cookie($cookie);
+</code></pre>
+<p><a name="expiring-cookies-early"></a></p>
+<h4>提前過期 Cookie</h4>
+<p>您可以透過傳出回應的 <code>withoutCookie</code> 方法使 Cookie 過期來移除它：</p>
+<pre><code class="language-php">return response('Hello World')->withoutCookie('name');
+</code></pre>
+<p>如果您還沒有傳出回應的實例，可以使用 <code>Cookie</code> 外觀的 <code>expire</code> 方法使 Cookie 過期：</p>
+<pre><code class="language-php">Cookie::expire('name');
+</code></pre>
+<p><a name="cookies-and-encryption"></a></p>
+<h3>Cookie 與加密</h3>
+<p>預設情況下，感謝 <code>Illuminate\\Cookie\\Middleware\\EncryptCookies</code> 中介層，Laravel 生成的所有 Cookie 都是加密和簽名的，因此它們無法被客戶端修改或讀取。如果您希望禁用應用程式生成的部分 Cookie 的加密，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>encryptCookies</code> 方法：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->encryptCookies(except: [
+        'cookie_name',
+    ]);
+})
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+一般來說，不應禁用 Cookie 加密，因為這會使您的 Cookie 暴露於潛在的客戶端資料洩露和篡改風險。</p>
+</blockquote>
+<p><a name="redirects"></a></p>
+<h2>重定向</h2>
+<p>重定向回應是 <code>Illuminate\\Http\\RedirectResponse</code> 類別的實例，並包含將使用者重定向到另一個 URL 所需的正確標頭。有多種方式可以生成 <code>RedirectResponse</code> 實例。最簡單的方法是使用全域 <code>redirect</code> 輔助函數：</p>
+<pre><code class="language-php">Route::get('/dashboard', function () {
+    return redirect('/home/dashboard');
+});
+</code></pre>
+<p>有時您可能希望將使用者重定向到他們之前的位置，例如當提交的表單無效時。您可以使用全域 <code>back</code> 輔助函數來實現。由於此功能使用<a href="/docs/session"> Session</a>，請確保呼叫 <code>back</code> 函數的路由正在使用 <code>web</code> 中介層群組：</p>
+<pre><code class="language-php">Route::post('/user/profile', function () {
+    // 驗證請求...
+
+    return back()->withInput();
+});
+</code></pre>
+<p><a name="redirecting-named-routes"></a></p>
+<h3>重定向到命名路由</h3>
+<p>當您不帶參數呼叫 <code>redirect</code> 輔助函數時，將返回 <code>Illuminate\\Routing\\Redirector</code> 的一個實例，允許您在 <code>Redirector</code> 實例上呼叫任何方法。例如，要生成指向命名路由的 <code>RedirectResponse</code>，您可以使用 <code>route</code> 方法：</p>
+<pre><code class="language-php">return redirect()->route('login');
+</code></pre>
+<p>如果您的路由有參數，您可以將它們作為第二個參數傳遞給 <code>route</code> 方法：</p>
+<pre><code class="language-php">// 對於具有以下 URI 的路由：/profile/{id}
+
+return redirect()->route('profile', ['id' => 1]);
+</code></pre>
+<p><a name="populating-parameters-via-eloquent-models"></a></p>
+<h4>透過 Eloquent 模型填充參數</h4>
+<p>如果您正在重定向到具有「ID」參數的路由，且該參數是從 Eloquent 模型填充的，您可以直接傳遞模型本身。ID 將被自動提取：</p>
+<pre><code class="language-php">// 對於具有以下 URI 的路由：/profile/{id}
+
+return redirect()->route('profile', [$user]);
+</code></pre>
+<p>如果您希望自訂放置在路由參數中的值，可以在路由參數定義中指定列（<code>/profile/{id:slug}</code>），或者您可以覆蓋 Eloquent 模型上的 <code>getRouteKey</code> 方法：</p>
+<pre><code class="language-php">/**
+ * 獲取模型的路由鍵值。
+ */
+public function getRouteKey(): mixed
+{
+    return $this->slug;
+}
+</code></pre>
+<p><a name="redirecting-controller-actions"></a></p>
+<h3>重定向到控制器動作</h4>
+<p>您還可以生成指向<a href="/docs/controllers">控制器動作</a>的重定向。為此，請將控制器和動作名稱傳遞給 <code>action</code> 方法：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+
+return redirect()->action([UserController::class, 'index']);
+</code></pre>
+<p>如果您的控制器路由需要參數，您可以將它們作為第二個參數傳遞給 <code>action</code> 方法：</p>
+<pre><code class="language-php">return redirect()->action(
+    [UserController::class, 'profile'], ['id' => 1]
+);
+</code></pre>
+<p><a name="redirecting-external-domains"></a></p>
+<h3>重定向到外部網域</h3>
+<p>有時您可能需要重定向到應用程式外部的網域。您可以透過呼叫 <code>away</code> 方法來實現，該方法創建一個 <code>RedirectResponse</code>，而不進行任何額外的 URL 編碼、驗證或驗證：</p>
+<pre><code class="language-php">return redirect()->away('https://www.google.com');
+</code></pre>
+<p><a name="redirecting-with-flashed-session-data"></a></p>
+<h3>帶有閃存 Session 資料的重定向</h3>
+<p>重定向到新 URL 和<a href="/docs/session#flash-data">將資料閃存到 Session</a>通常是同時完成的。通常，這是在成功執行動作後將成功訊息閃存到 Session 時完成的。為了方便，您可以使用單個流暢的方法鏈創建一個 <code>RedirectResponse</code> 實例並將資料閃存到 Session：</p>
+<pre><code class="language-php">Route::post('/user/profile', function () {
+    // ...
+
+    return redirect('/dashboard')->with('status', 'Profile updated!');
+});
+</code></pre>
+<p>使用者被重定向後，您可以從<a href="/docs/session"> Session</a> 中顯示閃存的訊息。例如，使用 <a href="/docs/blade">Blade 語法</a>：</p>
+<pre><code class="language-blade">@if (session('status'))
+    &lt;div class="alert alert-success"&gt;
+        {{ session('status') }}
+    &lt;/div&gt;
+@endif
+</code></pre>
+<p><a name="redirecting-with-input"></a></p>
+<h4>帶有輸入的重定向</h4>
+<p>您可以使用 <code>RedirectResponse</code> 實例提供的 <code>withInput</code> 方法，在將使用者重定向到新位置之前，將當前請求的輸入資料閃存到 Session。如果使用者遇到驗證錯誤，通常會這樣做。一旦輸入被閃存到 Session，您就可以輕鬆地在下一個請求中<a href="/docs/requests#retrieving-old-input">檢索它</a>以重新填充表單：</p>
+<pre><code class="language-php">return back()->withInput();
+</code></pre>
+<p><a name="other-response-types"></a></p>
+<h2>其他回應類型</h2>
+<p><code>response</code> 輔助函數可用於生成其他類型的回應實例。當不帶參數呼叫 <code>response</code> 輔助函數時，將返回 <code>Illuminate\\Contracts\\Routing\\ResponseFactory</code> <a href="/docs/contracts">合約</a>的實現。此合約提供了多種用於生成回應的有用方法。</p>
+<p><a name="view-responses"></a></p>
+<h3>視圖回應</h3>
+<p>如果您需要控制回應的狀態和標頭，但也需要返回<a href="/docs/views">視圖</a>作為回應的內容，您應該使用 <code>view</code> 方法：</p>
+<pre><code class="language-php">return response()
+    ->view('hello', $data, 200)
+    ->header('Content-Type', $type);
+</code></pre>
+<p>當然，如果您不需要傳遞自訂 HTTP 狀態碼或自訂標頭，可以使用全域 <code>view</code> 輔助函數。</p>
+<p><a name="json-responses"></a></p>
+<h3>JSON 回應</h3>
+<p><code>json</code> 方法將自動設定 <code>Content-Type</code> 標頭為 <code>application/json</code>，並使用 <code>json_encode</code> PHP 函數將給定陣列轉換為 JSON：</p>
+<pre><code class="language-php">return response()->json([
+    'name' => 'Abigail',
+    'state' => 'CA',
+]);
+</code></pre>
+<p>如果您希望創建 JSONP 回應，可以將 <code>json</code> 方法與 <code>withCallback</code> 方法結合使用：</p>
+<pre><code class="language-php">return response()
+    ->json(['name' => 'Abigail', 'state' => 'CA'])
+    ->withCallback($request->input('callback'));
+</code></pre>
+<p><a name="file-downloads"></a></p>
+<h3>檔案下載</h3>
+<p><code>download</code> 方法可用於生成一個回應，強制使用者的瀏覽器下載給定路徑的檔案。此方法接受一個檔案名作為方法的第二個參數，這將決定下載檔案的使用者看到的檔案名。最後，您可以傳遞一個 HTTP 標頭陣列作為方法的第三個參數：</p>
+<pre><code class="language-php">return response()->download($pathToFile);
+
+return response()->download($pathToFile, $name, $headers);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+管理檔案下載的 Symfony HttpFoundation 要求正在下載的檔案具有 ASCII 檔案名。</p>
+</blockquote>
+<p><a name="file-responses"></a></p>
+<h3>檔案回應</h3>
+<p><code>file</code> 方法可用於直接在使用者的瀏覽器中顯示檔案（例如圖片或 PDF），而不是啟動下載。此方法接受檔案的絕對路徑作為其第一個參數，標頭陣列作為其第二個參數：</p>
+<pre><code class="language-php">return response()->file($pathToFile);
+
+return response()->file($pathToFile, $headers);
+</code></pre>
+<p><a name="streamed-responses"></a></p>
+<h2>串流回應</h2>
+<p>透過在資料生成時將其串流到客戶端，您可以顯著減少記憶體使用量並提高效能，尤其是對於非常大的回應。串流回應允許客戶端在伺服器完成發送資料之前開始處理資料：</p>
+<pre><code class="language-php">Route::get('/stream', function () {
+    return response()->stream(function (): void {
+        foreach (['developer', 'admin'] as $string) {
+            echo $string;
+            ob_flush();
+            flush();
+            sleep(2); // 模擬區塊之間的延遲...
+        }
+    }, 200, ['X-Accel-Buffering' => 'no']);
+});
+</code></pre>
+<p>為了方便，如果您傳遞給 <code>stream</code> 方法的閉包返回一個<a href="https://www.php.net/manual/en/language.generators.overview.php">生成器</a>，Laravel 將自動在生成器返回的字串之間刷新輸出緩衝區，並禁用 Nginx 輸出緩衝：</p>
+<pre><code class="language-php">Route::post('/chat', function () {
+    return response()->stream(function (): Generator {
+        $stream = OpenAI::client()->chat()->createStreamed(...);
+
+        foreach ($stream as $response) {
+            yield $response->choices[0];
+        }
+    });
+});
+</code></pre>
+<p><a name="consuming-streamed-responses"></a></p>
+<h3>使用串流回應</h3>
+<p>串流回應可以使用 Laravel 的 <code>stream</code> npm 套件來使用，該套件提供了一個便利的 API 來與 Laravel 回應和事件串流互動。要開始，請安裝 <code>@laravel/stream-react</code>、<code>@laravel/stream-vue</code> 或 <code>@laravel/stream-svelte</code> 套件：</p>
+<pre><code class="language-shell">npm install @laravel/stream-react
+</code></pre>
+<pre><code class="language-shell">npm install @laravel/stream-vue
+</code></pre>
+<pre><code class="language-shell">npm install @laravel/stream-svelte
+</code></pre>
+<p>然後，<code>useStream</code> 可用於使用事件串流。提供串流 URL 後，該鉤子將在從 Laravel 應用程式返回內容時自動用串聯的回應更新 <code>data</code>：</p>
+<pre><code class="language-tsx">import { useStream } from "@laravel/stream-react";
+
+function App() {
+    const { data, isFetching, isStreaming, send } = useStream("chat");
+
+    const sendMessage = () =&gt; {
+        send({
+            message: \`Current timestamp: \${Date.now()}\`,
+        });
+    };
+
+    return (
+        &lt;div&gt;
+            &lt;div&gt;{data}&lt;/div&gt;
+            {isFetching &amp;&amp; &lt;div&gt;Connecting...&lt;/div&gt;}
+            {isStreaming &amp;&amp; &lt;div&gt;Generating...&lt;/div&gt;}
+            &lt;button onClick={sendMessage}&gt;Send Message&lt;/button&gt;
+        &lt;/div&gt;
+    );
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useStream } from "@laravel/stream-vue";
+
+const { data, isFetching, isStreaming, send } = useStream("chat");
+
+const sendMessage = () =&gt; {
+    send({
+        message: \`Current timestamp: \${Date.now()}\`,
+    });
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;div&gt;{{ data }}&lt;/div&gt;
+        &lt;div v-if="isFetching"&gt;Connecting...&lt;/div&gt;
+        &lt;div v-if="isStreaming"&gt;Generating...&lt;/div&gt;
+        &lt;button @click="sendMessage"&gt;Send Message&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useStream } from "@laravel/stream-svelte";
+
+const stream = useStream("chat");
+
+const sendMessage = () =&gt; {
+    stream.send({
+        message: \`Current timestamp: \${Date.now()}\`,
+    });
+};
+&lt;/script&gt;
+
+&lt;div&gt;
+    &lt;div&gt;{$stream.data}&lt;/div&gt;
+    {#if $stream.isFetching}
+        &lt;div&gt;Connecting...&lt;/div&gt;
+    {/if}
+    {#if $stream.isStreaming}
+        &lt;div&gt;Generating...&lt;/div&gt;
+    {/if}
+    &lt;button onclick={sendMessage}&gt;Send Message&lt;/button&gt;
+&lt;/div&gt;
+</code></pre>
+<p>透過 <code>send</code> 將資料傳回串流時，與串流的活動連接會在發送新資料之前被取消。所有請求都以 JSON <code>POST</code> 請求的形式發送。</p>
+<blockquote>
+<p>[!WARNING]
+由於 <code>useStream</code> 鉤子向您的應用程式發送 <code>POST</code> 請求，因此需要有效的 CSRF 令牌。提供 CSRF 令牌的最簡單方法是<a href="/docs/csrf#csrf-x-csrf-token">透過應用程式佈局的 head 中的 meta 標籤包含它</a>。</p>
+</blockquote>
+<p>傳遞給 <code>useStream</code> 的第二個參數是一個選項物件，您可以用它來自訂串流使用行為。此物件的預設值如下所示：</p>
+<pre><code class="language-tsx">import { useStream } from "@laravel/stream-react";
+
+function App() {
+    const { data } = useStream("chat", {
+        id: undefined,
+        initialInput: undefined,
+        headers: undefined,
+        csrfToken: undefined,
+        onResponse: (response: Response) =&gt; void,
+        onData: (data: string) =&gt; void,
+        onCancel: () =&gt; void,
+        onFinish: () =&gt; void,
+        onError: (error: Error) =&gt; void,
+    });
+
+    return &lt;div&gt;{data}&lt;/div&gt;;
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useStream } from "@laravel/stream-vue";
+
+const { data } = useStream("chat", {
+    id: undefined,
+    initialInput: undefined,
+    headers: undefined,
+    csrfToken: undefined,
+    onResponse: (response: Response) =&gt; void,
+    onData: (data: string) =&gt; void,
+    onCancel: () =&gt; void,
+    onFinish: () =&gt; void,
+    onError: (error: Error) =&gt; void,
+});
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;{{ data }}&lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useStream } from "@laravel/stream-svelte";
+
+const stream = useStream("chat", {
+    id: undefined,
+    initialInput: undefined,
+    headers: undefined,
+    csrfToken: undefined,
+    onResponse: (response) =&gt; {},
+    onData: (data) =&gt; {},
+    onCancel: () =&gt; {},
+    onFinish: () =&gt; {},
+    onError: (error) =&gt; {},
+});
+&lt;/script&gt;
+
+&lt;div&gt;{$stream.data}&lt;/div&gt;
+</code></pre>
+<p><code>onResponse</code> 在從串流收到成功的初始回應後觸發，原始的<a href="https://developer.mozilla.org/en-US/docs/Web/API/Response">回應</a>被傳遞給回呼。<code>onData</code> 在收到每個區塊時被呼叫——當前區塊被傳遞給回呼。<code>onFinish</code> 在串流完成時以及在獲取/讀取週期間發生錯誤時被呼叫。</p>
+<p>預設情況下，初始化時不會向串流發送請求。您可以透過使用 <code>initialInput</code> 選項向串流傳遞初始有效載荷：</p>
+<pre><code class="language-tsx">import { useStream } from "@laravel/stream-react";
+
+function App() {
+    const { data } = useStream("chat", {
+        initialInput: {
+            message: "Introduce yourself.",
+        },
+    });
+
+    return &lt;div&gt;{data}&lt;/div&gt;;
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useStream } from "@laravel/stream-vue";
+
+const { data } = useStream("chat", {
+    initialInput: {
+        message: "Introduce yourself.",
+    },
+});
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;{{ data }}&lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useStream } from "@laravel/stream-svelte";
+
+const stream = useStream("chat", {
+    initialInput: {
+        message: "Introduce yourself.",
+    },
+});
+&lt;/script&gt;
+
+&lt;div&gt;{$stream.data}&lt;/div&gt;
+</code></pre>
+<p>要手動取消串流，您可以使用鉤子返回的 <code>cancel</code> 方法：</p>
+<pre><code class="language-tsx">import { useStream } from "@laravel/stream-react";
+
+function App() {
+    const { data, cancel } = useStream("chat");
+
+    return (
+        &lt;div&gt;
+            &lt;div&gt;{data}&lt;/div&gt;
+            &lt;button onClick={cancel}&gt;Cancel&lt;/button&gt;
+        &lt;/div&gt;
+    );
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useStream } from "@laravel/stream-vue";
+
+const { data, cancel } = useStream("chat");
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;div&gt;{{ data }}&lt;/div&gt;
+        &lt;button @click="cancel"&gt;Cancel&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useStream } from "@laravel/stream-svelte";
+
+const stream = useStream("chat");
+&lt;/script&gt;
+
+&lt;div&gt;
+    &lt;div&gt;{$stream.data}&lt;/div&gt;
+    &lt;button onclick={() =&gt; stream.cancel()}&gt;Cancel&lt;/button&gt;
+&lt;/div&gt;
+</code></pre>
+<p>每次使用 <code>useStream</code> 鉤子時，都會生成一個隨機 <code>id</code> 來標識串流。這會在每個請求中透過 <code>X-STREAM-ID</code> 標頭傳回伺服器。從多個元件使用同一個串流時，您可以透過提供自己的 <code>id</code> 來讀取和寫入串流：</p>
+<pre><code class="language-tsx">// App.tsx
+import { useStream } from "@laravel/stream-react";
+
+function App() {
+    const { data, id } = useStream("chat");
+
+    return (
+        &lt;div&gt;
+            &lt;div&gt;{data}&lt;/div&gt;
+            &lt;StreamStatus id={id} /&gt;
+        &lt;/div&gt;
+    );
+}
+
+// StreamStatus.tsx
+import { useStream } from "@laravel/stream-react";
+
+function StreamStatus({ id }) {
+    const { isFetching, isStreaming } = useStream("chat", { id });
+
+    return (
+        &lt;div&gt;
+            {isFetching &amp;&amp; &lt;div&gt;Connecting...&lt;/div&gt;}
+            {isStreaming &amp;&amp; &lt;div&gt;Generating...&lt;/div&gt;}
+        &lt;/div&gt;
+    );
+}
+</code></pre>
+<pre><code class="language-vue">&lt;!-- App.vue --&gt;
+&lt;script setup lang="ts"&gt;
+import { useStream } from "@laravel/stream-vue";
+import StreamStatus from "./StreamStatus.vue";
+
+const { data, id } = useStream("chat");
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;div&gt;{{ data }}&lt;/div&gt;
+        &lt;StreamStatus :id="id" /&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;!-- StreamStatus.vue --&gt;
+&lt;script setup lang="ts"&gt;
+import { useStream } from "@laravel/stream-vue";
+
+const props = defineProps&lt;{
+    id: string;
+}&gt;();
+
+const { isFetching, isStreaming } = useStream("chat", { id: props.id });
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;div v-if="isFetching"&gt;Connecting...&lt;/div&gt;
+        &lt;div v-if="isStreaming"&gt;Generating...&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;!-- App.svelte --&gt;
+&lt;script&gt;
+import { useStream } from "@laravel/stream-svelte";
+import StreamStatus from "./StreamStatus.svelte";
+
+const stream = useStream("chat");
+&lt;/script&gt;
+
+&lt;div&gt;
+    &lt;div&gt;{$stream.data}&lt;/div&gt;
+    &lt;StreamStatus id={stream.id} /&gt;
+&lt;/div&gt;
+
+&lt;!-- StreamStatus.svelte --&gt;
+&lt;script&gt;
+import { useStream } from "@laravel/stream-svelte";
+
+let { id } = $props();
+
+const stream = useStream("chat", { id });
+&lt;/script&gt;
+
+&lt;div&gt;
+    {#if $stream.isFetching}
+        &lt;div&gt;Connecting...&lt;/div&gt;
+    {/if}
+    {#if $stream.isStreaming}
+        &lt;div&gt;Generating...&lt;/div&gt;
+    {/if}
+&lt;/div&gt;
+</code></pre>
+<p><a name="streamed-json-responses"></a></p>
+<h3>串流 JSON 回應</h3>
+<p>如果您需要以增量方式串流 JSON 資料，可以使用 <code>streamJson</code> 方法。此方法對於需要以 JavaScript 可輕鬆解析的格式逐步發送到瀏覽器的大型資料集特別有用：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+Route::get('/users.json', function () {
+    return response()->streamJson([
+        'users' => User::cursor(),
+    ]);
+});
+</code></pre>
+<p><code>useJsonStream</code> 鉤子與<a href="#consuming-streamed-responses"> useStream 鉤子</a>相同，只是它會在完成串流後嘗試將資料解析為 JSON：</p>
+<pre><code class="language-tsx">import { useJsonStream } from "@laravel/stream-react";
+
+type User = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+function App() {
+    const { data, send } = useJsonStream&lt;{ users: User[] }&gt;("users");
+
+    const loadUsers = () =&gt; {
+        send({
+            query: "taylor",
+        });
+    };
+
+    return (
+        &lt;div&gt;
+            &lt;ul&gt;
+                {data?.users.map((user) =&gt; (
+                    &lt;li&gt;
+                        {user.id}: {user.name}
+                    &lt;/li&gt;
+                ))}
+            &lt;/ul&gt;
+            &lt;button onClick={loadUsers}&gt;Load Users&lt;/button&gt;
+        &lt;/div&gt;
+    );
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useJsonStream } from "@laravel/stream-vue";
+
+type User = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+const { data, send } = useJsonStream&lt;{ users: User[] }&gt;("users");
+
+const loadUsers = () =&gt; {
+    send({
+        query: "taylor",
+    });
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+    &lt;div&gt;
+        &lt;ul&gt;
+            &lt;li v-for="user in data?.users" :key="user.id"&gt;
+                {{ user.id }}: {{ user.name }}
+            &lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;button @click="loadUsers"&gt;Load Users&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useJsonStream } from "@laravel/stream-svelte";
+
+const stream = useJsonStream("users");
+
+const loadUsers = () =&gt; {
+    stream.send({
+        query: "taylor",
+    });
+};
+&lt;/script&gt;
+
+&lt;div&gt;
+    &lt;ul&gt;
+        {#if $stream.data?.users}
+            {#each $stream.data.users as user (user.id)}
+                &lt;li&gt;{user.id}: {user.name}&lt;/li&gt;
+            {/each}
+        {/if}
+    &lt;/ul&gt;
+    &lt;button onclick={loadUsers}&gt;Load Users&lt;/button&gt;
+&lt;/div&gt;
+</code></pre>
+<p><a name="event-streams"></a></p>
+<h3>事件串流 (SSE)</h3>
+<p><code>eventStream</code> 方法可用於使用 <code>text/event-stream</code> 內容類型返回伺服器發送事件 (SSE) 串流回應。<code>eventStream</code> 方法接受一個閉包，該閉包應在回應可用時<a href="https://www.php.net/manual/en/language.generators.overview.php">產生</a>回應到串流：</p>
+<pre><code class="language-php">Route::get('/chat', function () {
+    return response()->eventStream(function () {
+        $stream = OpenAI::client()->chat()->createStreamed(...);
+
+        foreach ($stream as $response) {
+            yield $response->choices[0];
+        }
+    });
+});
+</code></pre>
+<p>如果您希望自訂發送到事件串流的事件名稱，可以產生 <code>StreamedEvent</code> 類別的一個實例：</p>
+<pre><code class="language-php">use Illuminate\\Http\\StreamedEvent;
+
+yield new StreamedEvent(
+    event: 'update',
+    data: $response->choices[0],
+);
+</code></pre>
+<p><a name="consuming-event-streams"></a></p>
+<h4>使用事件串流</h4>
+<p>事件串流可以使用 Laravel 的 <code>stream</code> npm 套件來使用，該套件提供了一個便利的 API 來與 Laravel 事件串流互動。要開始，請安裝 <code>@laravel/stream-react</code>、<code>@laravel/stream-vue</code> 或 <code>@laravel/stream-svelte</code> 套件：</p>
+<pre><code class="language-shell">npm install @laravel/stream-react
+</code></pre>
+<pre><code class="language-shell">npm install @laravel/stream-vue
+</code></pre>
+<pre><code class="language-shell">npm install @laravel/stream-svelte
+</code></pre>
+<p>然後，<code>useEventStream</code> 可用於使用事件串流。提供串流 URL 後，該鉤子將在從 Laravel 應用程式返回訊息時自動用串聯的回應更新 <code>message</code>：</p>
+<pre><code class="language-jsx">import { useEventStream } from "@laravel/stream-react";
+
+function App() {
+  const { message } = useEventStream("/chat");
+
+  return &lt;div&gt;{message}&lt;/div&gt;;
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useEventStream } from "@laravel/stream-vue";
+
+const { message } = useEventStream("/chat");
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;{{ message }}&lt;/div&gt;
+&lt;/template&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useEventStream } from "@laravel/stream-svelte";
+
+const eventStream = useEventStream("/chat");
+&lt;/script&gt;
+
+&lt;div&gt;{$eventStream.message}&lt;/div&gt;
+</code></pre>
+<p>傳遞給 <code>useEventStream</code> 的第二個參數是一個選項物件，您可以用它來自訂串流使用行為。此物件的預設值如下所示：</p>
+<pre><code class="language-jsx">import { useEventStream } from "@laravel/stream-react";
+
+function App() {
+  const { message } = useEventStream("/stream", {
+    eventName: "update",
+    onMessage: (message) =&gt; {
+      //
+    },
+    onError: (error) =&gt; {
+      //
+    },
+    onComplete: () =&gt; {
+      //
+    },
+    endSignal: "&lt;/stream&gt;",
+    glue: " ",
+  });
+
+  return &lt;div&gt;{message}&lt;/div&gt;;
+}
+</code></pre>
+<pre><code class="language-vue">&lt;script setup lang="ts"&gt;
+import { useEventStream } from "@laravel/stream-vue";
+
+const { message } = useEventStream("/chat", {
+  eventName: "update",
+  onMessage: (message) =&gt; {
+    // ...
+  },
+  onError: (error) =&gt; {
+    // ...
+  },
+  onComplete: () =&gt; {
+    // ...
+  },
+  endSignal: "&lt;/stream&gt;",
+  glue: " ",
+});
+&lt;/script&gt;
+</code></pre>
+<pre><code class="language-svelte">&lt;script&gt;
+import { useEventStream } from "@laravel/stream-svelte";
+
+const eventStream = useEventStream("/chat", {
+    eventName: "update",
+    onMessage: (event) =&gt; {
+        //
+    },
+    onError: (error) =&gt; {
+        //
+    },
+    onComplete: () =&gt; {
+        //
+    },
+    endSignal: "&lt;/stream&gt;",
+    glue: " ",
+    replace: false,
+});
+&lt;/script&gt;
+</code></pre>
+<p>事件串流也可以透過應用程式前端的 <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventSource">EventSource</a> 物件手動使用。當串流完成時，<code>eventStream</code> 方法將自動向事件串流發送 <code>&lt;/stream&gt;</code> 更新：</p>
+<pre><code class="language-js">const source = new EventSource('/chat');
+
+source.addEventListener('update', (event) =&gt; {
+    if (event.data === '&lt;/stream&gt;') {
+        source.close();
+
+        return;
+    }
+
+    console.log(event.data);
+});
+</code></pre>
+<p>要自訂發送到事件串流的最後一個事件，您可以向 <code>eventStream</code> 方法的 <code>endStreamWith</code> 參數提供一個 <code>StreamedEvent</code> 實例：</p>
+<pre><code class="language-php">return response()->eventStream(function () {
+    // ...
+}, endStreamWith: new StreamedEvent(event: 'update', data: '&lt;/stream&gt;'));
+</code></pre>
+<p><a name="streamed-downloads"></a></p>
+<h3>串流下載</h3>
+<p>有時您可能希望將給定操作的字串回應轉換為可下載的回應，而無需將操作的內容寫入磁碟。在這種情況下，您可以使用 <code>streamDownload</code> 方法。此方法接受一個回呼、檔案名和一個可選的標頭陣列作為其參數：</p>
+<pre><code class="language-php">use App\\Services\\GitHub;
+
+return response()->streamDownload(function () {
+    echo GitHub::api('repo')
+        ->contents()
+        ->readme('laravel', 'laravel')['contents'];
+}, 'laravel-readme.md');
+</code></pre>
+<p><a name="response-macros"></a></p>
+<h2>回應巨集</h2>
+<p>如果您希望定義一個可以在各種路由和控制器中重複使用的自訂回應，可以使用 <code>Response</code> 外觀上的 <code>macro</code> 方法。通常，您應該從應用程式的其中一個<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中呼叫此方法，例如 <code>App\\Providers\\AppServiceProvider</code> 服務提供者：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Providers;
+
+use Illuminate\\Support\\Facades\\Response;
+use Illuminate\\Support\\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 啟動任何應用程式服務。
+     */
+    public function boot(): void
+    {
+        Response::macro('caps', function (string $value) {
+            return Response::make(strtoupper($value));
+        });
+    }
+}
+</code></pre>
+<p><code>macro</code> 函數接受一個名稱作為其第一個參數，一個閉包作為其第二個參數。當從 <code>ResponseFactory</code> 實現或 <code>response</code> 輔助函數呼叫巨集名稱時，將執行巨集的閉包：</p>
+<pre><code class="language-php">return response()->caps('foo');
+</code></pre>
+`;
+---
+
+<DocsLayout title="HTTP 回應" currentPath="responses">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>HTTP 回應</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">HTTP 回應</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/responses" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

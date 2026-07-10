@@ -1,0 +1,247 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>安裝</h1>
+<ul>
+<li><a href="#meet-laravel">認識 Laravel</a><ul>
+<li><a href="#why-laravel">為什麼選擇 Laravel？</a></li>
+</ul>
+</li>
+<li><a href="#creating-a-laravel-project">建立 Laravel 應用程式</a><ul>
+<li><a href="#getting-started-using-ai">使用 AI 開始</a></li>
+<li><a href="#installing-php">安裝 PHP 和 Laravel 安裝器</a></li>
+<li><a href="#creating-an-application">建立應用程式</a></li>
+</ul>
+</li>
+<li><a href="#initial-configuration">初始配置</a><ul>
+<li><a href="#environment-based-configuration">基於環境的配置</a></li>
+<li><a href="#databases-and-migrations">資料庫和遷移</a></li>
+<li><a href="#directory-configuration">目錄配置</a></li>
+</ul>
+</li>
+<li><a href="#installation-using-herd">使用 Herd 安裝</a><ul>
+<li><a href="#herd-on-macos">macOS 上的 Herd</a></li>
+<li><a href="#herd-on-windows">Windows 上的 Herd</a></li>
+</ul>
+</li>
+<li><a href="#ide-support">IDE 支援</a></li>
+<li><a href="#laravel-and-ai">Laravel 與 AI</a><ul>
+<li><a href="#installing-laravel-boost">安裝 Laravel Boost</a></li>
+</ul>
+</li>
+<li><a href="#next-steps">下一步</a><ul>
+<li><a href="#laravel-the-fullstack-framework">Laravel 全端框架</a></li>
+<li><a href="#laravel-the-api-backend">Laravel API 後端</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="meet-laravel"></a></p>
+<h2>認識 Laravel</h2>
+<p>Laravel 是一個具有表達性、優雅語法的 Web 應用程式框架。Web 框架為創建應用程式提供了結構和起點，讓您可以專注於創建令人驚嘆的內容，而我們則處理細節。</p>
+<p>Laravel 致力於提供令人驚嘆的開發者體驗，同時提供強大的功能，如徹底的依賴注入、表達性的資料庫抽象層、佇列和排程任務、單元測試和整合測試等。</p>
+<p>無論您是 PHP Web 框架的新手還是有多年經驗，Laravel 都是一個可以與您一起成長的框架。我們將幫助您踏出成為 Web 開發者的第一步，或在您將專業知識提升到更高水平時給您助力。我們迫不及待想看看您會構建什麼。</p>
+<p><a name="why-laravel"></a></p>
+<h3>為什麼選擇 Laravel？</h3>
+<p>在構建 Web 應用程式時，您有各種工具和框架可供選擇。然而，我們相信 Laravel 是構建現代化全端 Web 應用程式的最佳選擇。</p>
+<h4>漸進式框架</h4>
+<p>我們喜歡稱 Laravel 為「漸進式」框架。我們的意思是 Laravel 會與您一起成長。如果您剛踏出進入 Web 開發的第一步，Laravel 廣泛的文檔庫、指南和 <a href="https://laracasts.com">影片教程</a>將幫助您學習基礎知識而不會感到不知所措。</p>
+<p>如果您是資深開發者，Laravel 為 <a href="/docs/container">依賴注入</a>、<a href="/docs/testing">單元測試</a>、<a href="/docs/queues">佇列</a>、<a href="/docs/broadcasting">即時事件</a>等提供了強大的工具。Laravel 專為構建專業 Web 應用程式而精心調校，並準備好處理企業級工作負載。</p>
+<h4>可擴展框架</h4>
+<p>Laravel 具有令人難以置信的可擴展性。得益於 PHP 的可擴展特性和 Laravel 對快速分散式快取系統（如 Redis）的內建支援，使用 Laravel 進行水平擴展輕而易舉。事實上，Laravel 應用程式已被輕鬆擴展到每月處理數億個請求。</p>
+<p>需要極端擴展？像 <a href="https://cloud.laravel.com">Laravel Cloud</a> 這樣的平台允許您以近乎無限的規模執行您的 Laravel 應用程式。</p>
+<h4>代理就緒框架</h4>
+<p>Laravel 的約定式規範和明確的結構使其成為使用 Cursor 和 Claude Code 等工具進行 <a href="/docs/ai">AI 輔助開發</a>的理想框架。當您要求 AI 代理添加一個控制器時，它確切地知道該將其放置何處。當您需要新的遷移時，命名規範和檔案位置都是可預測的。這種一致性消除了在更靈活的框架中經常困擾 AI 工具的猜測工作。</p>
+<p>除了檔案組織之外，Laravel 的表達式語法和全面的文檔為 AI 代理提供了生成準確、慣用程式碼所需的上下文。像 Eloquent 關聯、表單請求和中介層等功能遵循代理可以可靠理解和複製的模式。結果是 AI 生成的程式碼看起來像是由經驗豐富的 Laravel 開發者編寫的，而不是從通用 PHP 程式碼片段拼湊而成。</p>
+<p>要了解更多關於為什麼 Laravel 是 AI 輔助開發的完美選擇，請查看我們關於 <a href="/docs/ai">代理式開發</a>的文檔。</p>
+<h4>社群框架</h4>
+<p>Laravel 結合了 PHP 生態系統中最好的套件，提供最強大且對開發者友好的框架。此外，來自世界各地的數千名才華橫溢的開發者已<a href="https://github.com/laravel/framework">為該框架做出了貢獻</a>。谁知道，也許您甚至會成為 Laravel 的貢獻者。</p>
+<p><a name="creating-a-laravel-project"></a></p>
+<h2>建立 Laravel 應用程式</h2>
+<p><a name="getting-started-using-ai"></a></p>
+<h3>使用 AI 開始</h3>
+<p>如果您正在使用像 <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> 或 <a href="https://opencode.ai">OpenCode</a> 這樣的 AI 編碼代理，您可以從一個提示開始，該提示在代理接觸您的項目之前為其提供 Laravel 特定的操作手冊。</p>
+<p>下面的提示告訴代理在哪裡尋找 Laravel 的安裝指南、優先處理什麼，以及當您尚未做出選擇時如何做出合理的預設設定。將此貼到您的代理中以開始：</p>
+<pre><code class="language-text">I&#39;m building a new Laravel application.
+
+Fetch and follow the instructions from https://laravel.com/for/agents. Treat the returned Markdown as the source of truth for how to install and set up Laravel in this session.
+</code></pre>
+<p>代理讀取說明後，它應該逐步引導您並保持設定與 Laravel 的預設值一致。</p>
+<p><a name="installing-php"></a></p>
+<h3>安裝 PHP 和 Laravel 安裝器</h3>
+<p>在建立您的第一個 Laravel 應用程式之前，請確保您的本機機器已安裝 <a href="https://php.net">PHP</a>、<a href="https://getcomposer.org">Composer</a> 和 <a href="https://github.com/laravel/installer">Laravel 安裝器</a>。此外，您應該安裝 <a href="https://nodejs.org">Node 和 NPM</a> 或 <a href="https://bun.sh/">Bun</a>，以便您可以編譯應用程式的前端資源。</p>
+<p>如果您的本機機器上未安裝 PHP 和 Composer，以下命令將在 macOS、Windows 或 Linux 上安裝 PHP、Composer 和 Laravel 安裝器：</p>
+<pre><code class="language-shell">/bin/bash -c &quot;$(curl -fsSL https://php.new/install/mac/8.5)&quot;
+</code></pre>
+<pre><code class="language-shell"># 以管理員身份執行...
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString(&#39;https://php.new/install/windows/8.5&#39;))
+</code></pre>
+<pre><code class="language-shell">/bin/bash -c &quot;$(curl -fsSL https://php.new/install/linux/8.5)&quot;
+</code></pre>
+<p>執行上述其中一個命令後，您應該重新啟動終端會話。要透過 <code>php.new</code> 安裝後更新 PHP、Composer 和 Laravel 安裝器，您可以在終端中重新執行該命令。</p>
+<p>如果您已經安裝了 PHP 和 Composer，您可以透過 Composer 安裝 Laravel 安裝器：</p>
+<pre><code class="language-shell">composer global require laravel/installer
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有關功能齊全、圖形化的 PHP 安裝和管理體驗，請查看 <a href="#installation-using-herd">Laravel Herd</a>。</p>
+</blockquote>
+<p><a name="creating-an-application"></a></p>
+<h3>建立應用程式</h3>
+<p>安裝 PHP、Composer 和 Laravel 安裝器後，您就可以建立新的 Laravel 應用程式了。安裝器將提示您選擇您偏好的入門套件、測試框架和資料庫：</p>
+<pre><code class="language-shell">laravel new example-app
+</code></pre>
+<p>應用程式建立後，您可以使用 <code>dev</code> Composer 腳本啟動 Laravel 的本機開發伺服器、佇列工作者和 Vite 開發伺服器：</p>
+<pre><code class="language-shell">cd example-app
+npm install &amp;&amp; npm run build
+composer run dev
+</code></pre>
+<p>啟動開發伺服器後，您可以在 Web 瀏覽器中透過 <a href="http://localhost:8000">http://localhost:8000</a> 存取您的應用程式。接下來，您就可以<a href="#next-steps">開始踏出進入 Laravel 生態系統的下一步</a>。當然，您也可能想要<a href="#databases-and-migrations">配置資料庫</a>並執行必要的遷移。</p>
+<blockquote>
+<p>[!NOTE]
+如果您想在開發 Laravel 應用程式時有個良好的開頭，請考慮使用我們的其中一個 <a href="/docs/starter-kits">入門套件</a>。Laravel 的入門套件為您的新 Laravel 應用程式提供後端和前端的身份驗證腳手架。</p>
+</blockquote>
+<p><a name="initial-configuration"></a></p>
+<h2>初始配置</h2>
+<p>Laravel 框架的所有配置檔案都儲存在 <code>config</code> 目錄中。每個選項都有文檔說明，因此請隨意瀏覽檔案並熟悉可用的選項。</p>
+<p>Laravel 幾乎不需要額外的開箱即用配置。您可以自由開始開發！但是，您可能希望查看 <code>config/app.php</code> 檔案及其文檔。它包含幾個選項，如 <code>url</code> 和 <code>locale</code>，您可能希望根據您的應用程式進行變更。</p>
+<p><a name="environment-based-configuration"></a></p>
+<h3>基於環境的配置</h3>
+<p>由於 Laravel 的許多配置選項值可能會根據您的應用程式是在本機機器上還是在生產 Web 伺服器上運行而有所不同，因此許多重要的配置值使用存在於應用程式根目錄的 <code>.env</code> 檔案定義。</p>
+<p>您的 <code>.env</code> 檔案不應提交到應用程式的原始碼控制中，因為使用您應用程式的每個開發者/伺服器可能需要不同的環境配置。此外，如果入侵者獲得對您的原始碼控制儲存庫的存取權限，這將是一個安全風險，因為任何敏感憑證都會被暴露。</p>
+<blockquote>
+<p>[!NOTE]
+有關 <code>.env</code> 檔案和基於環境配置的更多資訊，請查看完整的 <a href="/docs/configuration#environment-configuration">配置文檔</a>。</p>
+</blockquote>
+<p><a name="databases-and-migrations"></a></p>
+<h3>資料庫和遷移</h3>
+<p>現在您已經建立了 Laravel 應用程式，您可能想要在資料庫中儲存一些資料。預設情況下，應用程式的 <code>.env</code> 配置檔案指定 Laravel 將與 SQLite 資料庫進行互動。</p>
+<p>在建立應用程式期間，Laravel 為您創建了一個 <code>database/database.sqlite</code> 檔案，並運行了必要的遷移來建立應用程式的資料庫表格。</p>
+<p>如果您偏好使用其他資料庫驅動程式（如 MySQL 或 PostgreSQL），您可以更新 <code>.env</code> 配置檔案以使用適當的資料庫。例如，如果您希望使用 MySQL，請像這樣更新 <code>.env</code> 配置檔案的 <code>DB_*</code> 變數：</p>
+<pre><code class="language-ini">DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+</code></pre>
+<p>如果您選擇使用 SQLite 以外的資料庫，您需要建立資料庫並執行應用程式的 <a href="/docs/migrations">資料庫遷移</a>：</p>
+<pre><code class="language-shell">php artisan migrate
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您在 macOS 或 Windows 上開發並需要在本機安裝 MySQL、PostgreSQL 或 Redis，請考慮使用 <a href="https://herd.laravel.com/#plans">Herd Pro</a> 或 <a href="https://dbngin.com/">DBngin</a>。</p>
+</blockquote>
+<p><a name="directory-configuration"></a></p>
+<h3>目錄配置</h3>
+<p>Laravel 應始終從為 Web 伺服器配置的「Web 目錄」的根目錄提供服務。您不應嘗試從「Web 目錄」的子目錄中提供 Laravel 應用程式。這樣做可能會暴露應用程式中存在的敏感檔案。</p>
+<p><a name="installation-using-herd"></a></p>
+<h2>使用 Herd 安裝</h2>
+<p><a href="https://herd.laravel.com">Laravel Herd</a> 是一個超快的原生 Laravel 和 PHP 開發環境，適用於 macOS 和 Windows。Herd 包含了開始 Laravel 開發所需的一切，包括 PHP 和 Nginx。</p>
+<p>安裝 Herd 後，您就可以開始使用 Laravel 進行開發了。Herd 包含 <code>php</code>、<code>composer</code>、<code>laravel</code>、<code>expose</code>、<code>node</code>、<code>npm</code> 和 <code>nvm</code> 的命令列工具。</p>
+<blockquote>
+<p>[!NOTE]
+<a href="https://herd.laravel.com/#plans">Herd Pro</a> 透過額外強大的功能增強了 Herd，例如建立和管理本機 MySQL、Postgres 和 Redis 資料庫的能力，以及本機郵件查看和日誌監控。</p>
+</blockquote>
+<p><a name="herd-on-macos"></a></p>
+<h3>macOS 上的 Herd</h3>
+<p>如果您在 macOS 上開發，您可以從 <a href="https://herd.laravel.com">Herd 網站</a>下載 Herd 安裝器。安裝器會自動下載最新版本的 PHP 並配置您的 Mac 始終在背景運行 <a href="https://www.nginx.com/">Nginx</a>。</p>
+<p>macOS 上的 Herd 使用 <a href="https://en.wikipedia.org/wiki/Dnsmasq">dnsmasq</a> 來支援「停放」目錄。停放目錄中的任何 Laravel 應用程式都將由 Herd 自動提供服務。預設情況下，Herd 在 <code>~/Herd</code> 創建一個停放目錄，您可以使用目錄名稱在 <code>.test</code> 網域上存取此目錄中的任何 Laravel 應用程式。</p>
+<p>安裝 Herd 後，建立新 Laravel 應用程式的最快方法是使用 Laravel CLI，它與 Herd 捆綁在一起：</p>
+<pre><code class="language-shell">cd ~/Herd
+laravel new my-app
+cd my-app
+herd open
+</code></pre>
+<p>當然，您可以隨時透過 Herd 的 UI 管理您的停放目錄和其他 PHP 設定，該 UI 可從系統托盤中的 Herd 選單打開。</p>
+<p>您可以透過查看 <a href="https://herd.laravel.com/docs">Herd 文檔</a>來了解更多關於 Herd 的資訊。</p>
+<p><a name="herd-on-windows"></a></p>
+<h3>Windows 上的 Herd</h3>
+<p>您可以從 <a href="https://herd.laravel.com/windows">Herd 網站</a>下載 Windows 版的 Herd 安裝器。安裝完成後，您可以啟動 Herd 以完成入門流程並首次存取 Herd UI。</p>
+<p>透過左鍵點擊 Herd 的系統托盤圖標即可存取 Herd UI。右鍵點擊可打開快速選單，存取您日常所需的所有工具。</p>
+<p>安裝期間，Herd 在您的主目錄中創建一個「停放」目錄 <code>%USERPROFILE%\\Herd</code>。停放目錄中的任何 Laravel 應用程式都將由 Herd 自動提供服務，您可以使用目錄名稱在 <code>.test</code> 網域上存取此目錄中的任何 Laravel 應用程式。</p>
+<p>安裝 Herd 後，建立新 Laravel 應用程式的最快方法是使用 Laravel CLI，它與 Herd 捆綁在一起。首先，打開 Powershell 並執行以下命令：</p>
+<pre><code class="language-shell">cd ~\\Herd
+laravel new my-app
+cd my-app
+herd open
+</code></pre>
+<p>您可以透過查看 <a href="https://herd.laravel.com/docs/windows">Windows 版 Herd 文檔</a>來了解更多關於 Herd 的資訊。</p>
+<p><a name="ide-support"></a></p>
+<h2>IDE 支援</h2>
+<p>開發 Laravel 應用程式時，您可以自由使用任何您喜歡的程式碼編輯器。如果您正在尋找輕量級且可擴展的編輯器，<a href="https://code.visualstudio.com">VS Code</a> 或 <a href="https://cursor.com">Cursor</a> 結合官方 <a href="https://marketplace.visualstudio.com/items?itemName=laravel.vscode-laravel">Laravel VS Code 擴充套件</a>提供了出色的 Laravel 支援，具有語法高亮、程式碼片段、Artisan 命令整合以及 Eloquent 模型、路由、中介層、資源、配置和 Inertia.js 的智慧自動完成等功能。</p>
+<p>有關 Laravel 的廣泛和強大支援，請查看 JetBrains IDE <a href="https://www.jetbrains.com/phpstorm/laravel/?utm_source=laravel.com&utm_medium=link&utm_campaign=laravel-2025&utm_content=partner&ref=laravel-2025">PhpStorm</a>。PhpStorm 的內建 Laravel 框架支援包括 Blade 模板、Eloquent 模型、路由、視圖、翻譯和元件的智慧自動完成，以及強大的程式碼生成和跨 Laravel 專案的導航。</p>
+<p>對於尋求基於雲端開發體驗的人，<a href="https://firebase.studio/">Firebase Studio</a> 提供了直接在瀏覽器中使用 Laravel 構建的即時存取。無需任何設定，Firebase Studio 使從任何設備開始構建 Laravel 應用程式變得輕而易舉。</p>
+<p><a name="laravel-and-ai"></a></p>
+<h2>Laravel 與 AI</h2>
+<p><a href="https://github.com/laravel/boost">Laravel Boost</a> 是一個強大的工具，它填補了 AI 編碼代理與 Laravel 應用程式之間的差距。Boost 為 AI 代理提供 Laravel 特定的上下文、工具和指南，使它們能夠生成更準確、特定版本且遵循 Laravel 規範的程式碼。</p>
+<p>當您在 Laravel 應用程式中安裝 Boost 時，AI 代理可以存取超過 15 個專門工具，包括了解您使用了哪些套件、查詢您的資料庫、搜尋 Laravel 文檔、讀取瀏覽器日誌、生成測試以及透過 Tinker 執行程式碼的能力。</p>
+<p>此外，Boost 為 AI 代理提供了超過 17,000 條向量化的 Laravel 生態系統文檔，針對您安裝的套件版本進行了客製化。這意味著代理可以提供針對您專案使用的確切版本的指導。</p>
+<p>Boost 還包括 Laravel 維護的 AI 準則，幫助代理追蹤框架規範、編寫適當的測試，並在生成 Laravel 程式碼時避免常見陷阱。</p>
+<p><a name="installing-laravel-boost"></a></p>
+<h3>安裝 Laravel Boost</h3>
+<p>Boost 可以安裝在運行 PHP 8.1 或更高版本的 Laravel 10、11、12 和 13 應用程式中。首先，將 Boost 安裝為開發依賴項：</p>
+<pre><code class="language-shell">composer require laravel/boost --dev
+</code></pre>
+<p>安裝完成後，執行互動式安裝程式：</p>
+<pre><code class="language-shell">php artisan boost:install
+</code></pre>
+<p>安裝程式將自動偵測您的 IDE 和 AI 代理，允許您選擇適合您專案的功能。Boost 尊重現有的專案規範，預設情況下不會強制執行主觀的樣式規則。</p>
+<blockquote>
+<p>[!NOTE]
+要了解更多關於 Boost 的資訊，請查看 <a href="https://github.com/laravel/boost">GitHub 上的 Laravel Boost 儲存庫</a>。</p>
+</blockquote>
+<p><a name="adding-custom-ai-guidelines"></a></p>
+<h4>添加自訂 AI 準則</h4>
+<p>要用您自己的自訂 AI 準則增強 Laravel Boost，請將 <code>.blade.php</code> 或 <code>.md</code> 檔案添加到應用程式的 <code>.ai/guidelines/*</code> 目錄中。當您執行 <code>boost:install</code> 時，這些檔案將自動包含在 Laravel Boost 的準則中。</p>
+<p><a name="next-steps"></a></p>
+<h2>下一步</h2>
+<p>現在您已經建立了 Laravel 應用程式，您可能想知道接下來要學習什麼。首先，我們強烈建議透過閱讀以下文檔來熟悉 Laravel 的運作方式：</p>
+<div class="content-list" markdown="1"><ul>
+<li><a href="/docs/lifecycle">請求生命週期</a></li>
+<li><a href="/docs/configuration">配置</a></li>
+<li><a href="/docs/structure">目錄結構</a></li>
+<li><a href="/docs/frontend">前端</a></li>
+<li><a href="/docs/container">服務容器</a></li>
+<li><a href="/docs/facades">Facades</a></li>
+</ul>
+</div><p>您想要如何使用 Laravel 也將決定您旅程中的下一步。有多種方式可以使用 Laravel，我們將在下面探討框架的兩個主要使用案例。</p>
+<p><a name="laravel-the-fullstack-framework"></a></p>
+<h3>Laravel 全端框架</h3>
+<p>Laravel 可以作為全端框架使用。所謂「全端」框架，我們的意思是您將使用 Laravel 將請求路由到您的應用程式，並透過 <a href="/docs/blade">Blade 模板</a>或像 <a href="https://inertiajs.com">Inertia</a> 這樣的單頁應用程式混合技術來渲染您的前端。這是使用 Laravel 框架最常見的方式，也是我們認為使用 Laravel 最高效的方式。</p>
+<p>如果您計劃以這種方式使用 Laravel，您可能想查看我們關於 <a href="/docs/frontend">前端開發</a>、<a href="/docs/routing">路由</a>、<a href="/docs/views">視圖</a>或 <a href="/docs/eloquent">Eloquent ORM</a>的文檔。此外，您可能有興趣了解像 <a href="https://livewire.laravel.com">Livewire</a> 和 <a href="https://inertiajs.com">Inertia</a> 這樣的社群套件。這些套件允許您將 Laravel 作為全端框架使用，同時享受單頁 JavaScript 應用程式提供的許多 UI 優勢。</p>
+<p>如果您將 Laravel 作為全端框架使用，我們還強烈鼓勵您學習如何使用 <a href="/docs/vite">Vite</a> 編譯應用程式的 CSS 和 JavaScript。</p>
+<blockquote>
+<p>[!NOTE]
+如果您想在構建應用程式時有個良好的開頭，請查看我們的其中一個官方 <a href="/docs/starter-kits">應用程式入門套件</a>。</p>
+</blockquote>
+<p><a name="laravel-the-api-backend"></a></p>
+<h3>Laravel API 後端</h3>
+<p>Laravel 也可以作為 JavaScript 單頁應用程式或行動應用程式的 API 後端。例如，您可以將 Laravel 用作 <a href="https://nextjs.org">Next.js</a> 應用程式的 API 後端。在此上下文中，您可以使用 Laravel 為您的應用程式提供<a href="/docs/sanctum">身份驗證</a>和資料儲存/檢索，同時利用 Laravel 強大的服務，如佇列、電子郵件、通知等。</p>
+<p>如果您計劃以這種方式使用 Laravel，您可能想查看我們關於 <a href="/docs/routing">路由</a>、<a href="/docs/sanctum">Laravel Sanctum</a> 和 <a href="/docs/eloquent">Eloquent ORM</a>的文檔。</p>
+`;
+---
+
+<DocsLayout title="安裝" currentPath="installation">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>安裝</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">安裝</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/installation" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

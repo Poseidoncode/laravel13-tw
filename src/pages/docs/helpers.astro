@@ -1,0 +1,2413 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>輔助函數</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#available-methods">可用方法</a></li>
+<li><a href="#other-utilities">其他實用工具</a><ul>
+<li><a href="#benchmarking">效能基準測試</a></li>
+<li><a href="#dates">日期和時間</a></li>
+<li><a href="#deferred-functions">延遲函數</a></li>
+<li><a href="#lottery">Lottery</a></li>
+<li><a href="#pipeline">Pipeline</a></li>
+<li><a href="#sleep">Sleep</a></li>
+<li><a href="#timebox">Timebox</a></li>
+<li><a href="#uri">URI</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 包含各種全域「輔助」PHP 函數。這些函數中有許多被框架本身使用；但是，如果您發現它們很方便，您可以自由地在自己的應用程式中使用它們。</p>
+<p><a name="available-methods"></a></p>
+<h2>可用方法</h2>
+<style>
+    .collection-method-list > p {
+        columns: 10.8em 3; -moz-columns: 10.8em 3; -webkit-columns: 10.8em 3;
+    }
+
+    .collection-method-list a {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style><p><a name="arrays-and-objects-method-list"></a></p>
+<h3>陣列和物件</h3>
+<div class="collection-method-list" markdown="1"><p><a href="#method-array-accessible">Arr::accessible</a>
+<a href="#method-array-add">Arr::add</a>
+<a href="#method-array-array">Arr::array</a>
+<a href="#method-array-boolean">Arr::boolean</a>
+<a href="#method-array-collapse">Arr::collapse</a>
+<a href="#method-array-crossjoin">Arr::crossJoin</a>
+<a href="#method-array-divide">Arr::divide</a>
+<a href="#method-array-dot">Arr::dot</a>
+<a href="#method-array-every">Arr::every</a>
+<a href="#method-array-except">Arr::except</a>
+<a href="#method-array-except-values">Arr::exceptValues</a>
+<a href="#method-array-exists">Arr::exists</a>
+<a href="#method-array-first">Arr::first</a>
+<a href="#method-array-flatten">Arr::flatten</a>
+<a href="#method-array-float">Arr::float</a>
+<a href="#method-array-forget">Arr::forget</a>
+<a href="#method-array-from">Arr::from</a>
+<a href="#method-array-get">Arr::get</a>
+<a href="#method-array-has">Arr::has</a>
+<a href="#method-array-hasall">Arr::hasAll</a>
+<a href="#method-array-hasany">Arr::hasAny</a>
+<a href="#method-array-integer">Arr::integer</a>
+<a href="#method-array-isassoc">Arr::isAssoc</a>
+<a href="#method-array-islist">Arr::isList</a>
+<a href="#method-array-join">Arr::join</a>
+<a href="#method-array-keyby">Arr::keyBy</a>
+<a href="#method-array-last">Arr::last</a>
+<a href="#method-array-map">Arr::map</a>
+<a href="#method-array-map-spread">Arr::mapSpread</a>
+<a href="#method-array-map-with-keys">Arr::mapWithKeys</a>
+<a href="#method-array-only">Arr::only</a>
+<a href="#method-array-only-values">Arr::onlyValues</a>
+<a href="#method-array-partition">Arr::partition</a>
+<a href="#method-array-pluck">Arr::pluck</a>
+<a href="#method-array-prepend">Arr::prepend</a>
+<a href="#method-array-prependkeyswith">Arr::prependKeysWith</a>
+<a href="#method-array-pull">Arr::pull</a>
+<a href="#method-array-push">Arr::push</a>
+<a href="#method-array-query">Arr::query</a>
+<a href="#method-array-random">Arr::random</a>
+<a href="#method-array-reject">Arr::reject</a>
+<a href="#method-array-select">Arr::select</a>
+<a href="#method-array-set">Arr::set</a>
+<a href="#method-array-shuffle">Arr::shuffle</a>
+<a href="#method-array-sole">Arr::sole</a>
+<a href="#method-array-some">Arr::some</a>
+<a href="#method-array-sort">Arr::sort</a>
+<a href="#method-array-sort-desc">Arr::sortDesc</a>
+<a href="#method-array-sort-recursive">Arr::sortRecursive</a>
+<a href="#method-array-string">Arr::string</a>
+<a href="#method-array-take">Arr::take</a>
+<a href="#method-array-to-css-classes">Arr::toCssClasses</a>
+<a href="#method-array-to-css-styles">Arr::toCssStyles</a>
+<a href="#method-array-undot">Arr::undot</a>
+<a href="#method-array-where">Arr::where</a>
+<a href="#method-array-where-not-null">Arr::whereNotNull</a>
+<a href="#method-array-wrap">Arr::wrap</a>
+<a href="#method-data-fill">data_fill</a>
+<a href="#method-data-get">data_get</a>
+<a href="#method-data-set">data_set</a>
+<a href="#method-data-forget">data_forget</a>
+<a href="#method-head">head</a>
+<a href="#method-last">last</a></p>
+</div><p><a name="numbers-method-list"></a></p>
+<h3>數字</h3>
+<div class="collection-method-list" markdown="1"><p><a href="#method-number-abbreviate">Number::abbreviate</a>
+<a href="#method-number-clamp">Number::clamp</a>
+<a href="#method-number-currency">Number::currency</a>
+<a href="#method-default-currency">Number::defaultCurrency</a>
+<a href="#method-default-locale">Number::defaultLocale</a>
+<a href="#method-number-file-size">Number::fileSize</a>
+<a href="#method-number-for-humans">Number::forHumans</a>
+<a href="#method-number-format">Number::format</a>
+<a href="#method-number-ordinal">Number::ordinal</a>
+<a href="#method-number-pairs">Number::pairs</a>
+<a href="#method-number-parse">Number::parse</a>
+<a href="#method-number-parse-int">Number::parseInt</a>
+<a href="#method-number-parse-float">Number::parseFloat</a>
+<a href="#method-number-percentage">Number::percentage</a>
+<a href="#method-number-spell">Number::spell</a>
+<a href="#method-number-spell-ordinal">Number::spellOrdinal</a>
+<a href="#method-number-trim">Number::trim</a>
+<a href="#method-number-use-locale">Number::useLocale</a>
+<a href="#method-number-with-locale">Number::withLocale</a>
+<a href="#method-number-use-currency">Number::useCurrency</a>
+<a href="#method-number-with-currency">Number::withCurrency</a></p>
+</div><p><a name="paths-method-list"></a></p>
+<h3>路徑</h3>
+<div class="collection-method-list" markdown="1"><p><a href="#method-app-path">app_path</a>
+<a href="#method-base-path">base_path</a>
+<a href="#method-config-path">config_path</a>
+<a href="#method-database-path">database_path</a>
+<a href="#method-lang-path">lang_path</a>
+<a href="#method-public-path">public_path</a>
+<a href="#method-resource-path">resource_path</a>
+<a href="#method-storage-path">storage_path</a></p>
+</div><p><a name="urls-method-list"></a></p>
+<h3>URL</h3>
+<div class="collection-method-list" markdown="1"><p><a href="#method-action">action</a>
+<a href="#method-asset">asset</a>
+<a href="#method-route">route</a>
+<a href="#method-secure-asset">secure_asset</a>
+<a href="#method-secure-url">secure_url</a>
+<a href="#method-to-action">to_action</a>
+<a href="#method-to-route">to_route</a>
+<a href="#method-uri">uri</a>
+<a href="#method-url">url</a></p>
+</div><p><a name="miscellaneous-method-list"></a></p>
+<h3>雜項</h3>
+<div class="collection-method-list" markdown="1"><p><a href="#method-abort">abort</a>
+<a href="#method-abort-if">abort_if</a>
+<a href="#method-abort-unless">abort_unless</a>
+<a href="#method-app">app</a>
+<a href="#method-auth">auth</a>
+<a href="#method-back">back</a>
+<a href="#method-bcrypt">bcrypt</a>
+<a href="#method-blank">blank</a>
+<a href="#method-broadcast">broadcast</a>
+<a href="#method-broadcast-if">broadcast_if</a>
+<a href="#method-broadcast-unless">broadcast_unless</a>
+<a href="#method-cache">cache</a>
+<a href="#method-class-uses-recursive">class_uses_recursive</a>
+<a href="#method-collect">collect</a>
+<a href="#method-config">config</a>
+<a href="#method-context">context</a>
+<a href="#method-cookie">cookie</a>
+<a href="#method-csrf-field">csrf_field</a>
+<a href="#method-csrf-token">csrf_token</a>
+<a href="#method-decrypt">decrypt</a>
+<a href="#method-dd">dd</a>
+<a href="#method-dispatch">dispatch</a>
+<a href="#method-dispatch-sync">dispatch_sync</a>
+<a href="#method-dump">dump</a>
+<a href="#method-encrypt">encrypt</a>
+<a href="#method-env">env</a>
+<a href="#method-event">event</a>
+<a href="#method-fake">fake</a>
+<a href="#method-filled">filled</a>
+<a href="#method-info">info</a>
+<a href="#method-literal">literal</a>
+<a href="#method-logger">logger</a>
+<a href="#method-method-field">method_field</a>
+<a href="#method-now">now</a>
+<a href="#method-old">old</a>
+<a href="#method-once">once</a>
+<a href="#method-optional">optional</a>
+<a href="#method-policy">policy</a>
+<a href="#method-redirect">redirect</a>
+<a href="#method-report">report</a>
+<a href="#method-report-if">report_if</a>
+<a href="#method-report-unless">report_unless</a>
+<a href="#method-request">request</a>
+<a href="#method-rescue">rescue</a>
+<a href="#method-resolve">resolve</a>
+<a href="#method-response">response</a>
+<a href="#method-retry">retry</a>
+<a href="#method-session">session</a>
+<a href="#method-tap">tap</a>
+<a href="#method-throw-if">throw_if</a>
+<a href="#method-throw-unless">throw_unless</a>
+<a href="#method-today">today</a>
+<a href="#method-trait-uses-recursive">trait_uses_recursive</a>
+<a href="#method-transform">transform</a>
+<a href="#method-validator">validator</a>
+<a href="#method-value">value</a>
+<a href="#method-view">view</a>
+<a href="#method-with">with</a>
+<a href="#method-when">when</a></p>
+</div><p><a name="arrays"></a></p>
+<h2>陣列和物件</h2>
+<p><a name="method-array-accessible"></a></p>
+<h4><code>Arr::accessible()</code> {.collection-method .first-collection-method}</h4>
+<p><code>Arr::accessible</code> 方法判斷給定的值是否是陣列可存取的：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+use Illuminate\\Support\\Collection;
+
+$isAccessible = Arr::accessible([&#39;a&#39; =&gt; 1, &#39;b&#39; =&gt; 2]);
+
+// true
+
+$isAccessible = Arr::accessible(new Collection);
+
+// true
+
+$isAccessible = Arr::accessible(&#39;abc&#39;);
+
+// false
+
+$isAccessible = Arr::accessible(new stdClass);
+
+// false
+</code></pre>
+<p><a name="method-array-add"></a></p>
+<h4><code>Arr::add()</code> {.collection-method}</h4>
+<p><code>Arr::add</code> 方法在給定的金鑰不存在於陣列中或設定為 <code>null</code> 時，將給定的金鑰/值對添加到陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = Arr::add([&#39;name&#39; =&gt; &#39;Desk&#39;], &#39;price&#39;, 100);
+
+// [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]
+
+$array = Arr::add([&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; null], &#39;price&#39;, 100);
+
+// [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]
+</code></pre>
+<p><a name="method-array-array"></a></p>
+<h4><code>Arr::array()</code> {.collection-method}</h4>
+<p><code>Arr::array</code> 方法使用「點」語法從深層嵌套的陣列中檢索值（就像 <a href="#method-array-get">Arr::get()</a> 一樣），但如果請求的值不是 <code>array</code>，則會拋出 <code>InvalidArgumentException</code>：</p>
+<pre><code>use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;languages&#39; =&gt; [&#39;PHP&#39;, &#39;Ruby&#39;]];
+
+$value = Arr::array($array, &#39;languages&#39;);
+
+// [&#39;PHP&#39;, &#39;Ruby&#39;]
+
+$value = Arr::array($array, &#39;name&#39;);
+
+// 拋出 InvalidArgumentException
+</code></pre>
+<p><a name="method-array-boolean"></a></p>
+<h4><code>Arr::boolean()</code> {.collection-method}</h4>
+<p><code>Arr::boolean</code> 方法使用「點」語法從深層嵌套的陣列中檢索值（就像 <a href="#method-array-get">Arr::get()</a> 一樣），但如果請求的值不是 <code>boolean</code>，則會拋出 <code>InvalidArgumentException</code>：</p>
+<pre><code>use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;available&#39; =&gt; true];
+
+$value = Arr::boolean($array, &#39;available&#39;);
+
+// true
+
+$value = Arr::boolean($array, &#39;name&#39;);
+
+// 拋出 InvalidArgumentException
+</code></pre>
+<p><a name="method-array-collapse"></a></p>
+<h4><code>Arr::collapse()</code> {.collection-method}</h4>
+<p><code>Arr::collapse</code> 方法將一個陣列的陣列或集合壓縮為單個陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = Arr::collapse([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+
+// [1, 2, 3, 4, 5, 6, 7, 8, 9]
+</code></pre>
+<p><a name="method-array-crossjoin"></a></p>
+<h4><code>Arr::crossJoin()</code> {.collection-method}</h4>
+<p><code>Arr::crossJoin</code> 方法交叉連接給定的陣列，返回一個包含所有可能排列的笛卡爾乘積：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$matrix = Arr::crossJoin([1, 2], [&#39;a&#39;, &#39;b&#39;]);
+
+/*
+    [
+        [1, &#39;a&#39;],
+        [1, &#39;b&#39;],
+        [2, &#39;a&#39;],
+        [2, &#39;b&#39;],
+    ]
+*/
+
+$matrix = Arr::crossJoin([1, 2], [&#39;a&#39;, &#39;b&#39;], [&#39;I&#39;, &#39;II&#39;]);
+
+/*
+    [
+        [1, &#39;a&#39;, &#39;I&#39;],
+        [1, &#39;a&#39;, &#39;II&#39;],
+        [1, &#39;b&#39;, &#39;I&#39;],
+        [1, &#39;b&#39;, &#39;II&#39;],
+        [2, &#39;a&#39;, &#39;I&#39;],
+        [2, &#39;a&#39;, &#39;II&#39;],
+        [2, &#39;b&#39;, &#39;I&#39;],
+        [2, &#39;b&#39;, &#39;II&#39;],
+    ]
+*/
+</code></pre>
+<p><a name="method-array-divide"></a></p>
+<h4><code>Arr::divide()</code> {.collection-method}</h4>
+<p><code>Arr::divide</code> 方法返回兩個陣列：一個包含鍵，另一個包含給定陣列的值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+[$keys, $values] = Arr::divide([&#39;name&#39; =&gt; &#39;Desk&#39;]);
+
+// $keys: [&#39;name&#39;]
+
+// $values: [&#39;Desk&#39;]
+</code></pre>
+<p><a name="method-array-dot"></a></p>
+<h4><code>Arr::dot()</code> {.collection-method}</h4>
+<p><code>Arr::dot</code> 方法將多維陣列展平為使用「點」語法表示深度的單層陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;products&#39; =&gt; [&#39;desk&#39; =&gt; [&#39;price&#39; =&gt; 100]]];
+
+$flattened = Arr::dot($array);
+
+// [&#39;products.desk.price&#39; =&gt; 100]
+</code></pre>
+<p><a name="method-array-every"></a></p>
+<h4><code>Arr::every()</code> {.collection-method}</h4>
+<p><code>Arr::every</code> 方法確保陣列中的所有值都通過給定的真值測試：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3];
+
+Arr::every($array, fn ($i) =&gt; $i &gt; 0);
+
+// true
+
+Arr::every($array, fn ($i) =&gt; $i &gt; 2);
+
+// false
+</code></pre>
+<p><a name="method-array-except"></a></p>
+<h4><code>Arr::except()</code> {.collection-method}</h4>
+<p><code>Arr::except</code> 方法從陣列中移除給定的金鑰/值對：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100];
+
+$filtered = Arr::except($array, [&#39;price&#39;]);
+
+// [&#39;name&#39; =&gt; &#39;Desk&#39;]
+</code></pre>
+<p><a name="method-array-except-values"></a></p>
+<h4><code>Arr::exceptValues()</code> {.collection-method}</h4>
+<p><code>Arr::exceptValues</code> 方法從陣列中移除指定的值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;foo&#39;, &#39;bar&#39;, &#39;baz&#39;, &#39;qux&#39;];
+
+$filtered = Arr::exceptValues($array, [&#39;foo&#39;, &#39;baz&#39;]);
+
+// [&#39;bar&#39;, &#39;qux&#39;]
+</code></pre>
+<p>您還可以向 <code>strict</code> 參數傳遞 <code>true</code>，以便在過濾時使用嚴格類型比較：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, &#39;1&#39;, 2, &#39;2&#39;];
+
+$filtered = Arr::exceptValues($array, [1, 2], strict: true);
+
+// [&#39;1&#39;, &#39;2&#39;]
+</code></pre>
+<p><a name="method-array-exists"></a></p>
+<h4><code>Arr::exists()</code> {.collection-method}</h4>
+<p><code>Arr::exists</code> 方法檢查給定的金鑰是否存在於提供的陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;John Doe&#39;, &#39;age&#39; =&gt; 17];
+
+$exists = Arr::exists($array, &#39;name&#39;);
+
+// true
+
+$exists = Arr::exists($array, &#39;salary&#39;);
+
+// false
+</code></pre>
+<p><a name="method-array-first"></a></p>
+<h4><code>Arr::first()</code> {.collection-method}</h4>
+<p><code>Arr::first</code> 方法返回通過給定真值測試的陣列的第一個元素：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [100, 200, 300];
+
+$first = Arr::first($array, function (int $value, int $key) {
+    return $value &gt;= 150;
+});
+
+// 200
+</code></pre>
+<p>預設值也可以作為方法的第三個參數傳遞。如果沒有值通過真值測試，將返回此值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$first = Arr::first($array, $callback, $default);
+</code></pre>
+<p><a name="method-array-flatten"></a></p>
+<h4><code>Arr::flatten()</code> {.collection-method}</h4>
+<p><code>Arr::flatten</code> 方法將多維陣列展平為單層陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;languages&#39; =&gt; [&#39;PHP&#39;, &#39;Ruby&#39;]];
+
+$flattened = Arr::flatten($array);
+
+// [&#39;Joe&#39;, &#39;PHP&#39;, &#39;Ruby&#39;]
+</code></pre>
+<p><a name="method-array-float"></a></p>
+<h4><code>Arr::float()</code> {.collection-method}</h4>
+<p><code>Arr::float</code> 方法使用「點」語法從深層嵌套的陣列中檢索值（就像 <a href="#method-array-get">Arr::get()</a> 一樣），但如果請求的值不是 <code>float</code>，則會拋出 <code>InvalidArgumentException</code>：</p>
+<pre><code>use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;balance&#39; =&gt; 123.45];
+
+$value = Arr::float($array, &#39;balance&#39;);
+
+// 123.45
+
+$value = Arr::float($array, &#39;name&#39;);
+
+// 拋出 InvalidArgumentException
+</code></pre>
+<p><a name="method-array-forget"></a></p>
+<h4><code>Arr::forget()</code> {.collection-method}</h4>
+<p><code>Arr::forget</code> 方法使用「點」語法從深層嵌套的陣列中移除給定的金鑰/值對：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;products&#39; =&gt; [&#39;desk&#39; =&gt; [&#39;price&#39; =&gt; 100]]];
+
+Arr::forget($array, &#39;products.desk&#39;);
+
+// [&#39;products&#39; =&gt; []]
+</code></pre>
+<p><a name="method-array-from"></a></p>
+<h4><code>Arr::from()</code> {.collection-method}</h4>
+<p><code>Arr::from</code> 方法將各種輸入類型轉換為普通 PHP 陣列。它支援多種輸入類型，包括陣列、物件和一些常見的 Laravel 介面，例如 <code>Arrayable</code>、<code>Enumerable</code>、<code>Jsonable</code> 和 <code>JsonSerializable</code>。此外，它還處理 <code>Traversable</code> 和 <code>WeakMap</code> 實例：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+Arr::from((object) [&#39;foo&#39; =&gt; &#39;bar&#39;]); // [&#39;foo&#39; =&gt; &#39;bar&#39;]
+
+class TestJsonableObject implements Jsonable
+{
+    public function toJson($options = 0)
+    {
+        return json_encode([&#39;foo&#39; =&gt; &#39;bar&#39;]);
+    }
+}
+
+Arr::from(new TestJsonableObject); // [&#39;foo&#39; =&gt; &#39;bar&#39;]
+</code></pre>
+<p><a name="method-array-get"></a></p>
+<h4><code>Arr::get()</code> {.collection-method}</h4>
+<p><code>Arr::get</code> 方法使用「點」語法從深層嵌套的陣列中檢索值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;products&#39; =&gt; [&#39;desk&#39; =&gt; [&#39;price&#39; =&gt; 100]]];
+
+$price = Arr::get($array, &#39;products.desk.price&#39;);
+
+// 100
+</code></pre>
+<p><code>Arr::get</code> 方法還接受一個預設值，如果陣列中不存在指定的金鑰，則返回此值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$discount = Arr::get($array, &#39;products.desk.discount&#39;, 0);
+
+// 0
+</code></pre>
+<p><a name="method-array-has"></a></p>
+<h4><code>Arr::has()</code> {.collection-method}</h4>
+<p><code>Arr::has</code> 方法使用「點」語法檢查給定的項目或項目是否存在於陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;product&#39; =&gt; [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]];
+
+$contains = Arr::has($array, &#39;product.name&#39;);
+
+// true
+
+$contains = Arr::has($array, [&#39;product.price&#39;, &#39;product.discount&#39;]);
+
+// false
+</code></pre>
+<p><a name="method-array-hasall"></a></p>
+<h4><code>Arr::hasAll()</code> {.collection-method}</h4>
+<p><code>Arr::hasAll</code> 方法使用「點」語法判斷所有指定的金鑰是否存在於給定的陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;language&#39; =&gt; &#39;PHP&#39;];
+
+Arr::hasAll($array, [&#39;name&#39;]); // true
+Arr::hasAll($array, [&#39;name&#39;, &#39;language&#39;]); // true
+Arr::hasAll($array, [&#39;name&#39;, &#39;IDE&#39;]); // false
+</code></pre>
+<p><a name="method-array-hasany"></a></p>
+<h4><code>Arr::hasAny()</code> {.collection-method}</h4>
+<p><code>Arr::hasAny</code> 方法使用「點」語法檢查給定集合中的任何項目是否存在于陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;product&#39; =&gt; [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]];
+
+$contains = Arr::hasAny($array, &#39;product.name&#39;);
+
+// true
+
+$contains = Arr::hasAny($array, [&#39;product.name&#39;, &#39;product.discount&#39;]);
+
+// true
+
+$contains = Arr::hasAny($array, [&#39;category&#39;, &#39;product.discount&#39;]);
+
+// false
+</code></pre>
+<p><a name="method-array-integer"></a></p>
+<h4><code>Arr::integer()</code> {.collection-method}</h4>
+<p><code>Arr::integer</code> 方法使用「點」語法從深層嵌套的陣列中檢索值（就像 <a href="#method-array-get">Arr::get()</a> 一樣），但如果請求的值不是 <code>int</code>，則會拋出 <code>InvalidArgumentException</code>：</p>
+<pre><code>use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;age&#39; =&gt; 42];
+
+$value = Arr::integer($array, &#39;age&#39;);
+
+// 42
+
+$value = Arr::integer($array, &#39;name&#39;);
+
+// 拋出 InvalidArgumentException
+</code></pre>
+<p><a name="method-array-isassoc"></a></p>
+<h4><code>Arr::isAssoc()</code> {.collection-method}</h4>
+<p><code>Arr::isAssoc</code> 方法在給定的陣列是關聯陣列時返回 <code>true</code>。如果陣列沒有從零開始的連續數字鍵，則被認為是「關聯的」：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$isAssoc = Arr::isAssoc([&#39;product&#39; =&gt; [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]]);
+
+// true
+
+$isAssoc = Arr::isAssoc([1, 2, 3]);
+
+// false
+</code></pre>
+<p><a name="method-array-islist"></a></p>
+<h4><code>Arr::isList()</code> {.collection-method}</h4>
+<p><code>Arr::isList</code> 方法在給定的陣列的鍵是從零開始的連續整數時返回 <code>true</code>：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$isList = Arr::isList([&#39;foo&#39;, &#39;bar&#39;, &#39;baz&#39;]);
+
+// true
+
+$isList = Arr::isList([&#39;product&#39; =&gt; [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]]);
+
+// false
+</code></pre>
+<p><a name="method-array-join"></a></p>
+<h4><code>Arr::join()</code> {.collection-method}</h4>
+<p><code>Arr::join</code> 方法使用字串連接陣列元素。使用此方法的第三個參數，您還可以指定陣列最後一個元素的連接字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;Tailwind&#39;, &#39;Alpine&#39;, &#39;Laravel&#39;, &#39;Livewire&#39;];
+
+$joined = Arr::join($array, &#39;, &#39;);
+
+// Tailwind, Alpine, Laravel, Livewire
+
+$joined = Arr::join($array, &#39;, &#39;, &#39;, and &#39;);
+
+// Tailwind, Alpine, Laravel, and Livewire
+</code></pre>
+<p><a name="method-array-keyby"></a></p>
+<h4><code>Arr::keyBy()</code> {.collection-method}</h4>
+<p><code>Arr::keyBy</code> 方法根據給定的鍵為陣列設定鍵。如果多個項目具有相同的鍵，則只有最後一個將出現在新陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    [&#39;product_id&#39; =&gt; &#39;prod-100&#39;, &#39;name&#39; =&gt; &#39;Desk&#39;],
+    [&#39;product_id&#39; =&gt; &#39;prod-200&#39;, &#39;name&#39; =&gt; &#39;Chair&#39;],
+];
+
+$keyed = Arr::keyBy($array, &#39;product_id&#39;);
+
+/*
+    [
+        &#39;prod-100&#39; =&gt; [&#39;product_id&#39; =&gt; &#39;prod-100&#39;, &#39;name&#39; =&gt; &#39;Desk&#39;],
+        &#39;prod-200&#39; =&gt; [&#39;product_id&#39; =&gt; &#39;prod-200&#39;, &#39;name&#39; =&gt; &#39;Chair&#39;],
+    ]
+*/
+</code></pre>
+<p><a name="method-array-last"></a></p>
+<h4><code>Arr::last()</code> {.collection-method}</h4>
+<p><code>Arr::last</code> 方法返回通過給定真值測試的陣列的最後一個元素：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [100, 200, 300, 400];
+
+$last = Arr::last($array, function (int $value, int $key) {
+    return $value &gt;= 300;
+});
+
+// 400
+</code></pre>
+<p>預設值也可以作為方法的第三個參數傳遞。如果沒有值通過真值測試，將返回此值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$last = Arr::last($array, $callback, $default);
+</code></pre>
+<p><a name="method-array-map"></a></p>
+<h4><code>Arr::map()</code> {.collection-method}</h4>
+<p><code>Arr::map</code> 方法遍歷陣列並將每個值傳遞給給定的回調。陣列由回調返回的值取代：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$prices = [99, 249, 499];
+
+$prices = Arr::map($prices, function ($price, $key) {
+    return $price * ($key + 1);
+});
+
+// [99, 498, 1497]
+</code></pre>
+<p><a name="method-array-map-spread"></a></p>
+<h4><code>Arr::mapSpread()</code> {.collection-method}</h4>
+<p><code>Arr::mapSpread</code> 方法遍歷陣列，將每個值展開作為回調的參數。陣列由回調返回的值取代：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$half = Arr::mapSpread([100, 250, 125], function ($int) {
+    return $int / 2;
+});
+
+// [50, 125, 62.5]
+</code></pre>
+<p><a name="method-array-map-with-keys"></a></p>
+<h4><code>Arr::mapWithKeys()</code> {.collection-method}</h4>
+<p><code>Arr::mapWithKeys</code> 方法遍歷陣列並將每個值傳遞給給定的回調。回調返回的鍵值對將被添加到返回的陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    [
+        &#39;name&#39; =&gt; &#39;Baked Potato&#39;,
+        &#39;type&#39; =&gt; &#39;vegetable&#39;,
+    ],
+    [
+        &#39;name&#39; =&gt; &#39;Burger&#39;,
+        &#39;type&#39; =&gt; &#39;fastfood&#39;,
+    ],
+];
+
+$result = Arr::mapWithKeys($array, function ($item, $key) {
+    return [$item[&#39;name&#39;] =&gt; $item[&#39;type&#39;]];
+});
+
+/*
+    [
+        &#39;Baked Potato&#39; =&gt; &#39;vegetable&#39;,
+        &#39;Burger&#39; =&gt; &#39;fastfood&#39;,
+    ]
+*/
+</code></pre>
+<p><a name="method-array-only"></a></p>
+<h4><code>Arr::only()</code> {.collection-method}</h4>
+<p><code>Arr::only</code> 方法僅返回給定陣列中指定金鑰的鍵/值對：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100, &#39;orders&#39; =&gt; 10];
+
+$filtered = Arr::only($array, [&#39;name&#39;, &#39;price&#39;]);
+
+// [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]
+</code></pre>
+<p><a name="method-array-only-values"></a></p>
+<h4><code>Arr::onlyValues()</code> {.collection-method}</h4>
+<p><code>Arr::onlyValues</code> 方法返回一個包含指定值的新陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;foo&#39;, &#39;bar&#39;, &#39;baz&#39;, &#39;qux&#39;];
+
+$filtered = Arr::onlyValues($array, [&#39;foo&#39;, &#39;baz&#39;]);
+
+// [&#39;foo&#39;, &#39;baz&#39;]
+</code></pre>
+<p><a name="method-array-partition"></a></p>
+<h4><code>Arr::partition()</code> {.collection-method}</h4>
+<p><code>Arr::partition</code> 方法根據真值回調將陣列分割為兩個陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$packages = [
+    [&#39;name&#39; =&gt; &#39;tailwindcss&#39;, &#39;type&#39; =&gt; &#39;dev&#39;],
+    [&#39;name&#39; =&gt; &#39;laravel&#39;, &#39;type&#39; =&gt; &#39;framework&#39;],
+    [&#39;name&#39; =&gt; &#39;pint&#39;, &#39;type&#39; =&gt; &#39;dev&#39;],
+];
+
+[$dev, $frameworks] = Arr::partition($packages, fn ($package) =&gt; $package[&#39;type&#39;] === &#39;dev&#39;);
+
+/*
+    [
+        [
+            [&#39;name&#39; =&gt; &#39;tailwindcss&#39;, &#39;type&#39; =&gt; &#39;dev&#39;],
+            [&#39;name&#39; =&gt; &#39;pint&#39;, &#39;type&#39; =&gt; &#39;dev&#39;],
+        ],
+        [
+            [&#39;name&#39; =&gt; &#39;laravel&#39;, &#39;type&#39; =&gt; &#39;framework&#39;],
+        ],
+    ]
+*/
+</code></pre>
+<p><a name="method-array-pluck"></a></p>
+<h4><code>Arr::pluck()</code> {.collection-method}</h4>
+<p><code>Arr::pluck</code> 方法從給定的陣列中檢索一列值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$users = [
+    [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;age&#39; =&gt; 18],
+    [&#39;name&#39; =&gt; &#39;Adam&#39;, &#39;age&#39; =&gt; 15],
+];
+
+$names = Arr::pluck($users, &#39;name&#39;);
+
+// [&#39;Taylor&#39;, &#39;Adam&#39;]
+</code></pre>
+<p>您還可以使用「點」語法指定應提取的嵌套金鑰：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$users = [
+    [&#39;first&#39; =&gt; &#39;Taylor&#39;, &#39;last&#39; =&gt; &#39;Otwell&#39;, &#39;device&#39; =&gt; &#39;iPhone&#39;],
+    [&#39;first&#39; =&gt; &#39;Adam&#39;, &#39;last&#39; =&gt; &#39;Wathan&#39;, &#39;device&#39; =&gt; &#39;Android&#39;],
+];
+
+$lastNames = Arr::pluck($users, &#39;last&#39;, &#39;first&#39;);
+
+// [&#39;Taylor&#39; =&gt; &#39;Otwell&#39;, &#39;Adam&#39; =&gt; &#39;Wathan&#39;]
+</code></pre>
+<p><a name="method-array-prepend"></a></p>
+<h4><code>Arr::prepend()</code> {.collection-method}</h4>
+<p><code>Arr::prepend</code> 方法將一個項目推送到陣列的開頭：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3, 4];
+
+$array = Arr::prepend($array, 0);
+
+// [0, 1, 2, 3, 4]
+</code></pre>
+<p>如果需要，您可以指定要使用的金鑰：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100];
+
+$array = Arr::prepend($array, &#39;Order&#39;, &#39;reference&#39;);
+
+// [&#39;reference&#39; =&gt; &#39;Order&#39;, &#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100]
+</code></pre>
+<p><a name="method-array-prependkeyswith"></a></p>
+<h4><code>Arr::prependKeysWith()</code> {.collection-method}</h4>
+<p><code>Arr::prependKeysWith</code> 方法使用給定的前綴為給定陣列的所有鍵添加前綴：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;age&#39; =&gt; 25];
+
+$prefixed = Arr::prependKeysWith($array, &#39;data_&#39;);
+
+// [&#39;data_name&#39; =&gt; &#39;Joe&#39;, &#39;data_age&#39; =&gt; 25]
+</code></pre>
+<p><a name="method-array-pull"></a></p>
+<h4><code>Arr::pull()</code> {.collection-method}</h4>
+<p><code>Arr::pull</code> 方法從陣列中移除並返回給定金鑰的值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Desk&#39;, &#39;price&#39; =&gt; 100];
+
+$name = Arr::pull($array, &#39;name&#39;);
+
+// $name: &quot;Desk&quot;
+
+// $array: [&#39;price&#39; =&gt; 100]
+</code></pre>
+<p><a name="method-array-push"></a></p>
+<h4><code>Arr::push()</code> {.collection-method}</h4>
+<p><code>Arr::push</code> 方法將一個項目追加到陣列的結尾：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3, 4];
+
+Arr::push($array, 5);
+
+// [1, 2, 3, 4, 5]
+</code></pre>
+<p><a name="method-array-query"></a></p>
+<h4><code>Arr::query()</code> {.collection-method}</h4>
+<p><code>Arr::query</code> 方法將陣列轉換為 URL 查詢字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;slide&#39; =&gt; 13];
+
+$query = Arr::query($array);
+
+// &quot;name=Taylor&amp;slide=13&quot;
+</code></pre>
+<p><a name="method-array-random"></a></p>
+<h4><code>Arr::random()</code> {.collection-method}</h4>
+<p><code>Arr::random</code> 方法從陣列中返回一個隨機元素：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3, 4, 5];
+
+$random = Arr::random($array);
+
+// 3 // (example output)
+</code></pre>
+<p>您可以將第二個參數傳遞給 <code>random</code> 方法，以指定您希望從陣列中檢索多少個隨機元素。如果第二個參數大於 1，則返回一組隨機元素：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3, 4, 5];
+
+$random = Arr::random($array, 3);
+
+// [2, 4, 5] // (example output)
+</code></pre>
+<p><a name="method-array-reject"></a></p>
+<h4><code>Arr::reject()</code> {.collection-method}</h4>
+<p><code>Arr::reject</code> 方法使用給定的回調過濾陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [100, 200, 300, 400];
+
+$filtered = Arr::reject($array, function (int $value, int $key) {
+    return $value &gt; 250;
+});
+
+// [100, 200]
+</code></pre>
+<p><a name="method-array-select"></a></p>
+<h4><code>Arr::select()</code> {.collection-method}</h4>
+<p><code>Arr::select</code> 方法從陣列中選擇給定的鍵：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;age&#39; =&gt; 18],
+    [&#39;name&#39; =&gt; &#39;Adam&#39;, &#39;age&#39; =&gt; 15],
+];
+
+$names = Arr::select($array, [&#39;name&#39;]);
+
+// [[&#39;name&#39; =&gt; &#39;Taylor&#39;], [&#39;name&#39; =&gt; &#39;Adam&#39;]]
+</code></pre>
+<p><a name="method-array-set"></a></p>
+<h4><code>Arr::set()</code> {.collection-method}</h4>
+<p><code>Arr::set</code> 方法使用「點」語法在深層嵌套的陣列中設定值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;products&#39; =&gt; [&#39;desk&#39; =&gt; [&#39;price&#39; =&gt; 100]]];
+
+Arr::set($array, &#39;products.desk.price&#39;, 200);
+
+// [&#39;products&#39; =&gt; [&#39;desk&#39; =&gt; [&#39;price&#39; =&gt; 200]]]
+</code></pre>
+<p><a name="method-array-shuffle"></a></p>
+<h4><code>Arr::shuffle()</code> {.collection-method}</h4>
+<p><code>Arr::shuffle</code> 方法隨機打亂陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3, 4, 5];
+
+$shuffled = Arr::shuffle($array);
+
+// [3, 1, 5, 2, 4] // (example output)
+</code></pre>
+<p><a name="method-array-sole"></a></p>
+<h4><code>Arr::sole()</code> {.collection-method}</h4>
+<p><code>Arr::sole</code> 方法返回陣列中匹配給定真值測試的第一個元素，但如果找到的元素不是一個，則會拋出異常：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [100, 200, 300];
+
+$first = Arr::sole($array, function (int $value, int $key) {
+    return $value &gt;= 150;
+});
+
+// 200
+</code></pre>
+<p><a name="method-array-some"></a></p>
+<h4><code>Arr::some()</code> {.collection-method}</h4>
+<p><code>Arr::some</code> 方法驗證陣列中是否有一個元素通過給定的真值測試：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [1, 2, 3, 4];
+
+Arr::some($array, function ($value, $key) {
+    return $value &gt; 5;
+});
+
+// false
+</code></pre>
+<p><a name="method-array-sort"></a></p>
+<h4><code>Arr::sort()</code> {.collection-method}</h4>
+<p><code>Arr::sort</code> 方法按值對陣列進行排序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;Desk&#39;, &#39;Table&#39;, &#39;Chair&#39;];
+
+$sorted = Arr::sort($array);
+
+// [&#39;Chair&#39;, &#39;Desk&#39;, &#39;Table&#39;]
+</code></pre>
+<p>您可以使用自己的比較函數按金鑰對陣列進行排序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;key_1&#39; =&gt; &#39;Desk&#39;, &#39;key_2&#39; =&gt; &#39;Table&#39;, &#39;key_3&#39; =&gt; &#39;Chair&#39;];
+
+$sorted = Arr::sort($array, function ($a, $b) {
+    return strcasecmp($a, $b);
+});
+
+// [&#39;key_1&#39; =&gt; &#39;Chair&#39;, &#39;key_2&#39; =&gt; &#39;Desk&#39;, &#39;key_3&#39; =&gt; &#39;Table&#39;]
+</code></pre>
+<p><a name="method-array-sort-desc"></a></p>
+<h4><code>Arr::sortDesc()</code> {.collection-method}</h4>
+<p><code>Arr::sortDesc</code> 方法按值對陣列進行降序排序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;Desk&#39;, &#39;Table&#39;, &#39;Chair&#39;];
+
+$sorted = Arr::sortDesc($array);
+
+// [&#39;Table&#39;, &#39;Desk&#39;, &#39;Chair&#39;]
+</code></pre>
+<p>您可以使用自己的比較函數按金鑰對陣列進行降序排序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;key_1&#39; =&gt; &#39;Desk&#39;, &#39;key_2&#39; =&gt; &#39;Table&#39;, &#39;key_3&#39; =&gt; &#39;Chair&#39;];
+
+$sorted = Arr::sortDesc($array, function ($a, $b) {
+    return strcasecmp($a, $b);
+});
+
+// [&#39;key_3&#39; =&gt; &#39;Table&#39;, &#39;key_1&#39; =&gt; &#39;Desk&#39;, &#39;key_2&#39; =&gt; &#39;Chair&#39;]
+</code></pre>
+<p><a name="method-array-sort-recursive"></a></p>
+<h4><code>Arr::sortRecursive()</code> {.collection-method}</h4>
+<p><code>Arr::sortRecursive</code> 方法使用 <code>usort</code> 函數遞歸地對陣列進行排序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    [&#39;Charlie&#39;, 2],
+    [&#39;Alice&#39;, 1],
+    [&#39;Bob&#39;, 3],
+];
+
+$sorted = Arr::sortRecursive($array);
+
+// [
+//     [&#39;Alice&#39;, 1],
+//     [&#39;Bob&#39;, 3],
+//     [&#39;Charlie&#39;, 2],
+// ]
+</code></pre>
+<p><a name="method-array-string"></a></p>
+<h4><code>Arr::string()</code> {.collection-method}</h4>
+<p><code>Arr::string</code> 方法使用「點」語法從深層嵌套的陣列中檢索值（就像 <a href="#method-array-get">Arr::get()</a> 一樣），但如果請求的值不是 <code>string</code>，則會拋出 <code>InvalidArgumentException</code>：</p>
+<pre><code>use Illuminate\\Support\\Arr;
+
+$array = [&#39;name&#39; =&gt; &#39;Joe&#39;, &#39;age&#39; =&gt; 42];
+
+$value = Arr::string($array, &#39;name&#39;);
+
+// Joe
+
+$value = Arr::string($array, &#39;age&#39;);
+
+// 拋出 InvalidArgumentException
+</code></pre>
+<p><a name="method-array-take"></a></p>
+<h4><code>Arr::take()</code> {.collection-method}</h4>
+<p><code>Arr::take</code> 方法從陣列中返回指定數量的元素：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [0, 1, 2, 3, 4, 5];
+
+$chunk = Arr::take($array, 3);
+
+// [0, 1, 2]
+
+$chunk = Arr::take($array, -2);
+
+// [4, 5]
+</code></pre>
+<p><a name="method-array-to-css-classes"></a></p>
+<h4><code>Arr::toCssClasses()</code> {.collection-method}</h4>
+<p><code>Arr::toCssClasses</code> 方法接受一個 CSS 類別的陣列，其中鍵包含您希望添加的 CSS 類別或類別，而值包含布林表達式。如果表達式評估為 true，則將添加鍵中包含的 CSS 類別。如果陣列包含數字鍵，則始終會將該元素包含在返回的類別列表中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    &#39;p-4&#39;,
+    &#39;font-bold&#39; =&gt; $isActive,
+    &#39;text-gray-500&#39; =&gt; ! $isActive,
+    &#39;bg-red&#39; =&gt; $hasError,
+];
+
+$classes = Arr::toCssClasses($array);
+
+/*
+    [
+        &#39;p-4&#39;,
+        &#39;font-bold&#39;,
+        &#39;bg-red&#39;,
+    ]
+*/
+</code></pre>
+<p><a name="method-array-to-css-styles"></a></p>
+<h4><code>Arr::toCssStyles()</code> {.collection-method}</h4>
+<p><code>Arr::toCssStyles</code> 方法接受一個 CSS 樣式的陣列，其中鍵包含您希望添加的 CSS 屬性或樣式，而值包含布林表達式。如果表達式評估為 true，則將添加鍵中包含的 CSS 樣式。如果陣列包含數字鍵，則始終會將該元素包含在返回的樣式列表中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    &#39;background-color: red&#39;,
+    &#39;font-weight: bold&#39; =&gt; $isActive,
+];
+
+$styles = Arr::toCssStyles($array);
+
+/*
+    [
+        &#39;background-color: red&#39;,
+        &#39;font-weight: bold&#39;,
+    ]
+*/
+</code></pre>
+<p><a name="method-array-undot"></a></p>
+<h4><code>Arr::undot()</code> {.collection-method}</h4>
+<p><code>Arr::undot</code> 方法使用「點」語法將一維陣列展開到多維陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [
+    &#39;user.name&#39; =&gt; &#39;Kevin&#39;,
+    &#39;user.age&#39; =&gt; 25,
+    &#39;user.posts.post_1&#39; =&gt; &#39;Title 1&#39;,
+    &#39;user.posts.post_2&#39; =&gt; &#39;Title 2&#39;,
+];
+
+$undotted = Arr::undot($array);
+
+// [
+//     &#39;user&#39; =&gt; [
+//         &#39;name&#39; =&gt; &#39;Kevin&#39;,
+//         &#39;age&#39; =&gt; 25,
+//         &#39;posts&#39; =&gt; [
+//             &#39;post_1&#39; =&gt; &#39;Title 1&#39;,
+//             &#39;post_2&#39; =&gt; &#39;Title 2&#39;,
+//         ],
+//     ],
+// ]
+</code></pre>
+<p><a name="method-array-where"></a></p>
+<h4><code>Arr::where()</code> {.collection-method}</h4>
+<p><code>Arr::where</code> 方法使用給定的回調過濾陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [100, &#39;200&#39;, 300, &#39;400&#39;, 500];
+
+$filtered = Arr::where($array, function (string|int $value) {
+    return is_int($value);
+});
+
+// [100, 300, 500]
+</code></pre>
+<p><a name="method-array-where-not-null"></a></p>
+<h4><code>Arr::whereNotNull()</code> {.collection-method}</h4>
+<p><code>Arr::whereNotNull</code> 方法從陣列中移除所有 <code>null</code> 值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [0, null, 1, 2, null];
+
+$array = Arr::whereNotNull($array);
+
+// [0, 1, 2]
+</code></pre>
+<p><a name="method-array-wrap"></a></p>
+<h4><code>Arr::wrap()</code> {.collection-method}</h4>
+<p><code>Arr::wrap</code> 方法將給定的值包裝在陣列中，如果它還不是陣列的話：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$string = &#39;Laravel&#39;
+
+$array = Arr::wrap($string);
+
+// [&#39;Laravel&#39;]
+</code></pre>
+<p>如果給定的值已經是一個陣列，<code>Arr::wrap</code> 方法將不會將其包裝在陣列中：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = [&#39;Laravel&#39;];
+
+$array = Arr::wrap($array);
+
+// [&#39;Laravel&#39;]
+</code></pre>
+<p>如果給定的值是 <code>null</code>，<code>Arr::wrap</code> 方法將返回一個空陣列：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Arr;
+
+$array = Arr::wrap(null);
+
+// []
+</code></pre>
+<p><a name="method-data-fill"></a></p>
+<h4><code>data_fill()</code> {.collection-method .first-collection-method}</h4>
+<p><code>data_fill</code> 方法使用「點」語法使用給定的值填充陣列中缺失的值：</p>
+<pre><code class="language-php">$data = [&#39;flowers&#39; =&gt; []];
+
+data_fill($data, &#39;flowers.0.name&#39;, [&#39;name&#39; =&gt; &#39;Daylily&#39;]);
+
+// [&#39;flowers&#39; =&gt; [[&#39;name&#39; =&gt; &#39;Daylily&#39;]]]
+
+data_fill($data, &#39;flowers.1.name&#39;, &#39;Spider Lily&#39;);
+
+// [&#39;flowers&#39; =&gt; [[&#39;name&#39; =&gt; &#39;Daylily&#39;], [&#39;name&#39; =&gt; &#39;Spider Lily&#39;]]
+</code></pre>
+<p><code>data_fill</code> 方法還接受一個 <code>Closure</code> 作為第三個參數，以便有條件地填充陣列：</p>
+<pre><code class="language-php">$data = [&#39;users&#39; =&gt; [
+    [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;email&#39; =&gt; &#39;taylor@laravel.com&#39;],
+    [&#39;name&#39; =&gt; &#39;Abigail&#39;, &#39;email&#39; =&gt; &#39;abigail@laravel.com&#39;],
+]];
+
+data_fill($data, &#39;users.*.active&#39;, function ($user) {
+    return $user[&#39;name&#39;] === &#39;Taylor&#39;;
+});
+
+/*
+    [
+        [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;email&#39; =&gt; &#39;taylor@laravel.com&#39;, &#39;active&#39; =&gt; true],
+        [&#39;name&#39; =&gt; &#39;Abigail&#39;, &#39;email&#39; =&gt; &#39;abigail@laravel.com&#39;, &#39;active&#39; =&gt; false],
+    ]
+*/
+</code></pre>
+<p><a name="method-data-get"></a></p>
+<h4><code>data_get()</code> {.collection-method}</h4>
+<p><code>data_get</code> 方法使用「點」語法從嵌套的陣列或物件中檢索值：</p>
+<pre><code class="language-php">$data = [&#39;names&#39; =&gt; [&#39;john&#39; =&gt; [&#39;contacts&#39; =&gt; [&#39;phone&#39; =&gt; &#39;555-1234&#39;]]]];
+
+$name = data_get($data, &#39;names.john.contacts.phone&#39;);
+
+// 555-1234
+</code></pre>
+<p>如果在資料結構中未找到金鑰，也可以使用預設值：</p>
+<pre><code class="language-php">$data = [&#39;names&#39; =&gt; [&#39;john&#39; =&gt; [&#39;contacts&#39; =&gt; [&#39;phone&#39; =&gt; &#39;555-1234&#39;]]]];
+
+$name = data_get($data, &#39;names.john.contacts.office&#39;, &#39;default&#39;);
+
+// default
+</code></pre>
+<p><a name="method-data-set"></a></p>
+<h4><code>data_set()</code> {.collection-method}</h4>
+<p><code>data_set</code> 方法使用「點」語法在嵌套的陣列或物件中設定值：</p>
+<pre><code class="language-php">$data = [&#39;names&#39; =&gt; [&#39;john&#39; =&gt; [&#39;contacts&#39; =&gt; [&#39;phone&#39; =&gt; &#39;555-1234&#39;]]]];
+
+data_set($data, &#39;names.john.contacts.office&#39;, &#39;555-5678&#39;);
+
+// $data is now [&#39;names&#39; =&gt; [&#39;john&#39; =&gt; [&#39;contacts&#39; =&gt; [&#39;phone&#39; =&gt; &#39;555-1234&#39;, &#39;office&#39; =&gt; &#39;555-5678&#39;]]]]
+</code></pre>
+<p><code>data_set</code> 方法還接受一個 <code>Closure</code> 作為第三個參數，以便有條件地設定值：</p>
+<pre><code class="language-php">$data = [&#39;names&#39; =&gt; [
+    [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;email&#39; =&gt; &#39;taylor@laravel.com&#39;],
+    [&#39;name&#39; =&gt; &#39;Abigail&#39;, &#39;email&#39; =&gt; &#39;abigail@laravel.com&#39;],
+]];
+
+data_set($data, &#39;users.*.active&#39;, function ($user) {
+    return $user[&#39;name&#39;] === &#39;Taylor&#39;;
+});
+
+/*
+    [
+        [&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;email&#39; =&gt; &#39;taylor@laravel.com&#39;, &#39;active&#39; =&gt; true],
+        [&#39;name&#39; =&gt; &#39;Abigail&#39;, &#39;email&#39; =&gt; &#39;abigail@laravel.com&#39;, &#39;active&#39; =&gt; false],
+    ]
+*/
+</code></pre>
+<p><a name="method-data-forget"></a></p>
+<h4><code>data_forget()</code> {.collection-method}</h4>
+<p><code>data_forget</code> 方法使用「點」語法從嵌套的陣列或物件中移除一個值：</p>
+<pre><code class="language-php">$data = [&#39;names&#39; =&gt; [&#39;john&#39; =&gt; [&#39;contacts&#39; =&gt; [&#39;phone&#39; =&gt; &#39;555-1234&#39;]]]];
+
+data_forget($data, &#39;names.john.contacts.phone&#39;);
+
+// $data is now [&#39;names&#39; =&gt; [&#39;john&#39; =&gt; [&#39;contacts&#39; =&gt; []]]]
+</code></pre>
+<p><a name="method-head"></a></p>
+<h4><code>head()</code> {.collection-method .first-collection-method}</h4>
+<p><code>head</code> 方法返回陣列中的第一個元素：</p>
+<pre><code class="language-php">$array = [1, 2, 3, 4];
+
+$first = head($array);
+
+// 1
+</code></pre>
+<p><a name="method-last"></a></p>
+<h4><code>last()</code> {.collection-method}</h4>
+<p><code>last</code> 方法返回陣列中的最後一個元素：</p>
+<pre><code class="language-php">$array = [1, 2, 3, 4];
+
+$last = last($array);
+
+// 4
+</code></pre>
+<p><a name="strings"></a></p>
+<h2>字串</h2>
+<p><a name="method-str-after"></a></p>
+<h4><code>Str::after()</code> {.collection-method .first-collection-method}</h4>
+<p><code>Str::after</code> 方法返回在給定的子字串之後的所有內容：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$sentence = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$substring = Str::after($sentence, &#39;fox&#39;);
+
+// &quot;jumps over the lazy dog.&quot;
+</code></pre>
+<p><a name="method-str-after-last"></a></p>
+<h4><code>Str::afterLast()</code> {.collection-method}</h4>
+<p><code>Str::afterLast</code> 方法返回在給定的子字串之後的所有內容，包括子字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$sentence = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$substring = Str::afterLast($sentence, &#39;fox&#39;);
+
+// &quot; jumps over the lazy dog.&quot;
+</code></pre>
+<p><a name="method-str-before"></a></p>
+<h4><code>Str::before()</code> {.collection-method}</h4>
+<p><code>Str::before</code> 方法返回在給定的子字串之前的所有內容：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$sentence = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$substring = Str::before($sentence, &#39;fox&#39;);
+
+// &quot;The quick brown &quot;
+</code></pre>
+<p><a name="method-str-before-last"></a></p>
+<h4><code>Str::beforeLast()</code> {.collection-method}</h4>
+<p><code>Str::beforeLast</code> 方法返回在給定的子字串之前的所有內容，包括子字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$sentence = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$substring = Str::beforeLast($sentence, &#39;fox&#39;);
+
+// &quot;The quick brown fox&quot;
+</code></pre>
+<p><a name="method-str-between"></a></p>
+<h4><code>Str::between()</code> {.collection-method}</h4>
+<p><code>Str::between</code> 方法返回在兩個給定的子字串之間的所有內容：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$sentence = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$substring = Str::between($sentence, &#39;quick&#39;, &#39;fox&#39;);
+
+// &quot;quick brown &quot;
+</code></pre>
+<p><a name="method-str-between-first"></a></p>
+<h4><code>Str::betweenFirst()</code> {.collection-method}</h4>
+<p><code>Str::betweenFirst</code> 方法返回在兩個給定的子字串之間的第一個匹配：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$sentence = &#39;[a] ab [b] bc [c]&#39;;
+
+$substring = Str::betweenFirst($sentence, &#39;[&#39;, &#39;]&#39;);
+
+// &quot;a&quot;
+</code></pre>
+<p><a name="method-str-camel"></a></p>
+<h4><code>Str::camel()</code> {.collection-method}</h4>
+<p><code>Str::camel</code> 方法將給定的字串轉換為駝峰命名法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$converted = Str::camel(&#39;foo_bar&#39;);
+
+// fooBar
+</code></pre>
+<p><a name="method-str-contains"></a></p>
+<h4><code>Str::contains()</code> {.collection-method}</h4>
+<p><code>Str::contains</code> 方法判斷給定的字串是否包含另一個子字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$contains = Str::contains(&#39;This is a foo bar string.&#39;, [&#39;foo&#39;, &#39;bar&#39;]);
+
+// true
+
+$contains = Str::contains(&#39;This is a foo bar string.&#39;, [&#39;baz&#39;, &#39;qux&#39;]);
+
+// false
+</code></pre>
+<p>您還可以將 <code>ignoreCase</code> 參數傳遞給 <code>contains</code> 方法，以忽略大小寫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$contains = Str::contains(&#39;This is a foo bar string.&#39;, &#39;FOO&#39;, ignoreCase: true);
+
+// true
+</code></pre>
+<p><a name="method-str-contains-all"></a></p>
+<h4><code>Str::containsAll()</code> {.collection-method}</h4>
+<p><code>Str::containsAll</code> 方法判斷給定的字串是否包含所有給定的子字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$contains = Str::containsAll(&#39;This is a foo bar string.&#39;, [&#39;foo&#39;, &#39;bar&#39;]);
+
+// true
+
+$contains = Str::containsAll(&#39;This is a foo bar string.&#39;, [&#39;baz&#39;, &#39;qux&#39;]);
+
+// false
+</code></pre>
+<p><a name="method-str-endsWith"></a></p>
+<h4><code>Str::endsWith()</code> {.collection-method}</h4>
+<p><code>Str::endsWith</code> 方法判斷給定的字串是否以另一個子字串結尾：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$result = Str::endsWith(&#39;This is my name&#39;, &#39;my name&#39;);
+
+// true
+
+$result = Str::endsWith(&#39;This is my name&#39;, [&#39;name&#39;, &#39;foo&#39;]);
+
+// true
+
+$result = Str::endsWith(&#39;This is my name&#39;, [&#39;this&#39;, &#39;foo&#39;]);
+
+// false
+</code></pre>
+<p><a name="method-str-limit"></a></p>
+<h4><code>Str::limit()</code> {.collection-method}</h4>
+<p><code>Str::limit</code> 方法將字串截斷為給定的最大長度。此方法將在字串的末尾附加 <code>...</code>：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$result = Str::limit(&#39;The quick brown fox jumps over the lazy dog.&#39;, 20);
+
+// &quot;The quick brown fox...&quot;
+</code></pre>
+<p>您也可以將第三個參數傳遞給 <code>limit</code> 方法以更改將附加到截斷字串末尾的字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$result = Str::limit(&#39;The quick brown fox jumps over the lazy dog.&#39;, 20, &#39;&amp;gt;&amp;gt;&amp;gt;&#39;);
+
+// &quot;The quick brown fox&amp;gt;&amp;gt;&amp;gt;&quot;
+</code></pre>
+<p><a name="method-str-order"></a></p>
+<h4><code>Str::orderedUuid()</code> {.collection-method}</h4>
+<p><code>orderedUuid</code> 方法生成一個可排序的 UUIDv7 實例。此 UUID 對於索引資料庫儲存非常有效，因為它們可以按字典順序排序：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+(Str::orderedUuid())-&gt;toString(); // &quot;01925262-c6ca-7c8a-a00c-078378149ad9&quot;
+</code></pre>
+<p><a name="method-str-plural"></a></p>
+<h4><code>Str::plural()</code> {.collection-method}</h4>
+<p><code>Str::plural</code> 方法將字串從單數轉換為複數。Laravel 的<code>pluralizer</code>基於 <a href="https://github.com/ramsey/inflect">ramsey/inflect</a> 包，支援多種語言：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$plural = Str::plural(&#39;car&#39;);
+
+// cars
+
+$plural = Str::plural(&#39;child&#39;);
+
+// children
+</code></pre>
+<p>您可以將第二個參數傳遞給 <code>plural</code> 方法以指定複數形式的數量：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$plural = Str::plural(&#39;apple&#39;, 0);
+
+// apples
+
+$plural = Str::plural(&#39;apple&#39;, 1);
+
+// apple
+
+$plural = Str::plural(&#39;apple&#39;, 2);
+
+// apples
+</code></pre>
+<p><a name="method-str-plural-studly"></a></p>
+<h4><code>Str::pluralStudly()</code> {.collection-method}</h4>
+<p><code>Str::pluralStudly</code> 方法使用大寫蛇形命名法將字串從單數轉換為複數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$plural = Str::pluralStudly(&#39;has_time&#39;);
+
+// has_times
+
+$plural = Str::pluralStudly(&#39;has_thought&#39;);
+
+// has_thoughts
+</code></pre>
+<p><a name="method-str-random"></a></p>
+<h4><code>Str::random()</code> {.collection-method}</h4>
+<p><code>Str::random</code> 方法生成一個給定長度的隨機字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$random = Str::random(40);
+
+// &quot;vAnT8S8FVWd9z6Z8Xf8u3b1s9a2c4e5f6g7h8&quot;
+</code></pre>
+<p>如果沒有指定，此方法預設使用字母和數字。此外，您可以使用 <code>alphabet</code> 方法指定要使用的字元集：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$random = Str::random(40, &#39;alpha&#39;);
+
+// &quot;aBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJk&quot;
+
+$random = Str::random(40, &#39;alphaNum&#39;);
+
+// &quot;vAnT8S8FVWd9z6Z8Xf8u3b1s9a2c4e5f6g7h8&quot;
+
+$random = Str::random(40, &#39;ascii&#39;);
+
+// &quot;F@1t!gHj#KlPqRsTuVwXyZaBcDeFgHiJkLm&quot;
+
+$random = Str::random(40, &#39;unprintable&#39;);
+
+// &quot;\\x1e\\x8e\\x9a\\x1b\\x08\\x14\\x12\\x1c\\x01\\x03\\x0e\\x09\\x17\\x05\\x16\\x0b\\x19\\x1a\\x0d\\x10\\x06\\x12\\x04\\x1e\\x11\\x0f\\x1c\\x13\\x0c\\x07\\x0a\\x1d\\x18\\x1f\\x02\\x19\\x09\\x0b\\x15\\x0e&quot;
+</code></pre>
+<p><a name="method-str-remove"></a></p>
+<h4><code>Str::remove()</code> {.collection-method}</h4>
+<p><code>Str::remove</code> 方法從字串中移除一個子字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = Str::remove(&#39;Peter Piper picked a peck of pickled peppers.&#39;, [&#39;pecker&#39;, &#39;pickled&#39;, &#39;piper&#39;]);
+
+// &quot;Peter Piper picked a peck of peppers.&quot;
+</code></pre>
+<p>您還可以使用第三個參數來忽略大小寫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = Str::remove(&#39;PETER PIPER PICKED A PECK OF PICKLED PEPPERS.&#39;, [&#39;pecker&#39;, &#39;pickled&#39;, &#39;piper&#39;], ignoreCase: true);
+
+// &quot;PETER PIPER PICKED A PECK OF PEPPERS.&quot;
+</code></pre>
+<p><a name="method-str-repeat"></a></p>
+<h4><code>Str::repeat()</code> {.collection-method}</h4>
+<p><code>Str::repeat</code> 方法重複給定的字串給定的次數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$repeated = Str::repeat(&#39;abc&#39;, 3);
+
+// &quot;abcabcabc&quot;
+</code></pre>
+<p><a name="method-str-replace"></a></p>
+<h4><code>Str::replace()</code> {.collection-method}</h4>
+<p><code>Str::replace</code> 方法替換給定的字串中的一個子字串：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = Str::replace(&#39;foo is the best?&#39;, &#39;bar&#39;, &#39;best&#39;);
+
+// &quot;foo is the bar?&quot;
+</code></pre>
+<p><a name="method-str-replace-array"></a></p>
+<h4><code>Str::replaceArray()</code> {.collection-method}</h4>
+<p><code>Str::replaceArray</code> 方法使用陣列中的值按順序替換給定字串中的佔位符：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = &#39;The event will take place on :first and :second&#39;;
+
+$formatted = Str::replaceArray($string, [&#39;:first&#39;, &#39;:second&#39;], [&#39;November&#39;, &#39;December&#39;]);
+
+// &quot;The event will take place on November and December&quot;
+</code></pre>
+<p><a name="method-str-replace-first"></a></p>
+<h4><code>Str::replaceFirst()</code> {.collection-method}</h4>
+<p><code>Str::replaceFirst</code> 方法替換給定字串中子字串的第一次出現：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$formatted = Str::replaceFirst($string, &#39;the&#39;, &#39;a&#39;);
+
+// &quot;A quick brown fox jumps over the lazy dog.&quot;
+</code></pre>
+<p><a name="method-str-replace-last"></a></p>
+<h4><code>Str::replaceLast()</code> {.collection-method}</h4>
+<p><code>Str::replaceLast</code> 方法替換給定字串中子字串的最後一次出現：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = &#39;The quick brown fox jumps over the lazy dog.&#39;;
+
+$formatted = Str::replaceLast($string, &#39;the&#39;, &#39;a&#39;);
+
+// &quot;The quick brown fox jumps over a lazy dog.&quot;
+</code></pre>
+<p><a name="method-str-start"></a></p>
+<h4><code>Str::start()</code> {.collection-method}</h4>
+<p><code>Str::start</code> 方法在字串的開頭添加給定的值，如果它尚未以給定的值開頭：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$adjusted = Str::start($string, &#39;this-is-a-&#39;);
+
+$adjusted = Str::start(&#39;this-is-a-string&#39;, &#39;this-is-a-&#39;);
+
+// this-is-a-string
+
+$adjusted = Str::start(&#39;awesome-string&#39;, &#39;this-is-a-&#39;);
+
+// this-is-a-awesome-string
+</code></pre>
+<p><a name="method-str-startsWith"></a></p>
+<h4><code>Str::startsWith()</code> {.collection-method}</h4>
+<p><code>Str::startsWith</code> 方法判斷給定的字串是否以另一個子字串開頭：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$result = Str::startsWith(&#39;This is my name&#39;, &#39;This&#39;);
+
+// true
+
+$result = Str::startsWith(&#39;This is my name&#39;, [&#39;This&#39;, &#39;That&#39;]);
+
+// true
+
+$result = Str::startsWith(&#39;This is my name&#39;, [&#39;that&#39;, &#39;there&#39;]);
+
+// false
+</code></pre>
+<p><a name="method-str-studly"></a></p>
+<h4><code>Str::studly()</code> {.collection-method}</h4>
+<p><code>Str::studly</code> 方法將給定的字串轉換為大寫蛇形命名法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$converted = Str::studly(&#39;foo_bar&#39;);
+
+// FooBar
+</code></pre>
+<p><a name="method-str-sub"></a></p>
+<h4><code>Str::substr()</code> {.collection-method}</h4>
+<p><code>Str::substr</code> 方法返回字串的給定部分：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = &#39;Laravel 13&#39;;
+
+$sub = Str::substr($string, 0, 6);
+
+// &quot;Laravel&quot;
+</code></pre>
+<p><a name="method-str-substr-count"></a></p>
+<h4><code>Str::substrCount()</code> {.collection-method}</h4>
+<p><code>Str::substrCount</code> 方法返回給定的子字串在字串中出現的次數：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$count = Str::substrCount(&#39;This is a test, test.&#39;, &#39;test&#39;);
+
+// 2
+</code></pre>
+<p><a name="method-str-text"></a></p>
+<h4><code>Str::text()</code> {.collection-method}</h4>
+<p><code>Str::text</code> 方法返回一個包含字串給定部分的 <code>Stringable</code> 實例：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$string = Str::text(&#39;The quick brown fox jumps over the lazy dog.&#39;)-&gt;after(&#39;fox&#39;)-&gt;before(&#39;lazy&#39;);
+
+// &quot;jumps over the &quot;
+</code></pre>
+<p><a name="method-str-title"></a></p>
+<h4><code>Str::title()</code> {.collection-method}</h4>
+<p><code>Str::title</code> 方法將給定的字串轉換為標題大小寫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$converted = Str::title(&#39;a nice title uses the correct case&#39;);
+
+// &quot;A Nice Title Uses The Correct Case&quot;
+</code></pre>
+<p><a name="method-str-uppercase"></a></p>
+<h4><code>Str::upper()</code> {.collection-method}</h4>
+<p><code>Str::upper</code> 方法將給定的字串轉換為大寫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$converted = Str::upper(&#39;laravel&#39;);
+
+// &quot;LARAVEL&quot;
+</code></pre>
+<p><a name="method-str-uuid"></a></p>
+<h4><code>Str::uuid()</code> {.collection-method}</h4>
+<p><code>uuid</code> 方法生成一個 UUIDv4（隨機）實例：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+(Str::uuid())-&gt;toString(); // &quot;5b9e3467-2c4f-4d5a-b9b5-4f6f7f8f9d0a&quot;
+</code></pre>
+<p><a name="method-str-words"></a></p>
+<h4><code>Str::words()</code> {.collection-method}</h4>
+<p><code>Str::words</code> 方法返回字串中的給定數量的單詞：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$words = Str::words(&#39;Perfectly balanced, as all things should be.&#39;, 3);
+
+// &quot;Perfectly balanced, as&quot;
+</code></pre>
+<p>您可以選擇將第三個參數傳遞給 <code>words</code> 方法，該參數將附加到字串的末尾：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+$words = Str::words(&#39;Perfectly balanced, as all things should be.&#39;, 3, &#39;&amp;gt;&amp;gt;&gt;&#39;);
+
+// &quot;Perfectly balanced, as&amp;gt;&amp;gt;&amp;gt;&quot;
+</code></pre>
+<p><a name="method-str-wrap"></a></p>
+<h4><code>Str::wrap()</code> {.collection-method}</h4>
+<p><code>Str::wrap</code> 方法將字串包裹在給定的字串中，如果尚未包裝：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Str;
+
+Str::wrap(&#39;Laravel&#39;, &#39;&#39;);
+
+// &quot;Laravel&quot;
+
+Str::wrap(&#39;Laravel&#39;, &#39;html&#39;);
+
+// &quot;htmlLaravelhtml&quot;
+
+Str::wrap(&#39;Laravel&#39;, &#39;&#39;&#39;&#39;);
+
+// &quot;&#39;Laravel&#39;&quot;
+</code></pre>
+<p><a name="urls"></a></p>
+<h2>URL</h2>
+<p><a name="method-action"></a></p>
+<h4><code>action()</code> {.collection-method .first-collection-method}</h4>
+<p><code>action</code> 方法生成一個給定控制器動作的 URL：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\HomeController;
+
+$url = action([HomeController::class, &#39;index&#39;]);
+</code></pre>
+<p><a name="method-asset"></a></p>
+<h4><code>asset()</code> {.collection-method}</h4>
+<p><code>asset</code> 方法生成一個資源的 URL：</p>
+<pre><code class="language-php">$url = asset(&#39;img/photo.jpg&#39;);
+</code></pre>
+<p>您可以將第二個參數傳遞給 <code>asset</code> 方法以指定所生成 URL 的協議：</p>
+<pre><code class="language-php">$url = asset(&#39;img/photo.jpg&#39;, false); // http://example.com/img/photo.jpg
+
+$url = asset(&#39;img/photo.jpg&#39;, true); // https://example.com/img/photo.jpg
+</code></pre>
+<p><a name="method-route"></a></p>
+<h4><code>route()</code> {.collection-method}</h4>
+<p><code>route</code> 方法生成一個給定具名路由的 URL：</p>
+<pre><code class="language-php">$url = route(&#39;route.name&#39;);
+</code></pre>
+<p>如果給定的路由需要參數，這些參數可以作為第二個參數傳遞給 <code>route</code> 方法：</p>
+<pre><code class="language-php">$url = route(&#39;route.name&#39;, [&#39;id&#39; =&gt; 1]);
+</code></pre>
+<p>您還可以傳遞 <code>true</code> 作為第三個參數以強制生成 HTTPS URL：</p>
+<pre><code class="language-php">$url = route(&#39;route.name&#39;, [], true);
+</code></pre>
+<p><a name="method-secure-asset"></a></p>
+<h4><code>secure_asset()</code> {.collection-method}</h4>
+<p><code>secure_asset</code> 方法使用 HTTPS 協議生成資源的 URL：</p>
+<pre><code class="language-php">$url = secure_asset(&#39;img/photo.jpg&#39;);
+</code></pre>
+<p><a name="method-secure-url"></a></p>
+<h4><code>secure_url()</code> {.collection-method}</h4>
+<p><code>secure_url</code> 方法使用 HTTPS 協議生成給定路徑的完整 URL：</p>
+<pre><code class="language-php">$url = secure_url(&#39;user/profile&#39;);
+</code></pre>
+<p><a name="method-to-action"></a></p>
+<h4><code>to_action()</code> {.collection-method}</h4>
+<p><code>to_action</code> 方法生成一個給定控制器動作的 URL：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\HomeController;
+
+$url = to_action([HomeController::class, &#39;index&#39;]);
+</code></pre>
+<p><a name="method-to-route"></a></p>
+<h4><code>to_route()</code> {.collection-method}</h4>
+<p><code>to_route</code> 方法生成一個給定具名路由的 URL：</p>
+<pre><code class="language-php">$url = to_route(&#39;route.name&#39;);
+</code></pre>
+<p>如果給定的路由需要參數，這些參數可以作為第二個參數傳遞給 <code>to_route</code> 方法：</p>
+<pre><code class="language-php">$url = to_route(&#39;route.name&#39;, [&#39;id&#39; =&gt; 1]);
+</code></pre>
+<p>您還可以傳遞 <code>true</code> 作為第三個參數以強制生成 HTTPS URL：</p>
+<pre><code class="language-php">$url = to_route(&#39;route.name&#39;, [], true);
+</code></pre>
+<p><a name="method-url"></a></p>
+<h4><code>url()</code> {.collection-method}</h4>
+<p><code>url</code> 方法生成給定路徑的完整 URL：</p>
+<pre><code class="language-php">$url = url(&#39;user/profile&#39;);
+
+$url = url(&#39;user/profile/1&#39;);
+</code></pre>
+<p>如果未提供路徑，將返回應用程式的根 URL：</p>
+<pre><code class="language-php">$url = url();
+</code></pre>
+<p><a name="miscellaneous"></a></p>
+<h2>雜項</h2>
+<p><a name="method-abort"></a></p>
+<h4><code>abort()</code> {.collection-method .first-collection-method}</h4>
+<p><code>abort</code> 方法中斷具有給定 HTTP 狀態碼的請求：</p>
+<pre><code class="language-php">abort(404);
+</code></pre>
+<p>您還可以提供自訂回應的文字：</p>
+<pre><code class="language-php">abort(403, &#39;Unauthorized.&#39;);
+</code></pre>
+<p><a name="method-abort-if"></a></p>
+<h4><code>abort_if()</code> {.collection-method}</h4>
+<p><code>abort_if</code> 方法在給定的布林條件為 true 時中斷具有給定 HTTP 狀態碼的請求：</p>
+<pre><code class="language-php">abort_if(! Auth::user()-&gt;isAdmin(), 403);
+</code></pre>
+<p><a name="method-abort-unless"></a></p>
+<h4><code>abort_unless()</code> {.collection-method}</h4>
+<p><code>abort_unless</code> 方法在給定的布林條件為 false 時中斷具有給定 HTTP 狀態碼的請求：</p>
+<pre><code class="language-php">abort_unless(Auth::user()-&gt;isAdmin(), 403);
+</code></pre>
+<p><a name="method-app"></a></p>
+<h4><code>app()</code> {.collection-method}</h4>
+<p><code>app</code> 方法返回<a href="/docs/container">服務容器</a>的實例：</p>
+<pre><code class="language-php">$container = app();
+</code></pre>
+<p>您可以選擇傳遞類別名以綁定到容器中。此方法將返回綁定的實例：</p>
+<pre><code class="language-php">$api = app(&#39;HelpSpot\\API&#39;);
+</code></pre>
+<p><a name="method-auth"></a></p>
+<h4><code>auth()</code> {.collection-method}</h4>
+<p><code>auth</code> 方法返回<a href="/docs/authentication">身份驗證</a>器的實例。您也可以使用它作為 <code>Auth</code> facade 的快捷方式：</p>
+<pre><code class="language-php">$user = auth()-&gt;user();
+</code></pre>
+<p>如果需要，您可以指定要使用的守衛實例：</p>
+<pre><code class="language-php">$user = auth(&#39;admin&#39;)-&gt;user();
+</code></pre>
+<p><a name="method-back"></a></p>
+<h4><code>back()</code> {.collection-method}</h4>
+<p><code>back</code> 方法將用戶重定向到上一個位置：</p>
+<pre><code class="language-php">Route::post(&#39;/user/profile&#39;, function () {
+    // 更新用戶的設定檔...
+
+    return back()-&gt;with(&#39;status&#39;, &#39;Profile updated!&#39;);
+});
+</code></pre>
+<p><a name="method-bcrypt"></a></p>
+<h4><code>bcrypt()</code> {.collection-method}</h4>
+<p><code>bcrypt</code> 方法使用 Bcrypt 雜湊給定的值。您可以將此方法用作 <code>Hash</code> facade 的快捷方式：</p>
+<pre><code class="language-php">$password = bcrypt(&#39;my-secret-password&#39;);
+</code></pre>
+<p><a name="method-blank"></a></p>
+<h4><code>blank()</code> {.collection-method}</h4>
+<p><code>blank</code> 方法判斷給定的值是否為「空」：</p>
+<pre><code class="language-php">blank(null); // true
+
+blank(&#39;&#39;); // true
+
+blank([]); // true
+
+blank(&#39;Hello&#39;); // false
+
+blank([1, 2, 3]); // false
+</code></pre>
+<p>要使用 <code>blank</code> 方法的逆邏輯，請使用 <code>filled</code> 方法。</p>
+<p><a name="method-broadcast"></a></p>
+<h4><code>broadcast()</code> {.collection-method}</h4>
+<p><code>broadcast</code> 方法透過<a href="/docs/broadcasting">廣播</a>通道廣播給定的事件：</p>
+<pre><code class="language-php">broadcast(new UserStatusUpdated($user));
+</code></pre>
+<p><a name="method-broadcast-if"></a></p>
+<h4><code>broadcast_if()</code> {.collection-method}</h4>
+<p><code>broadcast_if</code> 方法在給定的布林條件為 true 時透過<a href="/docs/broadcasting">廣播</a>通道廣播給定的事件：</p>
+<pre><code class="language-php">broadcast_if($user-&gt;isActive(), new UserStatusUpdated($user));
+</code></pre>
+<p><a name="method-broadcast-unless"></a></p>
+<h4><code>broadcast_unless()</code> {.collection-method}</h4>
+<p><code>broadcast_unless</code> 方法在給定的布林條件為 false 時透過<a href="/docs/broadcasting">廣播</a>通道廣播給定的事件：</p>
+<pre><code class="language-php">broadcast_unless($user-&gt;isInactive(), new UserStatusUpdated($user));
+</code></pre>
+<p><a name="method-cache"></a></p>
+<h4><code>cache()</code> {.collection-method}</h4>
+<p><code>cache</code> 方法可透過<a href="/docs/cache">快取</a>存取各種緩存功能：</p>
+<pre><code class="language-php">$value = cache(&#39;key&#39;);
+
+cache([&#39;key&#39; =&gt; &#39;value&#39;], 300);
+
+cache()->put(&#39;key&#39;, &#39;value&#39;, 300);
+</code></pre>
+<p><a name="method-class-uses-recursive"></a></p>
+<h4><code>class_uses_recursive()</code> {.collection-method}</h4>
+<p><code>class_uses_recursive</code> 方法返回一個類別使用的 trait（包括其父類別）的數組：</p>
+<pre><code class="language-php">$traits = class_uses_recursive(SuperClass::class);
+</code></pre>
+<p><a name="method-collect"></a></p>
+<h4><code>collect()</code> {.collection-method}</h4>
+<p><code>collect</code> 方法從給定的值創建一個<a href="/docs/collections">集合</a>實例：</p>
+<pre><code class="language-php">$collection = collect([&#39;name&#39; =&gt; &#39;Taylor&#39;, &#39;age&#39; =&gt; 18]);
+</code></pre>
+<p><a name="method-config"></a></p>
+<h4><code>config()</code> {.collection-method}</h4>
+<p><code>config</code> 方法可存取<a href="/docs/configuration">配置</a>值：</p>
+<pre><code class="language-php">$value = config(&#39;app.timezone&#39;);
+
+config([&39;app.timezone&#39; =&gt; &#39;UTC&#39;]);
+</code></pre>
+<p>如果配置不存在，您可以傳遞第二個參數作為預設值：</p>
+<pre><code class="language-php">$value = config(&#39;app.timezone&#39;, &#39;UTC&#39;);
+</code></pre>
+<p><a name="method-context"></a></p>
+<h4><code>context()</code> {.collection-method}</h4>
+<p><code>context</code> 方法可存取<a href="/docs/context">上下文</a>值：</p>
+<pre><code class="language-php">$value = context(&#39;key&#39;);
+
+context([&39;key&#39; =&gt; &#39;value&#39;]);
+</code></pre>
+<p>如果上下文值不存在，您可以傳遞第二個參數作為預設值：</p>
+<pre><code class="language-php">$value = context(&#39;key&#39;, &#39;default&#39;);
+</code></pre>
+<p><a name="method-cookie"></a></p>
+<h4><code>cookie()</code> {.collection-method}</h4>
+<p><code>cookie</code> 方法可創建一個新的<a href="/docs/requests#cookies">Cookie</a> 實例：</p>
+<pre><code class="language-php">$cookie = cookie(&#39;name&#39;, &#39;value&#39;, $minutes);
+</code></pre>
+<p><a name="method-csrf-field"></a></p>
+<h4><code>csrf_field()</code> {.collection-method}</h4>
+<p><code>csrf_field</code> 方法生成一個 CSRF 欄位的 HTML 欄位：</p>
+<pre><code class="language-html">{{ csrf_field() }}
+</code></pre>
+<p><a name="method-csrf-token"></a></p>
+<h4><code>csrf_token()</code> {.collection-method}</h4>
+<p><code>csrf_token</code> 方法返回當前 CSRF 令牌的值：</p>
+<pre><code class="language-php">$token = csrf_token();
+</code></pre>
+<p><a name="method-decrypt"></a></p>
+<h4><code>decrypt()</code> {.collection-method}</h4>
+<p><code>decrypt</code> 方法<a href="/docs/encryption#encryption-and-decryption">解密</a>給定的值：</p>
+<pre><code class="language-php">$decrypted = decrypt($encryptedValue);
+</code></pre>
+<p><a name="method-dd"></a></p>
+<h4><code>dd()</code> {.collection-method}</h4>
+<p><code>dd</code> 方法轉儲給定的變數並終止腳本的執行：</p>
+<pre><code class="language-php">dd($value);
+
+dd($value1, $value2, $value3);
+</code></pre>
+<p>如果您不想停止腳本的執行，請改用 <code>dump</code> 方法。</p>
+<p><a name="method-dispatch"></a></p>
+<h4><code>dispatch()</code> {.collection-method}</h4>
+<p><code>dispatch</code> 方法將<a href="/docs/queues#creating-jobs">任務</a>排入佇列：</p>
+<pre><code class="language-php">dispatch(new SendPodcastEmail($podcast));
+</code></pre>
+<p><a name="method-dispatch-sync"></a></p>
+<h4><code>dispatch_sync()</code> {.collection-method}</h4>
+<p><code>dispatch_sync</code> 方法將<a href="/docs/queues#creating-jobs">任務</a>同步排入佇列：</p>
+<pre><code class="language-php">dispatch_sync(new SendPodcastEmail($podcast));
+</code></pre>
+<p><a name="method-dump"></a></p>
+<h4><code>dump()</code> {.collection-method}</h4>
+<p><code>dump</code> 方法轉儲給定的變數：</p>
+<pre><code class="language-php">dump($value);
+
+dump($value1, $value2, $value3);
+</code></pre>
+<p><a name="method-encrypt"></a></p>
+<h4><code>encrypt()</code> {.collection-method}</h4>
+<p><code>encrypt</code> 方法<a href="/docs/encryption#encryption-and-decryption">加密</a>給定的值：</p>
+<pre><code class="language-php">$encrypted = encrypt($secret);
+</code></pre>
+<p><a name="method-env"></a></p>
+<h4><code>env()</code> {.collection-method}</h4>
+<p><code>env</code> 方法<a href="/docs/configuration#environment-configuration">检索環境變數值</a>或返回預設值：</p>
+<pre><code class="language-php">$env = env(&#39;APP_ENV&#39;);
+
+$env = env(&#39;APP_ENV&#39;, &#39;production&#39;);
+</code></pre>
+<p><a name="method-event"></a></p>
+<h4><code>event()</code> {.collection-method}</h4>
+<p><code>event</code> 方法<a href="/docs/events#dispatching-events">派發一個事件</a>給其所有的監聽器：</p>
+<pre><code class="language-php">event(new PodWasPlayed($podcast));
+
+event([new PodWasPlayed($podcast), new PodWasDownloaded($podcast)]);
+</code></pre>
+<p><a name="method-filled"></a></p>
+<h4><code>filled()</code> {.collection-method}</h4>
+<p><code>filled</code> 方法判斷給定的值是否不是「空」：</p>
+<pre><code class="language-php">filled(0); // true
+
+filled(&#39;&#39;); // false
+
+filled([]); // false
+
+filled(null); // false
+</code></pre>
+<p>要使用 <code>filled</code> 方法的逆邏輯，請使用 <code>blank</code> 方法。</p>
+<p><a name="method-info"></a></p>
+<h4><code>info()</code> {.collection-method}</h4>
+<p><code>info</code> 方法<a href="/docs/logging">寫入一條資訊級別的日誌</a>消息：</p>
+<pre><code class="language-php">info(&#39;User logged in.&#39;, [&#39;id&#39; =&gt; $user-&gt;id]);
+</code></pre>
+<p><a name="method-literal"></a></p>
+<h4><code>literal()</code> {.collection-method}</h4>
+<p><code>literal</code> 方法返回一個新的 <code>Illuminate\\Support\\Literal</code> 實例。此實例可以用作陣列鍵或 Eloquent 模型屬性，以指示值不應被字元轉義：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Literal;
+
+$data = [
+    Literal::string(&#39;\\SomeRawHtml&#39;) =&gt; &#39;&lt;b&gt;Note&lt;/b&gt;: All is fair in love and war.&#39;,
+];
+</code></pre>
+<p><a name="method-logger"></a></p>
+<h4><code>logger()</code> {.collection-method}</h4>
+<p><code>logger</code> 方法可<a href="/docs/logging">寫入一條偵錯級別的日誌</a>消息：</p>
+<pre><code class="language-php">logger(&#39;User logged in.&#39;, [&#39;id&#39; =&gt; $user-&gt;id]);
+</code></pre>
+<p>如果沒有提供參數，它將返回日誌通道的實例：</p>
+<pre><code class="language-php">logger()-&gt;debug(&#39;User logged in.&#39;, [&#39;id&#39; =&gt; $user-&gt;id]);
+</code></pre>
+<p><a name="method-method-field"></a></p>
+<h4><code>method_field()</code> {.collection-method}</h4>
+<p><code>method_field</code> 方法生成一個 HTML 隱藏輸入欄位。這在表單中使用 <code>PUT</code>、<code>PATCH</code> 或 <code>DELETE</code> 方法時非常有用：</p>
+<pre><code class="language-php">{{ method_field(&#39;PUT&#39;) }}
+</code></pre>
+<p><a name="method-now"></a></p>
+<h4><code>now()</code> {.collection-method}</h4>
+<p><code>now</code> 方法返回當前時間的 <code>Illuminate\\Support\\Carbon</code> 實例：</p>
+<pre><code class="language-php">$now = now();
+</code></pre>
+<p><a name="method-old"></a></p>
+<h4><code>old()</code> {.collection-method}</h4>
+<p><code>old</code> 方法<a href="/docs/requests#old-input">檢索<a href="/docs/session">session</a>中的上次輸入值</a>：</p>
+<pre><code class="language-php">$username = old(&#39;username&#39;);
+</code></pre>
+<p>您還可以傳遞一個預設值作為方法的第二個參數。如果session中不存在該值，將返回此值：</p>
+<pre><code class="language-php">$username = old(&#39;username&#39;, &#39;default&#39;);
+</code></pre>
+<p><a name="method-once"></a></p>
+<h4><code>once()</code> {.collection-method}</h4>
+<p><code>once</code> 方法執行給定的閉包，但僅執行一次。對此方法的任何後續調用都將返回第一次執行期間返回的值：</p>
+<pre><code class="language-php">function doSomething()
+{
+    return once(function () {
+        return &#39;This will only run once&#39;;
+    });
+}
+
+doSomething(); // This will only run once
+
+doSomething(); // This will only run once
+</code></pre>
+<p><a name="method-optional"></a></p>
+<h4><code>optional()</code> {.collection-method}</h4>
+<p><code>optional</code> 方法接受任何參數並允許您使用「鏈式」語法來存取物件上的屬性或調用方法。如果給定的物件是 <code>null</code>，則屬性和方法將返回 <code>null</code> 而不是拋出異常：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Optional;
+
+$user = User::find(1);
+
+$name = optional($user)-&gt;name;
+
+// &quot;Taylor&quot;
+</code></pre>
+<p>如果給定的值不是 <code>null</code>，則 <code>optional</code> 函數的結果將是給定值本身：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Optional;
+
+$user = User::find(1);
+
+$name = optional($user)-&gt;name ?? &#39;Taylor&#39;;
+
+// &quot;Taylor&quot;
+</code></pre>
+<p>您也可以將閉包作為 <code>optional</code> 函數的第二個參數傳遞。如果閉包返回的值不是 <code>null</code>，則將執行該閉包：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Optional;
+
+$result = optional(fn () =&gt; resolve(&#39;App\\Models\\User&#39;))-&gt;admin;
+
+// null
+</code></pre>
+<p><a name="method-policy"></a></p>
+<h4><code>policy()</code> {.collection-method}</h4>
+<p><code>policy</code> 方法<a href="/docs/authorization#registering-policies">獲取給定模型類別的策略</a>實例：</p>
+<pre><code class="language-php">$policy = policy(User::class);
+</code></pre>
+<p><a name="method-redirect"></a></p>
+<h4><code>redirect()</code> {.collection-method}</h4>
+<p><code>redirect</code> 方法返回一個<a href="/docs/responses#redirects">重定向</a>響應的實例：</p>
+<pre><code class="language-php">return redirect(&#39;/home/dashboard&#39;);
+
+return redirect()-&gt;route(&#39;dashboard&#39;);
+</code></pre>
+<p>如果需要，您可以傳遞 <code>true</code> 作為第三個參數以強制生成 HTTPS URL：</p>
+<pre><code class="language-php">return redirect()-&gt;route(&#39;dashboard&#39;, [], true);
+</code></pre>
+<p>您可以使用 <code>to_route</code> 方法作為 <code>redirect</code> 方法的替代：</p>
+<pre><code class="language-php">return to_route(&#39;dashboard&#39;);
+</code></pre>
+<p><a name="method-report"></a></p>
+<h4><code>report()</code> {.collection-method}</h4>
+<p><code>report</code> 方法<a href="/docs/errors#handling-exceptions">向您異常報告服務</a>中的一個異常：</p>
+<pre><code class="language-php">report($e);
+</code></pre>
+<p><a name="method-report-if"></a></p>
+<h4><code>report_if()</code> {.collection-method}</h4>
+<p><code>report_if</code> 方法在給定的布林條件為 true 時向您異常報告服務<a href="/docs/errors#handling-exceptions">中的一個異常</a>：</p>
+<pre><code class="language-php">report_if($this-&gt;isDown(), new AppDownException);
+</code></pre>
+<p><a name="method-report-unless"></a></p>
+<h4><code>report_unless()</code> {.collection-method}</h4>
+<p><code>report_unless</code> 方法在給定的布林條件為 false 時向您異常報告服務<a href="/docs/errors#handling-exceptions">中的一個異常</a>：</p>
+<pre><code class="language-php">report_unless(Auth::user()-&gt;isAdmin(), new AppDownException);
+</code></pre>
+<p><a name="method-request"></a></p>
+<h4><code>request()</code> {.collection-method}</h4>
+<p><code>request</code> 方法返回當前<a href="/docs/requests">HTTP 請求</a>的實例或獲取輸入值：</p>
+<pre><code class="language-php">$request = request();
+
+$value = request(&#39;name&#39;, &#39;default&#39;);
+</code></pre>
+<p><a name="method-rescue"></a></p>
+<h4><code>rescue()</code> {.collection-method}</h4>
+<p><code>rescue</code> 方法<a href="/docs/errors#handling-exceptions">在給定的回調中捕獲異常</a>並通過<a href="/docs/logging">異常報告服務</a>進行報告。您可以選擇提供將作為異常報告的第二個參數或 <code>false</code> 以完全不報告異常：</p>
+<pre><code class="language-php">return rescue(function () {
+    return $this-&gt;doSomething();
+});
+</code></pre>
+<p>您可以將第三個參數作為預設值傳遞給 <code>rescue</code> 方法。如果發生異常，將返回此值：</p>
+<pre><code class="language-php">return rescue(function () {
+    return $this-&gt;doSomething();
+}, false, fn () =&gt; $this-&gt;defaultOperation());
+</code></pre>
+<p><a name="method-resolve"></a></p>
+<h4><code>resolve()</code> {.collection-method}</h4>
+<p><code>resolve</code> 方法從<a href="/docs/container">容器</a>中解析一個類別或介面名以獲取其實例：</p>
+<pre><code class="language-php">$api = resolve(&#39;App\\Services\\Stripe&#39;);
+</code></pre>
+<p><a name="method-response"></a></p>
+<h4><code>response()</code> {.collection-method}</h4>
+<p><code>response</code> 方法<a href="/docs/responses">創建一個響應</a>的實例或獲取當前響應的實例：</p>
+<pre><code class="language-php">return response(&#39;Hello World&#39;, 200, [&#39;Content-Type&#39; =&gt; &#39;text/plain&#39;]);
+
+return response()-&gt;json([&#39;name&#39; =&gt; &#39;Steve&#39;, &#39;state&#39; =&gt; &#39;CA&#39;], 200);
+</code></pre>
+<p><a name="method-retry"></a></p>
+<h4><code>retry()</code> {.collection-method}</h4>
+<p><code>retry</code> 方法在給定的回調失敗時重複執行給定的回調：</p>
+<pre><code class="language-php">return retry(5, function () {
+    // 嘗試五次，如果失敗則拋出異常...
+}, 100);
+</code></pre>
+<p><a name="method-session"></a></p>
+<h4><code>session()</code> {.collection-method}</h4>
+<p><code>session</code> 方法可<a href="/docs/session">存取 session</a>值：</p>
+<pre><code class="language-php">$value = session(&#39;key&#39;);
+</code></pre>
+<p>您可以將陣列傳遞給 <code>session</code> 方法以設定多個 session值：</p>
+<pre><code class="language-php">session([&39;chairs&#39; =&gt; 7, &#39;instructors&#39; =&gt; 5]);
+</code></pre>
+<p><a name="method-tap"></a></p>
+<h4><code>tap()</code> {.collection-method}</h4>
+<p><code>tap</code> 方法將給定的值傳遞給給定的回調並返回該值。回調可以對值執行任何操作而無需修改值本身：</p>
+<pre><code class="language-php">use Illuminate\\Support\\User;
+
+$user = tap(User::first(), function ($user) {
+    $user-&gt;name = &#39;Taylor&#39;;
+
+    $user-&gt;save();
+});
+</code></pre>
+<p>如果沒有傳遞回調，您可以調用任何方法。每個方法調用將返回 <code>tap</code> 方法的實例，因此您可以將方法調用鏈接在一起：</p>
+<pre><code class="language-php">use Illuminate\\Support\\User;
+
+$user = tap(User::first())
+    -&gt;save()
+    -&gt;fill([&#39;active&#39; =&gt; true]);
+</code></pre>
+<p><a name="method-throw-if"></a></p>
+<h4><code>throw_if()</code> {.collection-method}</h4>
+<p><code>throw_if</code> 方法在給定的布林條件為 true 時<a href="/docs/errors#handling-exceptions">拋出異常</a>：</p>
+<pre><code class="language-php">throw_if($this-&gt;isDown(), AppDownException::class);
+
+throw_if(
+    $this-&gt;user()-&gt;isNot($post-&gt;author),
+    AuthorizationException::class
+);
+</code></pre>
+<p><a name="method-throw-unless"></a></p>
+<h4><code>throw_unless()</code> {.collection-method}</h4>
+<p><code>throw_unless</code> 方法在給定的布林條件為 false 時<a href="/docs/errors#handling-exceptions">拋出異常</a>：</p>
+<pre><code class="language-php">throw_unless($this-&gt;user()-&gt;isAdmin(), AuthorizationException::class);
+
+throw_unless(
+    $this-&gt;user()-&gt;can(&#39;edit-post&#39;, $post),
+    [AuthorizationException::class, &#39;Not authorized.&#39;]
+);
+</code></pre>
+<p><a name="method-today"></a></p>
+<h4><code>today()</code> {.collection-method}</h4>
+<p><code>today</code> 方法返回當前日期的 <code>Illuminate\\Support\\Carbon</code> 實例：</p>
+<pre><code class="language-php">$today = today();
+</code></pre>
+<p><a name="method-trait-uses-recursive"></a></p>
+<h4><code>trait_uses_recursive()</code> {.collection-method}</h4>
+<p><code>trait_uses_recursive</code> 方法返回一個 trait（包括其父 trait）的數組：</p>
+<pre><code class="language-php">$traits = trait_uses_recursive(SuperTrait::class);
+</code></pre>
+<p><a name="method-transform"></a></p>
+<h4><code>transform()</code> {.collection-method}</h4>
+<p><code>transform</code> 方法根據給定的回調在<a href="/docs/collections">集合</a>或陣列上執行映射和/或過濾操作：</p>
+<pre><code class="language-php">$collection = collect([&#39;name&#39; =&gt; &#39;John&#39;, &#39;age&#39; =&gt; 17]);
+
+$collection = transform($collection, function ($user, $key) {
+    if ($user[&#39;age&#39;] &gt;= 18) {
+        $user[&#39;status&#39;] = &#39;adult&#39;;
+    }
+
+    return $user;
+});
+
+/*
+    [
+        &#39;name&#39; =&gt; &#39;John&#39;,
+        &#39;age&#39; =&gt; 17,
+        &#39;status&#39; =&gt; &#39;adult&#39;,
+    ]
+*/
+</code></pre>
+<p>如果給定的值不是陣列或集合，<code>transform</code> 方法將返回 <code>null</code>：</p>
+<pre><code class="language-php">transform(&#39;string&#39;, function ($value) {
+    return $value;
+});
+</code></pre>
+<p><a name="method-validator"></a></p>
+<h4><code>validator()</code> {.collection-method}</h4>
+<p><code>validator</code> 方法可<a href="/docs/validation#creating-a-validator-instance">創建一個新的驗證器</a>實例：</p>
+<pre><code class="language-php">$validator = validator($data, $rules, $messages);
+</code></pre>
+<p><a name="method-value"></a></p>
+<h4><code>value()</code> {.collection-method}</h4>
+<p><code>value</code> 方法返回給定的值。如果值是閉包，則返回閉包的結果：</p>
+<pre><code class="language-php">$result = value(function () {
+    return &#39;hello&#39;;
+});
+
+// hello
+</code></pre>
+<p><a name="method-view"></a></p>
+<h4><code>view()</code> {.collection-method}</h4>
+<p><code>view</code> 方法創建一個<a href="/docs/views">視圖</a>響應的實例：</p>
+<pre><code class="language-php">return view(&#39;welcome&#39;);
+</code></pre>
+<p><a name="method-with"></a></p>
+<h4><code>with()</code> {.collection-method}</h4>
+<p><code>with</code> 方法返回給定的值。如果值是閉包，則返回閉包的結果：</p>
+<pre><code class="language-php">$result = with(function () {
+    return &#39;hello&#39;;
+}, function ($value) {
+    return strtoupper($value);
+});
+
+// HELLO
+</code></pre>
+<p><a name="method-when"></a></p>
+<h4><code>when()</code> {.collection-method}</h4>
+<p><code>when</code> 方法在給定的布林條件為 true 時對給定的值執行給定的回調：</p>
+<pre><code class="language-php">$collection = collect([1, 2, 3]);
+
+$collection = $collection-&gt;when(true, function ($collection, $value) {
+    return $collection-&gt;push(4);
+});
+
+// [1, 2, 3, 4]
+</code></pre>
+<p>如果未傳遞回調，則 <code>when</code> 方法將在布林條件為 true 時返回給定的值：</p>
+<pre><code class="language-php">$collection = collect([1, 2, 3]);
+
+$collection = $collection-&gt;when(true);
+
+// [1, 2, 3, 4]
+</code></pre>
+<p><a name="other-utilities"></a></p>
+<h2>其他實用工具</h2>
+<p><a name="benchmarking"></a></p>
+<h3>效能基準測試</h3>
+<p>Laravel 的 <code>benchmark</code> 函數允許您快速衡量給定回調的執行時間：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Benchmark;
+
+Benchmark::dd(fn () =&gt; Task::all()); // 10ms (example)
+
+Benchmark::dd([
+    &#39;Task::all&#39; =&gt; fn () =&gt; Task::all(),
+    &#39;Task::active&#39; =&gt; fn () =&gt; Task::active(),
+    &#39;Task::incomplete&#39; =&gt; fn () =&gt; Task::incomplete(),
+]); // Task::all: 10ms (example), Task::active: 5ms (example), Task::incomplete: 3ms (example)
+</code></pre>
+<p>如果您只想以秒為單位回傳執行時間（作為 <code>float</code>），您可以將 <code>$callback</code> 參數傳遞給 <code>Benchmark::measure</code> 方法：</p>
+<pre><code class="language-php">$executionTime = Benchmark::measure(fn () =&gt; Task::all());
+</code></pre>
+<p>如果您想重複執行基準測試多次以獲得更一致的結果，您可以將第二個參數傳遞給 <code>Benchmark::measure</code> 方法或將 <code>$iterations</code> 參數傳遞給 <code>Benchmark::dd</code> 方法：</p>
+<pre><code class="language-php">$executionTime = Benchmark::measure(fn () =&gt; Task::all(), 100);
+
+Benchmark::dd(fn () =&gt; Task::all(), 100);
+</code></pre>
+<p><a name="dates"></a></p>
+<h3>日期和時間</h3>
+<p>Laravel 包含各種方便存取和操作日期的輔助函數。這些輔助函數基於 <code>Carbon</code> 類別，後者繼承自 PHP 的 <code>DateTime</code> 類別。</p>
+<p><a name="method-carbon"></a></p>
+<h4><code>carbon()</code> {.collection-method .first-collection-method}</h4>
+<p><code>carbon</code> 方法創建一個 <code>Carbon</code> 實例以允許流暢的日期操作：</p>
+<pre><code class="language-php">$date = carbon(&#39;2025-07-10&#39;);
+
+$date = carbon()-&gt;addHours(4);
+
+$date = now()->addWeekdays(3);
+</code></pre>
+<p><a name="method-today"></a></p>
+<h4><code>today()</code> {.collection-method}</h4>
+<p><code>today</code> 方法返回當前時間的 <code>Illuminate\\Support\\Carbon</code> 實例：</p>
+<pre><code class="language-php">$today = today();
+</code></pre>
+<p><a name="method-tomorrow"></a></p>
+<h4><code>tomorrow()</code> {.collection-method}</h4>
+<p><code>tomorrow</code> 方法返回明天的 <code>Illuminate\\Support\\Carbon</code> 實例：</p>
+<pre><code class="language-php">$tomorrow = tomorrow();
+</code></pre>
+<p><a name="method-yesterday"></a></p>
+<h4><code>yesterday()</code> {.collection-method}</h4>
+<p><code>yesterday</code> 方法返回昨天的 <code>Illuminate\\Support\\Carbon</code> 實例：</p>
+<pre><code class="language-php">$yesterday = yesterday();
+</code></pre>
+<p><a name="deferred-functions"></a></p>
+<h3>延遲函數</h3>
+<p>延遲函數允許您將操作推遲到 HTTP 響應發送給用戶之後。這減少了處理時間，因為用戶在任何延遲函數完成之前收到響應。延遲函數通過 <code>defer</code> 輔助函數定義，可以從任何控制器方法中調用：</p>
+<pre><code class="language-php">use function Illuminate\\Support\\defer;
+
+Route::get(&#39;/user-profile&#39;, function () {
+    defer(fn () =&gt; Analytics::report());
+
+    return view(&#39;profile&#39;, [&#39;user&#39; =&gt; Auth::user()]);
+});
+</code></pre>
+<p>延遲函數也可以使用 <code>defer</code> 方法添加到 <code>Illuminate\\Support\\Carbon</code> 實例：</p>
+<pre><code class="language-php">Route::get(&#39;/user-profile&#39;, function () {
+    Analytics::report();
+
+    return view(&#39;profile&#39;, [&#39;user&#39; =&gt; Auth::user()]);
+});
+</code></pre>
+<p>您可以使用 <code>withoutVaporHeaders</code> 方法從響應中排除延遲函數標頭：</p>
+<pre><code class="language-php">Route::get(&#39;/user-profile&#39;, function () {
+    defer(fn () =&gt; Analytics::report());
+
+    return view(&#39;profile&#39;, [&#39;user&#39; =&gt; Auth::user()]);
+})->withoutVaporHeaders();
+</code></pre>
+<p><a name="lottery"></a></p>
+<h3>Lottery</h3>
+<p>Laravel 的 <code>Lottery</code> 類別可用於對偶發行為執行基於機率的操作：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Lottery;
+
+Lottery::odds(1, 100)-&gt;for(fn () =&gt; $logError());
+
+Lottery::odds(20)-&gt;for(fn () =&gt; $reportMetrics());
+
+Lottery::skip(10)-&gt;odds(1, 100)-&gt;for(fn () =&gt; $logError());
+
+Lottery::times(10)-&gt;odds(1, 100)-&gt;for(fn () =&gt; $logError());
+
+Lottery::dump()-&gt;odds(1, 100)-&gt;for(fn () =&gt; $logError());
+</code></pre>
+<p>您可以使用 <code>assert</code> 方法驗證是否調用了期望的機率回調：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Lottery;
+
+Lottery::fake();
+
+Lottery::odds(1, 100)-&gt;for(fn () =&gt; $logError());
+
+Lottery::assertNothingPassed();
+
+Lottery::assertPassed(fn () =&gt; true, times: 1);
+
+Lottery::assertNotPassed(fn () =&gt; true);
+</code></pre>
+<p><a name="pipeline"></a></p>
+<h3>Pipeline</h3>
+<p>Laravel 的 <code>Pipeline</code> 類別允許您將一系列操作「管道化」到一個物件上。管道將物件通過處理器類別的管道進行傳遞，讓每個處理器都有機會檢查或修改物件並呼叫管道中的下一個處理器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Pipelines;
+
+use Closure;
+
+class EnsureUserHasSubscription
+{
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(object $request, Closure $next): mixed
+    {
+        if ($request-&gt;user()-&gt;hasActiveSubscription()) {
+            return $next($request);
+        }
+
+        throw new SubscriptionRequiredException;
+    }
+}
+</code></pre>
+<p>處理器必須定義一個 <code>handle</code> 方法，該方法接受一個 <code>$next</code> 參數。調用 <code>$next</code> 方法會將 <code>$request</code> 繼續傳遞到管道中的下一個處理器：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Pipelines\\EnsureUserHasSubscription;
+use Illuminate\\Http\\Request;
+use Illuminate\\Pipeline\\Pipeline;
+
+class UserController extends Controller
+{
+    /**
+     * Update the user's profile.
+     */
+    public function update(Request $request): mixed
+    {
+        $response = app(Pipeline::class)
+            -&gt;send($request)
+            -&gt;through([
+                EnsureUserHasSubscription::class,
+            ])
+            -&gt;then(function (Request $request) {
+                // ...
+            });
+
+        return $response;
+    }
+}
+</code></pre>
+<p><a name="sleep"></a></p>
+<h3>Sleep</h3>
+<p>Laravel 的 <code>Sleep</code> 類別在測試時為休眠和時間旅行提供了一個流暢的 API：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Carbon;
+use Illuminate\\Support\\Sleep;
+
+Sleep::fake();
+
+Sleep::fake([Sleep::class =&gt; Sleep::for(5)-&gt;seconds()]);
+
+// After 1 second...
+Carbon::setTestNow(now()-&gt;addSeconds(1));
+
+// After 3 seconds total...
+Sleep::assertSleptTimes(3);
+
+// In 5 minutes...
+Carbon::setTestNow(now()-&gt;addMinutes(5));
+
+Sleep::assertSlept(fn ($sleep) =&gt; $sleep-&gt;seconds() === 300);
+
+Sleep::assertDidntSleep();
+</code></pre>
+<p><a name="timebox"></a></p>
+<h3>Timebox</h3>
+<p>Laravel 的 <code>timebox</code> 函數允許您將操作限制在預定義的時間限制內。當達到時間限制時，時間框將執行回調中提供的任何剩餘操作：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Timebox;
+
+$user = (new Timebox)-&gt;timeBox(2000, function () {
+    // 執行這個任務...
+});
+
+$user-&gt;first(); // [34.2ms]
+</code></pre>
+<p><a name="uri"></a></p>
+<h3>URI</h3>
+<p>Laravel 的 <code>Uri</code> 類別提供了一個流暢的、可鏈接的介面，用於構建和操作 URI：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Uri;
+
+$uri = Uri::build(&#39;https://laravel.com&#39;);
+$uri = Uri::build(&#39;https://laravel.com&#39;)-&gt;withPath(&#39;/docs/13.x&#39;);
+$uri = Uri::build(&#39;https://laravel.com&#39;)-&gt;withQuery([&#39;page&#39; =&gt; 1]);
+$uri = Uri::build(&#39;https://laravel.com&#39;)-&gt;withFragment(&#39;section-5&#39;);
+
+$uri = $uri-&gt;with([&39;framework&#39; =&gt; &#39;laravel&#39;]);
+
+$uri-&gt;getScheme(); // &quot;https&quot;
+$uri-&gt;getHost(); // &quot;laravel.com&quot;
+$uri-&gt;getPath(); // &quot;/docs/13.x&quot;
+$uri-&gt;getQuery(); // &quot;page=1&amp;framework=laravel&quot;
+$uri-&gt;getFragment(); // &quot;section-5&quot;
+$uri-&gt;getSchemeAndHttpHost(); // &quot;https://laravel.com&quot;
+$uri-&gt;getFullUrl(); // &quot;https://laravel.com/docs/13.x?page=1&amp;framework=laravel#section-5&quot;
+</code></pre>
+`;
+---
+
+<DocsLayout title="輔助函數" currentPath="helpers">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>輔助函數</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">輔助函數</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/helpers" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

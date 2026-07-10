@@ -1,0 +1,294 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>URL 生成</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#the-basics">基礎知識</a><ul>
+<li><a href="#generating-urls">生成 URL</a></li>
+<li><a href="#accessing-the-current-url">存取當前 URL</a></li>
+</ul>
+</li>
+<li><a href="#urls-for-named-routes">命名路由的 URL</a><ul>
+<li><a href="#signed-urls">簽名 URL</a></li>
+</ul>
+</li>
+<li><a href="#urls-for-controller-actions">控制器動作的 URL</a></li>
+<li><a href="#fluent-uri-objects">流暢 URI 物件</a></li>
+<li><a href="#default-values">預設值</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 提供了多種輔助函數來協助您為應用程式生成 URL。這些輔助函數主要在範本和 API 回應中構建連結時，或在生成到應用程式另一部分的重定向上時很有用。</p>
+<p><a name="the-basics"></a></p>
+<h2>基礎知識</h2>
+<p><a name="generating-urls"></a></p>
+<h3>生成 URL</h3>
+<p><code>url</code> 輔助函數可用於為您的應用程式生成任意 URL。生成的 URL 將自動使用當前請求的方案（HTTP 或 HTTPS）和主機：</p>
+<pre><code class="language-php">$post = App\\Models\\Post::find(1);
+
+echo url("/posts/{$post->id}");
+
+// http://example.com/posts/1
+</code></pre>
+<p>要生成帶有查詢字串參數的 URL，可以使用 <code>query</code> 方法：</p>
+<pre><code class="language-php">echo url()->query('/posts', ['search' => 'Laravel']);
+
+// https://example.com/posts?search=Laravel
+
+echo url()->query('/posts?sort=latest', ['search' => 'Laravel']);
+
+// http://example.com/posts?sort=latest&search=Laravel
+</code></pre>
+<p>提供路徑中已存在的查詢字串參數將覆蓋其現有值：</p>
+<pre><code class="language-php">echo url()->query('/posts?sort=latest', ['sort' => 'oldest']);
+
+// http://example.com/posts?sort=oldest
+</code></pre>
+<p>值陣列也可以作為查詢參數傳遞。這些值將在生成的 URL 中被正確地鍵控和編碼：</p>
+<pre><code class="language-php">echo $url = url()->query('/posts', ['columns' => ['title', 'body']]);
+
+// http://example.com/posts?columns%5B0%5D=title&columns%5B1%5D=body
+
+echo urldecode($url);
+
+// http://example.com/posts?columns[0]=title&columns[1]=body
+</code></pre>
+<p><a name="accessing-the-current-url"></a></p>
+<h3>存取當前 URL</h3>
+<p>如果未向 <code>url</code> 輔助函數提供路徑，將返回一個 <code>Illuminate\\Routing\\UrlGenerator</code> 實例，允許您存取有關當前 URL 的資訊：</p>
+<pre><code class="language-php">// 獲取不帶查詢字串的當前 URL...
+echo url()->current();
+
+// 獲取包含查詢字串的當前 URL...
+echo url()->full();
+</code></pre>
+<p>這些方法中的每一個也可以透過 <code>URL</code><a href="/docs/facades">外觀</a>存取：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\URL;
+
+echo URL::current();
+</code></pre>
+<p><a name="accessing-the-previous-url"></a></p>
+<h4>存取先前的 URL</h4>
+<p>有時了解使用者從哪裡訪問的先前 URL 很有幫助。您可以透過 <code>url</code> 輔助函數的 <code>previous</code> 和 <code>previousPath</code> 方法來存取先前的 URL：</p>
+<pre><code class="language-php">// 獲取先前請求的完整 URL...
+echo url()->previous();
+
+// 獲取先前請求的路徑...
+echo url()->previousPath();
+</code></pre>
+<p>或者，透過<a href="/docs/session">會話</a>，您可以將先前的 URL 作為<a href="#fluent-uri-objects">流暢 URI</a>實例來存取：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::post('/users', function (Request $request) {
+    $previousUri = $request->session()->previousUri();
+
+    // ...
+});
+</code></pre>
+<p>還可以透過會話檢索先前訪問的 URL 的路由名稱：</p>
+<pre><code class="language-php">$previousRoute = $request->session()->previousRoute();
+</code></pre>
+<p><a name="urls-for-named-routes"></a></p>
+<h2>命名路由的 URL</h2>
+<p><code>route</code> 輔助函數可用於為<a href="/docs/routing#named-routes">命名路由</a>生成 URL。命名路由允許您生成 URL，而不必與路由上定義的實際 URL 耦合。因此，如果路由的 URL 更改，則無需更改對 <code>route</code> 函數的呼叫。例如，想像您的應用程式包含一個定義如下的路由：</p>
+<pre><code class="language-php">Route::get('/post/{post}', function (Post $post) {
+    // ...
+})->name('post.show');
+</code></pre>
+<p>要生成此路由的 URL，您可以像這樣使用 <code>route</code> 輔助函數：</p>
+<pre><code class="language-php">echo route('post.show', ['post' => 1]);
+
+// http://example.com/post/1
+</code></pre>
+<p>當然，<code>route</code> 輔助函數也可以用於為具有多個參數的路由生成 URL：</p>
+<pre><code class="language-php">Route::get('/post/{post}/comment/{comment}', function (Post $post, Comment $comment) {
+    // ...
+})->name('comment.show');
+
+echo route('comment.show', ['post' => 1, 'comment' => 3]);
+
+// http://example.com/post/1/comment/3
+</code></pre>
+<p>任何與路由定義參數不對應的額外陣列元素都將添加到 URL 的查詢字串中：</p>
+<pre><code class="language-php">echo route('post.show', ['post' => 1, 'search' => 'rocket']);
+
+// http://example.com/post/1?search=rocket
+</code></pre>
+<p><a name="eloquent-models"></a></p>
+<h4>Eloquent 模型</h4>
+<p>您通常會使用<a href="/docs/eloquent"> Eloquent 模型</a>的路由金鑰（通常是主鍵）來生成 URL。為此，您可以將 Eloquent 模型作為參數值傳遞。<code>route</code> 輔助函數將自動提取模型的路由金鑰：</p>
+<pre><code class="language-php">echo route('post.show', ['post' => $post]);
+</code></pre>
+<p><a name="signed-urls"></a></p>
+<h3>簽名 URL</h3>
+<p>Laravel 允許您輕鬆地為命名路由創建「簽名」URL。這些 URL 在查詢字串中附加了一個「簽名」雜湊，允許 Laravel 驗證該 URL 自創建以來未被修改。簽名 URL 對於公開可存取但需要一層防護以防止 URL 操作的路由特別有用。</p>
+<p>例如，您可以使用簽名 URL 來實現一個公開的「取消訂閱」連結，該連結將透過電子郵件發送給您的客戶。要為命名路由創建簽名 URL，請使用 <code>URL</code> 外觀的 <code>signedRoute</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\URL;
+
+return URL::signedRoute('unsubscribe', ['user' => 1]);
+</code></pre>
+<p>您可以透過向 <code>signedRoute</code> 方法提供 <code>absolute</code> 參數來從簽名 URL 雜湊中排除網域：</p>
+<pre><code class="language-php">return URL::signedRoute('unsubscribe', ['user' => 1], absolute: false);
+</code></pre>
+<p>如果您希望生成一個在指定時間後過期的臨時簽名路由 URL，可以使用 <code>temporarySignedRoute</code> 方法。當 Laravel 驗證臨時簽名路由 URL 時，它將確保編碼到簽名 URL 中的過期時間戳尚未過去：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\URL;
+
+return URL::temporarySignedRoute(
+    'unsubscribe', now()->plus(minutes: 30), ['user' => 1]
+);
+</code></pre>
+<p><a name="validating-signed-route-requests"></a></p>
+<h4>驗證簽名路由請求</h4>
+<p>要驗證傳入請求是否具有有效簽名，應在傳入的 <code>Illuminate\\Http\\Request</code> 實例上呼叫 <code>hasValidSignature</code> 方法：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get('/unsubscribe/{user}', function (Request $request) {
+    if (! $request->hasValidSignature()) {
+        abort(401);
+    }
+
+    // ...
+})->name('unsubscribe');
+</code></pre>
+<p>有時，您可能需要允許應用程式的前端向簽名 URL 附加資料，例如執行客戶端分頁。因此，您可以使用 <code>hasValidSignatureWhileIgnoring</code> 方法指定在驗證簽名 URL 時應忽略的請求查詢參數。請記住，忽略參數允許任何人修改這些參數：</p>
+<pre><code class="language-php">if (! $request->hasValidSignatureWhileIgnoring(['page', 'order'])) {
+    abort(401);
+}
+</code></pre>
+<p>與其使用傳入的請求實例來驗證簽名 URL，您可以將 <code>signed</code>（<code>Illuminate\\Routing\\Middleware\\ValidateSignature</code>）<a href="/docs/middleware">中介層</a>分配給路由。如果傳入的請求沒有有效簽名，中介層將自動返回 <code>403</code> HTTP 回應：</p>
+<pre><code class="language-php">Route::post('/unsubscribe/{user}', function (Request $request) {
+    // ...
+})->name('unsubscribe')->middleware('signed');
+</code></pre>
+<p>如果您的簽名 URL 未在 URL 雜湊中包含網域，則應向中介層提供 <code>relative</code> 參數：</p>
+<pre><code class="language-php">Route::post('/unsubscribe/{user}', function (Request $request) {
+    // ...
+})->name('unsubscribe')->middleware('signed:relative');
+</code></pre>
+<p><a name="responding-to-invalid-signed-routes"></a></p>
+<h4>回應無效的簽名路由</h4>
+<p>當有人訪問已過期的簽名 URL 時，他們將收到 <code>403</code> HTTP 狀態碼的通用錯誤頁面。但是，您可以透過在應用程式的 <code>bootstrap/app.php</code> 檔案中為 <code>InvalidSignatureException</code> 異常定義一個自訂「render」閉包來自訂此行為：</p>
+<pre><code class="language-php">use Illuminate\\Routing\\Exceptions\\InvalidSignatureException;
+
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->render(function (InvalidSignatureException $e) {
+        return response()->view('errors.link-expired', status: 403);
+    });
+})
+</code></pre>
+<p><a name="urls-for-controller-actions"></a></p>
+<h2>控制器動作的 URL</h2>
+<p><code>action</code> 函數為給定的控制器動作生成一個 URL：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\HomeController;
+
+$url = action([HomeController::class, 'index']);
+</code></pre>
+<p>如果控制器方法接受路由參數，您可以將路由參數的關聯陣列作為函數的第二個參數傳遞：</p>
+<pre><code class="language-php">$url = action([UserController::class, 'profile'], ['id' => 1]);
+</code></pre>
+<p><a name="fluent-uri-objects"></a></p>
+<h2>流暢 URI 物件</h2>
+<p>Laravel 的 <code>Uri</code> 類別提供了一個便利且流暢的介面，用於透過物件創建和操作 URI。此類別封裝了底層 League URI 套件提供的功能，並與 Laravel 的路由系統無縫整合。</p>
+<p>您可以使用靜態方法輕鬆地創建 <code>Uri</code> 實例：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+use App\\Http\\Controllers\\InvokableController;
+use Illuminate\\Support\\Uri;
+
+// 從給定的字串生成一個 URI 實例...
+$uri = Uri::of('https://example.com/path');
+
+// 從路徑、命名路由或控制器動作生成 URI 實例...
+$uri = Uri::to('/dashboard');
+$uri = Uri::route('users.show', ['user' => 1]);
+$uri = Uri::signedRoute('users.show', ['user' => 1]);
+$uri = Uri::temporarySignedRoute('user.index', now()->plus(minutes: 5));
+$uri = Uri::action([UserController::class, 'index']);
+$uri = Uri::action(InvokableController::class);
+
+// 從當前請求 URL 生成一個 URI 實例...
+$uri = $request->uri();
+
+// 從先前的請求 URL 生成一個 URI 實例...
+$uri = $request->session()->previousUri();
+</code></pre>
+<p>獲得 URI 實例後，您可以流暢地修改它：</p>
+<pre><code class="language-php">$uri = Uri::of('https://example.com')
+    ->withScheme('http')
+    ->withHost('test.com')
+    ->withPort(8000)
+    ->withPath('/users')
+    ->withQuery(['page' => 2])
+    ->withFragment('section-1');
+</code></pre>
+<p>有關使用流暢 URI 物件的更多資訊，請查閱 <a href="/docs/helpers#uri">URI 文檔</a>。</p>
+<p><a name="default-values"></a></p>
+<h2>預設值</h2>
+<p>對於某些應用程式，您可能希望為某些 URL 參數指定請求範圍的預設值。例如，想像您的許多路由定義了一個 <code>{locale}</code> 參數：</p>
+<pre><code class="language-php">Route::get('/{locale}/posts', function () {
+    // ...
+})->name('post.index');
+</code></pre>
+<p>每次呼叫 <code>route</code> 輔助函數時都傳遞 <code>locale</code> 是很繁瑣的。因此，您可以使用 <code>URL::defaults</code> 方法來定義該參數的預設值，該預設值將始終在當前請求期間應用。您可能希望從<a href="/docs/middleware#assigning-middleware-to-routes">路由中介層</a>中呼叫此方法，以便存取當前請求：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Middleware;
+
+use Closure;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\URL;
+use Symfony\\Component\\HttpFoundation\\Response;
+
+class SetDefaultLocaleForUrls
+{
+    /**
+     * 處理傳入的請求。
+     *
+     * @param  \\Closure(\\Illuminate\\Http\\Request): (\\Symfony\\Component\\HttpFoundation\\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        URL::defaults(['locale' => $request->user()->locale]);
+
+        return $next($request);
+    }
+}
+</code></pre>
+<p>設定 <code>locale</code> 參數的預設值後，您在透過 <code>route</code> 輔助函數生成 URL 時不再需要傳遞其值。</p>
+<p><a name="url-defaults-middleware-priority"></a></p>
+<h4>URL 預設值和中介層優先級</h4>
+<p>設定 URL 預設值可能會干擾 Laravel 對隱式模型綁定的處理。因此，您應該<a href="/docs/middleware#sorting-middleware">優先處理您的中介層</a>，這些中介層設定 URL 預設值，以便在 Laravel 自己的 <code>SubstituteBindings</code> 中介層之前執行。您可以使用應用程式 <code>bootstrap/app.php</code> 檔案中的 <code>priority</code> 中介層方法來實現這一點：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->prependToPriorityList(
+        before: \\Illuminate\\Routing\\Middleware\\SubstituteBindings::class,
+        prepend: \\App\\Http\\Middleware\\SetDefaultLocaleForUrls::class,
+    );
+})
+</code></pre>
+`;
+---
+
+<DocsLayout title="URL 生成" currentPath="urls">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>URL</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">URL 生成</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/urls" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

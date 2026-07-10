@@ -1,0 +1,230 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>本地化</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#publishing-the-language-files">發佈語言檔案</a></li>
+<li><a href="#configuring-the-locale">配置語言環境</a></li>
+<li><a href="#pluralization-language">複數化語言</a></li>
+</ul>
+</li>
+<li><a href="#defining-translation-strings">定義翻譯字串</a><ul>
+<li><a href="#using-short-keys">使用短鍵</a></li>
+<li><a href="#using-translation-strings-as-keys">使用翻譯字串作為鍵</a></li>
+</ul>
+</li>
+<li><a href="#retrieving-translation-strings">檢索翻譯字串</a><ul>
+<li><a href="#replacing-parameters-in-translation-strings">替換翻譯字串中的參數</a></li>
+<li><a href="#pluralization">複數化</a></li>
+</ul>
+</li>
+<li><a href="#overriding-package-language-files">覆蓋套件語言檔案</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<blockquote>
+<p>[!NOTE]
+預設情況下，Laravel 應用程式骨架不包含 <code>lang</code> 目錄。如果您希望自訂 Laravel 的語言檔案，可以透過 <code>lang:publish</code> Artisan 命令來發佈它們。</p>
+</blockquote>
+<p>Laravel 的本地化功能提供了一種便利的方式來檢索各種語言的字串，讓您可以輕鬆地在應用程式中支援多種語言。</p>
+<p>Laravel 提供了兩種管理翻譯字串的方式。首先，語言字串可以存儲在應用程式 <code>lang</code> 目錄中的檔案內。在此目錄中，可以有每個應用程式支援的語言的子目錄。這是 Laravel 用於管理內建 Laravel 功能（如驗證錯誤訊息）的翻譯字串的方法：</p>
+<pre><code class="language-text">/lang
+    /en
+        messages.php
+    /es
+        messages.php
+</code></pre>
+<p>或者，翻譯字串可以定義在放置在 <code>lang</code> 目錄中的 JSON 檔案中。採用此方法時，您的應用程式支援的每種語言在此目錄中都有一個對應的 JSON 檔案。此方法推薦用於具有大量可翻譯字串的應用程式：</p>
+<pre><code class="language-text">/lang
+    en.json
+    es.json
+</code></pre>
+<p>我們將在本文檔中討論管理翻譯字串的每種方法。</p>
+<p><a name="publishing-the-language-files"></a></p>
+<h3>發佈語言檔案</h3>
+<p>預設情況下，Laravel 應用程式骨架不包含 <code>lang</code> 目錄。如果您希望自訂 Laravel 的語言檔案或創建自己的語言檔案，應該透過 <code>lang:publish</code> Artisan 命令來搭建 <code>lang</code> 目錄。<code>lang:publish</code> 命令將在您的應用程式中創建 <code>lang</code> 目錄，並發佈 Laravel 使用的預設語言檔案集：</p>
+<pre><code class="language-shell">php artisan lang:publish
+</code></pre>
+<p><a name="configuring-the-locale"></a></p>
+<h3>配置語言環境</h3>
+<p>您應用程式的預設語言存儲在 <code>config/app.php</code> 配置檔案的 <code>locale</code> 配置選項中，通常使用 <code>APP_LOCALE</code> 環境變數來設定。您可以自由修改此值以滿足應用程式的需求。</p>
+<p>您還可以配置一個「後備語言」，當預設語言不包含給定的翻譯字串時將使用該語言。與預設語言一樣，後備語言也在 <code>config/app.php</code> 配置檔案中配置，其值通常使用 <code>APP_FALLBACK_LOCALE</code> 環境變數來設定。</p>
+<p>您可以使用 <code>App</code> 外觀提供的 <code>setLocale</code> 方法在運行時為單個 HTTP 請求修改預設語言：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\App;
+
+Route::get('/greeting/{locale}', function (string $locale) {
+    if (! in_array($locale, ['en', 'es', 'fr'])) {
+        abort(400);
+    }
+
+    App::setLocale($locale);
+
+    // ...
+});
+</code></pre>
+<p><a name="determining-the-current-locale"></a></p>
+<h4>判斷當前語言環境</h4>
+<p>您可以使用 <code>App</code> 外觀上的 <code>currentLocale</code> 和 <code>isLocale</code> 方法來判斷當前語言環境或檢查語言環境是否為給定值：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\App;
+
+$locale = App::currentLocale();
+
+if (App::isLocale('en')) {
+    // ...
+}
+</code></pre>
+<p><a name="pluralization-language"></a></p>
+<h3>複數化語言</h3>
+<style>
+.code-list-no-flex-break code {
+    display: contents !important;
+}
+</style><div class="code-list-no-flex-break"><p>您可以指示 Laravel 的「複數化器」（由 Eloquent 和框架的其他部分用於將單數字串轉換為複數字串）使用英語以外的語言。這可以透過在應用程式服務提供者的 <code>boot</code> 方法中呼叫 <code>useLanguage</code> 方法來完成。複數化器目前支援的語言有：<code>french</code>、<code>norwegian-bokmal</code>、<code>portuguese</code>、<code>spanish</code> 和 <code>turkish</code>：</p>
+</div><pre><code class="language-php">use Illuminate\\Support\\Pluralizer;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Pluralizer::useLanguage('spanish');
+
+    // ...
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果您自訂了複數化器的語言，應該明確定義 Eloquent 模型的<a href="/docs/eloquent#table-names">表名</a>。</p>
+</blockquote>
+<p><a name="defining-translation-strings"></a></p>
+<h2>定義翻譯字串</h2>
+<p><a name="using-short-keys"></a></p>
+<h3>使用短鍵</h3>
+<p>通常，翻譯字串存儲在 <code>lang</code> 目錄中的檔案內。在此目錄中，應該為應用程式支援的每種語言設有一個子目錄。這是 Laravel 用於管理內建 Laravel 功能（如驗證錯誤訊息）的翻譯字串的方法：</p>
+<pre><code class="language-text">/lang
+    /en
+        messages.php
+    /es
+        messages.php
+</code></pre>
+<p>所有語言檔案都返回一個帶有鍵的字串陣列。例如：</p>
+<pre><code class="language-php">&lt;?php
+
+// lang/en/messages.php
+
+return [
+    'welcome' => 'Welcome to our application!',
+];
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+對於因地區而異的語言，您應該根據 ISO 15897 來命名語言目錄。例如，應該使用「en_GB」來表示英國英語，而不是「en-gb」。</p>
+</blockquote>
+<p><a name="using-translation-strings-as-keys"></a></p>
+<h3>使用翻譯字串作為鍵</h3>
+<p>對於具有大量可翻譯字串的應用程式，使用「短鍵」定義每個字串在視圖中引用鍵時可能會變得令人困惑，並且為應用程式支援的每個翻譯字串不斷發明鍵也很繁瑣。</p>
+<p>為此，Laravel 還支援使用字串的「預設」翻譯作為鍵來定義翻譯字串。使用翻譯字串作為鍵的語言檔案以 JSON 檔案的形式存儲在 <code>lang</code> 目錄中。例如，如果您的應用程式有西班牙語翻譯，您應該創建一個 <code>lang/es.json</code> 檔案：</p>
+<pre><code class="language-json">{
+    "I love programming.": "Me encanta programar."
+}
+</code></pre>
+<h4>鍵/檔案衝突</h4>
+<p>您不應定義與其他翻譯檔案名衝突的翻譯字串鍵。例如，在 <code>nl/action.php</code> 檔案存在但 <code>nl.json</code> 檔案不存在的情況下，為「NL」語言環境翻譯 <code>__('Action')</code> 將導致翻譯器返回 <code>nl/action.php</code> 的完整內容。</p>
+<p><a name="retrieving-translation-strings"></a></p>
+<h2>檢索翻譯字串</h2>
+<p>您可以使用 <code>__</code> 輔助函數從語言檔案中檢索翻譯字串。如果您正在使用「短鍵」來定義翻譯字串，應該使用「點」記法將包含該鍵的檔案和鍵本身傳遞給 <code>__</code> 函數。例如，讓我們從 <code>lang/en/messages.php</code> 語言檔案中檢索 <code>welcome</code> 翻譯字串：</p>
+<pre><code class="language-php">echo __('messages.welcome');
+</code></pre>
+<p>如果指定的翻譯字串不存在，<code>__</code> 函數將返回翻譯字串鍵。因此，使用上面的範例，如果翻譯字串不存在，<code>__</code> 函數將返回 <code>messages.welcome</code>。</p>
+<p>如果您正在使用<a href="#using-translation-strings-as-keys">預設翻譯字串作為翻譯鍵</a>，應該將字串的預設翻譯傳遞給 <code>__</code> 函數：</p>
+<pre><code class="language-php">echo __('I love programming.');
+</code></pre>
+<p>同樣，如果翻譯字串不存在，<code>__</code> 函數將返回它收到的翻譯字串鍵。</p>
+<p>如果您正在使用 <a href="/docs/blade">Blade 範本引擎</a>，可以使用 <code>{{ }}</code> echo 語法來顯示翻譯字串：</p>
+<pre><code class="language-blade">{{ __('messages.welcome') }}
+</code></pre>
+<p><a name="replacing-parameters-in-translation-strings"></a></p>
+<h3>替換翻譯字串中的參數</h3>
+<p>如果您願意，可以在翻譯字串中定義佔位符。所有佔位符都以 <code>:</code> 為前綴。例如，您可以定義一個帶有佔位符名稱的歡迎訊息：</p>
+<pre><code class="language-php">'welcome' => 'Welcome, :name',
+</code></pre>
+<p>要在檢索翻譯字串時替換佔位符，可以將替換陣列作為第二個參數傳遞給 <code>__</code> 函數：</p>
+<pre><code class="language-php">echo __('messages.welcome', ['name' => 'dayle']);
+</code></pre>
+<p>如果您的佔位符包含所有大寫字元，或者只有其第一個字母大寫，則翻譯後的值將相應地大寫：</p>
+<pre><code class="language-php">'welcome' => 'Welcome, :NAME', // Welcome, DAYLE
+'goodbye' => 'Goodbye, :Name', // Goodbye, Dayle
+</code></pre>
+<p><a name="object-replacement-formatting"></a></p>
+<h4>物件替換格式</h4>
+<p>如果您嘗試提供一個物件作為翻譯佔位符，將呼叫該物件的 <code>__toString</code> 方法。<a href="https://www.php.net/manual/en/language.oop5.magic.php#object.tostring">__toString</a> 方法是 PHP 的內建「魔法方法」之一。但是，有時您可能無法控制給定類別的 <code>__toString</code> 方法，例如當您正在互動的類別屬於第三方函式庫時。</p>
+<p>在這些情況下，Laravel 允許您為該特定類型的物件註冊一個自訂格式處理器。為此，您應該呼叫翻譯器的 <code>stringable</code> 方法。<code>stringable</code> 方法接受一個閉包，該閉包應鍵入提示其負責格式化的物件類型。通常，<code>stringable</code> 方法應在應用程式的 <code>AppServiceProvider</code> 類別的 <code>boot</code> 方法中被呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Lang;
+use Money\\Money;
+
+/**
+ * 啟動任何應用程式服務。
+ */
+public function boot(): void
+{
+    Lang::stringable(function (Money $money) {
+        return $money->formatTo('en_GB');
+    });
+}
+</code></pre>
+<p><a name="pluralization"></a></p>
+<h3>複數化</h3>
+<p>複數化是一個複雜的問題，因為不同的語言有各種複雜的複數化規則；但是，Laravel 可以幫助您根據您定義的複數化規則以不同的方式翻譯字串。使用 <code>|</code> 字元，您可以區分字串的單數和複數形式：</p>
+<pre><code class="language-php">'apples' => 'There is one apple|There are many apples',
+</code></pre>
+<p>當然，使用<a href="#using-translation-strings-as-keys">翻譯字串作為鍵</a>時也支援複數化：</p>
+<pre><code class="language-json">{
+    "There is one apple|There are many apples": "Hay una manzana|Hay muchas manzanas"
+}
+</code></pre>
+<p>您甚至可以創建更複雜的複數化規則，為多個值範圍指定翻譯字串：</p>
+<pre><code class="language-php">'apples' => '{0} There are none|[1,19] There are some|[20,*] There are many',
+</code></pre>
+<p>定義具有複數化選項的翻譯字串後，您可以使用 <code>trans_choice</code> 函數來檢索給定「數量」的行。在此範例中，由於數量大於一，因此返回翻譯字串的複數形式：</p>
+<pre><code class="language-php">echo trans_choice('messages.apples', 10);
+</code></pre>
+<p>您還可以在複數化字串中定義佔位符屬性。可以透過將陣列作為第三個參數傳遞給 <code>trans_choice</code> 函數來替換這些佔位符：</p>
+<pre><code class="language-php">'minutes_ago' => '{1} :value minute ago|[2,*] :value minutes ago',
+
+echo trans_choice('time.minutes_ago', 5, ['value' => 5]);
+</code></pre>
+<p>如果您希望顯示傳遞給 <code>trans_choice</code> 函數的整數值，可以使用內建的 <code>:count</code> 佔位符：</p>
+<pre><code class="language-php">'apples' => '{0} There are none|{1} There is one|[2,*] There are :count',
+</code></pre>
+<p><a name="overriding-package-language-files"></a></p>
+<h2>覆蓋套件語言檔案</h2>
+<p>某些套件可能附帶自己的語言檔案。與其更改套件的核心檔案來調整這些行，您可以透過將檔案放在 <code>lang/vendor/{package}/{locale}</code> 目錄中來覆蓋它們。</p>
+<p>因此，例如，如果您需要覆蓋名為 <code>skyrim/hearthfire</code> 的套件中 <code>messages.php</code> 的英文翻譯字串，您應該在以下位置放置一個語言檔案：<code>lang/vendor/hearthfire/en/messages.php</code>。在此檔案中，您應該只定義您希望覆蓋的翻譯字串。您未覆蓋的任何翻譯字串仍將從套件的原始語言檔案中載入。</p>
+`;
+---
+
+<DocsLayout title="本地化" currentPath="localization">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>本地化</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">本地化</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/localization" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

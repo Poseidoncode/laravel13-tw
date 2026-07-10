@@ -1,0 +1,255 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Dusk</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#managing-chromedriver-installations">管理 ChromeDriver 安裝</a></li>
+<li><a href="#using-other-browsers">使用其他瀏覽器</a></li>
+</ul>
+</li>
+<li><a href="#getting-started">入門</a><ul>
+<li><a href="#generating-tests">產生測試</a></li>
+<li><a href="#resetting-the-database-after-each-test">每次測試後重置資料庫</a></li>
+<li><a href="#running-tests">執行測試</a></li>
+<li><a href="#environment-handling">環境處理</a></li>
+</ul>
+</li>
+<li><a href="#browser-basics">瀏覽器基礎</a><ul>
+<li><a href="#creating-browsers">建立瀏覽器</a></li>
+<li><a href="#navigation">導航</a></li>
+<li><a href="#resizing-browser-windows">調整瀏覽器視窗大小</a></li>
+<li><a href="#browser-macros">瀏覽器巨集</a></li>
+<li><a href="#authentication">認證</a></li>
+<li><a href="#cookies">Cookie</a></li>
+<li><a href="#executing-javascript">執行 JavaScript</a></li>
+<li><a href="#taking-a-screenshot">截圖</a></li>
+<li><a href="#storing-console-output-to-disk">將控制台輸出儲存到磁碟</a></li>
+<li><a href="#storing-page-source-to-disk">將頁面原始碼儲存到磁碟</a></li>
+</ul>
+</li>
+<li><a href="#interacting-with-elements">與元素互動</a><ul>
+<li><a href="#dusk-selectors">Dusk 選擇器</a></li>
+<li><a href="#text-values-and-attributes">文字、值和屬性</a></li>
+<li><a href="#interacting-with-forms">與表單互動</a></li>
+<li><a href="#attaching-files">附加檔案</a></li>
+<li><a href="#pressing-buttons">按鈕點擊</a></li>
+<li><a href="#clicking-links">點擊連結</a></li>
+<li><a href="#using-the-keyboard">使用鍵盤</a></li>
+<li><a href="#using-the-mouse">使用滑鼠</a></li>
+<li><a href="#javascript-dialogs">JavaScript 對話框</a></li>
+<li><a href="#interacting-with-iframes">與內聯框架互動</a></li>
+<li><a href="#scoping-selectors">範圍限定選擇器</a></li>
+<li><a href="#waiting-for-elements">等待元素</a></li>
+<li><a href="#scrolling-an-element-into-view">滾動元素至視野</a></li>
+</ul>
+</li>
+<li><a href="#available-assertions">可用斷言</a></li>
+<li><a href="#pages">頁面</a><ul>
+<li><a href="#generating-pages">產生頁面</a></li>
+<li><a href="#configuring-pages">配置頁面</a></li>
+<li><a href="#navigating-to-pages">導航至頁面</a></li>
+<li><a href="#shorthand-selectors">速記選擇器</a></li>
+<li><a href="#page-methods">頁面方法</a></li>
+</ul>
+</li>
+<li><a href="#components">元件</a><ul>
+<li><a href="#generating-components">產生元件</a></li>
+<li><a href="#using-components">使用元件</a></li>
+</ul>
+</li>
+<li><a href="#continuous-integration">持續整合</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<blockquote>
+<p>[!WARNING]
+<a href="https://pestphp.com/">Pest 4</a> 現在包含了自動化瀏覽器測試，與 Laravel Dusk 相比，提供了顯著的效能和可用性改進。對於新專案，我們建議使用 Pest 進行瀏覽器測試。</p>
+</blockquote>
+<p><a href="https://github.com/laravel/dusk">Laravel Dusk</a> 提供了一個表達力強、易於使用的瀏覽器自動化和測試 API。預設情況下，Dusk 不需要您在本地電腦上安裝 JDK 或 Selenium。相反，Dusk 使用獨立的 <a href="https://sites.google.com/chromium.org/driver">ChromeDriver</a> 安裝。但是，您可以自由使用任何其他 Selenium 相容的驅動程式。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>首先，安裝 <a href="https://www.google.com/chrome">Google Chrome</a> 並將 <code>laravel/dusk</code> Composer 依賴項新增到您的專案中：</p>
+<pre><code class="language-shell">composer require laravel/dusk --dev</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果您手動註冊 Dusk 的服務提供者，則<strong>絕不</strong>應在生產環境中註冊它，因為這可能導致任意使用者能夠認證您的應用程式。</p>
+</blockquote>
+<p>安裝 Dusk 套件後，執行 <code>dusk:install</code> Artisan 命令。該命令將建立 <code>tests/Browser</code> 目錄、一個範例 Dusk 測試，並為您的作業系統安裝 Chrome Driver 二進位檔案：</p>
+<pre><code class="language-shell">php artisan dusk:install</code></pre>
+<p>接下來，在應用程式的 <code>.env</code> 檔案中設定 <code>APP_URL</code> 環境變數。此值應與您在瀏覽器中存取應用程式時使用的 URL 匹配。</p>
+<blockquote>
+<p>[!NOTE]
+如果您正在使用 <a href="/docs/sail">Laravel Sail</a> 來管理本地開發環境，請同時查閱 Sail 文件中關於<a href="/docs/sail#laravel-dusk">配置和執行 Dusk 測試</a>的內容。</p>
+</blockquote>
+<p><a name="managing-chromedriver-installations"></a></p>
+<h3>管理 ChromeDriver 安裝</h3>
+<p>如果您想安裝與 Laravel Dusk 通過 <code>dusk:install</code> 命令安裝的 ChromeDriver 不同版本，可以使用 <code>dusk:chrome-driver</code> 命令：</p>
+<pre><code class="language-shell"># Install the latest version of ChromeDriver for your OS...
+php artisan dusk:chrome-driver
+
+# Install a given version of ChromeDriver for your OS...
+php artisan dusk:chrome-driver 86
+
+# Install a given version of ChromeDriver for all supported OSs...
+php artisan dusk:chrome-driver --all
+
+# Install the version of ChromeDriver that matches the detected version of Chrome / Chromium for your OS...
+php artisan dusk:chrome-driver --detect</code></pre>
+<blockquote>
+<p>[!WARNING]
+Dusk 要求 <code>chromedriver</code> 二進位檔案可執行。如果您在執行 Dusk 時遇到問題，應使用以下命令確保二進位檔案可執行：<code>chmod -R 0755 vendor/laravel/dusk/bin/</code>。</p>
+</blockquote>
+<p><a name="using-other-browsers"></a></p>
+<h3>使用其他瀏覽器</h3>
+<p>預設情況下，Dusk 使用 Google Chrome 和獨立的 ChromeDriver 安裝來執行瀏覽器測試。但是，您可以啟動自己的 Selenium 伺服器並針對任何瀏覽器執行測試。</p>
+<p>首先，打開 <code>tests/DuskTestCase.php</code> 檔案，這是您應用程式的基礎 Dusk 測試案例。在此檔案中，您可以移除對 <code>startChromeDriver</code> 方法的呼叫。這將阻止 Dusk 自動啟動 ChromeDriver。然後，修改 <code>driver</code> 方法以連接到您選擇的 URL 和連接埠。</p>
+<p><a name="getting-started"></a></p>
+<h2>入門</h2>
+<p><a name="generating-tests"></a></p>
+<h3>產生測試</h3>
+<p>要產生 Dusk 測試，請使用 <code>dusk:make</code> Artisan 命令。產生的測試將放置在 <code>tests/Browser</code> 目錄中：</p>
+<pre><code class="language-shell">php artisan dusk:make LoginTest</code></pre>
+<p><a name="resetting-the-database-after-each-test"></a></p>
+<h3>每次測試後重置資料庫</h3>
+<p>您編寫的大多數測試都會與從應用程式資料庫檢索資料的頁面互動；但是，Dusk 測試絕不應使用 <code>RefreshDatabase</code> trait。該 trait 利用資料庫事務，這在 HTTP 請求中不適用或不可用。相反，您有兩個選擇：<code>DatabaseMigrations</code> trait 和 <code>DatabaseTruncation</code> trait。</p>
+<p><code>DatabaseMigrations</code> trait 會在每次測試前執行資料庫遷移。<code>DatabaseTruncation</code> trait 會在第一次測試時遷移資料庫，然後在後續測試中僅截斷資料表。</p>
+<p><a name="running-tests"></a></p>
+<h3>執行測試</h3>
+<p>要執行瀏覽器測試，請執行 <code>dusk</code> Artisan 命令：</p>
+<pre><code class="language-shell">php artisan dusk</code></pre>
+<p>如果您上次執行 <code>dusk</code> 命令時有測試失敗，可以使用 <code>dusk:fails</code> 命令優先重新執行失敗的測試以節省時間：</p>
+<pre><code class="language-shell">php artisan dusk:fails</code></pre>
+<p><code>dusk</code> 命令接受 Pest/PHPUnit 測試執行器通常接受的任何參數。</p>
+<p><a name="manually-starting-chromedriver"></a></p>
+<h4>手動啟動 ChromeDriver</h4>
+<p>預設情況下，Dusk 會自動嘗試啟動 ChromeDriver。如果這在您的系統上不起作用，可以在執行 <code>dusk</code> 命令前手動啟動 ChromeDriver。</p>
+<p><a name="environment-handling"></a></p>
+<h3>環境處理</h3>
+<p>要強制 Dusk 在執行測試時使用自己的環境檔案，請在專案根目錄建立一個 <code>.env.dusk.{environment}</code> 檔案。例如，如果您將從 <code>local</code> 環境啟動 <code>dusk</code> 命令，應建立一個 <code>.env.dusk.local</code> 檔案。執行測試時，Dusk 將備份您的 <code>.env</code> 檔案並將 Dusk 環境重新命名為 <code>.env</code>。測試完成後，<code>.env</code> 檔案將被恢復。</p>
+<p><a name="browser-basics"></a></p>
+<h2>瀏覽器基礎</h2>
+<p><a name="creating-browsers"></a></p>
+<h3>建立瀏覽器</h3>
+<p>要開始，讓我們編寫一個測試來驗證我們可以登入應用程式。您可以在 Dusk 測試中呼叫 <code>browse</code> 方法來建立瀏覽器實例：</p>
+<pre><code class="language-php">$this->browse(function (Browser $browser) {
+    $browser->visit('/login')
+        ->type('email', $user->email)
+        ->type('password', 'password')
+        ->press('Login')
+        ->assertPathIs('/home');
+});
+</code></pre>
+<p><a name="creating-multiple-browsers"></a></p>
+<h4>建立多個瀏覽器</h4>
+<p>有時您可能需要多個瀏覽器來正確執行測試。只需在提供給 <code>browse</code> 方法的閉包簽名中添加更多瀏覽器參數即可：</p>
+<pre><code class="language-php">$this->browse(function (Browser $first, Browser $second) {
+    $first->loginAs(User::find(1))->visit('/home')->waitForText('Message');
+    $second->loginAs(User::find(2))->visit('/home')->waitForText('Message')
+        ->type('message', 'Hey Taylor')->press('Send');
+    $first->waitForText('Hey Taylor')->assertSee('Jeffrey Way');
+});
+</code></pre>
+<p><a name="navigation"></a></p>
+<h3>導航</h3>
+<p><code>visit</code> 方法用於導航到應用程式中的給定 URI。使用 <code>visitRoute</code> 方法導航到<a href="/docs/routing#named-routes">命名路由</a>。使用 <code>back</code>、<code>forward</code> 和 <code>refresh</code> 方法進行前進、後退和重新整理。</p>
+<p><a name="resizing-browser-windows"></a></p>
+<h3>調整瀏覽器視窗大小</h3>
+<p>使用 <code>resize</code>、<code>maximize</code> 和 <code>fitContent</code> 方法調整瀏覽器視窗大小。使用 <code>move</code> 方法移動瀏覽器視窗位置。</p>
+<p><a name="browser-macros"></a></p>
+<h3>瀏覽器巨集</h3>
+<p>使用 <code>Browser::macro</code> 方法定義自訂瀏覽器方法，通常在<a href="/docs/providers">服務提供者</a>的 <code>boot</code> 方法中呼叫。</p>
+<p><a name="authentication"></a></p>
+<h3>認證</h3>
+<p>使用 Dusk 的 <code>loginAs</code> 方法來避免在每次測試中與應用程式的登入畫面互動。該方法接受認證模型的主鍵或認證模型實例。</p>
+<p><a name="cookies"></a></p>
+<h3>Cookie</h3>
+<p>使用 <code>cookie</code> 方法獲取或設定加密的 cookie 值。使用 <code>plainCookie</code> 方法處理未加密的 cookie。使用 <code>deleteCookie</code> 方法刪除 cookie。</p>
+<p><a name="executing-javascript"></a></p>
+<h3>執行 JavaScript</h3>
+<p>使用 <code>script</code> 方法在瀏覽器中執行任意 JavaScript 語句。</p>
+<p><a name="taking-a-screenshot"></a></p>
+<h3>截圖</h3>
+<p>使用 <code>screenshot</code> 方法截圖並儲存。使用 <code>responsiveScreenshots</code> 在不同斷點截取一系列截圖。使用 <code>screenshotElement</code> 截取特定元素的截圖。</p>
+<p><a name="storing-console-output-to-disk"></a></p>
+<h3>將控制台輸出儲存到磁碟</h3>
+<p>使用 <code>storeConsoleLog</code> 方法將瀏覽器控制台輸出寫入磁碟。</p>
+<p><a name="storing-page-source-to-disk"></a></p>
+<h3>將頁面原始碼儲存到磁碟</h3>
+<p>使用 <code>storeSource</code> 方法將頁面原始碼寫入磁碟。</p>
+<p><a name="interacting-with-elements"></a></p>
+<h2>與元素互動</h2>
+<p><a name="dusk-selectors"></a></p>
+<h3>Dusk 選擇器</h3>
+<p>Dusk 選擇器讓您專注於編寫有效的測試，而不是記住 CSS 選擇器。要定義選擇器，請為 HTML 元素添加 <code>dusk</code> 屬性。然後，在測試中使用 <code>@</code> 前綴來操作該元素：</p>
+<pre><code class="language-html">&lt;button dusk="login-button"&gt;Login&lt;/button&gt;</code></pre>
+<pre><code class="language-php">$browser->click('@login-button');</code></pre>
+<p><a name="text-values-and-attributes"></a></p>
+<h3>文字、值和屬性</h3>
+<p>使用 <code>value</code> 方法獲取或設定元素的值。使用 <code>text</code> 方法獲取元素的顯示文字。使用 <code>attribute</code> 方法獲取元素的屬性值。</p>
+<p><a name="interacting-with-forms"></a></p>
+<h3>與表單互動</h3>
+<p>使用 <code>type</code> 方法在輸入欄位中輸入文字。使用 <code>append</code> 方法追加文字而不清除內容。使用 <code>clear</code> 方法清除輸入值。使用 <code>typeSlowly</code> 和 <code>appendSlowly</code> 方法慢速輸入。</p>
+<p>使用 <code>select</code> 方法選擇下拉選項。使用 <code>check</code> 和 <code>uncheck</code> 方法勾選/取消勾選複選框。使用 <code>radio</code> 方法選擇單選按鈕。</p>
+<p><a name="attaching-files"></a></p>
+<h3>附加檔案</h3>
+<p>使用 <code>attach</code> 方法將檔案附加到 <code>file</code> 輸入元素。</p>
+<p><a name="pressing-buttons"></a></p>
+<h3>按鈕點擊</h3>
+<p>使用 <code>press</code> 方法點擊按鈕元素。使用 <code>pressAndWaitFor</code> 方法點擊按鈕並等待其重新啟用。</p>
+<p><a name="clicking-links"></a></p>
+<h3>點擊連結</h3>
+<p>使用 <code>clickLink</code> 方法點擊具有給定顯示文字的連結。使用 <code>seeLink</code> 方法檢查連結是否可見。</p>
+<p><a name="using-the-keyboard"></a></p>
+<h3>使用鍵盤</h3>
+<p>使用 <code>keys</code> 方法提供複雜的輸入序列。使用 <code>withKeyboard</code> 方法進行流暢的鍵盤互動。使用 <code>Keyboard::macro</code> 定義自訂鍵盤巨集。</p>
+<p><a name="using-the-mouse"></a></p>
+<h3>使用滑鼠</h3>
+<p>Dusk 提供了 <code>click</code>、<code>clickAtXPath</code>、<code>clickAtPoint</code>、<code>doubleClick</code>、<code>rightClick</code>、<code>clickAndHold</code>、<code>controlClick</code>、<code>clickWhenVisible</code>、<code>mouseover</code>、<code>drag</code> 等滑鼠互動方法。</p>
+<p><a name="javascript-dialogs"></a></p>
+<h3>JavaScript 對話框</h3>
+<p>使用 <code>waitForDialog</code> 等待對話框出現。使用 <code>assertDialogOpened</code> 斷言對話框已顯示。使用 <code>typeInDialog</code>、<code>acceptDialog</code> 和 <code>dismissDialog</code> 與對話框互動。</p>
+<p><a name="interacting-with-iframes"></a></p>
+<h3>與內聯框架互動</h3>
+<p>使用 <code>withinFrame</code> 方法與 iframe 內的元素互動。</p>
+<p><a name="scoping-selectors"></a></p>
+<h3>範圍限定選擇器</h3>
+<p>使用 <code>with</code> 方法將操作範圍限定在給定選擇器內。使用 <code>elsewhere</code> 和 <code>elsewhereWhenAvailable</code> 在當前範圍外執行斷言。</p>
+<p><a name="waiting-for-elements"></a></p>
+<h3>等待元素</h3>
+<p>Dusk 提供了多種等待方法：<code>pause</code>、<code>waitFor</code>、<code>waitForText</code>、<code>waitForTextIn</code>、<code>waitForLink</code>、<code>waitForInput</code>、<code>waitForLocation</code>、<code>waitForRoute</code>、<code>waitForReload</code>、<code>waitUntil</code>、<code>waitUntilMissing</code>、<code>waitUntilEnabled</code>、<code>waitUntilDisabled</code>、<code>waitUntilMissingText</code> 和 <code>whenAvailable</code>。</p>
+<p><a name="available-assertions"></a></p>
+<h2>可用斷言</h2>
+<p>Dusk 提供了豐富的斷言方法，包括 <code>assertTitle</code>、<code>assertTitleContains</code>、<code>assertUrlIs</code>、<code>assertSchemeIs</code>、<code>assertHostIs</code>、<code>assertPortIs</code>、<code>assertPathIs</code>、<code>assertPathBeginsWith</code>、<code>assertQueryStringHas</code>、<code>assertQueryStringMissing</code>、<code>assertFragmentIs</code>、<code>assertFragmentBeginsWith</code>、<code>assertRouteIs</code>、<code>assertSee</code>、<code>assertDontSee</code>、<code>assertSeeIn</code>、<code>assertDontSeeIn</code>、<code>assertSeeAnythingIn</code>、<code>assertSeeNothingIn</code>、<code>assertScript</code>、<code>assertSourceHas</code>、<code>assertSourceMissing</code>、<code>assertLinkPresent</code>、<code>assertLinkNotPresent</code>、<code>assertInputPresent</code>、<code>assertInputMissing</code>、<code>assertChecked</code>、<code>assertNotChecked</code>、<code>assertRadioSelected</code>、<code>assertRadioNotSelected</code>、<code>assertSelected</code>、<code>assertNotSelected</code>、<code>assertSelectHasOptions</code>、<code>assertSelectMissingOptions</code>、<code>assertSelectHasOption</code>、<code>assertSelectMissingOption</code>、<code>assertValue</code>、<code>assertAttribute</code>、<code>assertAriaAttribute</code>、<code>assertDataAttribute</code>、<code>assertVisible</code>、<code>assertPresent</code>、<code>assertNotPresent</code>、<code>assertMissing</code>、<code>assertInputValue</code>、<code>assertInputValueIsNot</code>、<code>assertDialogOpened</code>、<code>assertEnabled</code>、<code>assertDisabled</code>、<code>assertButtonEnabled</code>、<code>assertButtonDisabled</code>、<code>assertFocused</code>、<code>assertNotFocused</code>、<code>assertAuthenticated</code>、<code>assertGuest</code>、<code>assertAuthenticatedAs</code>、<code>assertVue</code>、<code>assertVueIsNot</code>、<code>assertVueContains</code>、<code>assertVueDoesNotContain</code> 等。</p>
+<p><a name="pages"></a></p>
+<h2>頁面</h2>
+<p>頁面允許您使用操作方法定義常見選擇器，從而在多個測試中輕鬆重用。使用 <code>dusk:page</code> Artisan 命令產生頁面。</p>
+<p><a name="components"></a></p>
+<h2>元件</h2>
+<p>元件類似於頁面，但用於在導航欄或通知等 UI 片段上建立可重用的測試功能。使用 <code>dusk:component</code> Artisan 命令產生元件。</p>
+<p><a name="continuous-integration"></a></p>
+<h2>持續整合</h2>
+<p>Dusk 可以在 Heroku CI、Travis CI、GitHub Actions 和 Chipper CI 等持續整合平台上執行。配置 CI 環境時，需要安裝 Chrome 瀏覽器並啟動 ChromeDriver。</p>
+`;
+---
+
+<DocsLayout title="Laravel Dusk" currentPath="dusk">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Dusk</span>
+    </nav>
+    <h1 class="text-4xl font-bold mb-4">Laravel Dusk</h1>
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/dusk" class="text-accent" target="_blank" rel="noopener">查看原始英文版本</a>
+      </p>
+    </div>
+  </div>
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

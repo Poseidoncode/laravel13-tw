@@ -1,0 +1,614 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>HTTP 請求</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#interacting-with-the-request">與請求互動</a><ul>
+<li><a href="#accessing-the-request">存取請求</a></li>
+<li><a href="#request-path-and-method">請求路徑、主機和方法</a></li>
+<li><a href="#request-headers">請求頁頭</a></li>
+<li><a href="#request-ip-address">請求 IP 位址</a></li>
+<li><a href="#content-negotiation">內容協商</a></li>
+<li><a href="#psr7-requests">PSR-7 請求</a></li>
+</ul>
+</li>
+<li><a href="#input">輸入</a><ul>
+<li><a href="#retrieving-input">檢索輸入</a></li>
+<li><a href="#input-presence">輸入存在性</a></li>
+<li><a href="#merging-additional-input">合併額外輸入</a></li>
+<li><a href="#old-input">舊輸入</a></li>
+<li><a href="#cookies">Cookies</a></li>
+<li><a href="#input-trimming-and-normalization">輸入修剪和標準化</a></li>
+</ul>
+</li>
+<li><a href="#files">檔案</a><ul>
+<li><a href="#retrieving-uploaded-files">檢索上傳的檔案</a></li>
+<li><a href="#storing-uploaded-files">儲存上傳的檔案</a></li>
+</ul>
+</li>
+<li><a href="#configuring-trusted-proxies">配置可信代理</a></li>
+<li><a href="#configuring-trusted-hosts">配置可信主機</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 的 <code>Illuminate\\Http\\Request</code> 類別提供了一種面向物件的方式來與應用程式處理的當前 HTTP 請求互動，並檢索隨請求提交的輸入、Cookie 和檔案。</p>
+<p><a name="interacting-with-the-request"></a></p>
+<h2>與請求互動</h2>
+<p><a name="accessing-the-request"></a></p>
+<h3>存取請求</h3>
+<p>要透過依賴注入取得當前 HTTP 請求的實例，您應該在路由閉包或控制器方法上鍵入提示 <code>Illuminate\\Http\\Request</code> 類別。傳入的請求實例將自動由 Laravel <a href="/docs/container">服務容器</a>注入：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+
+class UserController extends Controller
+{
+    /**
+     * 儲存一個新的使用者。
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $name = $request->input('name');
+
+        // 儲存使用者...
+
+        return redirect('/users');
+    }
+}
+</code></pre>
+<p>如前所述，您還可以在路由閉包上鍵入提示 <code>Illuminate\\Http\\Request</code> 類別。當閉包執行時，服務容器將自動將傳入的請求注入到閉包中：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get('/', function (Request $request) {
+    // ...
+});
+</code></pre>
+<p><a name="dependency-injection-route-parameters"></a></p>
+<h4>依賴注入和路由參數</h4>
+<p>如果您的控制器方法還期望從路由參數獲取輸入，則應在其他依賴之後列出路由參數。例如，如果您的路由定義如下：</p>
+<pre><code class="language-php">use App\\Http\\Controllers\\UserController;
+
+Route::put('/user/{id}', [UserController::class, 'update']);
+</code></pre>
+<p>您仍然可以透過以下方式定義控制器方法來鍵入提示 <code>Illuminate\\Http\\Request</code> 並存取您的 <code>id</code> 路由參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Illuminate\\Http\\RedirectResponse;
+use Illuminate\\Http\\Request;
+
+class UserController extends Controller
+{
+    /**
+     * 更新指定的使用者。
+     */
+    public function update(Request $request, string $id): RedirectResponse
+    {
+        // 更新使用者...
+
+        return redirect('/users');
+    }
+}
+</code></pre>
+<p><a name="request-path-and-method"></a></p>
+<h3>請求路徑、主機和方法</h3>
+<p><code>Illuminate\\Http\\Request</code> 實例提供了多種用於檢查傳入 HTTP 請求的方法，並擴展了 <code>Symfony\\Component\\HttpFoundation\\Request</code> 類別。我們將在下面討論一些最重要的方法。</p>
+<p><a name="retrieving-the-request-path"></a></p>
+<h4>檢索請求路徑</h4>
+<p><code>path</code> 方法返回請求的路徑資訊。因此，如果傳入的請求指向 <code>http://example.com/foo/bar</code>，<code>path</code> 方法將返回 <code>foo/bar</code>：</p>
+<pre><code class="language-php">$uri = $request->path();
+</code></pre>
+<p><a name="inspecting-the-request-path"></a></p>
+<h4>檢查請求路徑/路由</h4>
+<p><code>is</code> 方法允許您驗證傳入的請求路徑是否匹配給定的模式。使用此方法時，您可以使用 <code>*</code> 字元作為萬用字元：</p>
+<pre><code class="language-php">if ($request->is('admin/*')) {
+    // ...
+}
+</code></pre>
+<p>使用 <code>routeIs</code> 方法，您可以判斷傳入的請求是否匹配<a href="/docs/routing#named-routes">命名路由</a>：</p>
+<pre><code class="language-php">if ($request->routeIs('admin.*')) {
+    // ...
+}
+</code></pre>
+<p><a name="retrieving-the-request-url"></a></p>
+<h4>檢索請求 URL</h4>
+<p>要檢索傳入請求的完整 URL，您可以使用 <code>url</code> 或 <code>fullUrl</code> 方法。<code>url</code> 方法將返回不帶查詢字串的 URL，而 <code>fullUrl</code> 方法包含查詢字串：</p>
+<pre><code class="language-php">$url = $request->url();
+
+$urlWithQueryString = $request->fullUrl();
+</code></pre>
+<p>如果您希望向當前 URL 附加查詢字串資料，可以呼叫 <code>fullUrlWithQuery</code> 方法。此方法將給定的查詢字串變數陣列與當前查詢字串合併：</p>
+<pre><code class="language-php">$request->fullUrlWithQuery(['type' => 'phone']);
+</code></pre>
+<p>如果您希望在沒有給定查詢字串參數的情況下取得當前 URL，可以使用 <code>fullUrlWithoutQuery</code> 方法：</p>
+<pre><code class="language-php">$request->fullUrlWithoutQuery(['type']);
+</code></pre>
+<p><a name="retrieving-the-request-host"></a></p>
+<h4>檢索請求主機</h4>
+<p>您可以透過 <code>host</code>、<code>httpHost</code> 和 <code>schemeAndHttpHost</code> 方法來檢索傳入請求的「主機」：</p>
+<pre><code class="language-php">// http://localhost:8000
+$request->host(); // localhost
+$request->httpHost(); // localhost:8000
+$request->schemeAndHttpHost(); // http://localhost:8000
+</code></pre>
+<p><a name="retrieving-the-request-method"></a></p>
+<h4>檢索請求方法</h4>
+<p><code>method</code> 方法將返回請求的 HTTP 動詞。您可以使用 <code>isMethod</code> 方法來驗證 HTTP 動詞是否匹配給定的字串：</p>
+<pre><code class="language-php">$method = $request->method();
+
+if ($request->isMethod('post')) {
+    // ...
+}
+</code></pre>
+<p><a name="request-headers"></a></p>
+<h3>請求頁頭</h3>
+<p>您可以使用 <code>header</code> 方法從 <code>Illuminate\\Http Request</code> 實例中檢索請求頁頭。如果請求中沒有該頁頭，將返回 <code>null</code>。但是，<code>header</code> 方法接受一個可選的第二個參數，如果請求中沒有該頁頭，則返回該參數：</p>
+<pre><code class="language-php">$value = $request->header('X-Header-Name');
+
+$value = $request->header('X-Header-Name', 'default');
+</code></pre>
+<p><code>hasHeader</code> 方法可用於判斷請求是否包含給定的頁頭：</p>
+<pre><code class="language-php">if ($request->hasHeader('X-Header-Name')) {
+    // ...
+}
+</code></pre>
+<p>為了方便，<code>bearerToken</code> 方法可用於從 <code>Authorization</code> 頁頭中檢索一個 bearer 令牌。如果沒有此頁頭，將返回一個空字串：</p>
+<pre><code class="language-php">$token = $request->bearerToken();
+</code></pre>
+<p><a name="request-ip-address"></a></p>
+<h3>請求 IP 位址</h3>
+<p><code>ip</code> 方法可用於檢索向您的應用程式發出請求的客戶端的 IP 位址：</p>
+<pre><code class="language-php">$ipAddress = $request->ip();
+</code></pre>
+<p>如果您希望檢索一個 IP 位址陣列，包括由代理轉發的所有客戶端 IP 位址，可以使用 <code>ips</code> 方法。「原始」客戶端 IP 位址將位於陣列的末尾：</p>
+<pre><code class="language-php">$ipAddresses = $request->ips();
+</code></pre>
+<p>一般來說，IP 位址應被視為不可信的、使用者控制的輸入，僅用於提供資訊。</p>
+<p><a name="content-negotiation"></a></p>
+<h3>內容協商</h3>
+<p>Laravel 提供了多種方法來透過 <code>Accept</code> 頁頭檢查傳入請求的請求內容類型。首先，<code>getAcceptableContentTypes</code> 方法將返回一個包含請求接受的所有內容類型的陣列：</p>
+<pre><code class="language-php">$contentTypes = $request->getAcceptableContentTypes();
+</code></pre>
+<p><code>accepts</code> 方法接受一個內容類型陣列，如果請求接受任何內容類型，則返回 <code>true</code>。否則，將返回 <code>false</code>：</p>
+<pre><code class="language-php">if ($request->accepts(['text/html', 'application/json'])) {
+    // ...
+}
+</code></pre>
+<p>您可以使用 <code>prefers</code> 方法來判斷給定內容類型陣列中哪個內容類型是請求最首選的。如果請求不接受任何給定的內容類型，將返回 <code>null</code>：</p>
+<pre><code class="language-php">$preferred = $request->prefers(['text/html', 'application/json']);
+</code></pre>
+<p>由於許多應用程式只提供 HTML 或 JSON，您可以使用 <code>expectsJson</code> 方法來快速判斷傳入的請求是否期望 JSON 回應：</p>
+<pre><code class="language-php">if ($request->expectsJson()) {
+    // ...
+}
+</code></pre>
+<p>如果您需要判斷請求是特別首選 Markdown 還是接受 Markdown 以及其他內容類型（例如在為 AI 代理或其他消費 Markdown 回應的客戶端提供服務時），可以使用 <code>wantsMarkdown</code> 和 <code>acceptsMarkdown</code> 方法：</p>
+<pre><code class="language-php">if ($request->wantsMarkdown()) {
+    // 客戶端最首選的內容類型是 text/markdown...
+}
+
+if ($request->acceptsMarkdown()) {
+    // 客戶端接受 Markdown 回應...
+}
+</code></pre>
+<p><a name="psr7-requests"></a></p>
+<h3>PSR-7 請求</h3>
+<p><a href="https://www.php-fig.org/psr/psr-7/">PSR-7 標準</a>指定了 HTTP 訊息的介面，包括請求和回應。如果您希望取得 PSR-7 請求的實例而不是 Laravel 請求，您首先需要安裝一些函式庫。Laravel 使用 <em>Symfony HTTP Message Bridge</em> 元件將典型的 Laravel 請求和回應轉換為 PSR-7 相容的實現：</p>
+<pre><code class="language-shell">composer require symfony/psr-http-message-bridge
+composer require nyholm/psr7
+</code></pre>
+<p>安裝這些函式庫後，您可以透過在路由閉包或控制器方法上鍵入提示請求介面來取得 PSR-7 請求：</p>
+<pre><code class="language-php">use Psr\\Http\\Message\\ServerRequestInterface;
+
+Route::get('/', function (ServerRequestInterface $request) {
+    // ...
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您從路由或控制器返回一個 PSR-7 回應實例，它將自動被轉換回 Laravel 回應實例並由框架顯示。</p>
+</blockquote>
+<p><a name="input"></a></p>
+<h2>輸入</h2>
+<p><a name="retrieving-input"></a></p>
+<h3>檢索輸入</h3>
+<p><a name="retrieving-all-input-data"></a></p>
+<h4>檢索所有輸入資料</h4>
+<p>您可以使用 <code>all</code> 方法將所有傳入請求的輸入資料作為一個 <code>array</code> 檢索。無論傳入請求是來自 HTML 表單還是 XHR 請求，都可以使用此方法：</p>
+<pre><code class="language-php">$input = $request->all();
+</code></pre>
+<p>使用 <code>collect</code> 方法，您可以將所有傳入請求的輸入資料作為一個<a href="/docs/collections">集合</a>來檢索：</p>
+<pre><code class="language-php">$input = $request->collect();
+</code></pre>
+<p><code>collect</code> 方法還允許您將傳入請求輸入的子集作為集合來檢索：</p>
+<pre><code class="language-php">$request->collect('users')->each(function (string $user) {
+    // ...
+});
+</code></pre>
+<p><a name="retrieving-an-input-value"></a></p>
+<h4>檢索輸入值</h4>
+<p>使用一些簡單的方法，您可以從 <code>Illuminate\\Http\\Request</code> 實例中存取所有使用者輸入，而無需擔心使用了哪個 HTTP 動詞。無論 HTTP 動詞如何，都可以使用 <code>input</code> 方法來檢索使用者輸入：</p>
+<pre><code class="language-php">$name = $request->input('name');
+</code></pre>
+<p>您可以將預設值作為第二個參數傳遞給 <code>input</code> 方法。如果請求中不存在請求的輸入值，將返回此值：</p>
+<pre><code class="language-php">$name = $request->input('name', 'Sally');
+</code></pre>
+<p>使用包含陣列輸入的表單時，請使用「點」記法來存取陣列：</p>
+<pre><code class="language-php">$name = $request->input('products.0.name');
+
+$names = $request->input('products.*.name');
+</code></pre>
+<p>您可以不帶任何參數地呼叫 <code>input</code> 方法來將所有輸入值作為關聯陣列檢索：</p>
+<pre><code class="language-php">$input = $request->input();
+</code></pre>
+<p><a name="retrieving-input-from-the-query-string"></a></p>
+<h4>從查詢字串檢索輸入</h4>
+<p>雖然 <code>input</code> 方法從整個請求負載（包括查詢字串）中檢索值，但 <code>query</code> 方法將只從查詢字串中檢索值：</p>
+<pre><code class="language-php">$name = $request->query('name');
+</code></pre>
+<p>如果請求的查詢字串值資料不存在，將返回此方法的第二個參數：</p>
+<pre><code class="language-php">$name = $request->query('name', 'Helen');
+</code></pre>
+<p>您可以不帶任何參數地呼叫 <code>query</code> 方法來將所有查詢字串值作為關聯陣列檢索：</p>
+<pre><code class="language-php">$query = $request->query();
+</code></pre>
+<p><a name="retrieving-json-input-values"></a></p>
+<h4>檢索 JSON 輸入值</h4>
+<p>向應用程式發送 JSON 請求時，只要請求的 <code>Content-Type</code> 頁頭正確設定為 <code>application/json</code>，您就可以透過 <code>input</code> 方法存取 JSON 資料。您甚至可以使用「點」語法來檢索嵌套在 JSON 陣列/物件中的值：</p>
+<pre><code class="language-php">$name = $request->input('user.name');
+</code></pre>
+<p><a name="retrieving-stringable-input-values"></a></p>
+<h4>檢索可字串化輸入值</h4>
+<p>與其將請求的輸入資料作為原始 <code>string</code> 檢索，您可以使用 <code>string</code> 方法將請求資料作為 <a href="/docs/strings">Illuminate\\Support\\Stringable</a> 的實例來檢索：</p>
+<pre><code class="language-php">$name = $request->string('name')->trim();
+</code></pre>
+<p><a name="retrieving-integer-input-values"></a></p>
+<h4>檢索整數輸入值</h4>
+<p>要將輸入值作為整數檢索，您可以使用 <code>integer</code> 方法。此方法將嘗試將輸入值轉型為整數。如果輸入不存在或轉型失敗，將返回您指定的預設值。這對於分頁或其他數值輸入特別有用：</p>
+<pre><code class="language-php">$perPage = $request->integer('per_page');
+</code></pre>
+<p><a name="retrieving-boolean-input-values"></a></p>
+<h4>檢索布林輸入值</h4>
+<p>處理像複選框這樣的 HTML 元素時，您的應用程式可能會收到實際為字串的「真值」。例如，「true」或「on」。為了方便，您可以使用 <code>boolean</code> 方法將這些值作為布林值檢索。對於 1、「1」、true、「true」、「on」和「yes」，<code>boolean</code> 方法返回 <code>true</code>。所有其他值將返回 <code>false</code>：</p>
+<pre><code class="language-php">$archived = $request->boolean('archived');
+</code></pre>
+<p><a name="retrieving-array-input-values"></a></p>
+<h4>檢索陣列輸入值</h4>
+<p>可以使用 <code>array</code> 方法檢索包含陣列的輸入值。此方法將始終將輸入值轉型為陣列。如果請求不包含具有給定名稱的輸入值，將返回一個空陣列：</p>
+<pre><code class="language-php">$versions = $request->array('versions');
+</code></pre>
+<p><a name="retrieving-date-input-values"></a></p>
+<h4>檢索日期輸入值</h4>
+<p>為了方便，可以使用 <code>date</code> 方法將包含日期/時間的輸入值作為 Carbon 實例檢索。如果請求不包含具有給定名稱的輸入值，將返回 <code>null</code>：</p>
+<pre><code class="language-php">$birthday = $request->date('birthday');
+</code></pre>
+<p><code>date</code> 方法接受的第二個和第三個參數分別用於指定日期的格式和時區：</p>
+<pre><code class="language-php">$elapsed = $request->date('elapsed', '!H:i', 'Europe/Madrid');
+</code></pre>
+<p>如果輸入值存在但格式無效，將拋出 <code>InvalidArgumentException</code>；因此，建議在呼叫 <code>date</code> 方法之前驗證輸入。</p>
+<p><a name="retrieving-interval-input-values"></a></p>
+<h4>檢索間隔輸入值</h4>
+<p>可以使用 <code>interval</code> 方法將包含持續時間的輸入值作為 <code>CarbonInterval</code> 實例檢索。如果請求不包含具有給定名稱的輸入值，將返回 <code>null</code>：</p>
+<pre><code class="language-php">$duration = $request->interval('duration');
+</code></pre>
+<p>如果輸入值是數值的，您可以提供一個單位作為第二個參數。該單位可以是一個字串（例如 <code>second</code>、<code>minute</code> 或 <code>day</code>），也可以是一個 <code>Carbon\\Unit</code> 列舉實例：</p>
+<pre><code class="language-php">use Carbon\\Unit;
+
+$timeout = $request->interval('timeout', 'second');
+
+$delay = $request->interval('delay', Unit::Minute);
+</code></pre>
+<p>如果輸入值存在但格式無效，將拋出 <code>InvalidArgumentException</code>；因此，建議在呼叫 <code>interval</code> 方法之前驗證輸入。</p>
+<p><a name="retrieving-enum-input-values"></a></p>
+<h4>檢索列舉輸入值</h4>
+<p>對應於 <a href="https://www.php.net/manual/en/language.types.enumerations.php">PHP 列舉</a>的輸入值也可以從請求中檢索。如果請求不包含具有給定名稱的輸入值，或者列舉沒有與輸入值匹配的支援值，將返回 <code>null</code>。<code>enum</code> 方法分別接受輸入值的名稱和列舉類別作為其第一個和第二個參數：</p>
+<pre><code class="language-php">use App\\Enums\\Status;
+
+$status = $request->enum('status', Status::class);
+</code></pre>
+<p>您還可以提供一個預設值，如果值缺失或無效則返回該值：</p>
+<pre><code class="language-php">$status = $request->enum('status', Status::class, Status::Pending);
+</code></pre>
+<p>如果輸入值是對應於 PHP 列舉的值陣列，您可以使用 <code>enums</code> 方法將值陣列作為列舉實例檢索：</p>
+<pre><code class="language-php">use App\\Enums\\Product;
+
+$products = $request->enums('products', Product::class);
+</code></pre>
+<p><a name="retrieving-input-via-dynamic-properties"></a></p>
+<h4>透過動態屬性檢索輸入</h4>
+<p>您還可以使用 <code>Illuminate\\Http\\Request</code> 實例上的動態屬性來存取使用者輸入。例如，如果應用程式的其中一個表單包含一個 <code>name</code> 欄位，您可以像這樣存取該欄位的值：</p>
+<pre><code class="language-php">$name = $request->name;
+</code></pre>
+<p>使用動態屬性時，Laravel 將首先在請求負載中尋找參數的值。如果不存在，Laravel 將在匹配路由的參數中搜尋該欄位。</p>
+<p><a name="retrieving-a-portion-of-the-input-data"></a></p>
+<h4>檢索部分輸入資料</h4>
+<p>如果您需要檢索輸入資料的子集，可以使用 <code>only</code> 和 <code>except</code> 方法。這兩個方法都接受一個單一 <code>array</code> 或動態參數列表：</p>
+<pre><code class="language-php">$input = $request->only(['username', 'password']);
+
+$input = $request->only('username', 'password');
+
+$input = $request->except(['credit_card']);
+
+$input = $request->except('credit_card');
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+<code>only</code> 方法返回您請求的所有鍵/值對；但是，它不會返回請求中不存在的鍵/值對。</p>
+</blockquote>
+<p><a name="input-presence"></a></p>
+<h3>輸入存在性</h3>
+<p>您可以使用 <code>has</code> 方法來判斷請求中是否存在某個值。如果請求中存在該值，<code>has</code> 方法將返回 <code>true</code>：</p>
+<pre><code class="language-php">if ($request->has('name')) {
+    // ...
+}
+</code></pre>
+<p>當給定一個陣列時，<code>has</code> 方法將判斷所有指定的值是否存在：</p>
+<pre><code class="language-php">if ($request->has(['name', 'email'])) {
+    // ...
+}
+</code></pre>
+<p><code>hasAny</code> 方法在任何指定的值存在時返回 <code>true</code>：</p>
+<pre><code class="language-php">if ($request->hasAny(['name', 'email'])) {
+    // ...
+}
+</code></pre>
+<p><code>whenHas</code> 方法將在請求中存在某個值時執行給定的閉包：</p>
+<pre><code class="language-php">$request->whenHas('name', function (string $input) {
+    // ...
+});
+</code></pre>
+<p>可以向 <code>whenHas</code> 方法傳遞第二個閉包，如果指定的值不存在於請求中，則執行該閉包：</p>
+<pre><code class="language-php">$request->whenHas('name', function (string $input) {
+    // 「name」值存在...
+}, function () {
+    // 「name」值不存在...
+});
+</code></pre>
+<p>如果您希望判斷請求中是否存在某個值且不是空字串，可以使用 <code>filled</code> 方法：</p>
+<pre><code class="language-php">if ($request->filled('name')) {
+    // ...
+}
+</code></pre>
+<p>如果您希望判斷請求中是否缺少某個值或者是空字串，可以使用 <code>isNotFilled</code> 方法：</p>
+<pre><code class="language-php">if ($request->isNotFilled('name')) {
+    // ...
+}
+</code></pre>
+<p>當給定一個陣列時，<code>isNotFilled</code> 方法將判斷所有指定的值是否缺失或為空：</p>
+<pre><code class="language-php">if ($request->isNotFilled(['name', 'email'])) {
+    // ...
+}
+</code></pre>
+<p><code>anyFilled</code> 方法在任何指定的值不是空字串時返回 <code>true</code>：</p>
+<pre><code class="language-php">if ($request->anyFilled(['name', 'email'])) {
+    // ...
+}
+</code></pre>
+<p><code>whenFilled</code> 方法將在請求中存在某個值且不是空字串時執行給定的閉包：</p>
+<pre><code class="language-php">$request->whenFilled('name', function (string $input) {
+    // ...
+});
+</code></pre>
+<p>可以向 <code>whenFilled</code> 方法傳遞第二個閉包，如果指定的值不是「已填寫」的，則執行該閉包：</p>
+<pre><code class="language-php">$request->whenFilled('name', function (string $input) {
+    // 「name」值已填寫...
+}, function () {
+    // 「name」值未填寫...
+});
+</code></pre>
+<p>要判斷請求中是否缺少給定的鍵，可以使用 <code>missing</code> 和 <code>whenMissing</code> 方法：</p>
+<pre><code class="language-php">if ($request->missing('name')) {
+    // ...
+}
+
+$request->whenMissing('name', function () {
+    // 「name」值缺失...
+}, function () {
+    // 「name」值存在...
+});
+</code></pre>
+<p><a name="merging-additional-input"></a></p>
+<h3>合併額外輸入</h3>
+<p>有時您可能需要手動將額外輸入合併到請求的現有輸入資料中。為此，您可以使用 <code>merge</code> 方法。如果給定的輸入鍵已存在於請求中，它將被提供給 <code>merge</code> 方法的資料覆蓋：</p>
+<pre><code class="language-php">$request->merge(['votes' => 0]);
+</code></pre>
+<p><code>mergeIfMissing</code> 方法可用於在對應的鍵不存在於請求的輸入資料中時將輸入合併到請求中：</p>
+<pre><code class="language-php">$request->mergeIfMissing(['votes' => 0]);
+</code></pre>
+<p><a name="old-input"></a></p>
+<h3>舊輸入</h3>
+<p>Laravel 允許您在下一個請求期間保留來自一個請求的輸入。此功能對於在偵測到驗證錯誤後重新填充表單特別有用。但是，如果您正在使用 Laravel 的<a href="/docs/validation">驗證功能</a>，您可能不需要手動直接使用這些會話輸入閃現方法，因為 Laravel 的一些內建驗證設施將自動呼叫它們。</p>
+<p><a name="flashing-input-to-the-session"></a></p>
+<h4>將輸入閃現到會話</h4>
+<p><code>Illuminate\\Http\\Request</code> 類別上的 <code>flash</code> 方法將當前輸入閃現到<a href="/docs/session">會話</a>中，以便在使用者對應用程式的下一個請求期間可用：</p>
+<pre><code class="language-php">$request->flash();
+</code></pre>
+<p>您還可以使用 <code>flashOnly</code> 和 <code>flashExcept</code> 方法將請求資料的子集閃現到會話中。這些方法對於將敏感資訊（如密碼）排除在會話之外很有用：</p>
+<pre><code class="language-php">$request->flashOnly(['username', 'email']);
+
+$request->flashExcept('password');
+</code></pre>
+<p><a name="flashing-input-then-redirecting"></a></p>
+<h4>閃現輸入然後重定向</h4>
+<p>由於您通常希望將輸入閃現到會話中然後重定向到上一頁，您可以使用 <code>withInput</code> 方法輕鬆地將輸入閃現鏈式到重定向上：</p>
+<pre><code class="language-php">return redirect('/form')->withInput();
+
+return redirect()->route('user.create')->withInput();
+
+return redirect('/form')->withInput(
+    $request->except('password')
+);
+</code></pre>
+<p><a name="retrieving-old-input"></a></p>
+<h4>檢索舊輸入</h4>
+<p>要從上一個請求中檢索閃現的輸入，請在 <code>Illuminate\\Http\\Request</code> 的實例上呼叫 <code>old</code> 方法。<code>old</code> 方法將從<a href="/docs/session">會話</a>中拉取先前閃現的輸入資料：</p>
+<pre><code class="language-php">$username = $request->old('username');
+</code></pre>
+<p>Laravel 還提供了一個全域 <code>old</code> 輔助函數。如果您正在<a href="/docs/blade">Blade 範本</a>中顯示舊輸入，使用 <code>old</code> 輔助函數來重新填充表單會更方便。如果給定的欄位沒有舊輸入，將返回 <code>null</code>：</p>
+<pre><code class="language-blade">&lt;input type="text" name="username" value="{{ old('username') }}"&gt;
+</code></pre>
+<p><a name="cookies"></a></p>
+<h3>Cookies</h3>
+<p><a name="retrieving-cookies-from-requests"></a></p>
+<h4>從請求中檢索 Cookies</h4>
+<p>Laravel 框架創建的所有 Cookie 都是加密的，並使用認證碼簽署，這意味著如果它們被客戶端更改，它們將被視為無效。要從請求中檢索 Cookie 值，請使用 <code>Illuminate\\Http\\Request</code> 實例上的 <code>cookie</code> 方法：</p>
+<pre><code class="language-php">$value = $request->cookie('name');
+</code></pre>
+<p><a name="input-trimming-and-normalization"></a></p>
+<h2>輸入修剪和標準化</h2>
+<p>預設情況下，Laravel 在應用程式的全域中介層堆疊中包含 <code>Illuminate\\Foundation\\Http\\Middleware\\TrimStrings</code> 和 <code>Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull</code> 中介層。這些中介層將自動修剪請求上的所有傳入字串欄位，以及將任何空字串欄位轉換為 <code>null</code>。這使您無需在路由和控制器中擔心這些標準化問題。</p>
+<h4>禁用輸入標準化</h4>
+<p>如果您希望為所有請求禁用此行為，可以透過在應用程式的 <code>bootstrap/app.php</code> 檔案中呼叫 <code>$middleware->remove</code> 方法從應用程式的中介層堆疊中移除這兩個中介層：</p>
+<pre><code class="language-php">use Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull;
+use Illuminate\\Foundation\\Http\\Middleware\\TrimStrings;
+
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->remove([
+        ConvertEmptyStringsToNull::class,
+        TrimStrings::class,
+    ]);
+})
+</code></pre>
+<p>如果您希望為應用程式的一部分請求禁用字串修剪和空字串轉換，可以在應用程式的 <code>bootstrap/app.php</code> 檔案中使用 <code>trimStrings</code> 和 <code>convertEmptyStringsToNull</code> 中介層方法。這兩個方法都接受一個閉包陣列，應返回 <code>true</code> 或 <code>false</code> 以指示是否應跳過輸入標準化：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->convertEmptyStringsToNull(except: [
+        fn (Request $request) => $request->is('admin/*'),
+    ]);
+
+    $middleware->trimStrings(except: [
+        fn (Request $request) => $request->is('admin/*'),
+    ]);
+})
+</code></pre>
+<p><a name="files"></a></p>
+<h2>檔案</h2>
+<p><a name="retrieving-uploaded-files"></a></p>
+<h3>檢索上傳的檔案</h3>
+<p>您可以使用 <code>file</code> 方法或使用動態屬性從 <code>Illuminate\\Http\\Request</code> 實例中檢索上傳的檔案。<code>file</code> 方法返回 <code>Illuminate\\Http\\UploadedFile</code> 類別的實例，該類別擴展了 PHP 的 <code>SplFileInfo</code> 類別，並提供了多種用於與檔案互動的方法：</p>
+<pre><code class="language-php">$file = $request->file('photo');
+
+$file = $request->photo;
+</code></pre>
+<p>您可以使用 <code>hasFile</code> 方法來判斷請求中是否存在檔案：</p>
+<pre><code class="language-php">if ($request->hasFile('photo')) {
+    // ...
+}
+</code></pre>
+<p><a name="validating-successful-uploads"></a></p>
+<h4>驗證成功的上傳</h4>
+<p>除了檢查檔案是否存在外，您還可以透過 <code>isValid</code> 方法驗證上傳檔案時是否沒有問題：</p>
+<pre><code class="language-php">if ($request->file('photo')->isValid()) {
+    // ...
+}
+</code></pre>
+<p><a name="file-paths-extensions"></a></p>
+<h4>檔案路徑和擴展名</h4>
+<p><code>UploadedFile</code> 類別還包含用於存取檔案的完全限定路徑及其擴展名的方法。<code>extension</code> 方法將嘗試根據檔案的內容來猜測檔案的擴展名。此擴展名可能與客戶端提供的擴展名不同：</p>
+<pre><code class="language-php">$path = $request->photo->path();
+
+$extension = $request->photo->extension();
+</code></pre>
+<p><a name="other-file-methods"></a></p>
+<h4>其他檔案方法</h4>
+<p><code>UploadedFile</code> 實例上還有各種其他方法。請查看<a href="https://github.com/symfony/symfony/blob/6.0/src/Symfony/Component/HttpFoundation/File/UploadedFile.php">該類別的 API 文檔</a>以了解更多有關這些方法的資訊。</p>
+<p><a name="storing-uploaded-files"></a></p>
+<h3>儲存上傳的檔案</h3>
+<p>要儲存上傳的檔案，您通常會使用已配置的<a href="/docs/filesystem">檔案系統</a>之一。<code>UploadedFile</code> 類別有一個 <code>store</code> 方法，該方法將把上傳的檔案移動到您的一個磁碟上，該磁碟可以是本地檔案系統上的位置，也可以是雲端儲存位置（如 Amazon S3）。</p>
+<p><code>store</code> 方法接受相對於檔案系統配置的根目錄的儲存路徑。此路徑不應包含檔名，因為將自動生成一個唯一代碼作為檔名。</p>
+<p><code>store</code> 方法還接受一個可選的第二個參數，用於指定應儲存檔案的磁碟名稱。該方法將返回相對於磁碟根目錄的檔案路徑：</p>
+<pre><code class="language-php">$path = $request->photo->store('images');
+
+$path = $request->photo->store('images', 's3');
+</code></pre>
+<p>如果您不希望自動生成檔名，可以使用 <code>storeAs</code> 方法，該方法接受路徑、檔名和磁碟名稱作為其參數：</p>
+<pre><code class="language-php">$path = $request->photo->storeAs('images', 'filename.jpg');
+
+$path = $request->photo->storeAs('images', 'filename.jpg', 's3');
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有關 Laravel 中檔案儲存的更多資訊，請查看完整的<a href="/docs/filesystem">檔案儲存文檔</a>。</p>
+</blockquote>
+<p><a name="configuring-trusted-proxies"></a></p>
+<h2>配置可信代理</h2>
+<p>在終止 TLS / SSL 憑證的負載平衡器後面運行應用程式時，您可能會注意到您的應用程式在使用 <code>url</code> 輔助函數時有時不會生成 HTTPS 連結。通常這是因為您的應用程式正在從負載平衡器的連接埠 80 轉發流量，並且不知道應該生成安全連結。</p>
+<p>要解決此問題，您可以啟用 Laravel 應用程式中包含的 <code>Illuminate\\Http\\Middleware\\TrustProxies</code> 中介層，它允許您快速自訂您的應用程式應信任的負載平衡器或代理。您的可信代理應使用應用程式 <code>bootstrap/app.php</code> 檔案中的 <code>trustProxies</code> 中介層方法指定：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustProxies(at: [
+        '192.168.1.1',
+        '10.0.0.0/8',
+    ]);
+})
+</code></pre>
+<p>除了配置可信代理外，您還可以配置應信任的代理頁頭：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR |
+        Request::HEADER_X_FORWARDED_HOST |
+        Request::HEADER_X_FORWARDED_PORT |
+        Request::HEADER_X_FORWARDED_PROTO |
+        Request::HEADER_X_FORWARDED_AWS_ELB
+    );
+})
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您正在使用 AWS Elastic Load Balancing，<code>headers</code> 值應為 <code>Request::HEADER_X_FORWARDED_AWS_ELB</code>。如果您的負載平衡器使用 <a href="https://www.rfc-editor.org/rfc/rfc7239#section-4">RFC 7239</a> 的標準 <code>Forwarded</code> 頁頭，<code>headers</code> 值應為 <code>Request::HEADER_FORWARDED</code>。有關 <code>headers</code> 值中可用常數的更多資訊，請查看 Symfony 關於<a href="https://symfony.com/doc/current/deployment/proxies.html">信任代理</a>的文檔。</p>
+</blockquote>
+<p><a name="trusting-all-proxies"></a></p>
+<h4>信任所有代理</h4>
+<p>如果您正在使用 Amazon AWS 或其他「雲端」負載平衡器提供者，您可能不知道實際負載平衡器的 IP 位址。在這種情況下，您可以使用 <code>*</code> 來信任所有代理：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustProxies(at: '*');
+})
+</code></pre>
+<p><a name="configuring-trusted-hosts"></a></p>
+<h2>配置可信主機</h2>
+<p>預設情況下，Laravel 將回應它收到的所有請求，無論 HTTP 請求的 <code>Host</code> 頁頭的內容如何。此外，<code>Host</code> 頁頭的值將在 Web 請求期間生成應用程式的絕對 URL 時使用。</p>
+<p>通常，您應該配置您的 Web 伺服器（如 Nginx 或 Apache），使其只向您的應用程式發送匹配給定主機名的請求。但是，如果您無法直接自訂 Web 伺服器，並且需要指示 Laravel 只回應某些主機名，可以透過為應用程式啟用 <code>Illuminate\\Http\\Middleware\\TrustHosts</code> 中介層來執行此操作。</p>
+<p>要啟用 <code>TrustHosts</code> 中介層，您應該在應用程式的 <code>bootstrap/app.php</code> 檔案中呼叫 <code>trustHosts</code> 中介層方法。使用此方法的 <code>at</code> 參數，您可以指定應用程式應回應的主機名。主機名字串被視為正則表達式。具有其他 <code>Host</code> 頁頭的傳入請求將被拒絕：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustHosts(at: ['^laravel\\.test$']);
+})
+</code></pre>
+<p>預設情況下，來自應用程式 URL 子網域的請求也會被自動信任。如果您希望禁用此行為，可以使用 <code>subdomains</code> 參數：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustHosts(at: ['^laravel\\.test$'], subdomains: false);
+})
+</code></pre>
+<p>如果您需要存取應用程式的配置檔案或資料庫來判斷您的可信主機，可以向 <code>at</code> 參數提供一個閉包：</p>
+<pre><code class="language-php">->withMiddleware(function (Middleware $middleware): void {
+    $middleware->trustHosts(at: fn () => config('app.trusted_hosts'));
+})
+</code></pre>
+`;
+---
+
+<DocsLayout title="請求" currentPath="requests">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>請求</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">HTTP 請求</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/requests" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

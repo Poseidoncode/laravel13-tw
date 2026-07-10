@@ -1,0 +1,172 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>貢獻指南</h1>
+<ul>
+<li><a href="#bug-reports">錯誤報告</a></li>
+<li><a href="#support-questions">技術支援問題</a></li>
+<li><a href="#core-development-discussion">核心開發討論</a></li>
+<li><a href="#which-branch">哪個分支？</a></li>
+<li><a href="#compiled-assets">編譯資源</a></li>
+<li><a href="#ai-generated-contributions">AI 生成的貢獻</a></li>
+<li><a href="#security-vulnerabilities">安全性漏洞</a></li>
+<li><a href="#coding-style">程式碼風格</a><ul>
+<li><a href="#phpdoc">PHPDoc</a></li>
+<li><a href="#styleci">StyleCI</a></li>
+</ul>
+</li>
+<li><a href="#code-of-conduct">行為準則</a></li>
+</ul>
+<p><a name="bug-reports"></a></p>
+<h2>錯誤報告</h2>
+<p>為了鼓勵積極協作，Laravel 強烈鼓勵拉取請求，而不僅僅是錯誤報告。拉取請求只有在標記為「準備好審查」（不在「草稿」狀態）且所有新功能的測試都通過時才會被審查。擱置的、非活動的拉取請求如果一直處於「草稿」狀態，將在幾天後被關閉。</p>
+<p>但是，如果您提交錯誤報告，您的問題應包含標題和問題的清晰描述。您還應包含盡可能多的相關資訊以及展示問題的程式碼範例。錯誤報告的目標是讓您自己和其他人都能輕鬆地複現錯誤並開發修復。</p>
+<p>請記住，錯誤報告的創建是為了讓其他遇到相同問題的人能夠與您協作解決它。不要期望錯誤報告會自動看到任何活動，或期望其他人會跳出來修復它。創建錯誤報告是為了幫助您自己和其他人開始解決問題。如果您想貢獻，您可以透過修復<a href="https://github.com/issues?q=is%3Aopen+is%3Aissue+label%3Abug+user%3Alaravel">我們問題追蹤器中列出的任何錯誤</a>來提供幫助。您必須使用 GitHub 進行身份驗證才能查看 Laravel 的所有問題。</p>
+<p>如果您在使用 Laravel 時注意到不當的 DocBlock、PHPStan 或 IDE 警告，請不要創建 GitHub 問題。相反，請提交拉取請求來修復問題。</p>
+<p>Laravel 原始碼在 GitHub 上管理，每個 Laravel 項目都有自己的儲存庫：</p>
+<div class="content-list" markdown="1"><ul>
+<li><a href="https://github.com/laravel/laravel">Laravel 應用程式</a></li>
+<li><a href="https://github.com/laravel/art">Laravel Art</a></li>
+<li><a href="https://github.com/laravel/boost">Laravel Boost</a></li>
+<li><a href="https://github.com/laravel/docs">Laravel 文檔</a></li>
+<li><a href="https://github.com/laravel/dusk">Laravel Dusk</a></li>
+<li><a href="https://github.com/laravel/cashier">Laravel Cashier Stripe</a></li>
+<li><a href="https://github.com/laravel/cashier-paddle">Laravel Cashier Paddle</a></li>
+<li><a href="https://github.com/laravel/echo">Laravel Echo</a></li>
+<li><a href="https://github.com/laravel/envoy">Laravel Envoy</a></li>
+<li><a href="https://github.com/laravel/folio">Laravel Folio</a></li>
+<li><a href="https://github.com/laravel/framework">Laravel Framework</a></li>
+<li><a href="https://github.com/laravel/horizon">Laravel Horizon</a></li>
+<li><a href="https://github.com/laravel/passport">Laravel Passport</a></li>
+<li><a href="https://github.com/laravel/pennant">Laravel Pennant</a></li>
+<li><a href="https://github.com/laravel/pint">Laravel Pint</a></li>
+<li><a href="https://github.com/laravel/prompts">Laravel Prompts</a></li>
+<li><a href="https://github.com/laravel/reverb">Laravel Reverb</a></li>
+<li><a href="https://github.com/laravel/sail">Laravel Sail</a></li>
+<li><a href="https://github.com/laravel/sanctum">Laravel Sanctum</a></li>
+<li><a href="https://github.com/laravel/scout">Laravel Scout</a></li>
+<li><a href="https://github.com/laravel/socialite">Laravel Socialite</a></li>
+<li><a href="https://github.com/laravel/telescope">Laravel Telescope</a></li>
+<li><a href="https://github.com/laravel/livewire-starter-kit">Laravel Livewire 入門套件</a></li>
+<li><a href="https://github.com/laravel/react-starter-kit">Laravel React 入門套件</a></li>
+<li><a href="https://github.com/laravel/svelte-starter-kit">Laravel Svelte 入門套件</a></li>
+<li><a href="https://github.com/laravel/vue-starter-kit">Laravel Vue 入門套件</a></li>
+</ul>
+</div><p><a name="support-questions"></a></p>
+<h2>技術支援問題</h2>
+<p>Laravel 的 GitHub 問題追蹤器不應用於提供 Laravel 幫助或技術支援。相反，請使用以下其中一個頻道：</p>
+<div class="content-list" markdown="1"><ul>
+<li><a href="https://github.com/laravel/framework/discussions">GitHub 討論</a></li>
+<li><a href="https://laracasts.com/discuss">Laracasts 論壇</a></li>
+<li><a href="https://laravel.io/forum">Laravel.io 論壇</a></li>
+<li><a href="https://stackoverflow.com/questions/tagged/laravel">StackOverflow</a></li>
+<li><a href="https://discord.gg/laravel">Discord</a></li>
+<li><a href="https://larachat.co">Larachat</a></li>
+<li><a href="https://web.libera.chat/?nick=artisan&channels=#laravel">IRC</a></li>
+</ul>
+</div><p><a name="core-development-discussion"></a></p>
+<h2>核心開發討論</h2>
+<p>您可以在 Laravel 框架儲存庫的 <a href="https://github.com/laravel/framework/discussions">GitHub 討論板</a>中提出新功能或改進現有 Laravel 行為的建議。如果您提出新功能，請願意實現完成該功能所需的至少部分程式碼。</p>
+<p>關於錯誤、新功能和現有功能實現的非正式討論在 <a href="https://discord.gg/laravel">Laravel Discord 伺服器</a>的 <code>#internals</code> 頻道中進行。Laravel 的維護者 Taylor Otwell 通常在工作日的上午 8 點至下午 5 點（UTC-06:00 或 America/Chicago）出現在該頻道中，並在其他時間零星出現。</p>
+<p><a name="which-branch"></a></p>
+<h2>哪個分支？</h2>
+<p><strong>所有</strong>錯誤修復都應發送到支援錯誤修復的最新版本（目前是 <code>13.x</code>）。錯誤修復<strong>不應</strong>發送到 <code>master</code> 分支，除非它們修復的功能僅存在於即將發布的版本中。</p>
+<p>與當前版本<strong>完全向後相容</strong>的<strong>次要</strong>功能可以發送到最新的穩定分支（目前是 <code>13.x</code>）。</p>
+<p><strong>主要</strong>新功能或具有破壞性變更的功能應始終發送到 <code>master</code> 分支，該分支包含即將發布的版本。</p>
+<p><a name="compiled-assets"></a></p>
+<h2>編譯資源</h2>
+<p>如果您提交的更改將影響編譯檔案，例如 <code>laravel/laravel</code> 儲存庫中 <code>resources/css</code> 或 <code>resources/js</code> 中的大多數檔案，請不要提交編譯檔案。由於它們體積龐大，維護者實際上無法審查它們。這可能被利用作為將惡意程式碼注入 Laravel 的方式。為了防禦性地防止這種情況，所有編譯檔案將由 Laravel 維護者生成和提交。</p>
+<p><a name="ai-generated-contributions"></a></p>
+<h2>AI 生成的貢獻</h2>
+<p>我們感謝提交給 Laravel 的每個拉取請求。但是，未經深思熟慮的人工審查和考慮而主要由 AI 生成的貢獻是不可接受的。</p>
+<p>如果您選擇使用 AI 工具來協助您的貢獻，產生的程式碼<strong>必須</strong>在提交前由您徹底審查、測試和理解。</p>
+<p><strong>大量開啟完全由 AI 生成的問題或拉取請求是不可接受的。</strong>此類拉取請求將未經審查即被關閉，並且貢獻用戶可能會被封鎖存取該儲存庫。</p>
+<p>我們鼓勵貢獻者熟悉現有程式碼庫、與社群互動，並提交反映自己理解和仔細考慮所解決問題的拉取請求。</p>
+<p><a name="security-vulnerabilities"></a></p>
+<h2>安全性漏洞</h2>
+<p>如果您在 Laravel 中發現安全性漏洞，請發送電子郵件至 Taylor Otwell 的 <a href="mailto:taylor@laravel.com">taylor@laravel.com</a>。所有安全性漏洞將會被迅速處理。</p>
+<p><a name="coding-style"></a></p>
+<h2>程式碼風格</h2>
+<p>Laravel 遵循 <a href="https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-2-coding-style-guide.md">PSR-2</a> 程式碼標準和 <a href="https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader.md">PSR-4</a> 自動載入標準。</p>
+<p><a name="phpdoc"></a></p>
+<h3>PHPDoc</h3>
+<p>以下是有效的 Laravel 文件區塊範例。請注意，<code>@param</code> 屬性後跟兩個空格、參數類型、再兩個空格，最後是變數名稱：</p>
+<pre><code class="language-php">/**
+ * 在容器中註冊綁定。
+ *
+ * @param  string|array  $abstract
+ * @param  \\Closure|string|null  $concrete
+ * @param  bool  $shared
+ * @return void
+ *
+ * @throws \\Exception
+ */
+public function bind($abstract, $concrete = null, $shared = false)
+{
+    // ...
+}
+</code></pre>
+<p>當由於使用原生類型而使 <code>@param</code> 或 <code>@return</code> 屬性冗餘時，可以將其移除：</p>
+<pre><code class="language-php">/**
+ * 執行任務。
+ * [tl! remove]
+ * @return void [tl! remove]
+ */
+public function handle(AudioProcessor $processor): void
+{
+    // ...
+}
+</code></pre>
+<p>但是，當原生類型是泛型時，請透過使用 <code>@param</code> 或 <code>@return</code> 屬性指定泛型類型：</p>
+<pre><code class="language-php">/**
+ * 獲取訊息的附件。
+ * [tl! add]
+ * @return array&lt;int, \\Illuminate\\Mail\\Mailables\\Attachment&gt; [tl! add]
+ */
+public function attachments(): array
+{
+    return [
+        Attachment::fromStorage(&#39;/path/to/file&#39;),
+    ];
+}
+</code></pre>
+<p><a name="styleci"></a></p>
+<h3>StyleCI</h3>
+<p>不要擔心您的程式碼風格不夠完美！<a href="https://styleci.io/">StyleCI</a> 將在拉取請求合併後自動將任何風格修復合併到 Laravel 儲存庫中。這使我們能夠專注於貢獻的內容而不是程式碼風格。</p>
+<p><a name="code-of-conduct"></a></p>
+<h2>行為準則</h2>
+<p>Laravel 行為準則源自於 Ruby 行為準則。任何違反行為準則的行為都可以向 Taylor Otwell（<a href="mailto:taylor@laravel.com">taylor@laravel.com</a>）報告：</p>
+<div class="content-list" markdown="1"><ul>
+<li>參與者將容忍反對意見。</li>
+<li>參與者必須確保其語言和行為不含人身攻擊和貶低性的個人評論。</li>
+<li>在解釋他人的言語和行為時，參與者應始終假設善意。</li>
+<li>可以被合理認為是騷擾的行為將不被容忍。</li>
+</ul>
+</div>
+`;
+---
+
+<DocsLayout title="貢獻指南" currentPath="contributions">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>貢獻</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">貢獻指南</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/contributions" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

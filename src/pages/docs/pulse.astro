@@ -1,0 +1,591 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Pulse</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#configuration">配置</a></li>
+</ul>
+</li>
+<li><a href="#dashboard">儀表板</a><ul>
+<li><a href="#dashboard-authorization">授權</a></li>
+<li><a href="#dashboard-customization">自訂</a></li>
+<li><a href="#dashboard-resolving-users">解析使用者</a></li>
+<li><a href="#dashboard-cards">卡片</a></li>
+</ul>
+</li>
+<li><a href="#capturing-entries">捕獲資料</a><ul>
+<li><a href="#recorders">記錄器</a></li>
+<li><a href="#filtering">過濾</a></li>
+</ul>
+</li>
+<li><a href="#performance">效能</a><ul>
+<li><a href="#using-a-different-database">使用不同的資料庫</a></li>
+<li><a href="#ingest">Redis 接收</a></li>
+<li><a href="#sampling">採樣</a></li>
+<li><a href="#trimming">清理</a></li>
+<li><a href="#pulse-exceptions">處理 Pulse 例外</a></li>
+</ul>
+</li>
+<li><a href="#custom-cards">自訂卡片</a><ul>
+<li><a href="#custom-card-components">卡片元件</a></li>
+<li><a href="#custom-card-styling">樣式設定</a></li>
+<li><a href="#custom-card-data">資料捕獲與聚合</a></li>
+</ul>
+</li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/pulse">Laravel Pulse</a> 提供了應用程式效能和使用情況的即時洞察。使用 Pulse，您可以追蹤緩慢的任務和端點等瓶頸，找到最活躍的使用者等。</p>
+<p>如需對個別事件進行深入除錯，請查看 <a href="/docs/telescope">Laravel Telescope</a>。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<blockquote>
+<p>[!WARNING]
+Pulse 的第一方儲存實作目前需要 MySQL、MariaDB 或 PostgreSQL 資料庫。如果您使用不同的資料庫引擎，則需要一個獨立的 MySQL、MariaDB 或 PostgreSQL 資料庫來存放 Pulse 資料。</p>
+</blockquote>
+<p>您可以使用 Composer 套件管理器安裝 Pulse：</p>
+<pre><code class="language-shell">composer require laravel/pulse</code></pre>
+<p>接著，您應該使用 <code>vendor:publish</code> Artisan 命令發佈 Pulse 的配置和遷移檔案：</p>
+<pre><code class="language-shell">php artisan vendor:publish --provider="Laravel\\Pulse\\PulseServiceProvider"</code></pre>
+<p>最後，您應該執行 <code>migrate</code> 命令來建立儲存 Pulse 資料所需的資料表：</p>
+<pre><code class="language-shell">php artisan migrate</code></pre>
+<p>Pulse 的資料庫遷移執行完畢後，您可以透過 <code>/pulse</code> 路由存取 Pulse 儀表板。</p>
+<blockquote>
+<p>[!NOTE]
+如果您不想將 Pulse 資料儲存在應用程式的主資料庫中，可以<a href="#using-a-different-database">指定專用的資料庫連線</a>。</p>
+</blockquote>
+<p><a name="configuration"></a></p>
+<h3>配置</h3>
+<p>Pulse 的許多配置選項可以透過環境變數控制。要查看可用的選項、註冊新的記錄器或配置進階選項，您可以發佈 <code>config/pulse.php</code> 配置檔案：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=pulse-config</code></pre>
+<p><a name="dashboard"></a></p>
+<h2>儀表板</h2>
+<p><a name="dashboard-authorization"></a></p>
+<h3>授權</h3>
+<p>Pulse 儀表板可以透過 <code>/pulse</code> 路由存取。預設情況下，您只能在 <code>local</code> 環境中存取此儀表板，因此您需要透過自訂 <code>'viewPulse'</code> 授權閘道來為生產環境配置授權。您可以在應用程式的 <code>app/Providers/AppServiceProvider.php</code> 檔案中完成此操作：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Gate;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Gate::define('viewPulse', function (User $user) {
+        return $user->isAdmin();
+    });
+
+    // ...
+}
+</code></pre>
+<p><a name="dashboard-customization"></a></p>
+<h3>自訂</h3>
+<p>Pulse 儀表板的卡片和佈局可以透過發佈儀表板檢視來配置。儀表板檢視將被發佈到 <code>resources/views/vendor/pulse/dashboard.blade.php</code>：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=pulse-dashboard</code></pre>
+<p>儀表板由 <a href="https://livewire.laravel.com/">Livewire</a> 驅動，允許您自訂卡片和佈局，而無需重建任何 JavaScript 資源。</p>
+<p>在此檔案中，<code>&lt;x-pulse&gt;</code> 元件負責渲染儀表板，並為卡片提供網格佈局。如果您希望儀表板跨越螢幕的完整寬度，可以為元件提供 <code>full-width</code> 屬性：</p>
+<pre><code class="language-blade">&lt;x-pulse full-width&gt;
+    ...
+&lt;/x-pulse&gt;</code></pre>
+<p>預設情況下，<code>&lt;x-pulse&gt;</code> 元件將建立 12 列網格，但您可以使用 <code>cols</code> 屬性來自訂：</p>
+<pre><code class="language-blade">&lt;x-pulse cols="16"&gt;
+    ...
+&lt;/x-pulse&gt;</code></pre>
+<p>每張卡片接受 <code>cols</code> 和 <code>rows</code> 屬性來控制空間和定位：</p>
+<pre><code class="language-blade">&lt;livewire:pulse.usage cols="4" rows="2" /&gt;</code></pre>
+<p>大多數卡片還接受 <code>expand</code> 屬性來顯示完整卡片而不是滾動：</p>
+<pre><code class="language-blade">&lt;livewire:pulse.slow-queries expand /&gt;</code></pre>
+<p><a name="dashboard-resolving-users"></a></p>
+<h3>解析使用者</h3>
+<p>對於顯示使用者資訊的卡片（例如應用程式使用情況卡片），Pulse 只會記錄使用者的 ID。在渲染儀表板時，Pulse 將從預設的 <code>Authenticatable</code> 模型中解析 <code>name</code> 和 <code>email</code> 欄位，並使用 Gravatar 網路服務顯示頭像。</p>
+<p>您可以透過在應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別中呼叫 <code>Pulse::user</code> 方法來自訂欄位和頭像。</p>
+<p><code>user</code> 方法接受一個閉包，該閉包將接收要顯示的 <code>Authenticatable</code> 模型，並應返回包含使用者 <code>name</code>、<code>extra</code> 和 <code>avatar</code> 資訊的陣列：</p>
+<pre><code class="language-php">use Laravel\\Pulse\\Facades\\Pulse;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Pulse::user(fn ($user) => [
+        'name' => $user->name,
+        'extra' => $user->email,
+        'avatar' => $user->avatar_url,
+    ]);
+
+    // ...
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您可以透過實作 <code>Laravel\\Pulse\\Contracts\\ResolvesUsers</code> 合約並在 Laravel 的<a href="/docs/container#binding-a-singleton">服務容器</a>中綁定它，來自訂如何捕獲和檢索已認證使用者。</p>
+</blockquote>
+<p><a name="dashboard-cards"></a></p>
+<h3>卡片</h3>
+<p><a name="servers-card"></a></p>
+<h4>伺服器</h4>
+<p><code>&lt;livewire:pulse.servers /&gt;</code> 卡片顯示所有執行 <code>pulse:check</code> 命令的伺服器的系統資源使用情況。請參閱關於<a href="#servers-recorder">伺服器記錄器</a>的文件以了解更多關於系統資源報告的資訊。</p>
+<p>如果您在基礎架構中更換了伺服器，您可能希望在給定時間後停止在 Pulse 儀表板中顯示不活躍的伺服器。您可以透過 <code>ignore-after</code> 屬性來實現，該屬性接受不活躍伺服器應從 Pulse 儀表板中移除的秒數。或者，您可以提供相對時間格式的字串，例如 <code>1 hour</code> 或 <code>3 days and 1 hour</code>：</p>
+<pre><code class="language-blade">&lt;livewire:pulse.servers ignore-after="3 hours" /&gt;</code></pre>
+<p><a name="application-usage-card"></a></p>
+<h4>應用程式使用情況</h4>
+<p><code>&lt;livewire:pulse.usage /&gt;</code> 卡片顯示向應用程式發出請求、分發任務以及遇到緩慢請求的前 10 名使用者。</p>
+<p>如果您希望同時在螢幕上查看所有使用指標，可以多次包含該卡片並指定 <code>type</code> 屬性：</p>
+<pre><code class="language-blade">&lt;livewire:pulse.usage type="requests" /&gt;
+&lt;livewire:pulse.usage type="slow_requests" /&gt;
+&lt;livewire:pulse.usage type="jobs" /&gt;</code></pre>
+<p>要了解如何自訂 Pulse 檢索和顯示使用者資訊，請查閱我們關於<a href="#dashboard-resolving-users">解析使用者</a>的文件。</p>
+<blockquote>
+<p>[!NOTE]
+如果您的應用程式收到大量請求或分發大量任務，您可能希望啟用<a href="#sampling">採樣</a>。請參閱<a href="#user-requests-recorder">使用者請求記錄器</a>、<a href="#user-jobs-recorder">使用者任務記錄器</a>和<a href="#slow-jobs-recorder">緩慢任務記錄器</a>文件以了解更多資訊。</p>
+</blockquote>
+<p><a name="exceptions-card"></a></p>
+<h4>例外</h4>
+<p><code>&lt;livewire:pulse.exceptions /&gt;</code> 卡片顯示應用程式中發生的例外的頻率和最近性。預設情況下，例外會根據例外類別和發生的位置進行分組。請參閱<a href="#exceptions-recorder">例外記錄器</a>文件以了解更多資訊。</p>
+<p><a name="queues-card"></a></p>
+<h4>佇列</h4>
+<p><code>&lt;livewire:pulse.queues /&gt;</code> 卡片顯示應用程式中佇列的吞吐量，包括已排隊、處理中、已處理、已釋放和失敗的任務數量。請參閱<a href="#queues-recorder">佇列記錄器</a>文件以了解更多資訊。</p>
+<p><a name="slow-requests-card"></a></p>
+<h4>緩慢請求</h4>
+<p><code>&lt;livewire:pulse.slow-requests /&gt;</code> 卡片顯示超過配置閾值（預設為 1000ms）的傳入請求。請參閱<a href="#slow-requests-recorder">緩慢請求記錄器</a>文件以了解更多資訊。</p>
+<p><a name="slow-jobs-card"></a></p>
+<h4>緩慢任務</h4>
+<p><code>&lt;livewire:pulse.slow-jobs /&gt;</code> 卡片顯示應用程式中超過配置閾值（預設為 1000ms）的佇列任務。請參閱<a href="#slow-jobs-recorder">緩慢任務記錄器</a>文件以了解更多資訊。</p>
+<p><a name="slow-queries-card"></a></p>
+<h4>緩慢查詢</h4>
+<p><code>&lt;livewire:pulse.slow-queries /&gt;</code> 卡片顯示應用程式中超過配置閾值（預設為 1000ms）的資料庫查詢。</p>
+<p>預設情況下，緩慢查詢會根據 SQL 查詢（不含綁定）和發生的位置進行分組，但如果您希望僅根據 SQL 查詢進行分組，可以選擇不捕獲位置。</p>
+<p>如果您因極大的 SQL 查詢收到語法反白而遇到渲染效能問題，可以透過新增 <code>without-highlighting</code> 屬性來停用反白：</p>
+<pre><code class="language-blade">&lt;livewire:pulse.slow-queries without-highlighting /&gt;</code></pre>
+<p>請參閱<a href="#slow-queries-recorder">緩慢查詢記錄器</a>文件以了解更多資訊。</p>
+<p><a name="slow-outgoing-requests-card"></a></p>
+<h4>緩慢對外請求</h4>
+<p><code>&lt;livewire:pulse.slow-outgoing-requests /&gt;</code> 卡片顯示使用 Laravel 的 <a href="/docs/http-client">HTTP 客戶端</a>進行的對外請求，這些請求超過了配置閾值（預設為 1000ms）。</p>
+<p>預設情況下，條目會根據完整 URL 進行分組。但是，您可能希望使用正規表示式來標準化或分組類似的對外請求。請參閱<a href="#slow-outgoing-requests-recorder">緩慢對外請求記錄器</a>文件以了解更多資訊。</p>
+<p><a name="cache-card"></a></p>
+<h4>快取</h4>
+<p><code>&lt;livewire:pulse.cache /&gt;</code> 卡片顯示應用程式的快取命中與未命中統計資料，包括全域和個別金鑰。</p>
+<p>預設情況下，條目會根據金鑰進行分組。但是，您可能希望使用正規表示式來標準化或分組類似的金鑰。請參閱<a href="#cache-interactions-recorder">快取互動記錄器</a>文件以了解更多資訊。</p>
+<p><a name="capturing-entries"></a></p>
+<h2>捕獲資料</h2>
+<p>大多數 Pulse 記錄器會根據 Laravel 分發的框架事件自動捕獲資料。但是，<a href="#servers-recorder">伺服器記錄器</a>和某些第三方卡片必須定期輪詢資訊。要使用這些卡片，您必須在所有個別應用程式伺服器上執行 <code>pulse:check</code> 守護程序：</p>
+<pre><code class="language-php">php artisan pulse:check</code></pre>
+<blockquote>
+<p>[!NOTE]
+要讓 <code>pulse:check</code> 程序永久在背景執行，您應該使用 Supervisor 等程序監視器來確保命令不會停止執行。</p>
+</blockquote>
+<p>由於 <code>pulse:check</code> 命令是一個長時間執行的程序，它在不重新啟動的情況下將不會看到程式碼庫的變更。您應該在應用程式的部署過程中透過呼叫 <code>pulse:restart</code> 命令來優雅地重新啟動該命令：</p>
+<pre><code class="language-shell">php artisan pulse:restart</code></pre>
+<blockquote>
+<p>[!NOTE]
+Pulse 使用<a href="/docs/cache">快取</a>來儲存重新啟動訊號，因此在您使用此功能之前，應確認已為您的應用程式正確配置了快取驅動程式。</p>
+</blockquote>
+<p><a name="recorders"></a></p>
+<h3>記錄器</h3>
+<p>記錄器負責從您的應用程式捕獲要記錄在 Pulse 資料庫中的資料。記錄器在 <a href="#configuration">Pulse 配置檔案</a>的 <code>recorders</code> 部分中註冊和配置。</p>
+<p><a name="cache-interactions-recorder"></a></p>
+<h4>快取互動</h4>
+<p><code>CacheInteractions</code> 記錄器捕獲應用程式中發生的<a href="/docs/cache">快取</a>命中與未命中的資訊，用於在<a href="#cache-card">快取</a>卡片上顯示。</p>
+<p>您可以選擇調整<a href="#sampling">採樣率</a>和忽略的金鑰模式。</p>
+<p>您還可以配置金鑰分組，以便將類似的金鑰分組為單一條目。例如，您可能希望從快取相同類型資訊的金鑰中移除唯一 ID。分組是使用正規表示式來「尋找並取代」金鑰的部分。配置檔案中包含一個範例：</p>
+<pre><code class="language-php">Recorders\\CacheInteractions::class => [
+    // ...
+    'groups' => [
+        // '/:\\d+/' => ':*',
+    ],
+],</code></pre>
+<p>第一個匹配的模式將被使用。如果沒有模式匹配，則金鑰將按原樣捕獲。</p>
+<p><a name="exceptions-recorder"></a></p>
+<h4>例外</h4>
+<p><code>Exceptions</code> 記錄器捕獲應用程式中發生的可報告例外的資訊，用於在<a href="#exceptions-card">例外</a>卡片上顯示。</p>
+<p>您可以選擇調整<a href="#sampling">採樣率</a>和忽略的例外模式。您還可以配置是否捕獲例外發生的位置。捕獲的位置將顯示在 Pulse 儀表板上，有助於追蹤例外來源；但是，如果相同的例外發生在多個位置，則每個唯一位置都會出現多次。</p>
+<p><a name="queues-recorder"></a></p>
+<h4>佇列</h4>
+<p><code>Queues</code> 記錄器捕獲應用程式佇列的資訊，用於在<a href="#queues-card">佇列</a>卡片上顯示。</p>
+<p>您可以選擇調整<a href="#sampling">採樣率</a>和忽略的任務模式。</p>
+<p><a name="slow-jobs-recorder"></a></p>
+<h4>緩慢任務</h4>
+<p><code>SlowJobs</code> 記錄器捕獲應用程式中發生的緩慢任務的資訊，用於在<a href="#slow-jobs-recorder">緩慢任務</a>卡片上顯示。</p>
+<p>您可以選擇調整緩慢任務閾值、<a href="#sampling">採樣率</a>和忽略的任務模式。</p>
+<p>您可能有一些預期比其他任務需要更長時間的任務。在這種情況下，您可以配置每個任務的閾值：</p>
+<pre><code class="language-php">Recorders\\SlowJobs::class => [
+    // ...
+    'threshold' => [
+        '#^App\\\\Jobs\\\\GenerateYearlyReports$#' => 5000,
+        'default' => env('PULSE_SLOW_JOBS_THRESHOLD', 1000),
+    ],
+],</code></pre>
+<p>如果沒有正規表示式模式匹配任務的類別名稱，則將使用 <code>'default'</code> 值。</p>
+<p><a name="slow-outgoing-requests-recorder"></a></p>
+<h4>緩慢對外請求</h4>
+<p><code>SlowOutgoingRequests</code> 記錄器捕獲使用 Laravel 的 <a href="/docs/http-client">HTTP 客戶端</a>進行的對外 HTTP 請求的資訊，這些請求超過了配置閾值，用於在<a href="#slow-outgoing-requests-card">緩慢對外請求</a>卡片上顯示。</p>
+<p>您可以選擇調整緩慢對外請求閾值、<a href="#sampling">採樣率</a>和忽略的 URL 模式。</p>
+<p>您可能有一些預期比其他請求需要更長時間的對外請求。在這種情況下，您可以配置每個請求的閾值：</p>
+<pre><code class="language-php">Recorders\\SlowOutgoingRequests::class => [
+    // ...
+    'threshold' => [
+        '#backup.zip$#' => 5000,
+        'default' => env('PULSE_SLOW_OUTGOING_REQUESTS_THRESHOLD', 1000),
+    ],
+],</code></pre>
+<p>如果沒有正規表示式模式匹配請求的 URL，則將使用 <code>'default'</code> 值。</p>
+<p>您還可以配置 URL 分組，以便將類似的 URL 分組為單一條目。例如，您可能希望從 URL 路徑中移除唯一 ID 或僅按網域分組。分組是使用正規表示式來「尋找並取代」URL 的部分。配置檔案中包含一些範例：</p>
+<pre><code class="language-php">Recorders\\SlowOutgoingRequests::class => [
+    // ...
+    'groups' => [
+        // '#^https://api\\.github\\.com/repos/.*$#' => 'api.github.com/repos/*',
+        // '#^https?://([^/]*).*$#' => '\\1',
+        // '#/\\d+#' => '/*',
+    ],
+],</code></pre>
+<p>第一個匹配的模式將被使用。如果沒有模式匹配，則 URL 將按原樣捕獲。</p>
+<p><a name="slow-queries-recorder"></a></p>
+<h4>緩慢查詢</h4>
+<p><code>SlowQueries</code> 記錄器捕獲應用程式中超過配置閾值的任何資料庫查詢，用於在<a href="#slow-queries-card">緩慢查詢</a>卡片上顯示。</p>
+<p>您可以選擇調整緩慢查詢閾值、<a href="#sampling">採樣率</a>和忽略的查詢模式。您還可以配置是否捕獲查詢位置。捕獲的位置將顯示在 Pulse 儀表板上，有助於追蹤查詢來源；但是，如果相同的查詢在多個位置發出，則每個唯一位置都會出現多次。</p>
+<p>您可能有一些預期比其他查詢需要更長時間的查詢。在這種情況下，您可以配置每個查詢的閾值：</p>
+<pre><code class="language-php">Recorders\\SlowQueries::class => [
+    // ...
+    'threshold' => [
+        '#^insert into \`yearly_reports\`#' => 5000,
+        'default' => env('PULSE_SLOW_QUERIES_THRESHOLD', 1000),
+    ],
+],</code></pre>
+<p>如果沒有正規表示式模式匹配查詢的 SQL，則將使用 <code>'default'</code> 值。</p>
+<p><a name="slow-requests-recorder"></a></p>
+<h4>緩慢請求</h4>
+<p><code>Requests</code> 記錄器捕獲對應用程式的請求資訊，用於在<a href="#slow-requests-card">緩慢請求</a>和<a href="#application-usage-card">應用程式使用情況</a>卡片上顯示。</p>
+<p>您可以選擇調整緩慢路由閾值、<a href="#sampling">採樣率</a>和忽略的路徑。</p>
+<p>您可能有一些預期比其他請求需要更長時間的請求。在這種情況下，您可以配置每個請求的閾值：</p>
+<pre><code class="language-php">Recorders\\SlowRequests::class => [
+    // ...
+    'threshold' => [
+        '#^/admin/#' => 5000,
+        'default' => env('PULSE_SLOW_REQUESTS_THRESHOLD', 1000),
+    ],
+],</code></pre>
+<p>如果沒有正規表示式模式匹配請求的 URL，則將使用 <code>'default'</code> 值。</p>
+<p><a name="servers-recorder"></a></p>
+<h4>伺服器</h4>
+<p><code>Servers</code> 記錄器捕獲為應用程式提供服務的伺服器的 CPU、記憶體和儲存使用情況，用於在<a href="#servers-card">伺服器</a>卡片上顯示。此記錄器需要在您要監控的每個伺服器上執行 <a href="#capturing-entries">pulse:check 命令</a>。</p>
+<p>每個報告伺服器必須有一個唯一的名稱。預設情況下，Pulse 將使用 PHP 的 <code>gethostname</code> 函數返回的值。如果您想自訂此名稱，可以設定 <code>PULSE_SERVER_NAME</code> 環境變數：</p>
+<pre><code class="language-env">PULSE_SERVER_NAME=load-balancer</code></pre>
+<p>Pulse 配置檔案還允許您自訂被監控的目錄。</p>
+<p><a name="user-jobs-recorder"></a></p>
+<h4>使用者任務</h4>
+<p><code>UserJobs</code> 記錄器捕獲在應用程式中分發任務的使用者資訊，用於在<a href="#application-usage-card">應用程式使用情況</a>卡片上顯示。</p>
+<p>您可以選擇調整<a href="#sampling">採樣率</a>和忽略的任務模式。</p>
+<p><a name="user-requests-recorder"></a></p>
+<h4>使用者請求</h4>
+<p><code>UserRequests</code> 記錄器捕獲向應用程式發出請求的使用者資訊，用於在<a href="#application-usage-card">應用程式使用情況</a>卡片上顯示。</p>
+<p>您可以選擇調整<a href="#sampling">採樣率</a>和忽略的 URL 模式。</p>
+<p><a name="filtering"></a></p>
+<h3>過濾</h3>
+<p>正如我們所見，許多<a href="#recorders">記錄器</a>提供透過配置基於條目的值（例如請求的 URL）來「忽略」傳入條目的能力。但有時根據其他因素（例如當前已認證的使用者）過濾掉記錄可能很有用。要過濾掉這些記錄，您可以將閉包傳遞給 Pulse 的 <code>filter</code> 方法。通常，<code>filter</code> 方法應在應用程式的 <code>AppServiceProvider</code> 的 <code>boot</code> 方法中呼叫：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Auth;
+use Laravel\\Pulse\\Entry;
+use Laravel\\Pulse\\Facades\\Pulse;
+use Laravel\\Pulse\\Value;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Pulse::filter(function (Entry|Value $entry) {
+        return Auth::user()->isNotAdmin();
+    });
+
+    // ...
+}
+</code></pre>
+<p><a name="performance"></a></p>
+<h2>效能</h2>
+<p>Pulse 被設計為可以直接插入現有應用程式，無需任何額外的基礎架構。但是，對於高流量應用程式，有幾種方法可以消除 Pulse 可能對應用程式效能造成的任何影響。</p>
+<p><a name="using-a-different-database"></a></p>
+<h3>使用不同的資料庫</h3>
+<p>對於高流量應用程式，您可能更傾向使用專用的資料庫連線來處理 Pulse，以避免影響應用程式資料庫。</p>
+<p>您可以透過設定 <code>PULSE_DB_CONNECTION</code> 環境變數來自訂 Pulse 使用的<a href="/docs/database#configuration">資料庫連線</a>。</p>
+<pre><code class="language-env">PULSE_DB_CONNECTION=pulse</code></pre>
+<p><a name="ingest"></a></p>
+<h3>Redis 接收</h3>
+<blockquote>
+<p>[!WARNING]
+Redis 接收功能需要 Redis 6.2 或更高版本，並且需要 <code>phpredis</code> 或 <code>predis</code> 作為應用程式配置的 Redis 客戶端驅動程式。</p>
+</blockquote>
+<p>預設情況下，Pulse 會在 HTTP 回應發送給客戶端或任務處理完畢後，將條目直接儲存到<a href="#using-a-different-database">配置的資料庫連線</a>；但是，您可以使用 Pulse 的 Redis 接收驅動程式將條目發送到 Redis 串流。這可以透過配置 <code>PULSE_INGEST_DRIVER</code> 環境變數來啟用：</p>
+<pre><code class="language-ini">PULSE_INGEST_DRIVER=redis</code></pre>
+<p>預設情況下，Pulse 將使用預設的 <a href="/docs/redis#configuration">Redis 連線</a>，但您可以透過 <code>PULSE_REDIS_CONNECTION</code> 環境變數來自訂：</p>
+<pre><code class="language-ini">PULSE_REDIS_CONNECTION=pulse</code></pre>
+<blockquote>
+<p>[!WARNING]
+使用 Redis 接收驅動程式時，您的 Pulse 安裝應始終使用與 Redis 驅動佇列不同的 Redis 連線（如果適用的話）。</p>
+</blockquote>
+<p>使用 Redis 接收時，您需要執行 <code>pulse:work</code> 命令來監控串流並將條目從 Redis 移動到 Pulse 的資料庫表中。</p>
+<pre><code class="language-php">php artisan pulse:work</code></pre>
+<blockquote>
+<p>[!NOTE]
+要讓 <code>pulse:work</code> 程序永久在背景執行，您應該使用 Supervisor 等程序監視器來確保 Pulse 工作程式不會停止執行。</p>
+</blockquote>
+<p>由於 <code>pulse:work</code> 命令是一個長時間執行的程序，它在不重新啟動的情況下將不會看到程式碼庫的變更。您應該在應用程式的部署過程中透過呼叫 <code>pulse:restart</code> 命令來優雅地重新啟動該命令：</p>
+<pre><code class="language-shell">php artisan pulse:restart</code></pre>
+<blockquote>
+<p>[!NOTE]
+Pulse 使用<a href="/docs/cache">快取</a>來儲存重新啟動訊號，因此在您使用此功能之前，應確認已為您的應用程式正確配置了快取驅動程式。</p>
+</blockquote>
+<p><a name="sampling"></a></p>
+<h3>採樣</h3>
+<p>預設情況下，Pulse 會捕獲應用程式中發生的每個相關事件。對於高流量應用程式，這可能導致需要在儀表板中聚合數百萬個資料庫行，尤其是在較長時間範圍內。</p>
+<p>您可以選擇在特定 Pulse 資料記錄器上啟用「採樣」。例如，將<a href="#user-requests-recorder">使用者請求</a>記錄器的採樣率設定為 <code>0.1</code> 意味著您只記錄約 10% 的應用程式請求。在儀表板中，這些值將被放大並加上 <code>~</code> 前綴以表示它們是近似值。</p>
+<p>一般來說，特定指標的條目越多，您就可以安全地設定較低的採樣率，而不會犧牲太多準確性。</p>
+<p><a name="trimming"></a></p>
+<h3>清理</h3>
+<p>Pulse 會自動清理其儲存的條目，一旦它們超出儀表板的時間範圍。清理在接收資料時使用樂透系統進行，該系統可以在 Pulse <a href="#configuration">配置檔案</a>中自訂。</p>
+<p><a name="pulse-exceptions"></a></p>
+<h3>處理 Pulse 例外</h3>
+<p>如果在捕獲 Pulse 資料時發生例外（例如無法連線到儲存資料庫），Pulse 將靜默失敗以避免影響您的應用程式。</p>
+<p>如果您想自訂如何處理這些例外，可以為 <code>handleExceptionsUsing</code> 方法提供一個閉包：</p>
+<pre><code class="language-php">use Laravel\\Pulse\\Facades\\Pulse;
+use Illuminate\\Support\\Facades\\Log;
+
+Pulse::handleExceptionsUsing(function ($e) {
+    Log::debug('An exception happened in Pulse', [
+        'message' => $e->getMessage(),
+        'stack' => $e->getTraceAsString(),
+    ]);
+});
+</code></pre>
+<p><a name="custom-cards"></a></p>
+<h2>自訂卡片</h2>
+<p>Pulse 允許您建立自訂卡片來顯示與應用程式特定需求相關的資料。Pulse 使用 <a href="https://livewire.laravel.com/">Livewire</a>，因此在建立第一個自訂卡片之前，您可能想<a href="https://livewire.laravel.com/docs">查閱其文件</a>。</p>
+<p><a name="custom-card-components"></a></p>
+<h3>卡片元件</h3>
+<p>在 Laravel Pulse 中建立自訂卡片首先是擴展基礎的 <code>Card</code> Livewire 元件並定義對應的檢視：</p>
+<pre><code class="language-php">namespace App\\Livewire\\Pulse;
+
+use Laravel\\Pulse\\Livewire\\Card;
+use Livewire\\Attributes\\Lazy;
+
+#[Lazy]
+class TopSellers extends Card
+{
+    public function render()
+    {
+        return view('livewire.pulse.top-sellers');
+    }
+}
+</code></pre>
+<p>使用 Livewire 的<a href="https://livewire.laravel.com/docs/lazy">懶載入</a>功能時，<code>Card</code> 元件將自動提供一個佔位符，該佔位符會尊重傳遞給元件的 <code>cols</code> 和 <code>rows</code> 屬性。</p>
+<p>在編寫 Pulse 卡片對應的檢視時，您可以利用 Pulse 的 Blade 元件來獲得一致的外觀和感覺：</p>
+<pre><code class="language-blade">&lt;x-pulse::card :cols="$cols" :rows="$rows" :class="$class" wire:poll.5s=""&gt;
+    &lt;x-pulse::card-header name="Top Sellers"&gt;
+        &lt;x-slot:icon&gt;
+            ...
+        &lt;/x-slot:icon&gt;
+    &lt;/x-pulse::card-header&gt;
+
+    &lt;x-pulse::scroll :expand="$expand"&gt;
+        ...
+    &lt;/x-pulse::scroll&gt;
+&lt;/x-pulse::card&gt;</code></pre>
+<p><code>$cols</code>、<code>$rows</code>、<code>$class</code> 和 <code>$expand</code> 變數應傳遞給各自的 Blade 元件，以便可以從儀表板檢視自訂卡片佈局。您可能還希望在檢視中包含 <code>wire:poll.5s=""</code> 屬性，以使卡片自動更新。</p>
+<p>一旦您定義了 Livewire 元件和模板，就可以將卡片包含在您的<a href="#dashboard-customization">儀表板檢視</a>中：</p>
+<pre><code class="language-blade">&lt;x-pulse&gt;
+    ...
+
+    &lt;livewire:pulse.top-sellers cols="4" /&gt;
+&lt;/x-pulse&gt;</code></pre>
+<blockquote>
+<p>[!NOTE]
+如果您的卡片包含在套件中，您將需要使用 <code>Livewire::component</code> 方法向 Livewire 註冊元件。</p>
+</blockquote>
+<p><a name="custom-card-styling"></a></p>
+<h3>樣式設定</h3>
+<p>如果您的卡片需要超出 Pulse 附帶的類別和元件的額外樣式，有幾種選項可以為您的卡片包含自訂 CSS。</p>
+<p><a name="custom-card-styling-vite"></a></p>
+<h4>Laravel Vite 整合</h4>
+<p>如果您的自訂卡片存在於應用程式的程式碼庫中，並且您正在使用 Laravel 的 <a href="/docs/vite">Vite 整合</a>，您可以更新您的 <code>vite.config.js</code> 檔案以包含卡片的專用 CSS 入口點：</p>
+<pre><code class="language-js">laravel({
+    input: [
+        'resources/css/pulse/top-sellers.css',
+        // ...
+    ],
+}),</code></pre>
+<p>然後，您可以在<a href="#dashboard-customization">儀表板檢視</a>中使用 <code>@vite</code> Blade 指令，指定卡片的 CSS 入口點：</p>
+<pre><code class="language-blade">&lt;x-pulse&gt;
+    @vite('resources/css/pulse/top-sellers.css')
+
+    ...
+&lt;/x-pulse&gt;</code></pre>
+<p><a name="custom-card-styling-css"></a></p>
+<h4>CSS 檔案</h4>
+<p>對於其他使用案例，包括包含在套件中的 Pulse 卡片，您可以指示 Pulse 載入額外的樣式表，方法是在 Livewire 元件上定義一個返回 CSS 檔案路徑的 <code>css</code> 方法：</p>
+<pre><code class="language-php">class TopSellers extends Card
+{
+    // ...
+
+    protected function css()
+    {
+        return __DIR__.'/../../dist/top-sellers.css';
+    }
+}
+</code></pre>
+<p>當此卡片包含在儀表板中時，Pulse 將自動在 <code>&lt;style&gt;</code> 標籤中包含此檔案的內容，因此不需要將其發佈到 <code>public</code> 目錄。</p>
+<p><a name="custom-card-styling-tailwind"></a></p>
+<h4>Tailwind CSS</h4>
+<p>使用 Tailwind CSS 時，您應該建立一個專用的 CSS 入口點。以下範例排除了 Pulse 已包含的 Tailwind <a href="https://tailwindcss.com/docs/preflight">Preflight</a> 基礎樣式，並使用 CSS 選擇器來限定 Tailwind 的範圍，以避免與 Pulse 的 Tailwind 類別衝突：</p>
+<pre><code class="language-css">@import "tailwindcss/theme.css";
+
+@custom-variant dark (&amp;:where(.dark, .dark *));
+@source "./../../views/livewire/pulse/top-sellers.blade.php";
+
+@theme {
+  /* ... */
+}
+
+#top-sellers {
+  @import "tailwindcss/utilities.css" source(none);
+}</code></pre>
+<p>您還需要在卡片檢視中包含一個 <code>id</code> 或 <code>class</code> 屬性，該屬性與入口點中的 CSS 選擇器匹配：</p>
+<pre><code class="language-blade">&lt;x-pulse::card id="top-sellers" :cols="$cols" :rows="$rows" class="$class"&gt;
+    ...
+&lt;/x-pulse::card&gt;</code></pre>
+<p><a name="custom-card-data"></a></p>
+<h3>資料捕獲與聚合</h3>
+<p>自訂卡片可以從任何地方獲取和顯示資料；但是，您可能希望利用 Pulse 強大且高效的資料記錄和聚合系統。</p>
+<p><a name="custom-card-data-capture"></a></p>
+<h4>捕獲條目</h4>
+<p>Pulse 允許您使用 <code>Pulse::record</code> 方法記錄「條目」：</p>
+<pre><code class="language-php">use Laravel\\Pulse\\Facades\\Pulse;
+
+Pulse::record('user_sale', $user->id, $sale->amount)
+    -&gt;sum()
+    -&gt;count();
+</code></pre>
+<p>提供給 <code>record</code> 方法的第一個參數是您正在記錄的條目的 <code>type</code>，第二個參數是決定聚合資料應如何分組的 <code>key</code>。對於大多數聚合方法，您還需要指定要聚合的 <code>value</code>。在上面的範例中，正在聚合的值是 <code>$sale-&gt;amount</code>。然後，您可以呼叫一個或多個聚合方法（例如 <code>sum</code>），以便 Pulse 可以將預先聚合的值捕獲到「儲存桶」中，以便以後有效率地檢索。</p>
+<p>可用的聚合方法有：</p>
+<ul>
+<li><code>avg</code></li>
+<li><code>count</code></li>
+<li><code>max</code></li>
+<li><code>min</code></li>
+<li><code>sum</code></li>
+</ul>
+<blockquote>
+<p>[!NOTE]
+在建立捕獲當前已認證使用者 ID 的卡片套件時，您應該使用 <code>Pulse::resolveAuthenticatedUserId()</code> 方法，該方法會尊重對應用程式所做的任何<a href="#dashboard-resolving-users">使用者解析器自訂</a>。</p>
+</blockquote>
+<p><a name="custom-card-data-retrieval"></a></p>
+<h4>檢索聚合資料</h4>
+<p>在擴展 Pulse 的 <code>Card</code> Livewire 元件時，您可以使用 <code>aggregate</code> 方法來檢索儀表板當前查看時間範圍內的聚合資料：</p>
+<pre><code class="language-php">class TopSellers extends Card
+{
+    public function render()
+    {
+        return view('livewire.pulse.top-sellers', [
+            'topSellers' =&gt; $this-&gt;aggregate('user_sale', ['sum', 'count'])
+        ]);
+    }
+}
+</code></pre>
+<p><code>aggregate</code> 方法返回一個 PHP <code>stdClass</code> 物件的集合。每個物件將包含之前捕獲的 <code>key</code> 屬性，以及每個請求的聚合的金鑰：</p>
+<pre><code class="language-blade">@foreach ($topSellers as $seller)
+    {{ $seller->key }}
+    {{ $seller->sum }}
+    {{ $seller->count }}
+@endforeach</code></pre>
+<p>Pulse 將主要從預先聚合的儲存桶中檢索資料；因此，指定的聚合必須事先使用 <code>Pulse::record</code> 方法捕獲。最舊的儲存桶通常會部分落在時間範圍之外，因此 Pulse 將聚合最舊的條目來填補間隙，並為整個時間範圍提供準確的值，而無需在每次輪詢請求時聚合整個時間範圍。</p>
+<p>您還可以使用 <code>aggregateTotal</code> 方法檢索給定型別的總值。例如，以下方法將檢索所有使用者銷售的總額，而不是按使用者分組。</p>
+<pre><code class="language-php">$total = $this-&gt;aggregateTotal('user_sale', 'sum');</code></pre>
+<p><a name="custom-card-displaying-users"></a></p>
+<h4>顯示使用者</h4>
+<p>在處理以使用者 ID 作為金鑰記錄的聚合時，您可以使用 <code>Pulse::resolveUsers</code> 方法將金鑰解析為使用者記錄：</p>
+<pre><code class="language-php">$aggregates = $this-&gt;aggregate('user_sale', ['sum', 'count']);
+
+$users = Pulse::resolveUsers($aggregates-&gt;pluck('key'));
+
+return view('livewire.pulse.top-sellers', [
+    'sellers' =&gt; $aggregates-&gt;map(fn ($aggregate) =&gt; (object) [
+        'user' =&gt; $users-&gt;find($aggregate-&gt;key),
+        'sum' =&gt; $aggregate-&gt;sum,
+        'count' =&gt; $aggregate-&gt;count,
+    ])
+]);</code></pre>
+<p><code>find</code> 方法返回一個包含 <code>name</code>、<code>extra</code> 和 <code>avatar</code> 金鑰的物件，您可以選擇將它直接傳遞給 <code>&lt;x-pulse::user-card&gt;</code> Blade 元件：</p>
+<pre><code class="language-blade">&lt;x-pulse::user-card :user="{{ $seller->user }}" :stats="{{ $seller->sum }}" /&gt;</code></pre>
+<p><a name="custom-recorders"></a></p>
+<h4>自訂記錄器</h4>
+<p>套件作者可能希望提供記錄器類別，以允許使用者配置資料的捕獲。</p>
+<p>記錄器在應用程式的 <code>config/pulse.php</code> 配置檔案的 <code>recorders</code> 部分中註冊：</p>
+<pre><code class="language-php">[
+    // ...
+    'recorders' => [
+        Acme\\Recorders\\Deployments::class => [
+            // ...
+        ],
+
+        // ...
+    ],
+]</code></pre>
+<p>記錄器可以透過指定 <code>$listen</code> 屬性來監聽事件。Pulse 將自動註冊監聽器並呼叫記錄器的 <code>record</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Acme\\Recorders;
+
+use Acme\\Events\\Deployment;
+use Illuminate\\Support\\Facades\\Config;
+use Laravel\\Pulse\\Facades\\Pulse;
+
+class Deployments
+{
+    /**
+     * The events to listen for.
+     *
+     * @var array&lt;int, class-string&gt;
+     */
+    public array $listen = [
+        Deployment::class,
+    ];
+
+    /**
+     * Record the deployment.
+     */
+    public function record(Deployment $event): void
+    {
+        $config = Config::get('pulse.recorders.'.static::class);
+
+        Pulse::record(
+            // ...
+        );
+    }
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="Laravel Pulse" currentPath="pulse">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Laravel Pulse</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Laravel Pulse</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/pulse" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

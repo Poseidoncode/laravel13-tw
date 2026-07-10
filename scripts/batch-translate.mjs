@@ -1,0 +1,686 @@
+#!/usr/bin/env node
+
+/**
+ * Batch Translation Script for Laravel 13.x Documentation
+ * Translates original English docs to Traditional Chinese
+ */
+
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { join, basename } from 'path';
+
+const DOCS_ORIGINAL = './docs-original/laravel-docs';
+const PAGES_DIR = './src/pages/docs';
+
+// Comprehensive term translations
+const TERM_MAP = {
+  // Core concepts
+  'Eloquent': 'Eloquent',
+  'Blade': 'Blade',
+  'Artisan': 'Artisan',
+  'Facade': 'Facade',
+  'Facades': 'Facades',
+  'Middleware': '中介層',
+  'Controller': '控制器',
+  'Controllers': '控制器',
+  'Route': '路由',
+  'Routes': '路由',
+  'Routing': '路由',
+  'Request': '請求',
+  'Requests': '請求',
+  'Response': '回應',
+  'Responses': '回應',
+  'View': '視圖',
+  'Views': '視圖',
+  'Model': '模型',
+  'Models': '模型',
+  'Migration': '遷移',
+  'Migrations': '遷移',
+  'Seeder': '填充',
+  'Seeders': '填充',
+  'Seeding': '填充',
+  'Factory': '工廠',
+  'Factories': '工廠',
+  'Queue': '佇列',
+  'Queues': '佇列',
+  'Job': '任務',
+  'Jobs': '任務',
+  'Event': '事件',
+  'Events': '事件',
+  'Listener': '監聽器',
+  'Listeners': '監聽器',
+  'Service Provider': '服務提供者',
+  'Service Providers': '服務提供者',
+  'Service Container': '服務容器',
+  'Dependency Injection': '依賴注入',
+  'Interface': '介面',
+  'Interfaces': '介面',
+  'Trait': '特徵',
+  'Traits': '特徵',
+  'Contract': '合約',
+  'Contracts': '合約',
+  
+  // Database
+  'Database': '資料庫',
+  'Query Builder': '查詢建構器',
+  'Table': '資料表',
+  'Tables': '資料表',
+  'Column': '欄位',
+  'Columns': '欄位',
+  'Row': '資料列',
+  'Rows': '資料列',
+  'Index': '索引',
+  'Indexes': '索引',
+  'Foreign Key': '外鍵',
+  'Primary Key': '主鍵',
+  'Relationship': '關聯',
+  'Relationships': '關聯',
+  
+  // Authentication
+  'Authentication': '認證',
+  'Authorization': '授權',
+  'Gate': '閘道',
+  'Gates': '閘道',
+  'Policy': '政策',
+  'Policies': '政策',
+  'Guard': '守衛',
+  'Guards': '守衛',
+  'Password': '密碼',
+  'Passwords': '密碼',
+  'Token': '權杖',
+  'Tokens': '權杖',
+  'Sanctum': 'Sanctum',
+  'Passport': 'Passport',
+  
+  // Testing
+  'Test': '測試',
+  'Tests': '測試',
+  'Testing': '測試',
+  'Assertion': '斷言',
+  'Assertions': '斷言',
+  'Mock': '模擬',
+  'Mocking': '模擬',
+  'Feature Test': '功能測試',
+  'Feature Tests': '功能測試',
+  'Unit Test': '單元測試',
+  'Unit Tests': '單元測試',
+  
+  // Configuration
+  'Configuration': '配置',
+  'Environment': '環境',
+  'Cache': '快取',
+  'Caching': '快取',
+  'Session': 'Session',
+  'Sessions': 'Session',
+  'Cookie': 'Cookie',
+  'Cookies': 'Cookie',
+  
+  // Frontend
+  'Frontend': '前端',
+  'Backend': '後端',
+  'Asset': '資源',
+  'Assets': '資源',
+  'Vite': 'Vite',
+  'Webpack': 'Webpack',
+  'Node': 'Node',
+  'NPM': 'NPM',
+  'Bun': 'Bun',
+  
+  // Other
+  'Package': '套件',
+  'Packages': '套件',
+  'Extension': '擴展',
+  'Extensions': '擴展',
+  'Helper': '輔助函式',
+  'Helpers': '輔助函式',
+  'Collection': '集合',
+  'Collections': '集合',
+  'Carbon': 'Carbon',
+  'Prompts': '提示',
+  'Notification': '通知',
+  'Notifications': '通知',
+  'Mail': '郵件',
+  'Email': '電子郵件',
+  'Mail': '郵件',
+  'Storage': '儲存',
+  'Filesystem': '檔案系統',
+  'File': '檔案',
+  'Files': '檔案',
+  'Broadcasting': '廣播',
+  'WebSocket': 'WebSocket',
+  'HTTP': 'HTTP',
+  'API': 'API',
+  'JSON': 'JSON',
+  'XML': 'XML',
+  'HTML': 'HTML',
+  'CSS': 'CSS',
+  'JavaScript': 'JavaScript',
+  'TypeScript': 'TypeScript',
+  'PHP': 'PHP',
+  'Laravel': 'Laravel',
+  'Redis': 'Redis',
+  'MySQL': 'MySQL',
+  'PostgreSQL': 'PostgreSQL',
+  'SQLite': 'SQLite',
+  'Docker': 'Docker',
+  'Git': 'Git',
+  'GitHub': 'GitHub',
+  'CLI': 'CLI',
+  'UI': 'UI',
+  'UX': 'UX',
+  'REST': 'REST',
+  'RESTful': 'RESTful',
+};
+
+// Section header translations
+const HEADER_TRANSLATIONS = {
+  'Introduction': '簡介',
+  'Installation': '安裝',
+  'Configuration': '配置',
+  'Upgrading': '升級',
+  'Upgrade Guide': '升級指南',
+  'Release Notes': '發布說明',
+  'Directory Structure': '目錄結構',
+  'Frontend': '前端',
+  'Starter Kits': '入門套件',
+  'Deployment': '部署',
+  'Lifecycle': '生命週期',
+  'Container': '容器',
+  'Providers': '提供者',
+  'Service Providers': '服務提供者',
+  'Service Container': '服務容器',
+  'Facades': 'Facades',
+  'Routing': '路由',
+  'Middleware': '中介層',
+  'CSRF Protection': 'CSRF 保護',
+  'Controllers': '控制器',
+  'Requests': '請求',
+  'Responses': '回應',
+  'Views': '視圖',
+  'Blade Templates': 'Blade 模板',
+  'Asset Bundling': '資源打包',
+  'URL Generation': 'URL 生成',
+  'Session': 'Session',
+  'Validation': '驗證',
+  'Error Handling': '錯誤處理',
+  'Logging': '日誌',
+  'Artisan Console': 'Artisan 命令列',
+  'Database': '資料庫',
+  'Queries': '查詢',
+  'Query Builder': '查詢建構器',
+  'Migrations': '遷移',
+  'Seeding': '填充',
+  'Redis': 'Redis',
+  'Eloquent': 'Eloquent',
+  'Relationships': '關聯',
+  'Collections': '集合',
+  'Mutators': '修改器',
+  'API Resources': 'API 資源',
+  'Serialization': '序列化',
+  'Factories': '工廠',
+  'Packages': '套件',
+  'Billing': '帳單',
+  'Cashier': 'Cashier',
+  'Envoy': 'Envoy',
+  'Fortify': 'Fortify',
+  'Folio': 'Folio',
+  'Homestead': 'Homestead',
+  'Horizon': 'Horizon',
+  'Mix': 'Mix',
+  'Octane': 'Octane',
+  'Passport': 'Passport',
+  'Pennant': 'Pennant',
+  'Pint': 'Pint',
+  'Precognition': 'Precognition',
+  'Pulse': 'Pulse',
+  'Sail': 'Sail',
+  'Sanctum': 'Sanctum',
+  'Scout': 'Scout',
+  'Socialite': 'Socialite',
+  'Telescope': 'Telescope',
+  'Valet': 'Valet',
+  'Authentication': '認證',
+  'Authorization': '授權',
+  'Email Verification': '電子郵件驗證',
+  'Password Reset': '密碼重設',
+  'Encryption': '加密',
+  'Hashing': '雜湊',
+  'Rate Limiting': '速率限制',
+  'Broadcasting': '廣播',
+  'Cache': '快取',
+  'Collections': '集合',
+  'Concurrency': '並行',
+  'Events': '事件',
+  'Filesystem': '檔案系統',
+  'Helpers': '輔助函式',
+  'HTTP Client': 'HTTP 用戶端',
+  'Localization': '本地化',
+  'Mail': '郵件',
+  'Notifications': '通知',
+  'Pagination': '分頁',
+  'Queues': '佇列',
+  'Scheduling': '排程',
+  'Search': '搜尋',
+  'Testing': '測試',
+  'HTTP Tests': 'HTTP 測試',
+  'Console Tests': '控制台測試',
+  'Database Tests': '資料庫測試',
+  'Mocking': '模擬',
+  'AI': 'AI',
+  'Agentic Development': '代理式開發',
+  'MCP': 'MCP',
+  'Boost': 'Boost',
+  'Prompts': '提示',
+  'Contributions': '貢獻',
+  'Documentation': '文件',
+  'Contracts': '合約',
+  'Context': '上下文',
+  'Cloud': '雲端',
+  'MongoDB': 'MongoDB',
+  'Processes': '程序',
+  'Strings': '字串',
+  'Characteristics': '特性',
+  'Prerequisites': '前置條件',
+  'Additional Information': '額外資訊',
+  'Available Methods': '可用方法',
+  'Method Reference': '方法參考',
+  'Parameters': '參數',
+  'Return Values': '回傳值',
+  'Examples': '範例',
+  'Usage': '使用方式',
+  'Basic Usage': '基本用法',
+  'Advanced Usage': '進階用法',
+  'Configuration': '配置',
+  'Customization': '自訂',
+  'Troubleshooting': '疑難排解',
+  'Common Issues': '常見問題',
+  'Best Practices': '最佳實踐',
+  'Security': '安全性',
+  'Performance': '效能',
+  'Caching': '快取',
+  'Debugging': '除錯',
+  'Testing': '測試',
+  'Deployment': '部署',
+  'Production': '生產環境',
+  'Development': '開發環境',
+  'Local Development': '本機開發',
+  'Environment Variables': '環境變數',
+  'Service Providers': '服務提供者',
+  'Facades': 'Facades',
+  'Contracts': '合約',
+  'Type Hints': '類型提示',
+  'Namespaces': '命名空間',
+  'Autoloading': '自動載入',
+  'Composer': 'Composer',
+  'Artisan': 'Artisan',
+  'Tinker': 'Tinker',
+  'Pint': 'Pint',
+  'PHPStan': 'PHPStan',
+  'PHPUnit': 'PHPUnit',
+};
+
+/**
+ * Translate a line of text
+ */
+function translateLine(line) {
+  let translated = line;
+  
+  // Translate headers
+  for (const [en, zh] of Object.entries(HEADER_TRANSLATIONS)) {
+    const headerRegex = new RegExp(`^(#{1,6})\\s+${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
+    translated = translated.replace(headerRegex, `$1 ${zh}`);
+  }
+  
+  // Translate common terms (but not in code blocks)
+  if (!translated.startsWith('```') && !translated.startsWith('    ')) {
+    for (const [en, zh] of Object.entries(TERM_MAP)) {
+      if (en !== zh) {
+        const termRegex = new RegExp(`\\b${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+        translated = translated.replace(termRegex, zh);
+      }
+    }
+  }
+  
+  return translated;
+}
+
+/**
+ * Translate markdown content
+ */
+function translateMarkdown(content) {
+  const lines = content.split('\n');
+  const translatedLines = [];
+  let inCodeBlock = false;
+  
+  for (const line of lines) {
+    // Track code blocks
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      translatedLines.push(line);
+      continue;
+    }
+    
+    // Don't translate code blocks
+    if (inCodeBlock) {
+      translatedLines.push(line);
+      continue;
+    }
+    
+    // Translate the line
+    translatedLines.push(translateLine(line));
+  }
+  
+  return translatedLines.join('\n');
+}
+
+/**
+ * Generate Astro page from translated content
+ */
+function generateAstroPage(slug, title, category, translatedContent) {
+  // Escape backticks and dollar signs for template literal
+  const escapedContent = translatedContent
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$');
+  
+  return `---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = \`${escapedContent}\`;
+---
+
+<DocsLayout title="${title}" currentPath="${slug}">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>${category}</span>
+      <span class="mx-2">/</span>
+      <span>${title}</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">${title}</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 本文翻譯自 Laravel 官方文檔。
+        <a href="https://laravel.com/docs/13.x/${slug}" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>
+`;
+}
+
+// Category mapping
+const CATEGORY_MAP = {
+  'installation': '開始使用',
+  'configuration': '開始使用',
+  'structure': '開始使用',
+  'frontend': '開始使用',
+  'starter-kits': '開始使用',
+  'deployment': '開始使用',
+  'lifecycle': '核心概念',
+  'container': '核心概念',
+  'providers': '核心概念',
+  'facades': '核心概念',
+  'routing': '路由與請求',
+  'middleware': '路由與請求',
+  'csrf': '路由與請求',
+  'controllers': '路由與請求',
+  'requests': '路由與請求',
+  'responses': '路由與請求',
+  'views': '前端與視圖',
+  'blade': '前端與視圖',
+  'vite': '前端與視圖',
+  'urls': '前端與視圖',
+  'session': '應用功能',
+  'validation': '應用功能',
+  'errors': '應用功能',
+  'logging': '應用功能',
+  'artisan': '應用功能',
+  'database': '資料庫',
+  'queries': '資料庫',
+  'migrations': '資料庫',
+  'seeding': '資料庫',
+  'redis': '資料庫',
+  'eloquent': 'Eloquent ORM',
+  'eloquent-relationships': 'Eloquent ORM',
+  'eloquent-collections': 'Eloquent ORM',
+  'eloquent-mutators': 'Eloquent ORM',
+  'eloquent-resources': 'Eloquent ORM',
+  'eloquent-serialization': 'Eloquent ORM',
+  'eloquent-factories': 'Eloquent ORM',
+  'packages': '套件開發',
+  'billing': '套件開發',
+  'cashier-paddle': '套件開發',
+  'envoy': '套件開發',
+  'fortify': '套件開發',
+  'folio': '套件開發',
+  'homestead': '套件開發',
+  'horizon': '套件開發',
+  'mix': '套件開發',
+  'octane': '套件開發',
+  'passport': '套件開發',
+  'pennant': '套件開發',
+  'pint': '套件開發',
+  'precognition': '套件開發',
+  'pulse': '套件開發',
+  'sail': '套件開發',
+  'sanctum': '套件開發',
+  'scout': '套件開發',
+  'socialite': '套件開發',
+  'telescope': '套件開發',
+  'valet': '套件開發',
+  'authentication': '認證與安全',
+  'authorization': '認證與安全',
+  'verification': '認證與安全',
+  'passwords': '認證與安全',
+  'encryption': '認證與安全',
+  'hashing': '認證與安全',
+  'rate-limiting': '認證與安全',
+  'broadcasting': '進階功能',
+  'cache': '進階功能',
+  'collections': '進階功能',
+  'concurrency': '進階功能',
+  'events': '進階功能',
+  'filesystem': '進階功能',
+  'helpers': '進階功能',
+  'http-client': '進階功能',
+  'localization': '進階功能',
+  'mail': '進階功能',
+  'notifications': '進階功能',
+  'pagination': '進階功能',
+  'queues': '進階功能',
+  'scheduling': '進階功能',
+  'search': '進階功能',
+  'testing': '測試',
+  'http-tests': '測試',
+  'console-tests': '測試',
+  'database-testing': '測試',
+  'mocking': '測試',
+  'ai': 'AI 與 Agentic 開發',
+  'ai-sdk': 'AI 與 Agentic 開發',
+  'mcp': 'AI 與 Agentic 開發',
+  'boost': 'AI 與 Agentic 開發',
+  'prompts': 'AI 與 Agentic 開發',
+  'releases': '其他',
+  'upgrade': '其他',
+  'contributions': '其他',
+  'documentation': '其他',
+  'contracts': '其他',
+  'context': '其他',
+  'cloud': '其他',
+  'mongodb': '其他',
+  'processes': '其他',
+  'strings': '其他',
+};
+
+// Title mapping
+const TITLE_MAP = {
+  'installation': '安裝',
+  'configuration': '配置',
+  'structure': '目錄結構',
+  'frontend': '前端',
+  'starter-kits': '入門套件',
+  'deployment': '部署',
+  'lifecycle': '請求生命週期',
+  'container': '服務容器',
+  'providers': '服務提供者',
+  'facades': 'Facades',
+  'routing': '路由',
+  'middleware': '中介層',
+  'csrf': 'CSRF 保護',
+  'controllers': '控制器',
+  'requests': 'HTTP 請求',
+  'responses': 'HTTP 回應',
+  'views': '視圖',
+  'blade': 'Blade 模板',
+  'vite': '資源打包 (Vite)',
+  'urls': 'URL 生成',
+  'session': 'Session',
+  'validation': '驗證',
+  'errors': '錯誤處理',
+  'logging': '日誌',
+  'artisan': 'Artisan 命令列',
+  'database': '資料庫入門',
+  'queries': '查詢建構器',
+  'migrations': '遷移',
+  'seeding': '填充',
+  'redis': 'Redis',
+  'eloquent': 'Eloquent 入門',
+  'eloquent-relationships': 'Eloquent 關聯',
+  'eloquent-collections': 'Eloquent 集合',
+  'eloquent-mutators': 'Eloquent 修改器',
+  'eloquent-resources': 'Eloquent API 資源',
+  'eloquent-serialization': 'Eloquent 序列化',
+  'eloquent-factories': 'Eloquent 工廠',
+  'packages': '套件開發',
+  'billing': '擴展包',
+  'cashier-paddle': 'Cashier (Paddle)',
+  'envoy': 'Envoy',
+  'fortify': 'Fortify',
+  'folio': 'Folio',
+  'homestead': 'Homestead',
+  'horizon': 'Horizon',
+  'mix': 'Mix',
+  'octane': 'Octane',
+  'passport': 'Passport',
+  'pennant': 'Pennant',
+  'pint': 'Pint',
+  'precognition': 'Precognition',
+  'pulse': 'Pulse',
+  'sail': 'Sail',
+  'sanctum': 'Sanctum',
+  'scout': 'Scout',
+  'socialite': 'Socialite',
+  'telescope': 'Telescope',
+  'valet': 'Valet',
+  'authentication': '認證',
+  'authorization': '授權',
+  'verification': '電子郵件驗證',
+  'passwords': '密碼重設',
+  'encryption': '加密',
+  'hashing': '雜湊',
+  'rate-limiting': '速率限制',
+  'broadcasting': '廣播',
+  'cache': '快取',
+  'collections': '集合',
+  'concurrency': '並行',
+  'events': '事件',
+  'filesystem': '檔案系統',
+  'helpers': '輔助函式',
+  'http-client': 'HTTP 用戶端',
+  'localization': '本地化',
+  'mail': '郵件',
+  'notifications': '通知',
+  'pagination': '分頁',
+  'queues': '佇列',
+  'scheduling': '排程',
+  'search': '搜尋',
+  'testing': '測試入門',
+  'http-tests': 'HTTP 測試',
+  'console-tests': '控制台測試',
+  'database-testing': '資料庫測試',
+  'mocking': 'Mocking',
+  'ai': 'Laravel 與 AI',
+  'ai-sdk': 'AI SDK',
+  'mcp': 'MCP',
+  'boost': 'Boost',
+  'prompts': 'Prompts',
+  'releases': '發布說明',
+  'upgrade': '升級指南',
+  'contributions': '貢獻指南',
+  'documentation': '文件說明',
+  'contracts': '合約',
+  'context': '上下文',
+  'cloud': 'Laravel Cloud',
+  'mongodb': 'MongoDB',
+  'processes': 'Processes',
+  'strings': '字串輔助',
+};
+
+/**
+ * Process a single documentation file
+ */
+function processFile(filename) {
+  const slug = basename(filename, '.md');
+  const originalPath = join(DOCS_ORIGINAL, filename);
+  const outputPath = join(PAGES_DIR, `${slug}.astro`);
+  
+  if (!existsSync(originalPath)) {
+    console.log(`⚠️  原始檔案不存在: ${filename}`);
+    return false;
+  }
+  
+  const content = readFileSync(originalPath, 'utf-8');
+  const translatedContent = translateMarkdown(content);
+  
+  const title = TITLE_MAP[slug] || slug;
+  const category = CATEGORY_MAP[slug] || '其他';
+  
+  const astroContent = generateAstroPage(slug, title, category, translatedContent);
+  
+  writeFileSync(outputPath, astroContent);
+  console.log(`✅ 已翻譯: ${slug}`);
+  
+  return true;
+}
+
+/**
+ * Main function
+ */
+function main() {
+  console.log('🚀 開始批次翻譯 Laravel 文檔...\n');
+  
+  if (!existsSync(DOCS_ORIGINAL)) {
+    console.log('❌ 原始文檔目錄不存在');
+    process.exit(1);
+  }
+  
+  const files = readdirSync(DOCS_ORIGINAL).filter(f => f.endsWith('.md'));
+  let successCount = 0;
+  let failCount = 0;
+  
+  for (const file of files) {
+    try {
+      if (processFile(file)) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    } catch (error) {
+      console.log(`❌ 翻譯失敗: ${file} - ${error.message}`);
+      failCount++;
+    }
+  }
+  
+  console.log(`\n✨ 翻譯完成！`);
+  console.log(`✅ 成功: ${successCount} 個檔案`);
+  console.log(`❌ 失敗: ${failCount} 個檔案`);
+}
+
+main();

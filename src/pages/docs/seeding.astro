@@ -1,0 +1,157 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>資料庫：資料填充</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#writing-seeders">編寫 Seeder</a><ul>
+<li><a href="#using-model-factories">使用模型工廠</a></li>
+<li><a href="#calling-additional-seeders">呼叫其他 Seeder</a></li>
+<li><a href="#muting-model-events">靜音模型事件</a></li>
+</ul>
+</li>
+<li><a href="#running-seeders">執行 Seeder</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>Laravel 包含使用 seed 類別為資料庫填充資料的能力。所有 seed 類別都儲存在 <code>database/seeders</code> 目錄中。預設情況下，為您定義了一個 <code>DatabaseSeeder</code> 類別。從此類別中，您可以使用 <code>call</code> 方法來執行其他 seed 類別，從而控制填充順序。</p>
+<blockquote>
+<p>[!NOTE]
+<a href="/docs/eloquent#mass-assignment">大量賦值保護</a>在資料庫填充期間會自動停用。</p>
+</blockquote>
+<p><a name="writing-seeders"></a></p>
+<h2>編寫 Seeder</h2>
+<p>要生成一個 seeder，請執行 <code>make:seeder</code> <a href="/docs/artisan">Artisan 命令</a>。框架生成的所有 seeder 都將放在 <code>database/seeders</code> 目錄中：</p>
+<pre><code class="language-shell">php artisan make:seeder UserSeeder
+</code></pre>
+<p>一個 seeder 類別預設只包含一個方法：<code>run</code>。當執行 <code>db:seed</code> <a href="/docs/artisan">Artisan 命令</a>時會呼叫此方法。在 <code>run</code> 方法中，您可以以任何方式將資料插入資料庫。您可以使用<a href="/docs/queries">查詢建構器</a>手動插入資料，也可以使用 <a href="/docs/eloquent-factories">Eloquent 模型工廠</a>。</p>
+<p>例如，讓我們修改預設的 <code>DatabaseSeeder</code> 類別，並在 <code>run</code> 方法中新增一個資料庫插入語句：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Database\\Seeders;
+
+use Illuminate\\Database\\Seeder;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Support\\Facades\\Hash;
+use Illuminate\\Support\\Str;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Run the database seeders.
+     */
+    public function run(): void
+    {
+        DB::table('users')->insert([
+            'name' => Str::random(10),
+            'email' => Str::random(10).'@example.com',
+            'password' => Hash::make('password'),
+        ]);
+    }
+}
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+您可以在 <code>run</code> 方法的簽名中對任何需要的依賴項進行類型提示。它們將透過 Laravel <a href="/docs/container">服務容器</a>自動解析。</p>
+</blockquote>
+<p><a name="using-model-factories"></a></p>
+<h3>使用模型工廠</h3>
+<p>當然，手動指定每個模型填充的屬性是很繁瑣的。相反，您可以使用<a href="/docs/eloquent-factories">模型工廠</a>來方便地生成大量資料庫記錄。首先，查看<a href="/docs/eloquent-factories">模型工廠文件</a>以了解如何定義您的工廠。</p>
+<p>例如，讓我們建立 50 個用戶，每個用戶有一篇關聯的文章：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+/**
+ * Run the database seeders.
+ */
+public function run(): void
+{
+    User::factory()
+        ->count(50)
+        ->hasPosts(1)
+        ->create();
+}
+</code></pre>
+<p><a name="calling-additional-seeders"></a></p>
+<h3>呼叫其他 Seeder</h3>
+<p>在 <code>DatabaseSeeder</code> 類別中，您可以使用 <code>call</code> 方法來執行額外的 seed 類別。使用 <code>call</code> 方法允許您將資料庫填充分成多個檔案，這樣就不會有單一 seeder 類別變得太大。<code>call</code> 方法接受應執行的 seeder 類別陣列：</p>
+<pre><code class="language-php">/**
+ * Run the database seeders.
+ */
+public function run(): void
+{
+    $this->call([
+        UserSeeder::class,
+        PostSeeder::class,
+        CommentSeeder::class,
+    ]);
+}
+</code></pre>
+<p><a name="muting-model-events"></a></p>
+<h3>靜音模型事件</h3>
+<p>在執行填充時，您可能希望阻止模型派發事件。您可以使用 <code>WithoutModelEvents</code> trait 來實現。使用時，<code>WithoutModelEvents</code> trait 確保不會派發任何模型事件，即使透過 <code>call</code> 方法執行了額外的 seed 類別：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace Database\\Seeders;
+
+use Illuminate\\Database\\Seeder;
+use Illuminate\\Database\\Console\\Seeds\\WithoutModelEvents;
+
+class DatabaseSeeder extends Seeder
+{
+    use WithoutModelEvents;
+
+    /**
+     * Run the database seeders.
+     */
+    public function run(): void
+    {
+        $this->call([
+            UserSeeder::class,
+        ]);
+    }
+}
+</code></pre>
+<p><a name="running-seeders"></a></p>
+<h2>執行 Seeder</h2>
+<p>您可以執行 <code>db:seed</code> Artisan 命令來填充資料庫。預設情況下，<code>db:seed</code> 命令執行 <code>Database\\Seeders\\DatabaseSeeder</code> 類別，該類別又可以呼叫其他 seed 類別。但是，您可以使用 <code>--class</code> 選項來指定要單獨執行的特定 seeder 類別：</p>
+<pre><code class="language-shell">php artisan db:seed
+
+php artisan db:seed --class=UserSeeder
+</code></pre>
+<p>您也可以使用 <code>migrate:fresh</code> 命令配合 <code>--seed</code> 選項來填充資料庫，這將刪除所有表並重新執行所有遷移。此命令對於完全重建您的資料庫非常有用。可以使用 <code>--seeder</code> 選項來指定要執行的特定 seeder：</p>
+<pre><code class="language-shell">php artisan migrate:fresh --seed
+
+php artisan migrate:fresh --seed --seeder=UserSeeder
+</code></pre>
+<p><a name="forcing-seeding-production"></a></p>
+<h4>強制 Seeder 在生產環境中執行</h4>
+<p>某些填充操作可能會導致您變更或遺失資料。為了保護您免於在生產資料庫上執行填充命令，在 <code>production</code> 環境中執行 seeder 之前會提示您確認。要強制 seeder 在無提示的情況下執行，請使用 <code>--force</code> 標誌：</p>
+<pre><code class="language-shell">php artisan db:seed --force
+</code></pre>
+`;
+---
+
+<DocsLayout title="資料庫：資料填充" currentPath="seeding">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>資料填充</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">資料庫：資料填充</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/seeding" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

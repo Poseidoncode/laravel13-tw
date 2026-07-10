@@ -1,0 +1,1183 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Laravel Passport</h1>
+<ul>
+<li><a href="#introduction">簡介</a><ul>
+<li><a href="#passport-or-sanctum">Passport 或 Sanctum？</a></li>
+</ul>
+</li>
+<li><a href="#installation">安裝</a><ul>
+<li><a href="#deploying-passport">部署 Passport</a></li>
+<li><a href="#upgrading-passport">升級 Passport</a></li>
+</ul>
+</li>
+<li><a href="#configuration">設定</a><ul>
+<li><a href="#token-lifetimes">令牌生命週期</a></li>
+<li><a href="#overriding-default-models">覆寫預設模型</a></li>
+<li><a href="#overriding-routes">覆寫路由</a></li>
+</ul>
+</li>
+<li><a href="#authorization-code-grant">授權碼授權</a><ul>
+<li><a href="#managing-clients">管理客戶端</a></li>
+<li><a href="#requesting-tokens">請求令牌</a></li>
+<li><a href="#managing-tokens">管理令牌</a></li>
+<li><a href="#refreshing-tokens">重新整理令牌</a></li>
+<li><a href="#revoking-tokens">撤銷令牌</a></li>
+<li><a href="#purging-tokens">清除令牌</a></li>
+</ul>
+</li>
+<li><a href="#code-grant-pkce">使用 PKCE 的授權碼授權</a><ul>
+<li><a href="#creating-a-auth-pkce-grant-client">建立客戶端</a></li>
+<li><a href="#requesting-auth-pkce-grant-tokens">請求令牌</a></li>
+</ul>
+</li>
+<li><a href="#device-authorization-grant">裝置授權授權</a><ul>
+<li><a href="#creating-a-device-authorization-grant-client">建立裝置碼授權客戶端</a></li>
+<li><a href="#requesting-device-authorization-grant-tokens">請求令牌</a></li>
+</ul>
+</li>
+<li><a href="#password-grant">密碼授權</a><ul>
+<li><a href="#creating-a-password-grant-client">建立密碼授權客戶端</a></li>
+<li><a href="#requesting-password-grant-tokens">請求令牌</a></li>
+<li><a href="#requesting-all-scopes">請求所有範圍</a></li>
+<li><a href="#customizing-the-user-provider">自訂使用者提供者</a></li>
+<li><a href="#customizing-the-username-field">自訂使用者名稱欄位</a></li>
+<li><a href="#customizing-the-password-validation">自訂密碼驗證</a></li>
+</ul>
+</li>
+<li><a href="#implicit-grant">隱式授權</a></li>
+<li><a href="#client-credentials-grant">客戶端憑證授權</a></li>
+<li><a href="#personal-access-tokens">個人存取令牌</a><ul>
+<li><a href="#creating-a-personal-access-client">建立個人存取客戶端</a></li>
+<li><a href="#customizing-the-user-provider-for-pat">自訂使用者提供者</a></li>
+<li><a href="#managing-personal-access-tokens">管理個人存取令牌</a></li>
+</ul>
+</li>
+<li><a href="#protecting-routes">保護路由</a><ul>
+<li><a href="#via-middleware">透過中介層</a></li>
+<li><a href="#passing-the-access-token">傳遞存取令牌</a></li>
+</ul>
+</li>
+<li><a href="#token-scopes">令牌範圍</a><ul>
+<li><a href="#defining-scopes">定義範圍</a></li>
+<li><a href="#default-scope">預設範圍</a></li>
+<li><a href="#assigning-scopes-to-tokens">將範圍分配給令牌</a></li>
+<li><a href="#checking-scopes">檢查範圍</a></li>
+</ul>
+</li>
+<li><a href="#spa-authentication">SPA 認證</a></li>
+<li><a href="#events">事件</a></li>
+<li><a href="#testing">測試</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p><a href="https://github.com/laravel/passport">Laravel Passport</a> 為您的 Laravel 應用程式提供完整的 OAuth2 伺服器實作，只需幾分鐘即可完成。Passport 基於由 Andy Millington 和 Simon Hamp 維護的 <a href="https://github.com/thephpleague/oauth2-server">League OAuth2 server</a> 建構。</p>
+<blockquote>
+<p>[!NOTE]
+本文件假設您已熟悉 OAuth2。如果您對 OAuth2 一無所悉，請先熟悉 OAuth2 的一般<a href="https://oauth2.thephpleague.com/terminology/">術語</a>和功能，再繼續閱讀。</p>
+</blockquote>
+<p><a name="passport-or-sanctum"></a></p>
+<h3>Passport 或 Sanctum？</h3>
+<p>開始之前，您可能希望判斷您的應用程式是否更適合使用 Laravel Passport 或 <a href="/docs/sanctum">Laravel Sanctum</a>。如果您的應用程式絕對需要支援 OAuth2，則應使用 Laravel Passport。</p>
+<p>然而，如果您要認證單頁應用程式、行動應用程式，或發行 API 令牌，則應使用 <a href="/docs/sanctum">Laravel Sanctum</a>。Laravel Sanctum 不支援 OAuth2；然而，它提供更簡單的 API 認證開發體驗。</p>
+<p><a name="installation"></a></p>
+<h2>安裝</h2>
+<p>您可以透過 <code>install:api</code> Artisan 命令安裝 Laravel Passport：</p>
+<pre><code class="language-shell">php artisan install:api --passport
+</code></pre>
+<p>此命令將發佈並執行資料庫遷移，以建立您的應用程式儲存 OAuth2 客戶端和存取令牌所需的表格。該命令還將建立產生安全存取令牌所需的加密金鑰。</p>
+<p>執行 <code>install:api</code> 命令後，請將 <code>Laravel\\Passport\\HasApiTokens</code> trait 和 <code>Laravel\\Passport\\Contracts\\OAuthenticatable</code> 介面加入您的 <code>App\\Models\\User</code> 模型。此 trait 將為您的模型提供一些輔助方法，允許您檢查已認證使用者的令牌和範圍：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+use Laravel\\Passport\\Contracts\\OAuthenticatable;
+use Laravel\\Passport\\HasApiTokens;
+
+class User extends Authenticatable implements OAuthenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+}
+</code></pre>
+<p>最後，在您應用程式的 <code>config/auth.php</code> 設定檔案中，您應定義 <code>api</code> 認證守衛，並將 <code>driver</code> 選項設為 <code>passport</code>。這將指示您的應用程式在認證傳入的 API 請求時使用 Passport 的 <code>TokenGuard</code>：</p>
+<pre><code class="language-php">&#39;guards&#39; =&gt; [
+    &#39;web&#39; =&gt; [
+        &#39;driver&#39; =&gt; &#39;session&#39;,
+        &#39;provider&#39; =&gt; &#39;users&#39;,
+    ],
+
+    &#39;api&#39; =&gt; [
+        &#39;driver&#39; =&gt; &#39;passport&#39;,
+        &#39;provider&#39; =&gt; &#39;users&#39;,
+    ],
+],
+</code></pre>
+<p><a name="deploying-passport"></a></p>
+<h3>部署 Passport</h3>
+<p>首次將 Passport 部署到您應用程式的伺服器時，您通常需要執行 <code>passport:keys</code> 命令。此命令會產生 Passport 為了產生存取令牌所需的加密金鑰。產生的金鑰通常不會保存在原始碼控制中：</p>
+<pre><code class="language-shell">php artisan passport:keys
+</code></pre>
+<p>如有必要，您可以定義 Passport 金鑰的載入路徑。您可以使用 <code>Passport::loadKeysFrom</code> 方法來完成此操作。通常，應從您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::loadKeysFrom(__DIR__.&#39;/../secrets/oauth&#39;);
+}
+</code></pre>
+<p><a name="loading-keys-from-the-environment"></a></p>
+<h4>從環境變數載入金鑰</h4>
+<p>或者，您可以使用 <code>vendor:publish</code> Artisan 命令發佈 Passport 的設定檔案：</p>
+<pre><code class="language-shell">php artisan vendor:publish --tag=passport-config
+</code></pre>
+<p>設定檔案發佈後，您可以透過將加密金鑰定義為環境變數來載入您應用程式的加密金鑰：</p>
+<pre><code class="language-ini">PASSPORT_PRIVATE_KEY=&quot;-----BEGIN RSA PRIVATE KEY-----
+&lt;private key here&gt;
+-----END RSA PRIVATE KEY-----&quot;
+
+PASSPORT_PUBLIC_KEY=&quot;-----BEGIN PUBLIC KEY-----
+&lt;public key here&gt;
+-----END PUBLIC KEY-----&quot;
+</code></pre>
+<p><a name="upgrading-passport"></a></p>
+<h3>升級 Passport</h3>
+<p>升級到新主要版本的 Passport 時，請務必仔細閱讀<a href="https://github.com/laravel/passport/blob/master/UPGRADE.md">升級指南</a>。</p>
+<p><a name="configuration"></a></p>
+<h2>設定</h2>
+<p><a name="token-lifetimes"></a></p>
+<h3>令牌生命週期</h3>
+<p>預設情況下，Passport 發行一年後過期的長期存取令牌。如果您要配置較長或較短的令牌生命週期，可以使用 <code>tokensExpireIn</code>、<code>refreshTokensExpireIn</code> 和 <code>personalAccessTokensExpireIn</code> 方法。這些方法應從您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫：</p>
+<pre><code class="language-php">use Carbon\\CarbonInterval;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::tokensExpireIn(CarbonInterval::days(15));
+    Passport::refreshTokensExpireIn(CarbonInterval::days(30));
+    Passport::personalAccessTokensExpireIn(CarbonInterval::months(6));
+}
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+Passport 資料庫表格上的 <code>expires_at</code> 欄位是唯讀的，僅供顯示用途。發行令牌時，Passport 會將過期資訊儲存在已簽署和加密的令牌中。如果需要使令牌失效，應<a href="#revoking-tokens">撤銷它</a>。</p>
+</blockquote>
+<p><a name="overriding-default-models"></a></p>
+<h3>覆寫預設模型</h3>
+<p>您可以自由擴展 Passport 內部使用的模型，方法是定義您自己的模型並擴展對應的 Passport 模型：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Client as PassportClient;
+
+class Client extends PassportClient
+{
+    // ...
+}
+</code></pre>
+<p>定義模型後，您可以透過 <code>Laravel\\Passport\\Passport</code> 類別指示 Passport 使用您的自訂模型。通常，應在您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中告知 Passport 您的自訂模型：</p>
+<pre><code class="language-php">use App\\Models\\Passport\\AuthCode;
+use App\\Models\\Passport\\Client;
+use App\\Models\\Passport\\DeviceCode;
+use App\\Models\\Passport\\RefreshToken;
+use App\\Models\\Passport\\Token;
+use Laravel\\Passport\\Passport;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::useTokenModel(Token::class);
+    Passport::useRefreshTokenModel(RefreshToken::class);
+    Passport::useAuthCodeModel(AuthCode::class);
+    Passport::useClientModel(Client::class);
+    Passport::useDeviceCodeModel(DeviceCode::class);
+}
+</code></pre>
+<p><a name="overriding-routes"></a></p>
+<h3>覆寫路由</h3>
+<p>有時候您可能希望自訂 Passport 定義的路由。要實現此目的，首先需要透過在您應用程式的 <code>AppServiceProvider</code> 的 <code>register</code> 方法中加入 <code>Passport::ignoreRoutes</code> 來忽略 Passport 註冊的路由：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Passport;
+
+/**
+ * Register any application services.
+ */
+public function register(): void
+{
+    Passport::ignoreRoutes();
+}
+</code></pre>
+<p>然後，您可以將<a href="https://github.com/laravel/passport/blob/master/routes/web.php">其路由檔案</a>中定義的路由複製到您應用程式的 <code>routes/web.php</code> 檔案中，並根據您的需求進行修改：</p>
+<pre><code class="language-php">Route::group([
+    &#39;as&#39; =&gt; &#39;passport.&#39;,
+    &#39;prefix&#39; =&gt; config(&#39;passport.path&#39;, &#39;oauth&#39;),
+    &#39;namespace&#39; =&gt; &#39;\\Laravel\\Passport\\Http\\Controllers&#39;,
+], function () {
+    // Passport routes...
+});
+</code></pre>
+<p><a name="authorization-code-grant"></a></p>
+<h2>授權碼授權</h2>
+<p>透過授權碼使用 OAuth2 是大多數開發者熟悉 OAuth2 的方式。使用授權碼時，客戶端應用程式會將使用者重新導向到您的伺服器，使用者將在那裡核准或拒絕向客戶端發行存取令牌的請求。</p>
+<p>要開始，我們需要指示 Passport 如何返回我們的「授權」視圖。</p>
+<p>所有授權視圖的渲染邏輯都可以使用 <code>Laravel\\Passport\\Passport</code> 類別提供的適當方法來自訂。通常，應從您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Inertia\\Inertia;
+use Laravel\\Passport\\Passport;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    // By providing a view name...
+    Passport::authorizationView(&#39;auth.oauth.authorize&#39;);
+
+    // By providing a closure...
+    Passport::authorizationView(
+        fn ($parameters) =&gt; Inertia::render(&#39;Auth/OAuth/Authorize&#39;, [
+            &#39;request&#39; =&gt; $parameters[&#39;request&#39;],
+            &#39;authToken&#39; =&gt; $parameters[&#39;authToken&#39;],
+            &#39;client&#39; =&gt; $parameters[&#39;client&#39;],
+            &#39;user&#39; =&gt; $parameters[&#39;user&#39;],
+            &#39;scopes&#39; =&gt; $parameters[&#39;scopes&#39;],
+        ])
+    );
+}
+</code></pre>
+<p>Passport 將自動定義返回此視圖的 <code>/oauth/authorize</code> 路由。您的 <code>auth.oauth.authorize</code> 範本應包含一個向 <code>passport.authorizations.approve</code> 路由發出 POST 請求以核准授權的表單，以及一個向 <code>passport.authorizations.deny</code> 路由發出 DELETE 請求以拒絕授權的表單。<code>passport.authorizations.approve</code> 和 <code>passport.authorizations.deny</code> 路由需要 <code>state</code>、<code>client_id</code> 和 <code>auth_token</code> 欄位。</p>
+<p><a name="managing-clients"></a></p>
+<h3>管理客戶端</h3>
+<p>需要與您應用程式的 API 互動的應用程式開發者，需要透過建立「客戶端」來向您的應用程式註冊他們的應用程式。通常，這包括提供他們應用程式的名稱和一個 URI，該 URI 在使用者核准授權請求後可用於重新導向。</p>
+<p><a name="managing-first-party-clients"></a></p>
+<h4>第一方客戶端</h4>
+<p>建立客戶端最簡單的方法是使用 <code>passport:client</code> Artisan 命令。此命令可用於建立第一方客戶端或測試您的 OAuth2 功能。執行 <code>passport:client</code> 命令時，Passport 將提示您提供有關客戶端的更多資訊，並為您提供客戶端 ID 和密鑰：</p>
+<pre><code class="language-shell">php artisan passport:client
+</code></pre>
+<p>如果您希望允許客戶端使用多個重新導向 URI，可以在 <code>passport:client</code> 命令提示輸入 URI 時，使用逗號分隔的列表指定它們。任何包含逗號的 URI 都應進行 URI 編碼：</p>
+<pre><code class="language-shell">https://third-party-app.com/callback,https://example.com/oauth/redirect
+</code></pre>
+<p><a name="managing-third-party-clients"></a></p>
+<h4>第三方客戶端</h4>
+<p>由於您應用程式的使用者無法使用 <code>passport:client</code> 命令，您可以使用 <code>Laravel\\Passport\\ClientRepository</code> 類別的 <code>createAuthorizationCodeGrantClient</code> 方法為給定使用者註冊客戶端：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Laravel\\Passport\\ClientRepository;
+
+$user = User::find($userId);
+
+// Creating an OAuth app client that belongs to the given user...
+$client = app(ClientRepository::class)-&gt;createAuthorizationCodeGrantClient(
+    user: $user,
+    name: &#39;Example App&#39;,
+    redirectUris: [&#39;https://third-party-app.com/callback&#39;],
+    confidential: false,
+    enableDeviceFlow: true
+);
+
+// Retrieving all the OAuth app clients that belong to the user...
+$clients = $user-&gt;oauthApps()-&gt;get();
+</code></pre>
+<p><code>createAuthorizationCodeGrantClient</code> 方法返回 <code>Laravel\\Passport\\Client</code> 的實例。您可以將 <code>$client-&gt;id</code> 顯示為客戶端 ID，將 <code>$client-&gt;plainSecret</code> 顯示為客戶端密鑰給使用者。</p>
+<p><a name="requesting-tokens"></a></p>
+<h3>請求令牌</h3>
+<p><a name="requesting-tokens-redirecting-for-authorization"></a></p>
+<h4>重新導向以進行授權</h4>
+<p>建立客戶端後，開發者可以使用其客戶端 ID 和密鑰從您的應用程式請求授權碼和存取令牌。首先，消費應用程式應向您應用程式的 <code>/oauth/authorize</code> 路由發出重新導向請求，如下所示：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Str;
+
+Route::get(&#39;/redirect&#39;, function (Request $request) {
+    $request-&gt;session()-&gt;put(&#39;state&#39;, $state = Str::random(40));
+
+    $query = http_build_query([
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;redirect_uri&#39; =&gt; &#39;https://third-party-app.com/callback&#39;,
+        &#39;response_type&#39; =&gt; &#39;code&#39;,
+        &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+        &#39;state&#39; =&gt; $state,
+        // &#39;prompt&#39; =&gt; &#39;&#39;, // &quot;none&quot;, &quot;consent&quot;, or &quot;login&quot;
+    ]);
+
+    return redirect(&#39;https://passport-app.test/oauth/authorize?&#39;.$query);
+});
+</code></pre>
+<p><code>prompt</code> 參數可用於指定 Passport 應用程式的認證行為。</p>
+<p>如果 <code>prompt</code> 值為 <code>none</code>，Passport 將在使用者尚未透過 Passport 應用程式認證時擲出認證錯誤。如果值為 <code>consent</code>，Passport 將始終顯示授權核准畫面，即使先前已將所有範圍授予消費應用程式。當值為 <code>login</code> 時，Passport 應用程式將始終提示使用者重新登入應用程式，即使他們已有現有會話。</p>
+<p>如果未提供 <code>prompt</code> 值，將僅在使用者先前未為請求的範圍授權存取消費應用程式時，才會提示使用者進行授權。</p>
+<blockquote>
+<p>[!NOTE]
+請記住，<code>/oauth/authorize</code> 路由已由 Passport 定義。您不需要手動定義此路由。</p>
+</blockquote>
+<p><a name="approving-the-request"></a></p>
+<h4>核准請求</h4>
+<p>收到授權請求時，Passport 將根據 <code>prompt</code> 參數的值（如果存在）自動回應，並可能顯示範本給使用者，允許他們核准或拒絕授權請求。如果使用者核准請求，他們將被重新導向回消費應用程式指定的 <code>redirect_uri</code>。<code>redirect_uri</code> 必須與建立客戶端時指定的 <code>redirect</code> URL 相符。</p>
+<p>有時候您可能希望跳過授權提示，例如在授權第一方客戶端時。您可以透過<a href="#overriding-default-models">擴展 <code>Client</code> 模型</a>並定義 <code>skipsAuthorization</code> 方法來實現此目的。如果 <code>skipsAuthorization</code> 返回 <code>true</code>，客戶端將被核准，使用者將立即被重新導向回 <code>redirect_uri</code>，除非消費應用程式在重新導向以進行授權時明確設定了 <code>prompt</code> 參數：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models\\Passport;
+
+use Illuminate\\Contracts\\Auth\\Authenticatable;
+use Laravel\\Passport\\Client as BaseClient;
+
+class Client extends BaseClient
+{
+    /**
+     * Determine if the client should skip the authorization prompt.
+     *
+     * @param  \\Laravel\\Passport\\Scope[]  $scopes
+     */
+    public function skipsAuthorization(Authenticatable $user, array $scopes): bool
+    {
+        return $this-&gt;firstParty();
+    }
+}
+</code></pre>
+<p><a name="requesting-tokens-converting-authorization-codes-to-access-tokens"></a></p>
+<h4>將授權碼轉換為存取令牌</h4>
+<p>如果使用者核准授權請求，他們將被重新導向回消費應用程式。消費者應首先驗證 <code>state</code> 參數與重新導向前儲存的值是否相符。如果 state 參數相符，則消費者應向您的應用程式發出 <code>POST</code> 請求以請求存取令牌。該請求應包含使用者核准授權請求時您的應用程式發出的授權碼：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Http;
+
+Route::get(&#39;/callback&#39;, function (Request $request) {
+    $state = $request-&gt;session()-&gt;pull(&#39;state&#39;);
+
+    throw_unless(
+        strlen($state) &gt; 0 &amp;&amp; $state === $request-&gt;state,
+        InvalidArgumentException::class,
+        &#39;Invalid state value.&#39;
+    );
+
+    $response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+        &#39;grant_type&#39; =&gt; &#39;authorization_code&#39;,
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;client_secret&#39; =&gt; &#39;your-client-secret&#39;,
+        &#39;redirect_uri&#39; =&gt; &#39;https://third-party-app.com/callback&#39;,
+        &#39;code&#39; =&gt; $request-&gt;code,
+    ]);
+
+    return $response-&gt;json();
+});
+</code></pre>
+<p>此 <code>/oauth/token</code> 路由將返回包含 <code>access_token</code>、<code>refresh_token</code> 和 <code>expires_in</code> 屬性的 JSON 回應。<code>expires_in</code> 屬性包含存取令牌過期前的秒數。</p>
+<blockquote>
+<p>[!NOTE]
+與 <code>/oauth/authorize</code> 路由一樣，<code>/oauth/token</code> 路由已由 Passport 為您定義。無需手動定義此路由。</p>
+</blockquote>
+<p><a name="managing-tokens"></a></p>
+<h3>管理令牌</h3>
+<p>您可以使用 <code>Laravel\\Passport\\HasApiTokens</code> trait 的 <code>tokens</code> 方法檢索使用者的已授權令牌。例如，這可用於為使用者提供一個儀表板，以追蹤他們與第三方應用程式的連線：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Database\\Eloquent\\Collection;
+use Illuminate\\Support\\Facades\\Date;
+use Laravel\\Passport\\Token;
+
+$user = User::find($userId);
+
+// Retrieving all of the valid tokens for the user...
+$tokens = $user-&gt;tokens()
+    -&gt;where(&#39;revoked&#39;, false)
+    -&gt;where(&#39;expires_at&#39;, &#39;&gt;&#39;, Date::now())
+    -&gt;get();
+
+// Retrieving all the user&#39;s connections to third-party OAuth app clients...
+$connections = $tokens-&gt;load(&#39;client&#39;)
+    -&gt;reject(fn (Token $token) =&gt; $token-&gt;client-&gt;firstParty())
+    -&gt;groupBy(&#39;client_id&#39;)
+    -&gt;map(fn (Collection $tokens) =&gt; [
+        &#39;client&#39; =&gt; $tokens-&gt;first()-&gt;client,
+        &#39;scopes&#39; =&gt; $tokens-&gt;pluck(&#39;scopes&#39;)-&gt;flatten()-&gt;unique()-&gt;values()-&gt;all(),
+        &#39;tokens_count&#39; =&gt; $tokens-&gt;count(),
+    ])
+    -&gt;values();
+</code></pre>
+<p><a name="refreshing-tokens"></a></p>
+<h3>重新整理令牌</h3>
+<p>如果您的應用程式發行短期存取令牌，使用者需要透過發行存取令牌時提供的重新整理令牌來重新整理其存取令牌：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+    &#39;grant_type&#39; =&gt; &#39;refresh_token&#39;,
+    &#39;refresh_token&#39; =&gt; &#39;the-refresh-token&#39;,
+    &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+    &#39;client_secret&#39; =&gt; &#39;your-client-secret&#39;, // Required for confidential clients only...
+    &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+]);
+
+return $response-&gt;json();
+</code></pre>
+<p>此 <code>/oauth/token</code> 路由將返回包含 <code>access_token</code>、<code>refresh_token</code> 和 <code>expires_in</code> 屬性的 JSON 回應。<code>expires_in</code> 屬性包含存取令牌過期前的秒數。</p>
+<p><a name="revoking-tokens"></a></p>
+<h3>撤銷令牌</h3>
+<p>您可以使用 <code>Laravel\\Passport\\Token</code> 模型上的 <code>revoke</code> 方法來撤銷令牌。您可以使用 <code>Laravel\\Passport\\RefreshToken</code> 模型上的 <code>revoke</code> 方法來撤銷令牌的重新整理令牌：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Passport;
+use Laravel\\Passport\\Token;
+
+$token = Passport::token()-&gt;find($tokenId);
+
+// Revoke an access token...
+$token-&gt;revoke();
+
+// Revoke the token&#39;s refresh token...
+$token-&gt;refreshToken?-&gt;revoke();
+
+// Revoke all of the user&#39;s tokens...
+User::find($userId)-&gt;tokens()-&gt;each(function (Token $token) {
+    $token-&gt;revoke();
+    $token-&gt;refreshToken?-&gt;revoke();
+});
+</code></pre>
+<p><a name="purging-tokens"></a></p>
+<h3>清除令牌</h3>
+<p>當令牌已被撤銷或過期時，您可能希望從資料庫中清除它們。Passport 附含的 <code>passport:purge</code> Artisan 命令可以為您完成此操作：</p>
+<pre><code class="language-shell"># Purge revoked and expired tokens, auth codes, and device codes...
+php artisan passport:purge
+
+# Only purge tokens expired for more than 6 hours...
+php artisan passport:purge --hours=6
+
+# Only purge revoked tokens, auth codes, and device codes...
+php artisan passport:purge --revoked
+
+# Only purge expired tokens, auth codes, and device codes...
+php artisan passport:purge --expired
+</code></pre>
+<p>您也可以在應用程式的 <code>routes/console.php</code> 檔案中配置<a href="/docs/scheduling">排程任務</a>，以按排程自動修剪您的令牌：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Schedule;
+
+Schedule::command(&#39;passport:purge&#39;)-&gt;hourly();
+</code></pre>
+<p><a name="code-grant-pkce"></a></p>
+<h2>使用 PKCE 的授權碼授權</h2>
+<p>使用「Proof Key for Code Exchange」（PKCE）的授權碼授權是一種安全的方式，用於認證單頁應用程式或行動應用程式以存取您的 API。當您無法保證客戶端密鑰被機密儲存，或為了緩解授權碼被攻擊者攔截的威脅時，應使用此授權。在用授權碼交換存取令牌時，「code verifier」和「code challenge」的組合取代了客戶端密鑰。</p>
+<p><a name="creating-a-auth-pkce-grant-client"></a></p>
+<h3>建立客戶端</h3>
+<p>在您的應用程式可以透過使用 PKCE 的授權碼授權發行令牌之前，您需要建立一個支援 PKCE 的客戶端。您可以使用帶有 <code>--public</code> 選項的 <code>passport:client</code> Artisan 命令來完成此操作：</p>
+<pre><code class="language-shell">php artisan passport:client --public
+</code></pre>
+<p><a name="requesting-auth-pkce-grant-tokens"></a></p>
+<h3>請求令牌</h3>
+<p><a name="code-verifier-code-challenge"></a></p>
+<h4>Code Verifier 和 Code Challenge</h4>
+<p>由於此授權類型不提供客戶端密鑰，開發者需要產生 code verifier 和 code challenge 的組合來請求令牌。</p>
+<p>code verifier 應為 43 到 128 個字元的隨機字串，包含字母、數字以及 <code>&quot;-&quot;</code>、<code>&quot;.&quot;</code>、<code>&quot;_&quot;</code>、<code>&quot;~&quot;</code> 字元，如 <a href="https://tools.ietf.org/html/rfc7636">RFC 7636 規範</a>中所定義。</p>
+<p>code challenge 應為 Base64 編碼的字串，使用 URL 和檔案名稱安全的字元。尾部的 <code>&#39;=&#39;</code> 字元應被移除，且不應存在換行、空格或其他額外字元。</p>
+<pre><code class="language-php">$encoded = base64_encode(hash(&#39;sha256&#39;, $codeVerifier, true));
+
+$codeChallenge = strtr(rtrim($encoded, &#39;=&#39;), &#39;+/&#39;, &#39;-_&#39;);
+</code></pre>
+<p><a name="code-grant-pkce-redirecting-for-authorization"></a></p>
+<h4>重新導向以進行授權</h4>
+<p>建立客戶端後，您可以使用客戶端 ID 和產生的 code verifier 及 code challenge 從您的應用程式請求授權碼和存取令牌。首先，消費應用程式應向您應用程式的 <code>/oauth/authorize</code> 路由發出重新導向請求：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Str;
+
+Route::get(&#39;/redirect&#39;, function (Request $request) {
+    $request-&gt;session()-&gt;put(&#39;state&#39;, $state = Str::random(40));
+
+    $request-&gt;session()-&gt;put(
+        &#39;code_verifier&#39;, $codeVerifier = Str::random(128)
+    );
+
+    $codeChallenge = strtr(rtrim(
+        base64_encode(hash(&#39;sha256&#39;, $codeVerifier, true))
+    , &#39;=&#39;), &#39;+/&#39;, &#39;-_&#39;);
+
+    $query = http_build_query([
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;redirect_uri&#39; =&gt; &#39;https://third-party-app.com/callback&#39;,
+        &#39;response_type&#39; =&gt; &#39;code&#39;,
+        &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+        &#39;state&#39; =&gt; $state,
+        &#39;code_challenge&#39; =&gt; $codeChallenge,
+        &#39;code_challenge_method&#39; =&gt; &#39;S256&#39;,
+        // &#39;prompt&#39; =&gt; &#39;&#39;, // &quot;none&quot;, &quot;consent&quot;, or &quot;login&quot;
+    ]);
+
+    return redirect(&#39;https://passport-app.test/oauth/authorize?&#39;.$query);
+});
+</code></pre>
+<p><a name="code-grant-pkce-converting-authorization-codes-to-access-tokens"></a></p>
+<h4>將授權碼轉換為存取令牌</h4>
+<p>如果使用者核准授權請求，他們將被重新導向回消費應用程式。消費者應驗證 <code>state</code> 參數與重新導向前儲存的值是否相符，如同標準授權碼授權。</p>
+<p>如果 state 參數相符，消費者應向您的應用程式發出 <code>POST</code> 請求以請求存取令牌。該請求應包含您的應用程式在使用者核准授權請求時發出的授權碼，以及最初產生的 code verifier：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Facades\\Http;
+
+Route::get(&#39;/callback&#39;, function (Request $request) {
+    $state = $request-&gt;session()-&gt;pull(&#39;state&#39;);
+
+    $codeVerifier = $request-&gt;session()-&gt;pull(&#39;code_verifier&#39;);
+
+    throw_unless(
+        strlen($state) &gt; 0 &amp;&amp; $state === $request-&gt;state,
+        InvalidArgumentException::class
+    );
+
+    $response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+        &#39;grant_type&#39; =&gt; &#39;authorization_code&#39;,
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;redirect_uri&#39; =&gt; &#39;https://third-party-app.com/callback&#39;,
+        &#39;code_verifier&#39; =&gt; $codeVerifier,
+        &#39;code&#39; =&gt; $request-&gt;code,
+    ]);
+
+    return $response-&gt;json();
+});
+</code></pre>
+<p><a name="device-authorization-grant"></a></p>
+<h2>裝置授權授權</h2>
+<p>OAuth2 裝置授權授權允許無瀏覽器或輸入受限的裝置（例如電視和遊戲機）透過交換「裝置碼」來獲得存取令牌。使用裝置流程時，裝置客戶端將指示使用者使用次要裝置（例如電腦或智慧型手機）連接到您的伺服器，他們將在那裡輸入提供的「使用者碼」並核准或拒絕存取請求。</p>
+<p>要開始，我們需要指示 Passport 如何返回我們的「使用者碼」和「授權」視圖。</p>
+<p>所有授權視圖的渲染邏輯都可以使用 <code>Laravel\\Passport\\Passport</code> 類別提供的適當方法來自訂。通常，應從您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法。</p>
+<pre><code class="language-php">use Inertia\\Inertia;
+use Laravel\\Passport\\Passport;
+
+/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    // By providing a view name...
+    Passport::deviceUserCodeView(&#39;auth.oauth.device.user-code&#39;);
+    Passport::deviceAuthorizationView(&#39;auth.oauth.device.authorize&#39;);
+
+    // By providing a closure...
+    Passport::deviceUserCodeView(
+        fn ($parameters) =&gt; Inertia::render(&#39;Auth/OAuth/Device/UserCode&#39;)
+    );
+
+    Passport::deviceAuthorizationView(
+        fn ($parameters) =&gt; Inertia::render(&#39;Auth/OAuth/Device/Authorize&#39;, [
+            &#39;request&#39; =&gt; $parameters[&#39;request&#39;],
+            &#39;authToken&#39; =&gt; $parameters[&#39;authToken&#39;],
+            &#39;client&#39; =&gt; $parameters[&#39;client&#39;],
+            &#39;user&#39; =&gt; $parameters[&#39;user&#39;],
+            &#39;scopes&#39; =&gt; $parameters[&#39;scopes&#39;],
+        ])
+    );
+
+    // ...
+}
+</code></pre>
+<p>Passport 將自動定義返回這些視圖的路由。您的 <code>auth.oauth.device.user-code</code> 範本應包含一個向 <code>passport.device.authorizations.authorize</code> 路由發出 GET 請求的表單。<code>passport.device.authorizations.authorize</code> 路由需要 <code>user_code</code> 查詢參數。</p>
+<p>您的 <code>auth.oauth.device.authorize</code> 範本應包含一個向 <code>passport.device.authorizations.approve</code> 路由發出 POST 請求以核准授權的表單，以及一個向 <code>passport.device.authorizations.deny</code> 路由發出 DELETE 請求以拒絕授權的表單。<code>passport.device.authorizations.approve</code> 和 <code>passport.device.authorizations.deny</code> 路由需要 <code>state</code>、<code>client_id</code> 和 <code>auth_token</code> 欄位。</p>
+<p><a name="creating-a-device-authorization-grant-client"></a></p>
+<h3>建立裝置授權授權客戶端</h3>
+<p>在您的應用程式可以透過裝置授權授權發行令牌之前，您需要建立一個啟用裝置流程的客戶端。您可以使用帶有 <code>--device</code> 選項的 <code>passport:client</code> Artisan 命令來完成此操作。此命令將建立第一方啟用裝置流程的客戶端，並為您提供客戶端 ID 和密鑰：</p>
+<pre><code class="language-shell">php artisan passport:client --device
+</code></pre>
+<p>此外，您可以使用 <code>ClientRepository</code> 類別上的 <code>createDeviceAuthorizationGrantClient</code> 方法為給定使用者註冊屬於該使用者的第三方客戶端：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Laravel\\Passport\\ClientRepository;
+
+$user = User::find($userId);
+
+$client = app(ClientRepository::class)-&gt;createDeviceAuthorizationGrantClient(
+    user: $user,
+    name: &#39;Example Device&#39;,
+    confidential: false,
+);
+</code></pre>
+<p><a name="requesting-device-authorization-grant-tokens"></a></p>
+<h3>請求令牌</h3>
+<p><a name="device-code"></a></p>
+<h4>請求裝置碼</h4>
+<p>建立客戶端後，開發者可以使用其客戶端 ID 從您的應用程式請求裝置碼。首先，消費裝置應向您應用程式的 <code>/oauth/device/code</code> 路由發出 <code>POST</code> 請求以請求裝置碼：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/device/code&#39;, [
+    &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+    &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+]);
+
+return $response-&gt;json();
+</code></pre>
+<p>這將返回包含 <code>device_code</code>、<code>user_code</code>、<code>verification_uri</code>、<code>interval</code> 和 <code>expires_in</code> 屬性的 JSON 回應。<code>expires_in</code> 屬性包含裝置碼過期前的秒數。<code>interval</code> 屬性包含消費裝置在輪詢 <code>/oauth/token</code> 路由時應等待的秒數，以避免速率限制錯誤。</p>
+<blockquote>
+<p>[!NOTE]
+請記住，<code>/oauth/device/code</code> 路由已由 Passport 定義。您不需要手動定義此路由。</p>
+</blockquote>
+<p><a name="user-code"></a></p>
+<h4>顯示驗證 URI 和使用者碼</h4>
+<p>取得裝置碼請求後，消費裝置應指示使用者使用另一個裝置訪問提供的 <code>verification_uri</code> 並輸入 <code>user_code</code> 以核准授權請求。</p>
+<p><a name="polling-token-request"></a></p>
+<h4>輪詢令牌請求</h4>
+<p>由於使用者將使用單獨的裝置來授予（或拒絕）存取權限，消費裝置應輪詢您應用程式的 <code>/oauth/token</code> 路由以確定使用者何時已回應請求。消費裝置在請求裝置碼時，應使用 JSON 回應中提供的最小輪詢 <code>interval</code>，以避免速率限制錯誤：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+use Illuminate\\Support\\Sleep;
+
+$interval = 5;
+
+do {
+    Sleep::for($interval)-&gt;seconds();
+
+    $response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+        &#39;grant_type&#39; =&gt; &#39;urn:ietf:params:oauth:grant-type:device_code&#39;,
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;client_secret&#39; =&gt; &#39;your-client-secret&#39;, // Required for confidential clients only...
+        &#39;device_code&#39; =&gt; &#39;the-device-code&#39;,
+    ]);
+
+    if ($response-&gt;json(&#39;error&#39;) === &#39;slow_down&#39;) {
+        $interval += 5;
+    }
+} while (in_array($response-&gt;json(&#39;error&#39;), [&#39;authorization_pending&#39;, &#39;slow_down&#39;]));
+
+return $response-&gt;json();
+</code></pre>
+<p>如果使用者已核准授權請求，這將返回包含 <code>access_token</code>、<code>refresh_token</code> 和 <code>expires_in</code> 屬性的 JSON 回應。<code>expires_in</code> 屬性包含存取令牌過期前的秒數。</p>
+<p><a name="password-grant"></a></p>
+<h2>密碼授權</h2>
+<blockquote>
+<p>[!WARNING]
+我們不再建議使用密碼授權令牌。相反，您應選擇<a href="https://oauth2.thephpleague.com/authorization-server/which-grant/">目前被 OAuth2 Server 推薦的授權類型</a>。</p>
+</blockquote>
+<p>OAuth2 密碼授權允許您的其他第一方客戶端（例如行動應用程式）使用電子郵件地址/使用者名稱和密碼來獲得存取令牌。這使您能夠安全地向第一方客戶端發行存取令牌，無需要求使用者完成整個 OAuth2 授權碼重新導向流程。</p>
+<p>要啟用密碼授權，請在您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫 <code>enablePasswordGrant</code> 方法：</p>
+<pre><code class="language-php">/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::enablePasswordGrant();
+}
+</code></pre>
+<p><a name="creating-a-password-grant-client"></a></p>
+<h3>建立密碼授權客戶端</h3>
+<p>在您的應用程式可以透過密碼授權發行令牌之前，您需要建立一個密碼授權客戶端。您可以使用帶有 <code>--password</code> 選項的 <code>passport:client</code> Artisan 命令來完成此操作。</p>
+<pre><code class="language-shell">php artisan passport:client --password
+</code></pre>
+<p><a name="requesting-password-grant-tokens"></a></p>
+<h3>請求令牌</h3>
+<p>啟用授權並建立密碼授權客戶端後，您可以透過向 <code>/oauth/token</code> 路由發出 <code>POST</code> 請求來請求存取令牌，並附帶使用者的電子郵件地址和密碼。請記住，此路由已由 Passport 註冊，因此無需手動定義。如果請求成功，您將從伺服器的 JSON 回應中收到 <code>access_token</code> 和 <code>refresh_token</code>：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+    &#39;grant_type&#39; =&gt; &#39;password&#39;,
+    &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+    &#39;client_secret&#39; =&gt; &#39;your-client-secret&#39;, // Required for confidential clients only...
+    &#39;username&#39; =&gt; &#39;taylor@laravel.com&#39;,
+    &#39;password&#39; =&gt; &#39;my-password&#39;,
+    &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+]);
+
+return $response-&gt;json();
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+請記住，存取令牌預設為長期有效。但是，如有需要，您可以自由<a href="#configuration">配置最大存取令牌生命週期</a>。</p>
+</blockquote>
+<p><a name="requesting-all-scopes"></a></p>
+<h3>請求所有範圍</h3>
+<p>使用密碼授權或客戶端憑證授權時，您可能希望為您的應用程式支援的所有範圍授權令牌。您可以透過請求 <code>*</code> 範圍來完成此操作。如果您請求 <code>*</code> 範圍，則令牌實例上的 <code>can</code> 方法將始終返回 <code>true</code>。此範圍只能分配給使用 <code>password</code> 或 <code>client_credentials</code> 授權發行的令牌：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+    &#39;grant_type&#39; =&gt; &#39;password&#39;,
+    &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+    &#39;client_secret&#39; =&gt; &#39;your-client-secret&#39;, // Required for confidential clients only...
+    &#39;username&#39; =&gt; &#39;taylor@laravel.com&#39;,
+    &#39;password&#39; =&gt; &#39;my-password&#39;,
+    &#39;scope&#39; =&gt; &#39;*&#39;,
+]);
+</code></pre>
+<p><a name="customizing-the-user-provider"></a></p>
+<h3>自訂使用者提供者</h3>
+<p>如果您的應用程式使用多個<a href="/docs/authentication#introduction">認證使用者提供者</a>，您可以透過在透過 <code>artisan passport:client --password</code> 命令建立客戶端時提供 <code>--provider</code> 選項來指定密碼授權客戶端使用哪個使用者提供者。給定的提供者名稱應與您應用程式的 <code>config/auth.php</code> 設定檔案中定義的有效提供者相符。然後您可以<a href="#multiple-authentication-guards">使用中介層保護您的路由</a>，以確保只有來自守衛指定提供者的使用者被授權。</p>
+<p><a name="customizing-the-username-field"></a></p>
+<h3>自訂使用者名稱欄位</h3>
+<p>使用密碼授權進行認證時，Passport 將使用您可認證模型的 <code>email</code> 屬性作為「使用者名稱」。然而，您可以透過在模型上定義 <code>findForPassport</code> 方法來自訂此行為：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+use Laravel\\Passport\\Bridge\\Client;
+use Laravel\\Passport\\Contracts\\OAuthenticatable;
+use Laravel\\Passport\\HasApiTokens;
+
+class User extends Authenticatable implements OAuthenticatable
+{
+    use HasApiTokens, Notifiable;
+
+    /**
+     * Find the user instance for the given username.
+     */
+    public function findForPassport(string $username, Client $client): User
+    {
+        return $this-&gt;where(&#39;username&#39;, $username)-&gt;first();
+    }
+}
+</code></pre>
+<p><a name="customizing-the-password-validation"></a></p>
+<h3>自訂密碼驗證</h3>
+<p>使用密碼授權進行認證時，Passport 將使用您模型的 <code>password</code> 屬性來驗證給定的密碼。如果您的模型沒有 <code>password</code> 屬性或您希望自訂密碼驗證邏輯，可以在模型上定義 <code>validateForPassportPasswordGrant</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use Illuminate\\Foundation\\Auth\\User as Authenticatable;
+use Illuminate\\Notifications\\Notifiable;
+use Illuminate\\Support\\Facades\\Hash;
+use Laravel\\Passport\\Contracts\\OAuthenticatable;
+use Laravel\\Passport\\HasApiTokens;
+
+class User extends Authenticatable implements OAuthenticatable
+{
+    use HasApiTokens, Notifiable;
+
+    /**
+     * Validate the password of the user for the Passport password grant.
+     */
+    public function validateForPassportPasswordGrant(string $password): bool
+    {
+        return Hash::check($password, $this-&gt;password);
+    }
+}
+</code></pre>
+<p><a name="implicit-grant"></a></p>
+<h2>隱式授權</h2>
+<blockquote>
+<p>[!WARNING]
+我們不再建議使用隱式授權令牌。相反，您應選擇<a href="https://oauth2.thephpleague.com/authorization-server/which-grant/">目前被 OAuth2 Server 推薦的授權類型</a>。</p>
+</blockquote>
+<p>隱式授權類似於授權碼授權；然而，令牌是在不交換授權碼的情況下返回給客戶端的。此授權最常用於無法安全儲存客戶端憑證的 JavaScript 或行動應用程式。要啟用授權，請在您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫 <code>enableImplicitGrant</code> 方法：</p>
+<pre><code class="language-php">/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::enableImplicitGrant();
+}
+</code></pre>
+<p>在您的應用程式可以透過隱式授權發行令牌之前，您需要建立一個隱式授權客戶端。您可以使用帶有 <code>--implicit</code> 選項的 <code>passport:client</code> Artisan 命令來完成此操作。</p>
+<pre><code class="language-shell">php artisan passport:client --implicit
+</code></pre>
+<p>啟用授權並建立隱式客戶端後，開發者可以使用其客戶端 ID 從您的應用程式請求存取令牌。消費應用程式應向您應用程式的 <code>/oauth/authorize</code> 路由發出重新導向請求，如下所示：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get(&#39;/redirect&#39;, function (Request $request) {
+    $request-&gt;session()-&gt;put(&#39;state&#39;, $state = Str::random(40));
+
+    $query = http_build_query([
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;redirect_uri&#39; =&gt; &#39;https://third-party-app.com/callback&#39;,
+        &#39;response_type&#39; =&gt; &#39;token&#39;,
+        &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+        &#39;state&#39; =&gt; $state,
+        // &#39;prompt&#39; =&gt; &#39;&#39;, // &quot;none&quot;, &quot;consent&quot;, or &quot;login&quot;
+    ]);
+
+    return redirect(&#39;https://passport-app.test/oauth/authorize?&#39;.$query);
+});
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+請記住，<code>/oauth/authorize</code> 路由已由 Passport 定義。您不需要手動定義此路由。</p>
+</blockquote>
+<p><a name="client-credentials-grant"></a></p>
+<h2>客戶端憑證授權</h2>
+<p>客戶端憑證授權適用於機器對機器的認證。例如，您可能在執行維護任務的排程工作中使用此授權。</p>
+<p>在您的應用程式可以透過客戶端憑證授權發行令牌之前，您需要建立一個客戶端憑證授權客戶端。您可以使用 <code>passport:client</code> Artisan 命令的 <code>--client</code> 選項來完成此操作：</p>
+<pre><code class="language-shell">php artisan passport:client --client
+</code></pre>
+<p>接下來，將 <code>Laravel\\Passport\\Http\\Middleware\\EnsureClientIsResourceOwner</code> 中介層分配給路由：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Http\\Middleware\\EnsureClientIsResourceOwner;
+
+Route::get(&#39;/orders&#39;, function (Request $request) {
+    // Access token is valid and the client is resource owner...
+})-&gt;middleware(EnsureClientIsResourceOwner::class);
+</code></pre>
+<p>要將路由的存取限制為特定範圍，您可以向 <code>using</code> 方法提供所需範圍的列表：</p>
+<pre><code class="language-php">Route::get(&#39;/orders&#39;, function (Request $request) {
+    // Access token is valid, the client is resource owner, and has both &quot;servers:read&quot; and &quot;servers:create&quot; scopes...
+})-&gt;middleware(EnsureClientIsResourceOwner::using(&#39;servers:read&#39;, &#39;servers:create&#39;));
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+<a href="https://oauth2.thephpleague.com/database-setup/#:~:text=Please%20note%20that,the%20bearer%20token.">底層 OAuth2 伺服器</a>將客戶端憑證令牌的 <code>sub</code> 聲明設為客戶端的標識符。預設情況下，Passport 使用 UUID 作為客戶端，因此不會與使用者的整數主鍵衝突。但是，如果您已將 <code>Passport::$clientUuids</code> 設為 <code>false</code>，客戶端憑證令牌可能會無意中解析出 ID 與客戶端 ID 相符的使用者。在這種情況下，使用此中介層無法保證傳入的令牌是客戶端憑證令牌。</p>
+</blockquote>
+<p><a name="retrieving-tokens"></a></p>
+<h3>檢索令牌</h3>
+<p>要使用此授權類型檢索令牌，請向 <code>oauth/token</code> 端點發出請求：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::asForm()-&gt;post(&#39;https://passport-app.test/oauth/token&#39;, [
+    &#39;grant_type&#39; =&gt; &#39;client_credentials&#39;,
+    &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+    &#39;client_secret&#39; =&gt; &#39;your-client-secret&#39;,
+    &#39;scope&#39; =&gt; &#39;servers:read servers:create&#39;,
+]);
+
+return $response-&gt;json()[&#39;access_token&#39;];
+</code></pre>
+<p><a name="personal-access-tokens"></a></p>
+<h2>個人存取令牌</h2>
+<p>有時候，您的使用者可能希望在不經過典型的授權碼重新導向流程的情況下，自行發行存取令牌。允許使用者透過您應用程式的 UI 自行發行令牌，對於允許使用者試用您的 API 或作為發行存取令牌的更簡單方法可能很有用。</p>
+<blockquote>
+<p>[!NOTE]
+如果您的應用程式主要使用 Passport 發行個人存取令牌，請考慮使用 <a href="/docs/sanctum">Laravel Sanctum</a>，這是 Laravel 用於發行 API 存取令牌的輕量級第一方庫。</p>
+</blockquote>
+<p><a name="creating-a-personal-access-client"></a></p>
+<h3>建立個人存取客戶端</h3>
+<p>在您的應用程式可以發行個人存取令牌之前，您需要建立一個個人存取客戶端。您可以透過執行帶有 <code>--personal</code> 選項的 <code>passport:client</code> Artisan 命令來完成此操作。如果您已執行過 <code>passport:install</code> 命令，則無需執行此命令：</p>
+<pre><code class="language-shell">php artisan passport:client --personal
+</code></pre>
+<p><a name="customizing-the-user-provider-for-pat"></a></p>
+<h3>自訂使用者提供者</h3>
+<p>如果您的應用程式使用多個<a href="/docs/authentication#introduction">認證使用者提供者</a>，您可以透過在透過 <code>artisan passport:client --personal</code> 命令建立客戶端時提供 <code>--provider</code> 選項來指定個人存取授權客戶端使用哪個使用者提供者。給定的提供者名稱應與您應用程式的 <code>config/auth.php</code> 設定檔案中定義的有效提供者相符。然後您可以<a href="#multiple-authentication-guards">使用中介層保護您的路由</a>，以確保只有來自守衛指定提供者的使用者被授權。</p>
+<p><a name="managing-personal-access-tokens"></a></p>
+<h3>管理個人存取令牌</h3>
+<p>建立個人存取客戶端後，您可以使用 <code>App\\Models\\User</code> 模型實例上的 <code>createToken</code> 方法為給定使用者發行令牌。<code>createToken</code> 方法接受令牌名稱作為其第一個參數，以及可選的<a href="#token-scopes">範圍</a>陣列作為其第二個參數：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Illuminate\\Support\\Facades\\Date;
+use Laravel\\Passport\\Token;
+
+$user = User::find($userId);
+
+// Creating a token without scopes...
+$token = $user-&gt;createToken(&#39;My Token&#39;)-&gt;accessToken;
+
+// Creating a token with scopes...
+$token = $user-&gt;createToken(&#39;My Token&#39;, [&#39;user:read&#39;, &#39;orders:create&#39;])-&gt;accessToken;
+
+// Creating a token with all scopes...
+$token = $user-&gt;createToken(&#39;My Token&#39;, [&#39;*&#39;])-&gt;accessToken;
+
+// Retrieving all the valid personal access tokens that belong to the user...
+$tokens = $user-&gt;tokens()
+    -&gt;with(&#39;client&#39;)
+    -&gt;where(&#39;revoked&#39;, false)
+    -&gt;where(&#39;expires_at&#39;, &#39;&gt;&#39;, Date::now())
+    -&gt;get()
+    -&gt;filter(fn (Token $token) =&gt; $token-&gt;client-&gt;hasGrantType(&#39;personal_access&#39;));
+</code></pre>
+<p><a name="protecting-routes"></a></p>
+<h2>保護路由</h2>
+<p><a name="via-middleware"></a></p>
+<h3>透過中介層</h3>
+<p>Passport 包含一個<a href="/docs/authentication#adding-custom-guards">認證守衛</a>，將在傳入的請求上驗證存取令牌。一旦您已配置 <code>api</code> 守衛使用 <code>passport</code> 驅動程式，您只需在任何需要有效存取令牌的路由上指定 <code>auth:api</code> 中介層：</p>
+<pre><code class="language-php">Route::get(&#39;/user&#39;, function () {
+    // Only API authenticated users may access this route...
+})-&gt;middleware(&#39;auth:api&#39;);
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+如果您使用的是<a href="#client-credentials-grant">客戶端憑證授權</a>，應使用 <a href="#client-credentials-grant"><code>Laravel\\Passport\\Http\\Middleware\\EnsureClientIsResourceOwner</code> 中介層</a>來保護您的路由，而不是 <code>auth:api</code> 中介層。</p>
+</blockquote>
+<p><a name="multiple-authentication-guards"></a></p>
+<h4>多個認證守衛</h4>
+<p>如果您的應用程式認證不同類型的使用者（可能使用完全不同的 Eloquent 模型），您通常需要為應用程式中的每個使用者提供者類型定義守衛配置。這允許您保護針對特定使用者提供者的請求。例如，給定 <code>config/auth.php</code> 設定檔案中的以下守衛配置：</p>
+<pre><code class="language-php">&#39;guards&#39; =&gt; [
+    &#39;api&#39; =&gt; [
+        &#39;driver&#39; =&gt; &#39;passport&#39;,
+        &#39;provider&#39; =&gt; &#39;users&#39;,
+    ],
+
+    &#39;api-customers&#39; =&gt; [
+        &#39;driver&#39; =&gt; &#39;passport&#39;,
+        &#39;provider&#39; =&gt; &#39;customers&#39;,
+    ],
+],
+</code></pre>
+<p>以下路由將使用 <code>api-customers</code> 守衛（使用 <code>customers</code> 使用者提供者）來認證傳入的請求：</p>
+<pre><code class="language-php">Route::get(&#39;/customer&#39;, function () {
+    // ...
+})-&gt;middleware(&#39;auth:api-customers&#39;);
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+有關使用多個使用者提供者與 Passport 的更多資訊，請參閱<a href="#customizing-the-user-provider-for-pat">個人存取令牌文件</a>和<a href="#customizing-the-user-provider">密碼授權文件</a>。</p>
+</blockquote>
+<p><a name="passing-the-access-token"></a></p>
+<h3>傳遞存取令牌</h3>
+<p>呼叫受 Passport 保護的路由時，您應用程式的 API 消費者應在請求的 <code>Authorization</code> 標頭中將其存取令牌指定為 <code>Bearer</code> 令牌。例如，使用 <code>Http</code> Facade 時：</p>
+<pre><code class="language-php">use Illuminate\\Support\\Facades\\Http;
+
+$response = Http::withHeaders([
+    &#39;Accept&#39; =&gt; &#39;application/json&#39;,
+    &#39;Authorization&#39; =&gt; &quot;Bearer $accessToken&quot;,
+])-&gt;get(&#39;https://passport-app.test/api/user&#39;);
+
+return $response-&gt;json();
+</code></pre>
+<p><a name="token-scopes"></a></p>
+<h2>令牌範圍</h2>
+<p>範圍允許您的 API 客戶端在請求授權以存取帳戶時請求特定的權限集。例如，如果您正在建立電子商務應用程式，並非所有 API 消費者都需要下訂單的能力。相反，您可以允許消費者僅請求授權以存取訂單出貨狀態。換句話說，範圍允許您應用程式的使用者限制第三方應用程式可以代表他們執行的操作。</p>
+<p><a name="defining-scopes"></a></p>
+<h3>定義範圍</h3>
+<p>您可以使用您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中的 <code>Passport::tokensCan</code> 方法來定義 API 的範圍。<code>tokensCan</code> 方法接受範圍名稱和範圍描述的陣列。範圍描述可以是您希望的任何內容，並將顯示在授權核准畫面上的使用者：</p>
+<pre><code class="language-php">/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::tokensCan([
+        &#39;user:read&#39; =&gt; &#39;Retrieve the user info&#39;,
+        &#39;orders:create&#39; =&gt; &#39;Place orders&#39;,
+        &#39;orders:read:status&#39; =&gt; &#39;Check order status&#39;,
+    ]);
+}
+</code></pre>
+<p><a name="default-scope"></a></p>
+<h3>預設範圍</h3>
+<p>如果客戶端未請求任何特定範圍，您可以配置 Passport 伺服器使用 <code>defaultScopes</code> 方法將預設範圍附加到令牌。通常，應從您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Passport;
+
+Passport::tokensCan([
+    &#39;user:read&#39; =&gt; &#39;Retrieve the user info&#39;,
+    &#39;orders:create&#39; =&gt; &#39;Place orders&#39;,
+    &#39;orders:read:status&#39; =&gt; &#39;Check order status&#39;,
+]);
+
+Passport::defaultScopes([
+    &#39;user:read&#39;,
+    &#39;orders:create&#39;,
+]);
+</code></pre>
+<p><a name="assigning-scopes-to-tokens"></a></p>
+<h3>將範圍分配給令牌</h3>
+<p><a name="when-requesting-authorization-codes"></a></p>
+<h4>請求授權碼時</h4>
+<p>使用授權碼授權請求存取令牌時，消費者應將其所需的範圍指定為 <code>scope</code> 查詢字串參數。<code>scope</code> 參數應為空格分隔的範圍列表：</p>
+<pre><code class="language-php">Route::get(&#39;/redirect&#39;, function () {
+    $query = http_build_query([
+        &#39;client_id&#39; =&gt; &#39;your-client-id&#39;,
+        &#39;redirect_uri&#39; =&gt; &#39;https://third-party-app.com/callback&#39;,
+        &#39;response_type&#39; =&gt; &#39;code&#39;,
+        &#39;scope&#39; =&gt; &#39;user:read orders:create&#39;,
+    ]);
+
+    return redirect(&#39;https://passport-app.test/oauth/authorize?&#39;.$query);
+});
+</code></pre>
+<p><a name="when-issuing-personal-access-tokens"></a></p<h4>發行個人存取令牌時</h4>
+<p>如果您使用 <code>App\\Models\\User</code> 模型的 <code>createToken</code> 方法發行個人存取令牌，您可以將所需範圍的陣列作為第二個參數傳遞給該方法：</p>
+<pre><code class="language-php">$token = $user-&gt;createToken(&#39;My Token&#39;, [&#39;orders:create&#39;])-&gt;accessToken;
+</code></pre>
+<p><a name="checking-scopes"></a></p>
+<h3>檢查範圍</h3>
+<p>Passport 包含兩個中介層，可用於驗證傳入的請求是否已使用被授予給定範圍的令牌進行認證。</p>
+<p><a name="check-for-all-scopes"></a></p>
+<h4>檢查所有範圍</h4>
+<p><code>Laravel\\Passport\\Http\\Middleware\\CheckToken</code> 中介層可分配給路由，以驗證傳入請求的存取令牌具有所有列出的範圍：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Http\\Middleware\\CheckToken;
+
+Route::get(&#39;/orders&#39;, function () {
+    // Access token has both &quot;orders:read&quot; and &quot;orders:create&quot; scopes...
+})-&gt;middleware([&#39;auth:api&#39;, CheckToken::using(&#39;orders:read&#39;, &#39;orders:create&#39;)]);
+</code></pre>
+<p><a name="check-for-any-scopes"></a></p>
+<h4>檢查任何範圍</h4>
+<p><code>Laravel\\Passport\\Http\\Middleware\\CheckTokenForAnyScope</code> 中介層可分配給路由，以驗證傳入請求的存取令牌具有<em>至少一個</em>列出的範圍：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Http\\Middleware\\CheckTokenForAnyScope;
+
+Route::get(&#39;/orders&#39;, function () {
+    // Access token has either &quot;orders:read&quot; or &quot;orders:create&quot; scope...
+})-&gt;middleware([&#39;auth:api&#39;, CheckTokenForAnyScope::using(&#39;orders:read&#39;, &#39;orders:create&#39;)]);
+</code></pre>
+<p><a name="scope-attributes"></a></p>
+<h4>範圍屬性</h4>
+<p>如果您的應用程式使用<a href="/docs/controllers#middleware-attributes">控制器中介層屬性</a>，您可以使用 <code>Laravel\\Passport\\Attributes\\AuthorizeToken</code> 屬性作為 Passport 範圍中介層的便捷捷徑：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Http\\Controllers;
+
+use Laravel\\Passport\\Attributes\\AuthorizeToken;
+
+#[AuthorizeToken(&#39;orders:read&#39;)]
+#[AuthorizeToken(&#39;orders:create&#39;, only: [&#39;store&#39;])]
+class OrderController
+{
+    #[AuthorizeToken([&#39;orders:read&#39;, &#39;orders:create&#39;], anyScope: true)]
+    public function index()
+    {
+        // Access token has either &quot;orders:read&quot; or &quot;orders:create&quot; scope...
+    }
+
+    public function store()
+    {
+        // Access token has both &quot;orders:read&quot; and &quot;orders:create&quot; scopes...
+    }
+}
+</code></pre>
+<p>預設情況下，<code>AuthorizeToken</code> 屬性需要所有給定的範圍。如果您傳遞 <code>anyScope: true</code>，則當令牌具有至少一個給定範圍時，請求即被授權。</p>
+<p><a name="checking-scopes-on-a-token-instance"></a></p>
+<h4>在令牌實例上檢查範圍</h4>
+<p>一旦存取令牌認證請求進入您的應用程式，您仍然可以使用已認證的 <code>App\\Models\\User</code> 實例上的 <code>tokenCan</code> 方法來檢查令牌是否具有給定範圍：</p>
+<pre><code class="language-php">use Illuminate\\Http\\Request;
+
+Route::get(&#39;/orders&#39;, function (Request $request) {
+    if ($request-&gt;user()-&gt;tokenCan(&#39;orders:create&#39;)) {
+        // ...
+    }
+});
+</code></pre>
+<p><a name="additional-scope-methods"></a></p>
+<h4>其他範圍方法</h4>
+<p><code>scopeIds</code> 方法將返回所有已定義 ID / 名稱的陣列：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Passport;
+
+Passport::scopeIds();
+</code></pre>
+<p><code>scopes</code> 方法將返回所有已定義範圍的陣列，作為 <code>Laravel\\Passport\\Scope</code> 的實例：</p>
+<pre><code class="language-php">Passport::scopes();
+</code></pre>
+<p><code>scopesFor</code> 方法將返回與給定 ID / 名稱匹配的 <code>Laravel\\Passport\\Scope</code> 實例陣列：</p>
+<pre><code class="language-php">Passport::scopesFor([&#39;user:read&#39;, &#39;orders:create&#39;]);
+</code></pre>
+<p>您可以使用 <code>hasScope</code> 方法來判斷是否已定義給定範圍：</p>
+<pre><code class="language-php">Passport::hasScope(&#39;orders:create&#39;);
+</code></pre>
+<p><a name="spa-authentication"></a></p>
+<h2>SPA 認證</h2>
+<p>建構 API 時，能夠從您的 JavaScript 應用程式消費您自己的 API 可能非常有用。這種 API 開發方法允許您自己的應用程式消費您與世界共享的同一個 API。相同的 API 可由您的 Web 應用程式、行動應用程式、第三方應用程式以及您可能在各種套件管理器上發佈的任何 SDK 消費。</p>
+<p>通常，如果您希望從 JavaScript 應用程式消費您的 API，您需要手動將存取令牌傳送到應用程式，並在每個請求中將其傳遞給您的應用程式。然而，Passport 包含一個可以為您處理此問題的中介層。您只需將 <code>CreateFreshApiToken</code> 中介層附加到您應用程式的 <code>bootstrap/app.php</code> 檔案中的 <code>web</code> 中介層群組：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Http\\Middleware\\CreateFreshApiToken;
+
+-&gt;withMiddleware(function (Middleware $middleware): void {
+    $middleware-&gt;web(append: [
+        CreateFreshApiToken::class,
+    ]);
+})
+</code></pre>
+<blockquote>
+<p>[!WARNING]
+您應確保 <code>CreateFreshApiToken</code> 中介層是中介層堆疊中列出的最後一個中介層。</p>
+</blockquote>
+<p>此中介層將在您的外發回應上附加一個 <code>laravel_token</code> cookie。此 cookie 包含一個加密的 JWT，Passport 將使用它來認證來自 JavaScript 應用程式的 API 請求。JWT 的生命週期等於您的 <code>session.lifetime</code> 設定值。現在，由於瀏覽器將自動在所有後續請求中發送 cookie，您可以無需明確傳遞存取令牌即可對應用程式的 API 發出請求：</p>
+<pre><code class="language-js">axios.get(&#39;/api/user&#39;)
+    .then(response =&gt; {
+        console.log(response.data);
+    });
+</code></pre>
+<p><a name="customizing-the-cookie-name"></a></p>
+<h4>自訂 Cookie 名稱</h4>
+<p>如有需要，您可以使用 <code>Passport::cookie</code> 方法自訂 <code>laravel_token</code> cookie 的名稱。通常，應從您應用程式的 <code>App\\Providers\\AppServiceProvider</code> 類別的 <code>boot</code> 方法中呼叫此方法：</p>
+<pre><code class="language-php">/**
+ * Bootstrap any application services.
+ */
+public function boot(): void
+{
+    Passport::cookie(&#39;custom_name&#39;);
+}
+</code></pre>
+<p><a name="csrf-protection"></a></p>
+<h4>CSRF 保護</h4>
+<p>使用此認證方法時，您需要確保請求中包含有效的 CSRF 令牌標頭。骨架應用程式和所有入門套件中附含的預設 JavaScript 腳手架包含一個 <a href="https://github.com/axios/axios">Axios</a> 實例，該實例將自動使用加密的 <code>XSRF-TOKEN</code> cookie 值在同源請求上傳送 <code>X-XSRF-TOKEN</code> 標頭。</p>
+<blockquote>
+<p>[!NOTE]
+如果您選擇傳送 <code>X-CSRF-TOKEN</code> 標頭而不是 <code>X-XSRF-TOKEN</code>，則需要使用 <code>csrf_token()</code> 提供的未加密令牌。</p>
+</blockquote>
+<p><a name="events"></a></p>
+<h2>事件</h2>
+<p>Passport 在發行存取令牌和重新整理令牌時會觸發事件。您可以<a href="/docs/events">監聽這些事件</a>來修剪或撤銷資料庫中的其他存取令牌：</p>
+<div class="overflow-auto"><table>
+<thead>
+<tr>
+<th>事件名稱</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Laravel\\Passport\\Events\\AccessTokenCreated</code></td>
+</tr>
+<tr>
+<td><code>Laravel\\Passport\\Events\\AccessTokenRevoked</code></td>
+</tr>
+<tr>
+<td><code>Laravel\\Passport\\Events\\RefreshTokenCreated</code></td>
+</tr>
+</tbody></table>
+</div><p><a name="testing"></a></p>
+<h2>測試</h2>
+<p>Passport 的 <code>actingAs</code> 方法可用於指定目前認證的使用者及其範圍。傳遞給 <code>actingAs</code> 方法的第一個參數是使用者實例，第二個是應授予使用者令牌的範圍陣列：</p>
+<pre><code class="language-php">use App\\Models\\User;
+use Laravel\\Passport\\Passport;
+
+test(&#39;orders can be created&#39;, function () {
+    Passport::actingAs(
+        User::factory()-&gt;create(),
+        [&#39;orders:create&#39;]
+    );
+
+    $response = $this-&gt;post(&#39;/api/orders&#39;);
+
+    $response-&gt;assertStatus(201);
+});
+</code></pre>
+<pre><code class="language-php">use App\\Models\\User;
+use Laravel\\Passport\\Passport;
+
+public function test_orders_can_be_created(): void
+{
+    Passport::actingAs(
+        User::factory()-&gt;create(),
+        [&#39;orders:create&#39;]
+    );
+
+    $response = $this-&gt;post(&#39;/api/orders&#39;);
+
+    $response-&gt;assertStatus(201);
+}
+</code></pre>
+<p>Passport 的 <code>actingAsClient</code> 方法可用於指定目前認證的客戶端及其範圍。傳遞給 <code>actingAsClient</code> 方法的第一個參數是客戶端實例，第二個是應授予客戶端令牌的範圍陣列：</p>
+<pre><code class="language-php">use Laravel\\Passport\\Client;
+use Laravel\\Passport\\Passport;
+
+test(&#39;servers can be retrieved&#39;, function () {
+    Passport::actingAsClient(
+        Client::factory()-&gt;create(),
+        [&#39;servers:read&#39;]
+    );
+
+    $response = $this-&gt;get(&#39;/api/servers&#39;);
+
+    $response-&gt;assertStatus(200);
+});
+</code></pre>
+<pre><code class="language-php">use Laravel\\Passport\\Client;
+use Laravel\\Passport\\Passport;
+
+public function test_servers_can_be_retrieved(): void
+{
+    Passport::actingAsClient(
+        Client::factory()-&gt;create(),
+        [&#39;servers:read&#39;]
+    );
+
+    $response = $this-&gt;get(&#39;/api/servers&#39;);
+
+    $response-&gt;assertStatus(200);
+}
+</code></pre>
+`;
+---
+
+<DocsLayout title="Passport" currentPath="passport">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Passport</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Passport</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 本文翻譯自 Laravel 官方文檔。
+        <a href="https://laravel.com/docs/13.x/passport" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>

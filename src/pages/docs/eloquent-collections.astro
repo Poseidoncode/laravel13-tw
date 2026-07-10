@@ -1,0 +1,301 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const content = `<h1>Eloquent：集合</h1>
+<ul>
+<li><a href="#introduction">簡介</a></li>
+<li><a href="#available-methods">可用方法</a></li>
+<li><a href="#custom-collections">自訂集合</a></li>
+</ul>
+<p><a name="introduction"></a></p>
+<h2>簡介</h2>
+<p>所有返回多個模型結果的 Eloquent 方法都將返回 <code>Illuminate\\Database\\Eloquent\\Collection</code> 類別的實例，包括透過 <code>get</code> 方法檢索的結果或透過關聯存取的結果。Eloquent 集合物件擴展了 Laravel 的<a href="/docs/collections">基礎集合</a>，因此它自然繼承了數十種用於流暢地處理底層 Eloquent 模型陣列的方法。請務必查看 Laravel 集合文檔以了解所有這些有用方法的資訊！</p>
+<p>所有集合作為迭代器，允許您像處理簡單的 PHP 陣列一樣循環遍歷它們：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = User::where('active', 1)->get();
+
+foreach ($users as $user) {
+    echo $user->name;
+}
+</code></pre>
+<p>但是，如前所述，集合比陣列強大得多，並且公開了多種 map/reduce 操作，可以使用直觀的介面進行鏈式呼叫。例如，我們可以移除所有非活動模型，然後收集每個剩餘使用者的名字：</p>
+<pre><code class="language-php">$names = User::all()->reject(function (User $user) {
+    return $user->active === false;
+})->map(function (User $user) {
+    return $user->name;
+});
+</code></pre>
+<p><a name="eloquent-collection-conversion"></a></p>
+<h4>Eloquent 集合轉換</h4>
+<p>雖然大多數 Eloquent 集合方法返回 Eloquent 集合的新實例，但 <code>collapse</code>、<code>flatten</code>、<code>flip</code>、<code>keys</code>、<code>pluck</code> 和 <code>zip</code> 方法返回<a href="/docs/collections">基礎集合</a>實例。同樣地，如果 <code>map</code> 操作返回一個不包含任何 Eloquent 模型的集合，它將被轉換為基礎集合實例。</p>
+<p><a name="available-methods"></a></p>
+<h2>可用方法</h2>
+<p>所有 Eloquent 集合都擴展了基礎 <a href="/docs/collections#available-methods">Laravel 集合</a>物件；因此，它們繼承了基礎集合類別提供的所有強大方法。</p>
+<p>此外，<code>Illuminate\\Database\\Eloquent\\Collection</code> 類別提供了一組超集方法來協助管理您的模型集合。大多數方法返回 <code>Illuminate\\Database\\Eloquent\\Collection</code> 實例；但是，一些方法（如 <code>modelKeys</code>）返回 <code>Illuminate\\Support\\Collection</code> 實例。</p>
+<style>
+    .collection-method-list > p {
+        columns: 14.4em 1; -moz-columns: 14.4em 1; -webkit-columns: 14.4em 1;
+    }
+
+    .collection-method-list a {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .collection-method code {
+        font-size: 14px;
+    }
+
+    .collection-method:not(.first-collection-method) {
+        margin-top: 50px;
+    }
+</style><div class="collection-method-list" markdown="1"><p><a href="#method-append">append</a>
+<a href="#method-contains">contains</a>
+<a href="#method-diff">diff</a>
+<a href="#method-except">except</a>
+<a href="#method-find">find</a>
+<a href="#method-find-or-fail">findOrFail</a>
+<a href="#method-fresh">fresh</a>
+<a href="#method-intersect">intersect</a>
+<a href="#method-load">load</a>
+<a href="#method-loadMissing">loadMissing</a>
+<a href="#method-modelKeys">modelKeys</a>
+<a href="#method-makeVisible">makeVisible</a>
+<a href="#method-makeHidden">makeHidden</a>
+<a href="#method-mergeVisible">mergeVisible</a>
+<a href="#method-mergeHidden">mergeHidden</a>
+<a href="#method-only">only</a>
+<a href="#method-partition">partition</a>
+<a href="#method-setAppends">setAppends</a>
+<a href="#method-setVisible">setVisible</a>
+<a href="#method-setHidden">setHidden</a>
+<a href="#method-toquery">toQuery</a>
+<a href="#method-unique">unique</a>
+<a href="#method-withoutAppends">withoutAppends</a></p>
+</div><p><a name="method-append"></a></p>
+<h4><code>append($attributes)</code> {.collection-method .first-collection-method}</h4>
+<p><code>append</code> 方法可用於指示應為集合中的每個模型<a href="/docs/eloquent-serialization#appending-values-to-json">追加</a>一個屬性。此方法接受一個屬性陣列或單個屬性：</p>
+<pre><code class="language-php">$users->append('team');
+
+$users->append(['team', 'is_admin']);
+</code></pre>
+<p><a name="method-contains"></a></p>
+<h4><code>contains($key, $operator = null, $value = null)</code> {.collection-method}</h4>
+<p><code>contains</code> 方法可用於判斷給定的模型實例是否被集合包含。此方法接受一個主鍵或一個模型實例：</p>
+<pre><code class="language-php">$users->contains(1);
+
+$users->contains(User::find(1));
+</code></pre>
+<p><a name="method-diff"></a></p>
+<h4><code>diff($items)</code> {.collection-method}</h4>
+<p><code>diff</code> 方法返回所有不在給定集合中的模型：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = $users->diff(User::whereIn('id', [1, 2, 3])->get());
+</code></pre>
+<p><a name="method-except"></a></p>
+<h4><code>except($keys)</code> {.collection-method}</h4>
+<p><code>except</code> 方法返回所有不具有給定主鍵的模型：</p>
+<pre><code class="language-php">$users = $users->except([1, 2, 3]);
+</code></pre>
+<p><a name="method-find"></a></p>
+<h4><code>find($key)</code> {.collection-method}</h4>
+<p><code>find</code> 方法返回具有與給定鍵匹配的主鍵的模型。如果 <code>$key</code> 是一個模型實例，<code>find</code> 將嘗試返回一個與主鍵匹配的模型。如果 <code>$key</code> 是一個鍵陣列，<code>find</code> 將返回所有在給定陣列中具有主鍵的模型：</p>
+<pre><code class="language-php">$users = User::all();
+
+$user = $users->find(1);
+</code></pre>
+<p><a name="method-find-or-fail"></a></p>
+<h4><code>findOrFail($key)</code> {.collection-method}</h4>
+<p><code>findOrFail</code> 方法返回具有與給定鍵匹配的主鍵的模型，如果在集合中找不到匹配的模型，則拋出 <code>Illuminate\\Database\\Eloquent\\ModelNotFoundException</code> 異常：</p>
+<pre><code class="language-php">$users = User::all();
+
+$user = $users->findOrFail(1);
+</code></pre>
+<p><a name="method-fresh"></a></p>
+<h4><code>fresh($with = [])</code> {.collection-method}</h4>
+<p><code>fresh</code> 方法從資料庫中檢索集合中每個模型的新實例。此外，任何指定的關聯都將被預先載入：</p>
+<pre><code class="language-php">$users = $users->fresh();
+
+$users = $users->fresh('comments');
+</code></pre>
+<p><a name="method-intersect"></a></p>
+<h4><code>intersect($items)</code> {.collection-method}</h4>
+<p><code>intersect</code> 方法返回所有也存在於給定集合中的模型：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = $users->intersect(User::whereIn('id', [1, 2, 3])->get());
+</code></pre>
+<p><a name="method-load"></a></p>
+<h4><code>load($relations)</code> {.collection-method}</h4>
+<p><code>load</code> 方法為集合中的所有模型預先載入給定的關聯：</p>
+<pre><code class="language-php">$users->load(['comments', 'posts']);
+
+$users->load('comments.author');
+
+$users->load(['comments', 'posts' => fn ($query) => $query->where('active', 1)]);
+</code></pre>
+<p><a name="method-loadMissing"></a></p>
+<h4><code>loadMissing($relations)</code> {.collection-method}</h4>
+<p><code>loadMissing</code> 方法在關聯尚未載入時為集合中的所有模型預先載入給定的關聯：</p>
+<pre><code class="language-php">$users->loadMissing(['comments', 'posts']);
+
+$users->loadMissing('comments.author');
+
+$users->loadMissing(['comments', 'posts' => fn ($query) => $query->where('active', 1)]);
+</code></pre>
+<p><a name="method-modelKeys"></a></p>
+<h4><code>modelKeys()</code> {.collection-method}</h4>
+<p><code>modelKeys</code> 方法返回集合中所有模型的主鍵：</p>
+<pre><code class="language-php">$users->modelKeys();
+
+// [1, 2, 3, 4, 5]
+</code></pre>
+<p><a name="method-makeVisible"></a></p>
+<h4><code>makeVisible($attributes)</code> {.collection-method}</h4>
+<p><code>makeVisible</code> 方法<a href="/docs/eloquent-serialization#hiding-attributes-from-json">使屬性可見</a>，這些屬性在集合中的每個模型上通常被「隱藏」：</p>
+<pre><code class="language-php">$users = $users->makeVisible(['address', 'phone_number']);
+</code></pre>
+<p><a name="method-makeHidden"></a></p>
+<h4><code>makeHidden($attributes)</code> {.collection-method}</h4>
+<p><code>makeHidden</code> 方法<a href="/docs/eloquent-serialization#hiding-attributes-from-json">隱藏屬性</a>，這些屬性在集合中的每個模型上通常「可見」：</p>
+<pre><code class="language-php">$users = $users->makeHidden(['address', 'phone_number']);
+</code></pre>
+<p><a name="method-mergeVisible"></a></p>
+<h4><code>mergeVisible($attributes)</code> {.collection-method}</h4>
+<p><code>mergeVisible</code> 方法<a href="/docs/eloquent-serialization#hiding-attributes-from-json">使額外的屬性可見</a>，同時保留現有的可見屬性：</p>
+<pre><code class="language-php">$users = $users->mergeVisible(['middle_name']);
+</code></pre>
+<p><a name="method-mergeHidden"></a></p>
+<h4><code>mergeHidden($attributes)</code> {.collection-method}</h4>
+<p><code>mergeHidden</code> 方法<a href="/docs/eloquent-serialization#hiding-attributes-from-json">隱藏額外的屬性</a>，同時保留現有的隱藏屬性：</p>
+<pre><code class="language-php">$users = $users->mergeHidden(['last_login_at']);
+</code></pre>
+<p><a name="method-only"></a></p>
+<h4><code>only($keys)</code> {.collection-method}</h4>
+<p><code>only</code> 方法返回所有具有給定主鍵的模型：</p>
+<pre><code class="language-php">$users = $users->only([1, 2, 3]);
+</code></pre>
+<p><a name="method-partition"></a></p>
+<h4><code>partition</code> {.collection-method}</h4>
+<p><code>partition</code> 方法返回一個 <code>Illuminate\\Support\\Collection</code> 的實例，其中包含 <code>Illuminate\\Database\\Eloquent\\Collection</code> 集合實例：</p>
+<pre><code class="language-php">$partition = $users->partition(fn ($user) => $user->age > 18);
+
+dump($partition::class);    // Illuminate\\Support\\Collection
+dump($partition[0]::class); // Illuminate\\Database\\Eloquent\\Collection
+dump($partition[1]::class); // Illuminate\\Database\\Eloquent\\Collection
+</code></pre>
+<p><a name="method-setAppends"></a></p>
+<h4><code>setAppends($attributes)</code> {.collection-method}</h4>
+<p><code>setAppends</code> 方法暫時覆蓋集合中每個模型上的所有<a href="/docs/eloquent-serialization#appending-values-to-json">追加屬性</a>：</p>
+<pre><code class="language-php">$users = $users->setAppends(['is_admin']);
+</code></pre>
+<p><a name="method-setVisible"></a></p>
+<h4><code>setVisible($attributes)</code> {.collection-method}</h4>
+<p><code>setVisible</code> 方法<a href="/docs/eloquent-serialization#temporarily-modifying-attribute-visibility">暫時覆蓋</a>集合中每個模型上的所有可見屬性：</p>
+<pre><code class="language-php">$users = $users->setVisible(['id', 'name']);
+</code></pre>
+<p><a name="method-setHidden"></a></p>
+<h4><code>setHidden($attributes)</code> {.collection-method}</h4>
+<p><code>setHidden</code> 方法<a href="/docs/eloquent-serialization#temporarily-modifying-attribute-visibility">暫時覆蓋</a>集合中每個模型上的所有隱藏屬性：</p>
+<pre><code class="language-php">$users = $users->setHidden(['email', 'password', 'remember_token']);
+</code></pre>
+<p><a name="method-toquery"></a></p>
+<h4><code>toQuery()</code> {.collection-method}</h4>
+<p><code>toQuery</code> 方法返回一個 Eloquent 查詢建構器實例，其中包含對集合模型主鍵的 <code>whereIn</code> 約束：</p>
+<pre><code class="language-php">use App\\Models\\User;
+
+$users = User::where('status', 'VIP')->get();
+
+$users->toQuery()->update([
+    'status' => 'Administrator',
+]);
+</code></pre>
+<p><a name="method-unique"></a></p>
+<h4><code>unique($key = null, $strict = false)</code> {.collection-method}</h4>
+<p><code>unique</code> 方法返回集合中所有唯一的模型。任何與集合中另一個模型具有相同主鍵的模型都會被移除：</p>
+<pre><code class="language-php">$users = $users->unique();
+</code></pre>
+<p><a name="method-withoutAppends"></a></p>
+<h4><code>withoutAppends()</code> {.collection-method}</h4>
+<p><code>withoutAppends</code> 方法暫時移除集合中每個模型上的所有<a href="/docs/eloquent-serialization#appending-values-to-json">追加屬性</a>：</p>
+<pre><code class="language-php">$users = $users->withoutAppends();
+</code></pre>
+<p><a name="custom-collections"></a></p>
+<h2>自訂集合</h2>
+<p>如果您希望在與給定模型互動時使用自訂 <code>Collection</code> 物件，可以在模型上添加 <code>CollectedBy</code> 屬性：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Support\\UserCollection;
+use Illuminate\\Database\\Eloquent\\Attributes\\CollectedBy;
+use Illuminate\\Database\\Eloquent\\Model;
+
+#[CollectedBy(UserCollection::class)]
+class User extends Model
+{
+    // ...
+}
+</code></pre>
+<p>或者，您可以在模型上定義一個 <code>newCollection</code> 方法：</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\\Models;
+
+use App\\Support\\UserCollection;
+use Illuminate\\Database\\Eloquent\\Collection;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class User extends Model
+{
+    /**
+     * 創建一個新的 Eloquent 集合實例。
+     *
+     * @param  array<int, \\Illuminate\\Database\\Eloquent\\Model>  $models
+     * @return \\Illuminate\\Database\\Eloquent\\Collection<int, \\Illuminate\\Database\\Eloquent\\Model>
+     */
+    public function newCollection(array $models = []): Collection
+    {
+        $collection = new UserCollection($models);
+
+        if (Model::isAutomaticallyEagerLoadingRelationships()) {
+            $collection->withRelationshipAutoloading();
+        }
+
+        return $collection;
+    }
+}
+</code></pre>
+<p>定義好 <code>newCollection</code> 方法或向模型添加 <code>CollectedBy</code> 屬性後，每次 Eloquent 通常返回 <code>Illuminate\\Database\\Eloquent\\Collection</code> 實例時，您都將收到自訂集合的實例。</p>
+<p>如果您希望為應用程式中的每個模型使用自訂集合，應該在所有應用程式模型擴展的基礎模型類別上定義 <code>newCollection</code> 方法。</p>
+`;
+---
+
+<DocsLayout title="Eloquent 集合" currentPath="eloquent-collections">
+  <div class="mb-8">
+    <nav class="text-sm text-text-secondary mb-4">
+      <a href="/" class="hover:text-accent">首頁</a>
+      <span class="mx-2">/</span>
+      <span>文件</span>
+      <span class="mx-2">/</span>
+      <span>Eloquent 集合</span>
+    </nav>
+    
+    <h1 class="text-4xl font-bold mb-4">Eloquent 集合</h1>
+    
+    <div class="bg-bg-secondary border border-border rounded-lg p-4 mb-6">
+      <p class="text-text-secondary">
+        📝 此頁面為 Laravel 官方文檔的繁體中文翻譯。
+        <a href="https://laravel.com/docs/13.x/eloquent-collections" class="text-accent" target="_blank" rel="noopener">
+          查看原始英文版本
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="prose prose-invert max-w-none" set:html={content}></div>
+</DocsLayout>
