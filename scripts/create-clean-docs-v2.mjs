@@ -131,8 +131,8 @@ const pageTitles = {
 };
 
 function escapeContent(content) {
-  // Escape backticks for JavaScript template literal
-  return content.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+  // Escape backslash, backtick and dollar for JavaScript template literals
+  return content.replace(/[\\`$]/g, (c) => '\\' + c);
 }
 
 function createAstroFile(content, slug) {
