@@ -172,4 +172,16 @@ const { title, description, currentPath = '' } = Astro.props;
       trigger?.click();
     });
   </script>
+
+  <!-- ─── Vertically center translation notice ─── -->
+  <style is:global>
+    article > div:first-child > div.bg-bg-secondary {
+      display: flex;
+      align-items: center;
+    }
+    article > div:first-child > div.bg-bg-secondary > p {
+      flex: 1;
+      margin-bottom: 0;
+    }
+  </style>
 </Layout>

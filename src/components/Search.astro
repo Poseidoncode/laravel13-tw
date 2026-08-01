@@ -124,6 +124,7 @@
     private isOpen = false;
     private selectedIndex = -1;
     private results: any[] = [];
+    private bodyStyleBackup = { overflow: '', paddingRight: '' };
 
     constructor() {
       this.init();
@@ -233,8 +234,18 @@
 
       this.isOpen = true;
       modal.classList.remove('hidden');
+
+      // Lock body scroll while preserving the scrollbar gutter so the
+      // page layout does not jump when the scrollbar disappears.
+      this.bodyStyleBackup.overflow = document.body.style.overflow;
+      this.bodyStyleBackup.paddingRight = document.body.style.paddingRight;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
       document.body.style.overflow = 'hidden';
-      setTimeout(() => input.focus(), 100);
+
+      setTimeout(() => input.focus({ preventScroll: true }), 100);
       await this.loadPagefind();
     }
 
@@ -245,7 +256,10 @@
 
       this.isOpen = false;
       modal.classList.add('hidden');
-      document.body.style.overflow = '';
+
+      document.body.style.overflow = this.bodyStyleBackup.overflow;
+      document.body.style.paddingRight = this.bodyStyleBackup.paddingRight;
+
       if (input) input.value = '';
       this.clearResults();
     }
