@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
 
-# Remember to update this with your real domain before deploying.
-# Sitemap: https://your-domain.com/sitemap-index.xml
+Sitemap: https://laravel13-zh-tw.hulstem.com/sitemap-index.xml

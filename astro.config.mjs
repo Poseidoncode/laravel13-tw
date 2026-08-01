@@ -6,7 +6,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://laravel13-tw.example.com',
+  site: 'https://laravel13-zh-tw.hulstem.com',
 
   integrations: [
     mdx(),
