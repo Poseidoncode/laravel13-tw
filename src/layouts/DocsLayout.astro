@@ -11,7 +11,7 @@ interface Props {
 const { title, description, currentPath = '' } = Astro.props;
 ---
 
-<Layout title={title} description={description}>
+<Layout title={title} description={description} type="article">
   <div class="flex min-h-[calc(100vh-4rem)]">
     <!-- ─── Sidebar (desktop: fixed, mobile: hidden toggleable) ─── -->
     <aside
