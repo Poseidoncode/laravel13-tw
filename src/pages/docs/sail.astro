@@ -410,5 +410,5 @@ Laravel Sail 依賴 <code>artisan serve</code> 來為您的應用程式提供服
     </div>
   </div>
 
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>

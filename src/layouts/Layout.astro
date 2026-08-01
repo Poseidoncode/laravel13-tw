@@ -21,8 +21,10 @@ const {
 const siteName = 'Laravel 13.x 繁體中文文檔';
 const pageTitle = `${title} | ${siteName}`;
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).toString() : Astro.url.pathname;
-const ogImage = image && Astro.site ? new URL(image, Astro.site).toString() : image;
-const twitterCard = ogImage ? 'summary_large_image' : 'summary';
+const defaultImage = '/og-default.png';
+const imagePath = image || defaultImage;
+const ogImage = Astro.site ? new URL(imagePath, Astro.site).toString() : imagePath;
+const twitterCard = 'summary_large_image';
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': type === 'website' ? 'WebSite' : 'WebPage',
@@ -76,6 +78,7 @@ const jsonLd = JSON.stringify({
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
 </head>
 <body>

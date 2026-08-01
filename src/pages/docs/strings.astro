@@ -2468,5 +2468,5 @@ $string = str(&#39;Laravel&#39;)-&gt;wrap(&#39;&#39;&#39;&#39;);
     </div>
   </div>
 
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>

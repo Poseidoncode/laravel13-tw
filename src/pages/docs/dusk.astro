@@ -251,5 +251,5 @@ Dusk 要求 <code>chromedriver</code> 二進位檔案可執行。如果您在執
       </p>
     </div>
   </div>
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>

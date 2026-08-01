@@ -1095,5 +1095,5 @@ SQLite 預設情況下會停用外部鍵約束。使用 SQLite 時，請確保�
     </div>
   </div>
 
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>

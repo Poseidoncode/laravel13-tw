@@ -1312,5 +1312,5 @@ DB::table(&#39;users&#39;)-&gt;where(&#39;votes&#39;, &#39;&gt;&#39;, 100)-&gt;d
     </div>
   </div>
 
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>

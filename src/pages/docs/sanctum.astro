@@ -381,5 +381,5 @@ public function test_task_list_can_be_retrieved(): void
       </p>
     </div>
   </div>
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>

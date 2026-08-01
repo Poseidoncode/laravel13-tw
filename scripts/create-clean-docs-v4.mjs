@@ -181,7 +181,7 @@ const content = \`${escapedContent}\`;
     </div>
   </div>
 
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\\s\\S]*?<\\/h1>/, "")}></div>
 </DocsLayout>
 `;
 }

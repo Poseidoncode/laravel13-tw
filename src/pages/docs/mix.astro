@@ -46,5 +46,5 @@ Vite 已在新的 Laravel 安裝中取代了 Laravel Mix。有關 Mix 文件，�
     </div>
   </div>
 
-  <div class="prose prose-invert max-w-none" set:html={content}></div>
+  <div class="prose prose-invert max-w-none" set:html={content.replace(/<h1[\s\S]*?<\/h1>/, "")}></div>
 </DocsLayout>
