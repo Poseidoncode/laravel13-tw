@@ -336,7 +336,7 @@ npm run build:search
 
 本專案基於 [MIT 授權條款](LICENSE) 開源。
 
-原始 Laravel 文檔由 Laravel 官方維護，遵循 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/)。
+原始 Laravel 文檔由 Taylor Otwell 以 MIT License 授權，繁體中文翻譯部分由 Poseidoncode 於 2026 年貢獻。
 
 ## 🙏 致謝
 
