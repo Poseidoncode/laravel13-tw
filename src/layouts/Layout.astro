@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { cleanDescription } from '../utils/seo';
 import Search from '../components/Search.astro';
 
 interface Props {
@@ -25,14 +26,24 @@ const defaultImage = '/og-default.png';
 const imagePath = image || defaultImage;
 const ogImage = Astro.site ? new URL(imagePath, Astro.site).toString() : imagePath;
 const twitterCard = 'summary_large_image';
+const safeDescription = cleanDescription(description);
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': type === 'website' ? 'WebSite' : 'WebPage',
   name: title,
-  description,
+  description: safeDescription,
   inLanguage: 'zh-TW',
   url: canonical,
   ...(ogImage ? { image: ogImage } : {}),
+});
+const siteUrl = Astro.site ? Astro.site.toString() : 'https://laravel13-zh-tw.hulstem.com';
+const orgJson = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: siteName,
+  url: siteUrl,
+  logo: new URL(defaultImage, siteUrl).toString(),
+  sameAs: ['https://github.com/Poseidoncode/laravel13-tw'],
 });
 ---
 
@@ -41,26 +52,35 @@ const jsonLd = JSON.stringify({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content={description} />
-  <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+  <meta name="description" content={safeDescription} />
+  <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
   <link rel="canonical" href={canonical} />
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap-index.xml" />
   <title>{pageTitle}</title>
+
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#1e3a5f" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#7ba7d9" />
+  <meta name="msapplication-TileColor" content="#1e3a5f" />
 
   <meta property="og:locale" content="zh_TW" />
   <meta property="og:site_name" content={siteName} />
   <meta property="og:title" content={title} />
-  <meta property="og:description" content={description} />
+  <meta property="og:description" content={safeDescription} />
   <meta property="og:type" content={type} />
   <meta property="og:url" content={canonical} />
   {ogImage && <meta property="og:image" content={ogImage} />}
   {ogImage && <meta property="og:image:alt" content={title} />}
+  {ogImage && imagePath === defaultImage && <meta property="og:image:width" content="1200" />}
+  {ogImage && imagePath === defaultImage && <meta property="og:image:height" content="630" />}
+  {ogImage && imagePath === defaultImage && <meta property="og:image:type" content="image/png" />}
 
   <meta name="twitter:card" content={twitterCard} />
   <meta name="twitter:title" content={title} />
-  <meta name="twitter:description" content={description} />
+  <meta name="twitter:description" content={safeDescription} />
   {ogImage && <meta name="twitter:image" content={ogImage} />}
 
   <script type="application/ld+json" set:html={jsonLd}></script>
+  <script type="application/ld+json" set:html={orgJson}></script>
 
   <!-- ⚡ Theme detection — runs before render to prevent flash ⚡ -->
   <script is:inline>

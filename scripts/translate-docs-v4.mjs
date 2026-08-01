@@ -31,7 +31,7 @@ const pageTitles = {
   'blade': 'Blade 範本',
   'url-generation': 'URL 生成',
   'session': '會話',
-  'validation': '驗證',
+  'validation': '資料驗證',
   'error-handling': '錯誤處理',
   'logging': '日誌記錄',
   'database': '資料庫',
@@ -133,7 +133,7 @@ const pageTitles = {
   'structure': '目錄結構',
   'upgrade': '升級',
   'urls': 'URL',
-  'verification': '驗證',
+  'verification': '電子郵件驗證',
 };
 
 // Common header translations

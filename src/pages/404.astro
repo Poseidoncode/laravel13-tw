@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="找不到頁面"
+  description="您要尋找的頁面不存在。"
+  noindex={true}
+>
+  <main class="grid min-h-[60vh] place-items-center px-4">
+    <div class="text-center">
+      <h1 class="text-4xl font-bold text-text-primary">404</h1>
+      <p class="mt-4 text-text-secondary">找不到您請求的頁面。</p>
+      <a href="/" class="mt-6 inline-block text-accent hover:underline no-underline">
+        返回首頁
+      </a>
+    </div>
+  </main>
+</Layout>
